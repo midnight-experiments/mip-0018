@@ -1,0 +1,230 @@
+{
+  "$comment": "MIP-0018 metadata of examples/openzeppelin/native-unshielded: what to deploy and publish, the exact payload of every event, and what a conforming consumer concludes. Format: examples/openzeppelin/README.md#metadatajson. Checked against the contract by test/native-unshielded.test.ts.",
+  "example": "native-unshielded",
+  "mip": {
+    "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
+    "eventName": "mip-0018:token-metadata[v1]"
+  },
+  "contract": {
+    "source": "contracts/MyUnshieldedToken.compact",
+    "withoutMetadata": "contracts/without-metadata/MyUnshieldedToken.compact",
+    "openzeppelin": "@openzeppelin/compact-contracts@0.4.0-alpha.5 (access/Ownable); the token part is the Compact standard library (mintUnshieldedToken): OpenZeppelin has no native unshielded module",
+    "constructorArgs": {
+      "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+      "name_": "Acme Public",
+      "symbol_": "APUB",
+      "decimals_": 6,
+      "initialOwner": "left(<the deployer's Ownable account id = persistentHash([secretKey])>)"
+    }
+  },
+  "identities": [
+    {
+      "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+      "kind": 2,
+      "name": "Acme Public",
+      "symbol": "APUB",
+      "decimals": 6
+    }
+  ],
+  "steps": [
+    {
+      "id": "mint",
+      "circuit": "mint",
+      "args": {
+        "recipient": "<the holder's unshielded user address (32 bytes)>",
+        "amount": "1000000"
+      },
+      "caller": "owner",
+      "events": [],
+      "mints": [
+        {
+          "kind": 2,
+          "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+          "amount": "1000000"
+        }
+      ]
+    },
+    {
+      "id": "publish",
+      "circuit": "publishMetadata",
+      "args": {},
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+          "kind": 2,
+          "name": "Acme Public",
+          "symbol": "APUB",
+          "decimals": 6,
+          "payload": "6d69702d303031383a6578616d706c653a756e736869656c646564000000000002046e616d65010b41636d65205075626c69630673796d626f6c01044150554208646563696d616c73020106000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    }
+  ],
+  "expected": {
+    "identities": [
+      {
+        "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+        "kind": 2,
+        "visible": true,
+        "colored": true,
+        "common": {
+          "name": "Acme Public",
+          "symbol": "APUB",
+          "decimals": 6
+        }
+      }
+    ],
+    "groups": [
+      {
+        "symbol": "APUB",
+        "members": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+            "kind": 2
+          }
+        ]
+      }
+    ]
+  },
+  "lifecycle": [
+    {
+      "id": "rename",
+      "circuit": "setMetadata",
+      "args": {
+        "newName": "Acme Opened",
+        "newSymbol": "AOPN"
+      },
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+          "kind": 2,
+          "name": "Acme Opened",
+          "symbol": "AOPN",
+          "payload": "6d69702d303031383a6578616d706c653a756e736869656c646564000000000002046e616d65010b41636d65204f70656e65640673796d626f6c0104414f504e000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expected": {
+        "identities": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+            "kind": 2,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Acme Opened",
+              "symbol": "AOPN",
+              "decimals": 6
+            }
+          }
+        ],
+        "groups": [
+          {
+            "symbol": "AOPN",
+            "members": [
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+                "kind": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "withdraw",
+      "circuit": "withdrawMetadata",
+      "args": {},
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+          "kind": 2,
+          "tombstone": true,
+          "payload": "6d69702d303031383a6578616d706c653a756e736869656c646564000000000002046e616d650500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expected": {
+        "identities": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+            "kind": 2,
+            "visible": false,
+            "colored": true,
+            "common": {}
+          }
+        ],
+        "groups": []
+      }
+    },
+    {
+      "id": "withdraw-again",
+      "circuit": "withdrawMetadata",
+      "args": {},
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+          "kind": 2,
+          "tombstone": true,
+          "payload": "6d69702d303031383a6578616d706c653a756e736869656c646564000000000002046e616d650500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expected": {
+        "identities": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+            "kind": 2,
+            "visible": false,
+            "colored": true,
+            "common": {}
+          }
+        ],
+        "groups": []
+      }
+    },
+    {
+      "id": "revive",
+      "circuit": "publishMetadata",
+      "args": {},
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+          "kind": 2,
+          "name": "Acme Public",
+          "symbol": "APUB",
+          "decimals": 6,
+          "payload": "6d69702d303031383a6578616d706c653a756e736869656c646564000000000002046e616d65010b41636d65205075626c69630673796d626f6c01044150554208646563696d616c73020106000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expected": {
+        "identities": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+            "kind": 2,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Acme Public",
+              "symbol": "APUB",
+              "decimals": 6
+            }
+          }
+        ],
+        "groups": [
+          {
+            "symbol": "APUB",
+            "members": [
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+                "kind": 2
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
