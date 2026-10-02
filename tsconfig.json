@@ -14,7 +14,10 @@
     "examples/**/test/**/*.ts",
     "test-contracts/*/src/**/*.ts",
     "test-contracts/*/test/**/*.ts",
-    "vitest.config.ts"
+    "vitest.config.ts",
+    "examples/**/scripts/**/*.ts",
+    "test-contracts/*/scripts/**/*.ts",
+    "packages/*/scripts/**/*.ts"
   ],
   "exclude": ["**/node_modules/**", "**/managed/**", "**/dist/**"]
 }
