@@ -108,6 +108,7 @@
         "--force"
       ],
       "expectExit": 1,
+      "expectOutput": "has no verifier key",
       "note": "refused before submission: publishMetadata has no verifier key any more (exit 1, no transaction)"
     },
     {

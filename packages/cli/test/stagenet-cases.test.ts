@@ -28,7 +28,7 @@ describe('Stagenet case folders', () => {
 
   it.each(ids)('%s: one mip0018 command per step, documented placeholders only, an expected exit code', (id) => {
     const c = JSON.parse(readFileSync(join(cases, id, 'case.json'), 'utf8')) as {
-      steps: { id: string; runner: string; argv: string[]; expectExit: number }[];
+      steps: { id: string; runner: string; argv: string[]; expectExit: number; expectOutput?: string }[];
       recheck: Record<string, unknown[]>;
     };
     const commands = ['deploy', 'publish', 'call', 'remove-circuit', 'deploy-and-publish', 'wallet', 'verify', 'list', 'index', 'lookup'];
@@ -37,6 +37,8 @@ describe('Stagenet case folders', () => {
     for (const s of c.steps) {
       expect(commands).toContain(s.argv[0]);
       expect([0, 1, 3]).toContain(s.expectExit);
+      // a step that must fail names the reason it must fail for
+      expect(s.expectExit === 0 || (s.expectOutput ?? '').length > 0).toBe(true);
       expect(s.runner === 'signer').toBe(
         ['deploy', 'publish', 'call', 'remove-circuit', 'deploy-and-publish', 'wallet'].includes(s.argv[0]!),
       );

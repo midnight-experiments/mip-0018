@@ -61,6 +61,8 @@ type Step = {
   submits?: 'deploy' | 'call' | 'verifier-key-remove';
   /** Save stdout here (relative to {out}). */
   stdout?: string;
+  /** A failing step must fail for this reason: a text its output (stdout or stderr) contains. */
+  expectOutput?: string;
   note?: string;
 };
 type Recheck = {
@@ -547,6 +549,7 @@ function build(): { cases: CaseDef[] } {
           'non-owner-set-metadata',
         ],
         expectExit: 1,
+        expectOutput: 'caller is not the owner',
         note: 'expected to fail before submission (exit 1); the record keeps the attempt (state pending, no transaction)',
       },
       list('expected.json', 'list', '{out:C01}/record.json'),
@@ -592,6 +595,7 @@ function build(): { cases: CaseDef[] } {
         },
         {
           ...call({ ...publish, stepId: 'publish-again' }, { force: true, expectExit: 1 }),
+          expectOutput: 'has no verifier key',
           note: 'refused before submission: publishMetadata has no verifier key any more (exit 1, no transaction)',
         },
         list(),
@@ -640,6 +644,7 @@ function build(): { cases: CaseDef[] } {
         ],
         expectExit: minted ? 0 : 3,
         stdout: `lookup-${label}.json`,
+        ...(minted ? {} : { expectOutput: '"found": false' }),
         ...(minted ? {} : { note: 'published but never minted: "not minted in the scanned range" (exit 3)' }),
       });
     };
@@ -738,7 +743,7 @@ function readme(c: CaseDef): string {
     '|---|---|---|---|---|',
     ...c.steps.map(
       (s, i) =>
-        `| ${i + 1} | \`${s.id}\`${s.note ? ` — ${s.note}` : ''} | ${s.wallet ?? 'none'} | ${s.expectExit} | \`${renderStagenet(c, s).replace(/\|/gu, '\\|')}\` |`,
+        `| ${i + 1} | \`${s.id}\`${s.note ? ` — ${s.note}` : ''} | ${s.wallet ?? 'none'} | ${s.expectExit}${s.expectOutput ? ` (output contains \`${s.expectOutput}\`)` : ''} | \`${renderStagenet(c, s).replace(/\|/gu, '\\|')}\` |`,
     ),
     '',
     '## Re-check (wallet-free, one command)',

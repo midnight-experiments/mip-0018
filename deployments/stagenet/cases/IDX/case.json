@@ -183,6 +183,7 @@
       ],
       "expectExit": 3,
       "stdout": "lookup-C05-bronze.json",
+      "expectOutput": "\"found\": false",
       "note": "published but never minted: \"not minted in the scanned range\" (exit 3)"
     }
   ],

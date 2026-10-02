@@ -28,7 +28,7 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 
 | # | Step | Wallet | Exit | Command |
 |---|---|---|---|---|
-| 1 | `non-owner-set-metadata` — expected to fail before submission (exit 1); the record keeps the attempt (state pending, no transaction) | wallet2 | 1 | `signer publish --network stagenet --mnemonic-file /run/mip0018/secrets/stagenet-wallet-2.mnemonic --wallet-cache /run/mip0018/state/wallet2.cache --private-state /run/mip0018/state/wallet2-private-state.json --example fungible-token --attach @deployments/stagenet/cases/C01/record.json --record deployments/stagenet/cases/C09/record.json --circuit setMetadata --args '[{"$utf8":"Evil Gold"},{"$utf8":"EVIL"}]' --step non-owner-set-metadata` |
+| 1 | `non-owner-set-metadata` — expected to fail before submission (exit 1); the record keeps the attempt (state pending, no transaction) | wallet2 | 1 (output contains `caller is not the owner`) | `signer publish --network stagenet --mnemonic-file /run/mip0018/secrets/stagenet-wallet-2.mnemonic --wallet-cache /run/mip0018/state/wallet2.cache --private-state /run/mip0018/state/wallet2-private-state.json --example fungible-token --attach @deployments/stagenet/cases/C01/record.json --record deployments/stagenet/cases/C09/record.json --circuit setMetadata --args '[{"$utf8":"Evil Gold"},{"$utf8":"EVIL"}]' --step non-owner-set-metadata` |
 | 2 | `list` | none | 0 | `wallet_free list --network stagenet --record deployments/stagenet/cases/C01/record.json --expect @deployments/stagenet/cases/C09/expected.json --json > deployments/stagenet/cases/C09/observed-list.json` |
 
 ## Re-check (wallet-free, one command)

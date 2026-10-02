@@ -32,6 +32,7 @@ import { DustSecretKey, LedgerParameters, ZswapSecretKeys, nativeToken, type Fin
 import { createMidnightProvider, createWalletProvider } from '@midnight-ntwrk/midnight-js-types';
 import type { MidnightProvider, UnboundTransaction, WalletProvider } from '@midnight-ntwrk/midnight-js-types';
 import * as Rx from 'rxjs';
+import { normHex } from '../hex.ts';
 import { Indexer } from '../indexer.ts';
 import type { NetworkProfile } from '../network.ts';
 import { existsSync } from 'node:fs';
@@ -48,6 +49,8 @@ export interface SignerEndpoints {
 
 export interface WalletSession {
   readonly facade: WalletFacade;
+  /** The network the wallet was opened on (the cache anchor is read from its indexer). */
+  readonly profile: NetworkProfile;
   /** 0600 sync cache (serialized sub-wallet states) written on close, when the wallet was opened with one. */
   readonly cachePath?: string;
   readonly keystore: UnshieldedKeystore;
@@ -80,6 +83,15 @@ export function masterSeed(s: WalletSecret, profile: NetworkProfile): Uint8Array
   return Uint8Array.from(Buffer.from(GENESIS_DEV_SEED_HEX, 'hex'));
 }
 
+/** The hash (hex, no 0x) of the indexer's block at a height, or undefined when it has none. */
+const blockHashAt = async (profile: NetworkProfile, height: number): Promise<string | undefined> => {
+  const { block } = await new Indexer(profile.indexer, profile.indexerWs).query<{ block: { hash: string } | null }>(
+    'query ($h: Int!) { block(offset: { height: $h }) { hash } }',
+    { h: height },
+  );
+  return block ? normHex(block.hash) : undefined;
+};
+
 /** The network's current DUST parameters (never the built-in initial ones). */
 const currentDustParameters = async (profile: NetworkProfile) => {
   const { block } = await new Indexer(profile.indexer, profile.indexerWs).query<{ block: { ledgerParameters: string } }>(
@@ -93,6 +105,13 @@ type WalletCache = {
   kind: 'mip0018-wallet-cache';
   networkId: string;
   unshieldedAddress: string;
+  /**
+   * A block of the chain the cache was synced against (the indexer tip when it was written). A restore checks that the
+   * chain still has that block: local chains restarted from the same genesis share network id and genesis but not
+   * history, and restoring another chain's state makes the DUST sub-wallet fail forever ("values inserted
+   * non-linearly into dust commitment tree").
+   */
+  anchor?: { height: number; hash: string };
   shielded: unknown;
   unshielded: unknown;
   dust: unknown;
@@ -128,9 +147,16 @@ export const openWallet = async (
         c.kind === 'mip0018-wallet-cache' &&
         c.networkId === ep.profile.networkId &&
         c.unshieldedAddress === keystore.getBech32Address().asString()
-      )
-        cache = c;
-      else o.log?.('wallet cache belongs to another wallet or network: ignored');
+      ) {
+        const here = c.anchor ? await blockHashAt(ep.profile, c.anchor.height) : undefined;
+        if (c.anchor && here === normHex(c.anchor.hash)) cache = c;
+        else
+          o.log?.(
+            c.anchor
+              ? `wallet cache was synced against another chain (block ${c.anchor.height} is ${here ?? 'missing'} here): ignored`
+              : 'wallet cache has no chain anchor: ignored',
+          );
+      } else o.log?.('wallet cache belongs to another wallet or network: ignored');
     } catch (e) {
       o.log?.(`wallet cache unreadable (${(e as Error).message}): ignored`);
     }
@@ -164,6 +190,7 @@ export const openWallet = async (
   await facade.start(shieldedSecretKeys, dustSecretKey);
   return {
     facade,
+    profile: ep.profile,
     keystore,
     shieldedSecretKeys,
     dustSecretKey,
@@ -176,10 +203,12 @@ export const closeWallet = async (session: WalletSession): Promise<void> => {
   if (session.cachePath) {
     try {
       const f = session.facade as unknown as Record<'shielded' | 'unshielded' | 'dust', { serializeState(): Promise<unknown> }>;
+      const tip = await new Indexer(session.profile.indexer, session.profile.indexerWs).latestBlock();
       const c: WalletCache = {
         kind: 'mip0018-wallet-cache',
         networkId: session.networkId,
         unshieldedAddress: session.keystore.getBech32Address().asString(),
+        anchor: { height: tip.height, hash: normHex(tip.hash) },
         shielded: await f.shielded.serializeState(),
         unshielded: await f.unshielded.serializeState(),
         dust: await f.dust.serializeState(),

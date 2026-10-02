@@ -33,6 +33,13 @@ E2E="$(cd "$MIP0018_E2E_DIR" && pwd -P)"
 case "$E2E/" in "$repo"/*) echo "MIP0018_E2E_DIR must be outside the repository" >&2; exit 2 ;; esac
 PARTS=" ${MIP0018_E2E_PARTS:-A B C D} "
 
+# A non-empty directory that this script did not create is refused: another run's wallet caches and seeds would be
+# reused (a sync cache of another local chain makes the DUST wallet fail to sync).
+if [ -n "$(ls -A "$E2E")" ] && [ ! -f "$E2E/.mip0018-examples-e2e" ]; then
+  echo "$E2E is not empty and was not made by examples-e2e.sh; use a new directory" >&2
+  exit 2
+fi
+touch "$E2E/.mip0018-examples-e2e"
 SECRETS="$E2E/secrets"; STATE="$E2E/state"; LOGS="$E2E/logs"; DAP="$E2E/dap"; CASES="$E2E/cases"
 mkdir -p "$SECRETS" "$STATE" "$LOGS" "$DAP" "$CASES"
 chmod 700 "$SECRETS" "$STATE"
@@ -180,12 +187,12 @@ fi
 
 # ------------------------------------------------------------------------------------------- C: S5 case folders, local
 run_case() { # run_case <ID>
-  local id="$1" cj="$repo/deployments/stagenet/cases/$1/case.json" line i sid runner want out args a rc
+  local id="$1" cj="$repo/deployments/stagenet/cases/$1/case.json" line i sid runner want out msg args a rc
   mkdir -p "$CASES/$id"
   say "C: case $id"
   while IFS= read -r line; do
     i="$(printf '%s' "$line" | cut -f1)"; sid="$(printf '%s' "$line" | cut -f2)"; runner="$(printf '%s' "$line" | cut -f3)"
-    want="$(printf '%s' "$line" | cut -f4)"; out="$(printf '%s' "$line" | cut -f5)"
+    want="$(printf '%s' "$line" | cut -f4)"; out="$(printf '%s' "$line" | cut -f5)"; msg="$(printf '%s' "$line" | cut -f6)"
     args=()
     while IFS= read -r -d '' a; do args[${#args[@]}]="$a"; done < <(python3 "$here/case.py" argv "$cj" "$i" "$E2E")
     rc=0
@@ -193,6 +200,7 @@ run_case() { # run_case <ID>
     else cli "case-$id-$sid" ${args[@]+"${args[@]}"} || rc=$?; fi
     if [ -n "$out" ] && [ -f "$LOGS/case-$id-$sid.out" ]; then cp "$LOGS/case-$id-$sid.out" "$CASES/$id/$out"; fi
     expect_rc "C $id $sid" "$want" "$rc"
+    if [ -n "$msg" ]; then check "C $id $sid fails for the expected reason ($msg)" grep -qF "$msg" "$LOGS/case-$id-$sid.out" "$LOGS/case-$id-$sid.err"; fi
   done < <(python3 "$here/case.py" steps "$cj")
 }
 if part C; then
@@ -205,6 +213,12 @@ if part D; then
     rc=0; cli "recheck-$id" recheck --network undeployed --case "deployments/stagenet/cases/$id" --out "/e2e/cases/$id" || rc=$?
     expect_rc "D recheck $id ($(tail -1 "$LOGS/recheck-$id.out" 2>/dev/null))" 0 "$rc"
   done
+  say "wallet sync cache of another chain"
+  py "import json; c=json.load(open('$STATE/a.wallet-cache')); c['anchor']['hash']='00'*32; json.dump(c, open('$STATE/x.wallet-cache','w'))"
+  chmod 600 "$STATE/x.wallet-cache"
+  rc=0; signer cache-foreign wallet status --network undeployed --dev-genesis-wallet --wallet-cache /run/mip0018/state/x.wallet-cache --json || rc=$?
+  expect_rc "D a wallet cache anchored to another chain's block is ignored (fresh sync)" 0 "$rc"
+  check "D … and says why" grep -q "synced against another chain" "$LOGS/cache-foreign.err"
   say "secret scan"
   check "D no secret value in any log, record, observation or index state" py "
 import json,glob,os

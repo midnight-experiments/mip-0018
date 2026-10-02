@@ -4,6 +4,7 @@
 # expands each step's argv for the LOCAL stack, exactly as S5 expands it for Stagenet (only the placeholders differ):
 #
 #   python3 case.py steps <case.json>                       one line per step: index TAB id TAB runner TAB exit TAB stdout
+#                                                           TAB expected output text (failing steps)
 #   python3 case.py argv <case.json> <index> <e2e dir>      the step's argv, NUL-separated (container paths)
 #
 # Local values: {net} = --network undeployed (URLs from the container environment); {signer} = the dev chain's
@@ -44,7 +45,7 @@ def main():
     case_id = c["id"]
     if cmd == "steps":
         for i, s in enumerate(c["steps"]):
-            print("\t".join([str(i), s["id"], s["runner"], str(s["expectExit"]), s.get("stdout", "")]))
+            print("\t".join([str(i), s["id"], s["runner"], str(s["expectExit"]), s.get("stdout", ""), s.get("expectOutput", "")]))
         return
     if cmd == "argv":
         step = c["steps"][int(sys.argv[3])]

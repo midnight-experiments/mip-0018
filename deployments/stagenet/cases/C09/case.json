@@ -51,6 +51,7 @@
         "non-owner-set-metadata"
       ],
       "expectExit": 1,
+      "expectOutput": "caller is not the owner",
       "note": "expected to fail before submission (exit 1); the record keeps the attempt (state pending, no transaction)"
     },
     {
