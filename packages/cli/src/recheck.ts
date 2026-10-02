@@ -85,6 +85,15 @@ export interface RecheckResult {
   message: string;
 }
 
+/** A domainSep for humans: its text when it is printable ASCII padded with zeros (pad(32, "…")), else hex. */
+function domainLabel(domainSep: string): string {
+  const b = Buffer.from(normHex(domainSep), 'hex');
+  let end = b.length;
+  while (end > 0 && b[end - 1] === 0) end--;
+  const t = b.subarray(0, end);
+  return t.length > 0 && t.every((x) => x >= 0x20 && x < 0x7f) ? `"${t.toString('latin1')}"` : `${normHex(domainSep).slice(0, 12)}…`;
+}
+
 const readJson = (p: string, what: string): unknown => {
   if (!existsSync(p)) throw new UsageError(`${what} ${p} does not exist`);
   return JSON.parse(readFileSync(p, 'utf8'));
@@ -179,7 +188,7 @@ export async function recheckCase(
     });
 
   for (const k of spec.colors ?? []) {
-    const id = `color ${normHex(k.domainSep).slice(0, 8)}…/${k.kind}`;
+    const id = `color ${domainLabel(k.domainSep)}/${k.kind}`;
     await guard(id, async () => {
       const address = recordContract(rec(k.record), profile);
       const color = tokenTypeHex(k.domainSep, address);
@@ -250,7 +259,8 @@ export async function cmdRecheck(argv: string[]): Promise<number> {
   if (v.json) emitJson({ case: r.caseId, network: profile.id, ok, results: r.results });
   else {
     out(`case ${r.caseId}  network ${profile.id}  ${caseDir}`);
-    for (const x of r.results) out(`  ${x.ok ? 'OK  ' : x.pending ? 'WAIT' : 'FAIL'} ${x.id.padEnd(28)} ${x.message}`);
+    const w = Math.max(28, ...r.results.map((x) => x.id.length));
+    for (const x of r.results) out(`  ${x.ok ? 'OK  ' : x.pending ? 'WAIT' : 'FAIL'} ${x.id.padEnd(w)} ${x.message}`);
     out(`result ${ok ? 'ok' : pending ? 'pending' : 'FAILED'} (${r.results.filter((x) => x.ok).length}/${r.results.length})`);
   }
   if (r.results.length === 0) {

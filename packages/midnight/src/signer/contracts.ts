@@ -259,6 +259,15 @@ function finish(run: Run, step: StepRecord, observed: unknown, ok: boolean, why:
   return step;
 }
 
+/** A before-check refusal: recorded in the step (state pending, no transaction), then thrown. */
+function refuse(run: Run, step: StepRecord, why: string): never {
+  step.state = 'pending';
+  step.error = why;
+  note(step, `refused before submission: ${why}`);
+  run.save();
+  throw new StepError(`${step.id}: ${why}`, 'refused');
+}
+
 function onPerformError(run: Run, step: StepRecord, e: unknown): never {
   if (e instanceof StepError) throw e;
   const msg = `${(e as Error)?.name ?? 'Error'}: ${String((e as Error)?.message ?? e)}`.slice(0, 1500);
@@ -404,11 +413,11 @@ export async function callStep(run: Run, input: CallInput): Promise<StepRecord> 
   });
   if (step.state === 'completed') return step;
   if (step.tx && (await reconcile(run, step)) === 'included') return afterCall(run, step);
-  // before: the contract exists and the circuit can still be called
+  // before: the contract exists and the circuit can still be called (a refusal is recorded in the step)
   const v = await contractView(run.o.ep.profile, address);
-  if (!v.exists) throw new StepError(`contract ${address} is not on chain`, 'refused');
+  if (!v.exists) refuse(run, step, `contract ${address} is not on chain`);
   if (!v.operations.includes(input.circuit))
-    throw new StepError(`${input.circuit} has no verifier key on ${address} (removed?); nothing submitted`, 'refused');
+    refuse(run, step, `${input.circuit} has no verifier key on ${address} (removed?); nothing submitted`);
   const a = run.o.adapter;
   const privateStateId = run.record.contract.privateStateId;
   if (privateStateId !== undefined) run.psp.setContractAddress(address);
@@ -495,14 +504,14 @@ export async function removeVerifierKeyStep(run: Run, circuit: string, slot: 'v3
   };
   if (step.tx && (await reconcile(run, step)) === 'included') return after();
   const v = await contractView(run.o.ep.profile, address);
-  if (!v.exists) throw new StepError(`contract ${address} is not on chain`, 'refused');
+  if (!v.exists) refuse(run, step, `contract ${address} is not on chain`);
   if (!v.operations.includes(circuit)) {
     step.skipped = `${circuit} already has no verifier key (before-check)`;
     note(step, step.skipped);
     return after();
   }
   const key = await run.psp.getSigningKey(address);
-  if (!key) throw new StepError(`no maintenance signing key for ${address} in ${run.o.privateStatePath}`, 'refused');
+  if (!key) refuse(run, step, `no maintenance signing key for ${address} in this signer's private-state file`);
   const hooks = journal(run, step, async () => {});
   try {
     run.log(`removing the ${circuit} verifier key (${slot})`, { contract: address });

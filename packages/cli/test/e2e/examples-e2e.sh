@@ -139,16 +139,17 @@ if part B; then
   say "B: rename / withdraw / withdraw again / revive on the fungible token"
   FT=/e2e/dap/fungible-token.json
   FTM=examples/openzeppelin/fungible-token/metadata.json
+  at() { jget "$DAP/fungible-token.json" "[s for s in d['steps'] if s['id']=='$1'][0]['inclusion']['height']"; } # the state as of a step (re-runnable)
   for i in 0 1 2 3; do
     py "import json; m=json.load(open('$repo/$FTM')); json.dump(m['lifecycle'][$i]['expected'], open('$DAP/ft-after-$i.json','w'))"
   done
   rc=0; signer wt-rename publish $A --record $FT --circuit setMetadata --args '[{"$utf8":"Acme Bars"},{"$utf8":"ABAR"}]' --step rename || rc=$?
   expect_rc "B rename (setMetadata Acme Bars / ABAR)" 0 "$rc"
-  rc=0; cli wt-list-rename list --network undeployed --record $FT --expect @/e2e/dap/ft-after-0.json || rc=$?
+  rc=0; cli wt-list-rename list --network undeployed --record $FT --to-block "$(at rename)" --expect @/e2e/dap/ft-after-0.json || rc=$?
   expect_rc "B list after rename = metadata.json lifecycle[rename]" 0 "$rc"
   rc=0; signer wt-withdraw publish $A --record $FT --circuit withdrawMetadata --step withdraw || rc=$?
   expect_rc "B withdraw (tombstone)" 0 "$rc"
-  rc=0; cli wt-list-withdraw list --network undeployed --record $FT --expect @/e2e/dap/ft-after-1.json || rc=$?
+  rc=0; cli wt-list-withdraw list --network undeployed --record $FT --to-block "$(at withdraw)" --expect @/e2e/dap/ft-after-1.json || rc=$?
   expect_rc "B list after withdraw (hidden, no fields, no group)" 0 "$rc"
   rc=0; signer wt-withdraw-skip publish $A --record $FT --circuit withdrawMetadata --step withdraw-again-skipped || rc=$?
   expect_rc "B withdraw again WITHOUT --force" 0 "$rc"
@@ -156,11 +157,11 @@ if part B; then
 import json; s=[x for x in json.load(open('$DAP/fungible-token.json'))['steps'] if x['id']=='withdraw-again-skipped'][0]; assert 'tx' not in s and s.get('skipped'), s"
   rc=0; signer wt-withdraw-again publish $A --record $FT --circuit withdrawMetadata --step withdraw-again --force || rc=$?
   expect_rc "B withdraw again with --force (emitted)" 0 "$rc"
-  rc=0; cli wt-list-withdraw-again list --network undeployed --record $FT --expect @/e2e/dap/ft-after-2.json || rc=$?
+  rc=0; cli wt-list-withdraw-again list --network undeployed --record $FT --to-block "$(at withdraw-again)" --expect @/e2e/dap/ft-after-2.json || rc=$?
   expect_rc "B list after the repeated tombstone (unchanged)" 0 "$rc"
   rc=0; signer wt-revive publish $A --record $FT --circuit publishMetadata --step revive || rc=$?
   expect_rc "B revive (publishMetadata again)" 0 "$rc"
-  rc=0; cli wt-list-revive list --network undeployed --record $FT --expect @/e2e/dap/ft-after-3.json --history || rc=$?
+  rc=0; cli wt-list-revive list --network undeployed --record $FT --to-block "$(at revive)" --expect @/e2e/dap/ft-after-3.json --history || rc=$?
   expect_rc "B list after revive = the published values again" 0 "$rc"
   rc=0; cli wt-verify-revive verify --network undeployed --record $FT --step revive || rc=$?
   expect_rc "B verify the revive" 0 "$rc"
