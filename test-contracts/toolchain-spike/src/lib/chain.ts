@@ -62,13 +62,26 @@ export const miscEvents = async (network: NetworkConfig, contractAddress: string
   for (let offset = 0; ; offset += 500) {
     const page = await graphql<{ contractEvents: MiscEvent[] }>(
       network,
-      `query ($filter: ContractEventFilter!, $offset: Int!) {
-        contractEvents(filter: $filter, limit: 500, offset: $offset) {
-          id contractAddress raw
-          ... on MiscContractEvent { name payload }
-          transaction { hash block { height hash } }
+      `
+        query ($filter: ContractEventFilter!, $offset: Int!) {
+          contractEvents(filter: $filter, limit: 500, offset: $offset) {
+            id
+            contractAddress
+            raw
+            ... on MiscContractEvent {
+              name
+              payload
+            }
+            transaction {
+              hash
+              block {
+                height
+                hash
+              }
+            }
+          }
         }
-      }`,
+      `,
       { filter: { contractAddress, types: ['MISC'], ...(transactionHash ? { transactionHash } : {}) }, offset },
     );
     out.push(...page.contractEvents);
@@ -83,7 +96,19 @@ export type ContractView = { exists: boolean; operations: string[]; blockHeight?
 export const contractView = async (network: NetworkConfig, contractAddress: string): Promise<ContractView> => {
   const data = await graphql<{ contractAction: null | { state: string; transaction: { hash: string; block: { height: number } } } }>(
     network,
-    `query ($address: HexEncoded!) { contractAction(address: $address) { state transaction { hash block { height } } } }`,
+    `
+      query ($address: HexEncoded!) {
+        contractAction(address: $address) {
+          state
+          transaction {
+            hash
+            block {
+              height
+            }
+          }
+        }
+      }
+    `,
     { address: contractAddress },
   );
   if (!data.contractAction) return { exists: false, operations: [] };
@@ -108,17 +133,30 @@ export const contractView = async (network: NetworkConfig, contractAddress: stri
   };
 };
 
-export type TransactionView =
-  | { hash: string; status?: string; fee?: string; block: { height: number; hash: string } }
-  | undefined;
+export type TransactionView = { hash: string; status?: string; fee?: string; block: { height: number; hash: string } } | undefined;
 
 export const transactionByHash = async (network: NetworkConfig, hash: string): Promise<TransactionView> => {
   const data = await graphql<{
     transactions: { hash: string; block: { height: number; hash: string }; fee?: string; transactionResult?: { status: string } }[];
   }>(
     network,
-    `query ($hash: HexEncoded!) { transactions(offset: { hash: $hash }) {
-        hash block { height hash } ... on RegularTransaction { fee transactionResult { status } } } }`,
+    `
+      query ($hash: HexEncoded!) {
+        transactions(offset: { hash: $hash }) {
+          hash
+          block {
+            height
+            hash
+          }
+          ... on RegularTransaction {
+            fee
+            transactionResult {
+              status
+            }
+          }
+        }
+      }
+    `,
     { hash },
   );
   const t = data.transactions[0];
@@ -165,7 +203,9 @@ export const preflight = async (network: NetworkConfig): Promise<Preflight> => {
   if (!health.ok) throw new Error(`proof server /health: HTTP ${health.status}`);
   const proofServerVersion = (await (await fetch(`${network.proofServer}/version`)).text()).trim();
   const proofVersions = (await (await fetch(`${network.proofServer}/proof-versions`)).text()).trim();
-  const walletProofServerVersion = (await (await fetch(`${network.walletProofServer}/version`, { signal: AbortSignal.timeout(10_000) })).text()).trim();
+  const walletProofServerVersion = (
+    await (await fetch(`${network.walletProofServer}/version`, { signal: AbortSignal.timeout(10_000) })).text()
+  ).trim();
   return {
     network: network.name,
     networkId: network.networkId,

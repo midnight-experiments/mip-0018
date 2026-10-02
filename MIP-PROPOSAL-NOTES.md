@@ -26,7 +26,7 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 
 - **MIP section**: Payload ("every byte after the last record, up to byte 256, is zero") and Consuming ("How consumers obtain events is defined by MIP-0002").
 - **Problem**: the ledger and the Compact runtime store a logged `Misc` item (`name ‖ payload`, 288 bytes) **without its trailing zero bytes**. A consumer that reads events from raw transactions, node data or the runtime (instead of the indexer, whose `payload` is already 256 bytes) sees a shorter byte string and may reject a valid payload as truncated, or mis-split `name` and `payload`.
-- **Evidence**: ledger source (log items are stored without trailing zeros) and the Compact runtime (`CircuitResults.context.events` returns the shortened data); the indexer's `MiscContractEvent.payload` is padded to 256. Re-confirmed on this repository's own Stagenet cases (to be linked from `deployments/stagenet/`).
+- **Evidence**: ledger source (log items are stored without trailing zeros) and the Compact runtime (`CircuitResults.context.events` returns the shortened data); the indexer's `MiscContractEvent.payload` is padded to 256. Confirmed on Stagenet case S0-SPIKE (`deployments/stagenet/`, record `test-contracts/toolchain-spike/records/stagenet.json`, event id 53254): the event's `raw` ledger bytes carry only 127 data bytes (the 32-byte name and the 95 content bytes of the A1 payload) followed directly by the next field — the 161 padding zeros are not there — while the indexer's `payload` field is the full 256 bytes.
 - **Proposed text** (Consuming, or MIP-0002 if it belongs there): "Some sources return a `Misc` item's 288 data bytes without trailing zero bytes. Consumers MUST zero-extend the data to 288 bytes before taking `name` (bytes 0–31) and `payload` (bytes 32–287)."
 - **Meanwhile**: the reference reader zero-extends every raw item to 288 bytes.
 - **Status**: PROPOSED
@@ -45,8 +45,18 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 - **MIP section**: Implementation — Dependencies ("Compact 0.34.0 / language 0.26.0 / runtime 0.19.0, Midnight ledger v9").
 - **Problem**: read literally it pins one compiler; Compact 0.35.0 (language 0.27.0, runtime 0.20.0, same ledger target) is already released.
 - **Proposed text**: "MIP-0002 `Misc` events: Compact 0.34.0 or later (language 0.26.0, runtime 0.19.0 or later), Midnight ledger v9."
+- **Evidence**: this repository emits with Compact 0.35.0 (language 0.27.0, runtime 0.20.0) and `--feature-zkir-v3`; the emitted event equals A1 byte-for-byte on the local stack and on Stagenet (case S0-SPIKE).
 - **Meanwhile**: the repository states the minimum and the exact versions it is built and tested with (`toolchain.json`).
 - **Status**: PROPOSED (editorial)
+
+## N5 — Existing contracts: the inserted verifier key must use the key version of the circuit's proving system
+
+- **MIP section**: Backwards Compatibility Assessment — Existing contracts (step 2: "Add its verifier key with a `VerifierKeyInsert` maintenance update").
+- **Problem**: on ledger v9 a contract operation holds verifier keys in two versioned slots: `v3` for circuits compiled to ZKIR v2 (the Compact default) and `v4` for circuits compiled with `--feature-zkir-v3`. A `VerifierKeyInsert`/`VerifierKeyRemove` must name the slot that matches the circuit; a mismatch is included on chain but its fallible segment fails, so the issuer pays a fee and nothing changes. The step reads as if any `VerifierKeyInsert` works, and the current SDK path makes the mismatch easy: midnight-js 5.0.0-rc.2 / compact-js 3.0.0-rc.3 always build `v3` maintenance updates.
+- **Evidence**: local stack, this repository's S0 spike: midnight-js `removeVerifierKey()` of a ZKIR-v3 `publishMetadata` → `FailFallible`, key still present; the same `MaintenanceUpdate` with `VerifierKeyRemove(publishMetadata, v4)` → `SucceedEntirely`, key gone; the same `v4` removal on Stagenet (case S0-SPIKE, block 710814). Ledger: `ContractOperationVersion::{V3, V4}`, `ContractOperationVersionedVerifierKey::{V3, V4}`.
+- **Proposed text** (informative, after step 2): "The verifier key is inserted at the key version of the circuit's proving system (on ledger v9: `v3` for ZKIR v2 circuits, `v4` for ZKIR v3 circuits). Check that the tool building the maintenance update supports that version."
+- **Meanwhile**: the upgrade template (S6) and the create-and-destroy example build the maintenance update with the ledger API and an explicit version (`test-contracts/toolchain-spike/src/lib/maintenance.ts`).
+- **Status**: PROPOSED (informative)
 
 ---
 

@@ -24,7 +24,14 @@ const recordPath = process.env.SPIKE_RECORD ?? join(repo, 'docker', 'local-stack
 
 const session = await openWallet(network, GENESIS_DEV_SEED);
 try {
-  const record = await runSpike({ network, session, recordPath, secondCall: true, tryMidnightJsRemove: true, toolchain: toolchain(CONTRACT) });
+  const record = await runSpike({
+    network,
+    session,
+    recordPath,
+    secondCall: true,
+    tryMidnightJsRemove: true,
+    toolchain: toolchain(CONTRACT),
+  });
   process.stdout.write(`${JSON.stringify({ result: record.result, record: recordPath, contract: record.contract })}\n`);
 } catch (e) {
   process.stderr.write(`spike failed: ${(e as Error).stack ?? String(e)}\nrecord: ${recordPath}\n`);

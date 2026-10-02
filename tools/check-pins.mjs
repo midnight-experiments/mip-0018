@@ -38,19 +38,28 @@ const walk = (dir, out = []) => {
 const files = ['docker', 'test-contracts', '.github', 'tools'].flatMap((d) => walk(join(repoRoot, d)));
 
 // 1. images
-const allowed = new Set(Object.entries(tc.images).filter(([k]) => !k.startsWith('$')).map(([, v]) => v));
+const allowed = new Set(
+  Object.entries(tc.images)
+    .filter(([k]) => !k.startsWith('$'))
+    .map(([, v]) => v),
+);
 const imageRef = /\b((?:midnightntwrk|[a-z0-9-]+\/[a-z0-9-]+|node)(?::[\w.-]+)?@sha256:[0-9a-f]{64})/gu;
-const unpinned = /\b(?:image:\s*|FROM\s+|docker run[^\n]*\s)(midnightntwrk\/[\w.-]+(?::[\w.-]+)?)(?!@sha256)\b/gu;
+const anyMidnightImage = /\bmidnightntwrk\/[a-z0-9-]+(?::[\w.-]+)?(@sha256:[0-9a-f]{64})?/gu;
 for (const f of files) {
   const text = readFileSync(f, 'utf8');
   const rel = relative(repoRoot, f);
   for (const m of text.matchAll(imageRef)) {
     const ref = m[1];
-    if (!ref.startsWith('midnightntwrk/') && !ref.startsWith('node:')) fail(`${rel}: ${ref} is not an official midnightntwrk/* or node image`);
+    if (!ref.startsWith('midnightntwrk/') && !ref.startsWith('node:'))
+      fail(`${rel}: ${ref} is not an official midnightntwrk/* or node image`);
     else if (!allowed.has(ref)) fail(`${rel}: ${ref} is not pinned in toolchain.json`);
   }
-  for (const m of text.matchAll(unpinned)) fail(`${rel}: image ${m[1]} is not pinned by digest`);
-  if (!rel.startsWith('tools/') && /\b(effectstream|acedward)\b/iu.test(text)) fail(`${rel}: mentions a non-official source (effectstream/acedward)`);
+  for (const m of text.matchAll(anyMidnightImage)) {
+    // An image reference with a tag must carry its digest (npm scopes like @midnightntwrk/x have no tag).
+    if (text[m.index - 1] !== '@' && m[0].includes(':') && !m[1]) fail(`${rel}: image ${m[0]} is not pinned by digest`);
+  }
+  if (!rel.startsWith('tools/') && /\b(effectstream|acedward)\b/iu.test(text))
+    fail(`${rel}: mentions a non-official source (effectstream/acedward)`);
 }
 
 // 2. Dockerfile
@@ -95,4 +104,6 @@ if (problems.length) {
   for (const p of problems) console.error(`FAIL ${p}`);
   process.exit(1);
 }
-console.log(`OK ${allowed.size} images, Compact ${tc.compact.version} release + devtool ${tc.compact.devtool.version}, ${Object.keys(tc.npm).filter((k) => !k.startsWith('$')).length} npm pins; official sources only`);
+console.log(
+  `OK ${allowed.size} images, Compact ${tc.compact.version} release + devtool ${tc.compact.devtool.version}, ${Object.keys(tc.npm).filter((k) => !k.startsWith('$')).length} npm pins; official sources only`,
+);

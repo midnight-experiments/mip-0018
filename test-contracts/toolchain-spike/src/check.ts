@@ -64,6 +64,12 @@ check('publishMetadata has no verifier key any more', view.exists && !view.opera
 
 for (const r of results) process.stdout.write(`${r.ok ? 'OK  ' : 'FAIL'} ${r.check}\n`);
 if (results.some((r) => !r.ok)) {
-  process.stdout.write(`${JSON.stringify(results.filter((r) => !r.ok), null, 2)}\n`);
+  process.stdout.write(
+    `${JSON.stringify(
+      results.filter((r) => !r.ok),
+      null,
+      2,
+    )}\n`,
+  );
   process.exitCode = 1;
 }

@@ -26,7 +26,12 @@ describe('MIP requirement extraction', () => {
     const reqs = extractRequirements(md);
     expect(reqs.map((r) => [r.id, r.section, r.level, r.text])).toEqual([
       ['C-001', 'Specification > Payload', 'MUST', 'A consumer MUST check a payload.'],
-      ['C-002', 'Specification > Payload', 'MUST/SHOULD', 'Keys SHOULD be UTF-8, but consumers MUST NOT reject an event because a key is not UTF-8.'],
+      [
+        'C-002',
+        'Specification > Payload',
+        'MUST/SHOULD',
+        'Keys SHOULD be UTF-8, but consumers MUST NOT reject an event because a key is not UTF-8.',
+      ],
       ['C-003', 'Specification > Payload', 'SHOULD', '| `name` | UTF-8 string (1), not empty | SHOULD | Display name. |'],
     ]);
   });

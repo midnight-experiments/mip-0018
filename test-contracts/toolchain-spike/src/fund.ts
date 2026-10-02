@@ -23,7 +23,8 @@ const night = BigInt(process.env.MIP0018_FUND_NIGHT ?? '1000') * 1_000_000n; // 
 const network = local();
 const sender = await openWallet(network, GENESIS_DEV_SEED);
 const receiver = await openWallet(network, seedFromHexFile(seedFile));
-const log = (msg: string, v?: unknown) => process.stderr.write(`${new Date().toISOString()} ${msg}${v === undefined ? '' : ` ${JSON.stringify(v)}`}\n`);
+const log = (msg: string, v?: unknown) =>
+  process.stderr.write(`${new Date().toISOString()} ${msg}${v === undefined ? '' : ` ${JSON.stringify(v)}`}\n`);
 try {
   await waitForSync(sender);
   const before = describe(receiver, await waitForSync(receiver));
@@ -31,7 +32,12 @@ try {
 
   if (BigInt(before.night) < night) {
     const recipe = await sender.facade.transferTransaction(
-      [{ type: 'unshielded', outputs: [{ amount: night, receiverAddress: await receiver.facade.unshielded.getAddress(), type: nativeToken().raw }] }] as never,
+      [
+        {
+          type: 'unshielded',
+          outputs: [{ amount: night, receiverAddress: await receiver.facade.unshielded.getAddress(), type: nativeToken().raw }],
+        },
+      ] as never,
       { shieldedSecretKeys: sender.shieldedSecretKeys, dustSecretKey: sender.dustSecretKey },
       { ttl: new Date(Date.now() + 30 * 60_000) },
     );

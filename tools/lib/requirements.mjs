@@ -11,10 +11,10 @@ export const normalize = (s) => s.replace(/\\\|/gu, '|').replace(/\s+/gu, ' ').t
 
 /** Splits a paragraph or list item into sentences without breaking "e.g." or "i.e.". */
 export const sentences = (line) => {
-  const protectedLine = line.replace(/\b(e\.g|i\.e|etc)\./gu, (m) => m.replace(/\./gu, '\u0000'));
+  const protectedLine = line.replace(/\b(e\.g|i\.e|etc)\./gu, (m) => m.replace(/\./gu, '\uE000'));
   return protectedLine
     .split(/(?<=[.!?])\s+(?=[A-Z*`"([])/u)
-    .map((s) => s.replace(/\u0000/gu, '.').trim())
+    .map((s) => s.replace(/\uE000/gu, '.').trim())
     .filter(Boolean);
 };
 

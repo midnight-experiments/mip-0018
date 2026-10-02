@@ -127,7 +127,10 @@ export const runSpike = async (o: SpikeOptions): Promise<SpikeRecord> => {
     const dustBefore = (await waitForSync(o.session)).dust.balance(new Date());
     log('deploying', { contract: CONTRACT });
     let t = Date.now();
-    const deployed = (await deployContract(providers as never, { compiledContract: compiledContract as never, signingKey } as never)) as unknown as Handle;
+    const deployed = (await deployContract(
+      providers as never,
+      { compiledContract: compiledContract as never, signingKey } as never,
+    )) as unknown as Handle;
     const deployPublic = deployed.deployTxData.public;
     const address = String(deployPublic.contractAddress);
     record.contract = address;
@@ -159,7 +162,14 @@ export const runSpike = async (o: SpikeOptions): Promise<SpikeRecord> => {
     const payloadOk = ev.payload === A1_PAYLOAD_HEX;
     record.steps.call = {
       ...record.steps.call,
-      event: { id: ev.id, contractAddress: ev.contractAddress, name: ev.name, payload: ev.payload, raw: ev.raw, block: ev.transaction.block },
+      event: {
+        id: ev.id,
+        contractAddress: ev.contractAddress,
+        name: ev.name,
+        payload: ev.payload,
+        raw: ev.raw,
+        block: ev.transaction.block,
+      },
       eventsInTx: events.length,
       nameEqualsExpected: nameOk,
       payloadEqualsA1: payloadOk,
@@ -172,7 +182,10 @@ export const runSpike = async (o: SpikeOptions): Promise<SpikeRecord> => {
     // --- VerifierKeyRemove (create and destroy) ---
     const opBefore = await describeOperation(o.network, address, CIRCUIT);
     const key = (await providers.privateStateProvider.getSigningKey(address)) ?? signingKey;
-    const found = (await findDeployedContract(providers as never, { compiledContract: compiledContract as never, contractAddress: address } as never)) as unknown as Handle;
+    const found = (await findDeployedContract(
+      providers as never,
+      { compiledContract: compiledContract as never, contractAddress: address } as never,
+    )) as unknown as Handle;
     if (o.tryMidnightJsRemove) {
       // Evidence for the SDK limitation: midnight-js removes the 'v3' slot only.
       log('removing the verifier key with midnight-js circuitMaintenanceTx (expected to fail for a ZKIR v3 key)');
@@ -188,7 +201,11 @@ export const runSpike = async (o: SpikeOptions): Promise<SpikeRecord> => {
         if (m?.[1]) sdkOutcome = { ...sdkOutcome, ...(await txSummary(o.network, { txHash: m[1], status: status?.[1] })) };
       }
       const still = await contractView(o.network, address);
-      record.steps.removeVerifierKeyMidnightJs = { ...sdkOutcome, keyStillPresent: still.operations.includes(CIRCUIT), operationBefore: opBefore };
+      record.steps.removeVerifierKeyMidnightJs = {
+        ...sdkOutcome,
+        keyStillPresent: still.operations.includes(CIRCUIT),
+        operationBefore: opBefore,
+      };
       save();
       log('midnight-js removeVerifierKey', record.steps.removeVerifierKeyMidnightJs);
     }
@@ -220,14 +237,23 @@ export const runSpike = async (o: SpikeOptions): Promise<SpikeRecord> => {
         failure = `${(e as Error).name}: ${(e as Error).message}`.slice(0, 600);
       }
       const eventsAfter = await miscEvents(o.network, address);
-      record.steps.secondCall = { failed: failure !== undefined, error: failure, miscEventsAfter: eventsAfter.length, done: failure !== undefined && eventsAfter.length === 1 };
+      record.steps.secondCall = {
+        failed: failure !== undefined,
+        error: failure,
+        miscEventsAfter: eventsAfter.length,
+        done: failure !== undefined && eventsAfter.length === 1,
+      };
       save();
       log('second call', record.steps.secondCall);
       if (!record.steps.secondCall.done) throw new Error('the second call did not fail as required');
     }
 
     const dustAfter = (await waitForSync(o.session)).dust.balance(new Date());
-    record.steps.dust = { before: dustBefore.toString(), after: dustAfter.toString(), note: 'wallet DUST balance (SPECK); generation continues meanwhile, so the indexer fee per step is the exact cost' };
+    record.steps.dust = {
+      before: dustBefore.toString(),
+      after: dustAfter.toString(),
+      note: 'wallet DUST balance (SPECK); generation continues meanwhile, so the indexer fee per step is the exact cost',
+    };
     record.result = 'passed';
     save();
     return record;
