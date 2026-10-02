@@ -2,6 +2,11 @@
 //
 // Network endpoints. Stagenet values are pinned (toolchain.json); the local
 // stack's come from docker/local-stack/ports.env through the environment.
+// The chain clients themselves live in @mip0018/midnight (S4); `toProfile` /
+// `toEndpoints` map this spike configuration onto them.
+
+import { STAGENET as PINNED, stagenetProfile, undeployedProfile, type NetworkProfile } from '@mip0018/midnight';
+import type { SignerEndpoints } from '@mip0018/midnight/signer';
 
 export type NetworkConfig = {
   readonly name: 'local' | 'stagenet';
@@ -25,7 +30,7 @@ const env = (name: string, fallback?: string): string => {
 
 const toWs = (url: string) => url.replace(/^http/u, 'ws');
 
-export const STAGENET_GENESIS = '0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491';
+export const STAGENET_GENESIS = PINNED.genesisHash;
 
 export const stagenet = (): NetworkConfig => ({
   name: 'stagenet',
@@ -54,3 +59,15 @@ export const local = (): NetworkConfig => {
     walletProofServer: env('MIP0018_WALLET_PROOF_SERVER_URL', 'http://wallet-proof-server:6300'),
   };
 };
+
+/** The package's network profile + signer endpoints for a spike NetworkConfig. */
+export const toProfile = (n: NetworkConfig): NetworkProfile =>
+  n.name === 'stagenet'
+    ? stagenetProfile({ indexer: n.indexer, indexerWs: n.indexerWs, rpc: n.node, rpcWs: n.nodeWs })
+    : undeployedProfile({ indexer: n.indexer, indexerWs: n.indexerWs, rpc: n.node, rpcWs: n.nodeWs });
+
+export const toEndpoints = (n: NetworkConfig): SignerEndpoints => ({
+  profile: toProfile(n),
+  proofServer: n.proofServer,
+  walletProofServer: n.walletProofServer,
+});

@@ -24,6 +24,7 @@
     "@midnight-ntwrk/midnight-js-utils": "5.0.0-rc.2",
     "@midnightntwrk/ledger-v9": "1.0.0-rc.5",
     "@midnightntwrk/wallet-sdk": "2.0.0-beta.2",
+    "@mip0018/midnight": "0.1.0",
     "@openzeppelin/compact-contracts": "0.4.0-alpha.5",
     "@scure/bip39": "2.4.0",
     "rxjs": "7.8.2",

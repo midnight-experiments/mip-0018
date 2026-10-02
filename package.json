@@ -33,7 +33,8 @@
     "check:secrets": "node tools/secret-scan.mjs --self-test && node tools/secret-scan.mjs --history",
     "vectors:generate": "npm run generate -w vectors --",
     "vectors:validate": "npm run validate -w vectors",
-    "vectors:run": "npm run run -w vectors --"
+    "vectors:run": "npm run run -w vectors --",
+    "mip0018": "node packages/cli/bin/mip0018.js"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

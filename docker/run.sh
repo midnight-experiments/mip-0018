@@ -43,7 +43,8 @@ else
   while [ "$#" -gt 0 ]; do
     if [ "$1" = "--" ]; then
       shift
-      extra="$*"
+      # Quote each argument so JSON and spaces survive the inner `bash -c` (bash 3.2: printf %q).
+      extra="$(printf '%q ' "$@")"
       break
     fi
     scripts="$scripts $1"
