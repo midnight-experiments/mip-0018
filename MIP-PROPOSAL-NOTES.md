@@ -206,7 +206,7 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 - **Evidence**: ledger semantics of `VerifierKeyRemove` / `VerifierKeyInsert` (any entry point); the local run inserts a circuit into a deployed token with the deploy-time key alone.
 - **Proposed text** (Unauthorized updates, new sentence): "A contract's maintenance authority can replace its emitting circuits, so it can change the metadata as well; metadata is fixed only when no one can call an emitting circuit and no one holds the maintenance authority." (Whether and how an authority can be given up — e.g. a `ReplaceAuthority` to an empty committee — was not exercised here.)
 - **Meanwhile**: documented in `docs/upgrade-guide.md` (Limits: Trust).
-- **Status**: NEEDS-DECISION (the authors may consider it outside the MIP's scope; owner question Q29 in the project questions file)
+- **Status**: WITHDRAWN (project owner, 2026-10-02: possible, but it cannot be verified in circuit — an implementation design question, not part of the MIP; kept in `docs/upgrade-guide.md`, Limits: Trust)
 
 ---
 
