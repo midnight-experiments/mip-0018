@@ -17,7 +17,6 @@ import {
   DustWallet,
   HDWallet,
   InMemoryTransactionHistoryStorage,
-  MidnightBech32m,
   PublicKey,
   Roles,
   ShieldedWallet,
@@ -172,14 +171,21 @@ export interface PublicIdentity {
   nightUtxosRegisteredForDust: number;
 }
 
+/**
+ * Bech32m of a wallet SDK address object through ITS OWN class codec. `MidnightBech32m.encode` looks the codec up by a
+ * module-local Symbol, which fails when npm installs more than one copy of wallet-sdk-address-format.
+ */
+const bech32 = (networkId: string, item: unknown): string =>
+  (item as { constructor: { codec: { encode(n: string, i: unknown): { asString(): string } } } }).constructor.codec.encode(networkId, item).asString();
+
 export const describeWallet = (session: WalletSession, state: FacadeState): PublicIdentity => {
   const night = nativeToken().raw;
   const nightCoins = state.unshielded.availableCoins.filter((c) => c.utxo.type === night);
   return {
     unshieldedAddress: session.keystore.getBech32Address().asString(),
     coinPublicKey: String(session.shieldedSecretKeys.coinPublicKey),
-    shieldedAddress: MidnightBech32m.encode(session.networkId, state.shielded.address).asString(),
-    dustAddress: MidnightBech32m.encode(session.networkId, state.dust.address).asString(),
+    shieldedAddress: bech32(session.networkId, state.shielded.address),
+    dustAddress: bech32(session.networkId, state.dust.address),
     night: (state.unshielded.balances[night] ?? 0n).toString(),
     dust: state.dust.balance(new Date()).toString(),
     nightUtxos: nightCoins.length,
