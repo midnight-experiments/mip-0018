@@ -68,7 +68,9 @@ Q24); `LegacyToken.mint` and the inserted `publishMetadata` key equal the upgrad
 height **714485** (the first matrix transaction's block − 10), end 715183; built by
 `mip0018 index --network stagenet --from-height 714485 --to-height 715183 --state deployments/stagenet/cases/IDX/index`
 (699 blocks over the indexer's `blocks` subscription, 2 HTTP requests + 1 WebSocket). Re-running it reproduces the
-table.
+table. The upgrade case keeps its own scan (it ran after the matrix; question Q31):
+[`cases/U1/index/index-state.json`](cases/U1/index/index-state.json), start height **715402** (U1's deploy block − 1),
+end 715433 — the pre-upgrade mint (715409) precedes the `VerifierKeyInsert` (715428).
 
 ## Files in a case folder
 
