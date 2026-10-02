@@ -1,0 +1,13 @@
+# Generated or byte-pinned files must never be reformatted.
+package-lock.json
+**/managed/**
+**/node_modules/**
+.cache/
+docker/local-stack/.state/
+vectors/**/*.json
+vectors/**/*.bin
+vectors/SHA256SUMS
+test-contracts/*/records/
+# Prose is formatted by hand (tables, line breaks).
+*.md
+**/*.md

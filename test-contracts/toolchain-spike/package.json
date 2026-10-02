@@ -9,7 +9,8 @@
     "compile": "bash scripts/compile.sh",
     "local": "tsx src/local.ts",
     "stagenet": "tsx src/stagenet.ts",
-    "fund": "tsx src/fund.ts"
+    "fund": "tsx src/fund.ts",
+    "check": "tsx src/check.ts"
   },
   "dependencies": {
     "@midnight-ntwrk/compact-js": "3.0.0-rc.3",

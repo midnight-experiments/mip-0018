@@ -25,11 +25,11 @@ mip0018_ensure_image() {
     return 0
   fi
   local digest
-  digest="$(mip0018_sha256 <"$here/Dockerfile" | cut -c1-12)"
+  digest="$(mip0018_sha256 <"$repo/docker/Dockerfile" | cut -c1-12)"
   MIP0018_IMAGE="${MIP0018_DOCKER_PREFIX}-toolchain:${digest}"
   if ! docker image inspect "$MIP0018_IMAGE" >/dev/null 2>&1; then
     echo "building $MIP0018_IMAGE from docker/Dockerfile" >&2
-    docker build --label "$MIP0018_LABEL" -f "$here/Dockerfile" -t "$MIP0018_IMAGE" "$here" >&2
+    docker build --label "$MIP0018_LABEL" -f "$repo/docker/Dockerfile" -t "$MIP0018_IMAGE" "$repo/docker" >&2
   fi
 }
 

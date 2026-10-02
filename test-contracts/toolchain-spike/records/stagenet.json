@@ -1,0 +1,113 @@
+{
+  "kind": "mip-0018-s0-toolchain-spike",
+  "network": "stagenet",
+  "startedAt": "2026-10-02T01:51:51.700Z",
+  "toolchain": {
+    "compactCompiler": "0.35.0 (debb05f94)",
+    "compactLanguage": "0.27.0",
+    "compactRuntime": "0.20.0",
+    "zkir": "v3 (--feature-zkir-v3)",
+    "ledgerV9": "1.0.0-rc.5",
+    "compactJs": "3.0.0-rc.3",
+    "midnightJs": "5.0.0-rc.2",
+    "walletSdk": "2.0.0-beta.2",
+    "walletSdkFacade": "5.0.0-beta.2",
+    "node": "v24.21.0"
+  },
+  "steps": {
+    "deploy": {
+      "txId": "00b57c93bb257e6096430fc3310a2c5aa0c420747d69af9f8855b83b6da5e845d7",
+      "txHash": "62bd33fd5fe18ca2ddd78922f4685eabac97f4de2418492daf753568cee8b059",
+      "blockHeight": 710806,
+      "blockHash": "0106027fd3da4ea72869185ff3ee98bced160295b440b5d18e56a4fa17018354",
+      "status": "SucceedEntirely",
+      "indexerStatus": "SUCCESS",
+      "feeSpecks": "818614485237235",
+      "seconds": 22,
+      "observed": {
+        "exists": true,
+        "operations": [
+          "publishMetadata"
+        ],
+        "blockHeight": 710806,
+        "transactionHash": "62bd33fd5fe18ca2ddd78922f4685eabac97f4de2418492daf753568cee8b059"
+      },
+      "done": true
+    },
+    "call": {
+      "txId": "00674b24bf92c994c2c58336406e70abbe437026f1d6d577004b038c7f760a6b2b",
+      "txHash": "223050717f704fe47d1bd0b6b91da8ea248139d2d15a23a2eab7cf07d5a51418",
+      "blockHeight": 710810,
+      "blockHash": "0cadba2817cc6fd9e1e25905b0241762f2a5df517bd90de4623e1f1f23929658",
+      "status": "SucceedEntirely",
+      "indexerStatus": "SUCCESS",
+      "feeSpecks": "169392887855896",
+      "seconds": 23,
+      "event": {
+        "id": 53254,
+        "contractAddress": "18097aeb608f35d83a65b2cad987084c97c6e9d1dc02973f2a6f6cc2fcdd76e1",
+        "name": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+        "payload": "111111111111111111111111111111111111111111111111111111111111111103046e616d65010a41636d6520546f6b656e0673796d626f6c010441434d4508646563696d616c73020106097374616e646172647301086d69702d303030340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "raw": "6d69646e696768743a6576656e745b7631345d3a08000d027f036d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000111111111111111111111111111111111111111111111111111111111111111103046e616d65010a41636d6520546f6b656e0673796d626f6c010441434d4508646563696d616c73020106097374616e646172647301086d69702d30303034200904006101223050717f704fe47d1bd0b6b91da8ea248139d2d15a23a2eab7cf07d5a5141800005b760318097aeb608f35d83a65b2cad987084c97c6e9d1dc02973f2a6f6cc2fcdd76e13c7075626c6973684d65746164617461040a01",
+        "block": {
+          "height": 710810,
+          "hash": "0cadba2817cc6fd9e1e25905b0241762f2a5df517bd90de4623e1f1f23929658"
+        }
+      },
+      "eventsInTx": 1,
+      "nameEqualsExpected": true,
+      "payloadEqualsA1": true,
+      "done": true
+    },
+    "removeVerifierKey": {
+      "txId": "006e9eeeb3860cfbcfe983bb1a35741a5f74cc8aeee80c1c7633fbebdda0afbbd0",
+      "txHash": "646ad26baaa0390931438c626646af12ee939698d235464cd06f089f0a3f5aa2",
+      "blockHeight": 710814,
+      "blockHash": "a5a135fca9562f8e9a0100b82c53e14a214e46d445368ebeae03fbb38519fb5c",
+      "status": "SucceedEntirely",
+      "indexerStatus": "SUCCESS",
+      "feeSpecks": "35595608109109",
+      "seconds": 23,
+      "operationBefore": "<verifier key>",
+      "version": "v4",
+      "observed": {
+        "exists": true,
+        "operations": [],
+        "blockHeight": 710814,
+        "transactionHash": "646ad26baaa0390931438c626646af12ee939698d235464cd06f089f0a3f5aa2"
+      },
+      "done": true
+    },
+    "dust": {
+      "before": "824078524384210767",
+      "after": "825648958657841744",
+      "note": "wallet DUST balance (SPECK); generation continues meanwhile, so the indexer fee per step is the exact cost"
+    }
+  },
+  "preflight": {
+    "network": "stagenet",
+    "networkId": "stagenet",
+    "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+    "nodeVersion": "2.0.0-d9729c13",
+    "specVersion": 2000000,
+    "finalizedHeight": 710772,
+    "indexerHeight": 710772,
+    "indexerHash": "69673f9d3129c07d78ada2e0e5480a5cb7404719b4ad287f46a6e1ed5e0e7bbf",
+    "proofServerVersion": "9.0.0-rc.8",
+    "proofVersions": "[\"V2\", \"V3\"]",
+    "walletProofServerVersion": "9.0.0-rc.6",
+    "checkedAt": "2026-10-02T01:51:56.619Z"
+  },
+  "wallet": {
+    "unshieldedAddress": "mn_addr_stagenet1vw57646su9y5z6myarm93m6kcn62j97z0yma94lfkhmta6pz5h5q6utr3k",
+    "shieldedAddress": "mn_shield-addr_stagenet1emrpxc3lmnytr5nl9wzkp0agas2egpfup32fmu2swt58tlypctn4lgtpafg22anv2y4f0wf7lqu2s00fg8ndp0qaxnez29xzexmd2qcm9wudk",
+    "dustAddress": "mn_dust_stagenet1wwjujztruwqkkem9mgdl26kx4w4ksdjx7qyrgmcegxve44468ex52wvf9a6",
+    "night": "5000000000",
+    "dust": "824078524384210767",
+    "nightUtxos": 1,
+    "nightUtxosRegisteredForDust": 1,
+    "syncSeconds": 176
+  },
+  "contract": "18097aeb608f35d83a65b2cad987084c97c6e9d1dc02973f2a6f6cc2fcdd76e1",
+  "result": "passed"
+}
