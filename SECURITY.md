@@ -23,4 +23,4 @@ Every byte of a MIP-0018 payload is attacker-controlled. The reference consumer:
 - takes the contract address from the event record, never from the payload, and computes colors with `tokenType`, never reading them from a value;
 - never groups tokens of different contracts because their `symbol` matches.
 
-Names and symbols are self-declared; see the MIP's Security Considerations before showing a token as a known asset.
+Names and symbols are self-declared; see the MIP's Security Considerations and the [consumer guide](docs/consumer-guide.md#7-impersonation-and-curation) before showing a token as a known asset.

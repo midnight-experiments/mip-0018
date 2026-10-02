@@ -15,4 +15,6 @@ Proves the pinned toolchain end to end before any module API is frozen (spec FR-
 
 Findings that shaped the pins (questions Q21–Q23): two official proof servers are needed today (rc.8 reads ZKIR 3.1 circuits; only rc.6 makes DUST-spend proofs node 2.0.0-rc.4 accepts); the wallet SDK rc line cannot sync against indexer 4.4.0-rc.1; midnight-js maintenance updates use the `v3` key slot while ZKIR-v3 keys live in `v4`.
 
-`managed/` (compiler output) is not committed yet; S2 decides the policy for committed keys.
+`managed/` (compiler output) is not committed: builds are deterministic, and the verifier-key SHA-256s are recorded in
+[`docs/costs.json`](../../docs/costs.json) (question Q24). The Stagenet run is recorded in
+[`records/stagenet.json`](records/stagenet.json) (case S0-SPIKE in [`deployments/stagenet`](../../deployments/stagenet/README.md)).

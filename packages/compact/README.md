@@ -88,7 +88,7 @@ Anyone who can call a circuit that reaches `emitPayload` can rename or withdraw 
    by the deployer, whose verifier key the maintenance authority then removes with a
    `VerifierKeyRemove` update: the circuit no longer exists
    ([`examples/minimal/contracts/CreateAndDestroy.compact`](../../examples/minimal/contracts/CreateAndDestroy.compact),
-   tested on the local chain). Caveats: until the key is removed anyone holding the compiled artefacts
+   tested on the local chain and on Stagenet, case [C10](../../deployments/stagenet/cases/C10/README.md)). Caveats: until the key is removed anyone holding the compiled artefacts
    can call the circuit (the deploy does not put the circuit's ZKIR on chain — only its verifier key —
    but the artefacts ship with any DApp), so its payload must be constant: a caller can then only
    re-emit the same values. The contract needs a maintenance authority (midnight-js deploys with

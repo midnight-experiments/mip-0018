@@ -11,11 +11,13 @@ prints the details; every command has `--json`.
 | `index --network <id> --from-height <h> [--to-height <h> \| --follow] --state <dir>` | no | The mint scanner: color → (contract, domainSep, kinds, first mint), MIP-0018 events and deploys of the range; resumable |
 | `lookup --color <hex> --state <dir> [--kind 1\|2] [--network <id>]` | no | Color → identity → metadata (live with `--network`, otherwise from the scan); "not minted in the scanned range [from, to]" otherwise; kind 3 has no color |
 | `vectors run [--consumer "<cmd>"]` | no | The language-neutral vector runner (default: the reference consumer) |
+| `recheck --network <id> --case <dir>` | no | Re-checks a recorded case folder from its `case.json`: `verify` of each transaction with its expectation, `list` against `expected.json`, refused steps, removed keys, colors ([`deployments/stagenet`](../../deployments/stagenet/README.md)) |
 | `wallet status` · `wallet register-dust [--estimate]` | yes | Public addresses and balances · DUST registration (skipped when already registered) |
 | `deploy (--contract <managed dir> \| --adapter <file> \| --example <name>) --record <file> [--args <json>]` | yes | midnight-js `deployContract` with a run record and before/after checks |
 | `publish --record <file> --circuit <name> [--args <json>] [--step <id>] [--force]` (`call` = alias) | yes | `findDeployedContract().callTx.<circuit>()`; skipped when the metadata already holds exactly what it would set |
 | `remove-circuit --record <file> --circuit <name>` | yes | Create-and-destroy: `VerifierKeyRemove` in the `v4` slot (Q23) |
 | `deploy-and-publish --example <name> [--metadata <json>] --record <file>` | yes | compile → deploy → publish → verify, each step guarded |
+| `upgrade --record <file> --source <dir> --circuit <name>` | yes | Existing contracts: `VerifierKeyInsert` of the circuit (`v4` slot), then call it ([upgrade guide](../../docs/upgrade-guide.md)) |
 
 Exit codes: 0 ok · 1 mismatch, failed or refused · 2 usage · 3 not found / not minted in range · 4 not yet indexed /
 outcome unknown (re-run to reconcile).
@@ -28,6 +30,10 @@ for DUST spends; Q21), a wallet secret file (`--mnemonic-file`; on a local chain
 
 Records are public JSON (contract address, transactions, observations — never a secret). Maintenance keys and
 witness private state (e.g. an `Ownable` owner secret) are in `<state-dir>/mip0018-private-state.json` (0600).
+
+Guides: [issuer](../../docs/issuer-guide.md) (deploy, publish, rename, withdraw) and [consumer](../../docs/consumer-guide.md)
+(verify, list, index, lookup, vectors). Walkthroughs with real outputs: [`examples/publish-and-emit`](../../examples/publish-and-emit/README.md),
+[`examples/verify`](../../examples/verify/README.md).
 
 End-to-end test on a local chain: `MIP0018_DOCKER_PREFIX=… MIP0018_E2E_DIR=<dir outside the repo>
 packages/cli/test/e2e/local-e2e.sh`.

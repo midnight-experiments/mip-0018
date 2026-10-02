@@ -63,3 +63,8 @@ the run record goes to `docker/local-stack/.state/` (not committed).
 Local run, 2026-10-01: deploy 1.221 DUST, `publishMetadata` 0.146 DUST, `transfer` 0.239 DUST,
 `VerifierKeyRemove` 0.039 DUST; second call refused (`Operation 'publishMetadata' is undefined`);
 exactly one `Misc` event. Circuit sizes and proving times: [`docs/costs.md`](../../docs/costs.md).
+
+On Stagenet (2026-10-02): `OwnerKey`'s publish → rename → tombstone ×2 → revive is case
+[C06](../../deployments/stagenet/cases/C06/README.md), `CreateAndDestroy` is case
+[C10](../../deployments/stagenet/cases/C10/README.md); both re-check wallet-free with
+`docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/<ID>`.
