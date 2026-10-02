@@ -1,0 +1,108 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// Test contract (not an example): the same circuits as VectorsTyped.compact, built with the
+// ALTERNATIVE module (individual pure circuits composed with spreads). Every record size R
+// and padding P below is checked by the compiler.
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+import "../../src/Mip0018Pure" prefix P_;
+
+export circuit A1(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<10>, k2: Bytes<6>, v2: Bytes<4>,
+                  k3: Bytes<8>, v3: Uint<8>, k4: Bytes<9>, v4: Bytes<8>): [] {
+  P_emitPayload(P_payload4<17, 13, 12, 20, 161>(P_header(ds, kind), P_utf8Record<4, 10, 17>(k1, v1),
+    P_utf8Record<6, 4, 13>(k2, v2), P_uintRecord<8, 12>(k3, v3), P_utf8Record<9, 8, 20>(k4, v4)));
+}
+
+export circuit A1_common(ds: Bytes<32>, kind: Uint<8>, name: Bytes<10>, symbol: Bytes<4>, decimals: Uint<8>,
+                         standards: Bytes<8>): [] {
+  P_emitPayload(P_commonFieldsWithStandards<10, 4, 8, 17, 13, 20, 161>(ds, kind, name, symbol, decimals, standards));
+}
+
+// The inline spread form.
+export circuit A1_literal(): [] {
+  const p: Bytes<256> = Bytes[
+    ...P_header(pad(32, "\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11"), P_KIND_LEDGER()),
+    ...P_nameRecord<10, 17>("Acme Token"),
+    ...P_symbolRecord<4, 13>("ACME"),
+    ...P_decimalsRecord(6),
+    ...P_standardsRecord<8, 20>("mip-0004"),
+    ...pad(161, "")];
+  P_emitPayload(p);
+}
+
+export circuit A2a(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<220>, v1: Bytes<0>): [] {
+  P_emitPayload(P_payload1<223, 0>(P_header(ds, kind), P_bytesRecord<220, 0, 223>(k1, v1)));
+}
+
+export circuit A2b(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<1>, v1: Bytes<219>): [] {
+  P_emitPayload(P_payload1<223, 0>(P_header(ds, kind), P_bytesRecord<1, 219, 223>(k1, v1)));
+}
+
+export circuit A3a(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<6>, v1: Bytes<4>, k2: Bytes<7>, v2: Bytes<3>): [] {
+  P_emitPayload(P_payload2<13, 13, 197>(P_header(ds, kind), P_utf8Record<6, 4, 13>(k1, v1), P_utf8Record<7, 3, 13>(k2, v2)));
+}
+
+export circuit A3b(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<3>): [] {
+  P_emitPayload(P_payload1<10, 213>(P_header(ds, kind), P_bytesRecord<4, 3, 10>(k1, v1)));
+}
+
+export circuit A3c(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<2>): [] {
+  P_emitPayload(P_payload1<9, 214>(P_header(ds, kind), P_utf8Record<4, 2, 9>(k1, v1)));
+}
+
+export circuit A4a(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<8>, v1: Uint<8>): [] {
+  P_emitPayload(P_payload1<12, 211>(P_header(ds, kind), P_uintRecord<8, 12>(k1, v1)));
+}
+
+export circuit A4b(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<8>, v1: Uint<128>): [] {
+  P_emitPayload(P_payload1<27, 196>(P_header(ds, kind), P_uint128Record<8, 27>(k1, v1)));
+}
+
+export circuit A5a(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<4>, k2: Bytes<4>, v2: Bytes<0>): [] {
+  P_emitPayload(P_payload2<11, 7, 205>(P_header(ds, kind), P_utf8Record<4, 4, 11>(k1, v1), P_utf8Record<4, 0, 7>(k2, v2)));
+}
+
+export circuit A5b(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<4>, k2: Bytes<4>, v2: Bytes<0>): [] {
+  P_emitPayload(P_payload2<11, 7, 205>(P_header(ds, kind), P_utf8Record<4, 4, 11>(k1, v1), P_bytesRecord<4, 0, 7>(k2, v2)));
+}
+
+export circuit A5c(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<4>, k2: Bytes<4>, v2: Bytes<4>): [] {
+  P_emitPayload(P_payload2<11, 11, 201>(P_header(ds, kind), P_utf8Record<4, 4, 11>(k1, v1), P_jsonRecord<4, 4, 11>(k2, v2)));
+}
+
+export circuit S1a(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<1>, k2: Bytes<6>, k3: Bytes<4>, v3: Bytes<1>): [] {
+  P_emitPayload(P_payload3<8, 9, 8, 198>(P_header(ds, kind), P_utf8Record<4, 1, 8>(k1, v1), P_nullRecord<6, 9>(k2),
+    P_utf8Record<4, 1, 8>(k3, v3)));
+}
+
+export circuit S1a_common(ds: Bytes<32>, a: Bytes<1>, b: Bytes<1>): [] {
+  P_emitPayload(P_payload3<8, 9, 8, 198>(P_header(ds, P_KIND_SHIELDED()), P_nameRecord<1, 8>(a),
+    P_nullRecord<6, 9>("retire"), P_nameRecord<1, 8>(b)));
+}
+
+export circuit S1b(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<1>, k2: Bytes<4>, v2: Bytes<1>): [] {
+  P_emitPayload(P_payload2<8, 8, 207>(P_header(ds, kind), P_utf8Record<4, 1, 8>(k1, v1), P_utf8Record<4, 1, 8>(k2, v2)));
+}
+
+export circuit tombstone(ds: Bytes<32>, kind: Uint<8>): [] {
+  P_emitPayload(P_tombstone(ds, kind));
+}
+
+export circuit commonFields(ds: Bytes<32>, kind: Uint<8>, name: Bytes<10>, symbol: Bytes<4>, decimals: Uint<8>): [] {
+  P_emitPayload(P_commonFields<10, 4, 17, 13, 181>(ds, kind, name, symbol, decimals));
+}
+
+export circuit uriRecord(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<3>, v1: Bytes<28>): [] {
+  P_emitPayload(P_payload1<34, 189>(P_header(ds, kind), P_uriRecord<3, 28, 34>(k1, v1)));
+}
+
+export pure circuit eventName(): Bytes<32> {
+  return P_EVENT_NAME();
+}
+
+export pure circuit constants(): Vector<9, Uint<8>> {
+  return [P_KIND_SHIELDED(), P_KIND_UNSHIELDED(), P_KIND_LEDGER(), P_VALTYPE_BYTES(), P_VALTYPE_UTF8(),
+          P_VALTYPE_UINT(), P_VALTYPE_JSON(), P_VALTYPE_URI(), P_VALTYPE_NULL()];
+}

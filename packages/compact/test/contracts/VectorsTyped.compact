@@ -1,0 +1,108 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// Test contract (not an example): one circuit per normative accept vector, built with the
+// DEFAULT module (typed records serialized by Compact). Arguments are the header and the
+// records' keys/values taken from the fixture at test time:
+//   (domainSep, kind, key1, value1, key2, value2, ...); a uint value is a number, a Null
+//   record has no value. The test compares the emitted Misc event with vectors/payload/<id>.
+// Circuits named *_common use the convenience builders instead.
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+import "../../src/Mip0018" prefix M_;
+
+export circuit A1(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<10>, k2: Bytes<6>, v2: Bytes<4>,
+                  k3: Bytes<8>, v3: Uint<8>, k4: Bytes<9>, v4: Bytes<8>): [] {
+  M_emitPayload(M_payload4<4, 10, 6, 4, 8, 1, 9, 8>(M_header(ds, kind), M_utf8Record<4, 10>(k1, v1),
+    M_utf8Record<6, 4>(k2, v2), M_uintRecord<8>(k3, v3), M_utf8Record<9, 8>(k4, v4)));
+}
+
+export circuit A1_common(ds: Bytes<32>, kind: Uint<8>, name: Bytes<10>, symbol: Bytes<4>, decimals: Uint<8>,
+                         standards: Bytes<8>): [] {
+  M_emitPayload(M_commonFieldsWithStandards<10, 4, 8>(ds, kind, name, symbol, decimals, standards));
+}
+
+// The literal form an issuer writes in publishMetadata(): everything constant.
+export circuit A1_literal(): [] {
+  M_emitPayload(M_commonFieldsWithStandards<10, 4, 8>(
+    pad(32, "\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11"),
+    M_KIND_LEDGER(), "Acme Token", "ACME", 6, "mip-0004"));
+}
+
+export circuit A2a(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<220>, v1: Bytes<0>): [] {
+  M_emitPayload(M_payload1<220, 0>(M_header(ds, kind), M_bytesRecord<220, 0>(k1, v1)));
+}
+
+export circuit A2b(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<1>, v1: Bytes<219>): [] {
+  M_emitPayload(M_payload1<1, 219>(M_header(ds, kind), M_bytesRecord<1, 219>(k1, v1)));
+}
+
+export circuit A3a(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<6>, v1: Bytes<4>, k2: Bytes<7>, v2: Bytes<3>): [] {
+  M_emitPayload(M_payload2<6, 4, 7, 3>(M_header(ds, kind), M_utf8Record<6, 4>(k1, v1), M_utf8Record<7, 3>(k2, v2)));
+}
+
+export circuit A3b(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<3>): [] {
+  M_emitPayload(M_payload1<4, 3>(M_header(ds, kind), M_bytesRecord<4, 3>(k1, v1)));
+}
+
+export circuit A3c(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<2>): [] {
+  M_emitPayload(M_payload1<4, 2>(M_header(ds, kind), M_utf8Record<4, 2>(k1, v1)));
+}
+
+export circuit A4a(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<8>, v1: Uint<8>): [] {
+  M_emitPayload(M_payload1<8, 1>(M_header(ds, kind), M_uintRecord<8>(k1, v1)));
+}
+
+export circuit A4b(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<8>, v1: Uint<128>): [] {
+  M_emitPayload(M_payload1<8, 16>(M_header(ds, kind), M_uint128Record<8>(k1, v1)));
+}
+
+export circuit A5a(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<4>, k2: Bytes<4>, v2: Bytes<0>): [] {
+  M_emitPayload(M_payload2<4, 4, 4, 0>(M_header(ds, kind), M_utf8Record<4, 4>(k1, v1), M_utf8Record<4, 0>(k2, v2)));
+}
+
+export circuit A5b(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<4>, k2: Bytes<4>, v2: Bytes<0>): [] {
+  M_emitPayload(M_payload2<4, 4, 4, 0>(M_header(ds, kind), M_utf8Record<4, 4>(k1, v1), M_bytesRecord<4, 0>(k2, v2)));
+}
+
+export circuit A5c(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<4>, k2: Bytes<4>, v2: Bytes<4>): [] {
+  M_emitPayload(M_payload2<4, 4, 4, 4>(M_header(ds, kind), M_utf8Record<4, 4>(k1, v1), M_jsonRecord<4, 4>(k2, v2)));
+}
+
+// S1a: name = "A", Null at key "retire", name = "B" (kind 1), offsets 33, 41, 50.
+export circuit S1a(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<1>, k2: Bytes<6>, k3: Bytes<4>, v3: Bytes<1>): [] {
+  M_emitPayload(M_payload3<4, 1, 6, 0, 4, 1>(M_header(ds, kind), M_utf8Record<4, 1>(k1, v1), M_nullRecord<6>(k2),
+    M_utf8Record<4, 1>(k3, v3)));
+}
+
+export circuit S1a_common(ds: Bytes<32>, a: Bytes<1>, b: Bytes<1>): [] {
+  M_emitPayload(M_payload3<4, 1, 6, 0, 4, 1>(M_header(ds, M_KIND_SHIELDED()), M_nameRecord<1>(a),
+    M_nullRecord<6>("retire"), M_nameRecord<1>(b)));
+}
+
+export circuit S1b(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<1>, k2: Bytes<4>, v2: Bytes<1>): [] {
+  M_emitPayload(M_payload2<4, 1, 4, 1>(M_header(ds, kind), M_utf8Record<4, 1>(k1, v1), M_utf8Record<4, 1>(k2, v2)));
+}
+
+export circuit tombstone(ds: Bytes<32>, kind: Uint<8>): [] {
+  M_emitPayload(M_tombstone(ds, kind));
+}
+
+export circuit commonFields(ds: Bytes<32>, kind: Uint<8>, name: Bytes<10>, symbol: Bytes<4>, decimals: Uint<8>): [] {
+  M_emitPayload(M_commonFields<10, 4>(ds, kind, name, symbol, decimals));
+}
+
+export circuit uriRecord(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<3>, v1: Bytes<28>): [] {
+  M_emitPayload(M_payload1<3, 28>(M_header(ds, kind), M_uriRecord<3, 28>(k1, v1)));
+}
+
+// Exported so the test can compare them with the codec constants.
+export pure circuit eventName(): Bytes<32> {
+  return M_EVENT_NAME();
+}
+
+export pure circuit constants(): Vector<9, Uint<8>> {
+  return [M_KIND_SHIELDED(), M_KIND_UNSHIELDED(), M_KIND_LEDGER(), M_VALTYPE_BYTES(), M_VALTYPE_UTF8(),
+          M_VALTYPE_UINT(), M_VALTYPE_JSON(), M_VALTYPE_URI(), M_VALTYPE_NULL()];
+}

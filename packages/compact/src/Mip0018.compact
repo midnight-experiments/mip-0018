@@ -1,0 +1,302 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// MIP-0018 On-Chain Token Metadata Emission — Compact module (default API).
+//
+// Pinned MIP text: midnightntwrk/midnight-improvement-proposals@b147c627e1bb15b5d15cc73cf30c2a36afd34dbb
+// (mips/mip-0018-on-chain-token-metadata.md, PR #340). Section names below refer to that text.
+//
+// What this module gives a contract:
+//
+//   * the event name and the `kind` / `valType` constants ("Event", "Value types",
+//     "Token identity and authority");
+//   * typed builders: a record is the struct `MetadataRecord<#K, #V>` whose key and
+//     value sizes are generic; the payload is the header plus 1-4 records serialized by
+//     Compact itself (`serialize<[...], 256>`), which appends the zero padding. The
+//     compiler therefore checks every size: a value of the wrong length, a key longer
+//     than 255 bytes, an empty key, or records that do not fit in 256 bytes are all
+//     compile errors ("Payload", "Limitations");
+//   * convenience builders for the common fields `name`, `symbol`, `decimals` (`Uint<8>`)
+//     and `standards`, and the identity-wide tombstone ("Common fields", "Applying records");
+//   * `emitPayload`, the only circuit that calls `emit`.
+//
+// Generic arguments are always written explicitly at the call site (Compact requires it):
+//
+//   import "<path>/Mip0018" prefix Mip0018_;
+//
+//   export circuit publishMetadata(): [] {
+//     Mip0018_emitPayload(Mip0018_commonFieldsWithStandards<10, 4, 8>(
+//       domain, Mip0018_KIND_LEDGER(), "Acme Token", "ACME", 6, "mip-0004"));
+//   }
+//
+// The sizes are fixed per contract from the actual value lengths: "Acme Token" is
+// `Bytes<10>`, so `<10, ...>`. A literal payload compiles to the cheapest possible circuit
+// (k=6, 48 rows with ZKIR v3: the cost of `emit` itself); runtime-valued records cost more
+// (docs/costs.md).
+//
+// What the module cannot check in a circuit: that a type-1 value is valid UTF-8, a type-3
+// value valid JSON, or a type-4 value an RFC 3986 URI. String literals are UTF-8 by
+// construction; values passed in at run time are the caller's responsibility (validate them
+// off chain with @mip0018/codec before calling).
+//
+// Access control is the contract's choice ("Publishing"): anyone who can call a circuit that
+// reaches `emitPayload` can rename or withdraw the token. Guard it (e.g. OpenZeppelin
+// `Ownable`), make it publish-once, or remove its verifier key after the first call
+// (create-and-destroy). Never call it from mint/transfer/burn circuits: "Normal token
+// operation ... MUST NOT emit metadata events". A constructor cannot emit, so a contract
+// exposes `publishMetadata()` and calls it right after deployment.
+//
+// Requires Compact >= 0.34.0 (MIP-0002 `Misc` events, ledger v9). Built and tested with
+// Compact 0.35.0 (language 0.27.0) and --feature-zkir-v3.
+
+pragma language_version >= 0.26.0;
+
+module Mip0018 {
+  import CompactStandardLibrary;
+
+  // ---------------------------------------------------------------------------
+  // Constants ("Event", "Token identity and authority", "Value types")
+  // ---------------------------------------------------------------------------
+
+  /** The `Misc` event name: pad(32, "mip-0018:token-metadata[v1]"). */
+  export pure circuit EVENT_NAME(): Bytes<32> {
+    return pad(32, "mip-0018:token-metadata[v1]");
+  }
+
+  /** kind 1: native shielded token (MIP-0011); has a color. */
+  export pure circuit KIND_SHIELDED(): Uint<8> {
+    return 1;
+  }
+
+  /** kind 2: native unshielded token (MIP-0014); has a color. */
+  export pure circuit KIND_UNSHIELDED(): Uint<8> {
+    return 2;
+  }
+
+  /** kind 3: ledger token (MIP-0004 or any contract-defined representation); no color. */
+  export pure circuit KIND_LEDGER(): Uint<8> {
+    return 3;
+  }
+
+  /** valType 0: bytes, any length. */
+  export pure circuit VALTYPE_BYTES(): Uint<8> {
+    return 0;
+  }
+
+  /** valType 1: UTF-8 string, may be empty. */
+  export pure circuit VALTYPE_UTF8(): Uint<8> {
+    return 1;
+  }
+
+  /** valType 2: unsigned integer, 1-31 bytes, little-endian (Compact `Uint<8 x valLen>`). */
+  export pure circuit VALTYPE_UINT(): Uint<8> {
+    return 2;
+  }
+
+  /** valType 3: one complete UTF-8 JSON value (RFC 8259). */
+  export pure circuit VALTYPE_JSON(): Uint<8> {
+    return 3;
+  }
+
+  /** valType 4: UTF-8 absolute URI (RFC 3986). */
+  export pure circuit VALTYPE_URI(): Uint<8> {
+    return 4;
+  }
+
+  /** valType 5: Null (tombstone), valLen 0. Withdraws the whole token identity. */
+  export pure circuit VALTYPE_NULL(): Uint<8> {
+    return 5;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Types ("Payload")
+  // ---------------------------------------------------------------------------
+
+  /** The 33-byte header: which token (`domainSep`) and how it is represented (`kind`). */
+  export struct MetadataHeader {
+    domainSep: Bytes<32>;
+    kind: Uint<8>;
+  }
+
+  /**
+   * One record, `keyLen | key | valType | valLen | value`, serialized as 3 + K + V bytes.
+   * Build it with the record constructors below: they derive `keyLen` and `valLen` from
+   * K and V, so the lengths cannot disagree with the data.
+   */
+  export struct MetadataRecord<#K, #V> {
+    keyLen: Uint<8>;
+    key: Bytes<K>;
+    valType: Uint<8>;
+    valLen: Uint<8>;
+    value: Bytes<V>;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Header and records
+  // ---------------------------------------------------------------------------
+
+  /** The header. Asserts kind is 1, 2 or 3 (folded away when kind is a constant). */
+  export pure circuit header(domainSep: Bytes<32>, kind: Uint<8>): MetadataHeader {
+    assert(kind >= 1 && kind <= 3, "MIP-0018: kind must be 1, 2 or 3");
+    return MetadataHeader { domainSep: domainSep, kind: kind };
+  }
+
+  // keyLen is the generic K: a key longer than 255 bytes does not fit Uint<8> (compile
+  // error); `slice<1>(key, 0)` makes an empty key (K = 0) a compile error too. valLen is V:
+  // a value longer than 255 bytes is a compile error; the 256-byte payload bound is enforced
+  // by serialize (largest value: 220 - keyLen bytes, "Limitations").
+  pure circuit typedRecord<#K, #V>(key: Bytes<K>, valType: Uint<8>, value: Bytes<V>): MetadataRecord<K, V> {
+    const keyIsNotEmpty = slice<1>(key, 0);
+    return MetadataRecord<K, V> { keyLen: K, key: key, valType: valType, valLen: V, value: value };
+  }
+
+  /** valType 0 record. */
+  export pure circuit bytesRecord<#K, #V>(key: Bytes<K>, value: Bytes<V>): MetadataRecord<K, V> {
+    return typedRecord<K, V>(key, 0, value);
+  }
+
+  /** valType 1 record. The value must be valid UTF-8 (literals are). */
+  export pure circuit utf8Record<#K, #V>(key: Bytes<K>, value: Bytes<V>): MetadataRecord<K, V> {
+    return typedRecord<K, V>(key, 1, value);
+  }
+
+  /** valType 2 record holding a `Uint<8>` (1 byte), the width MIP-0011/MIP-0014 use for decimals. */
+  export pure circuit uintRecord<#K>(key: Bytes<K>, value: Uint<8>): MetadataRecord<K, 1> {
+    return typedRecord<K, 1>(key, 2, value as Bytes<1>);
+  }
+
+  /** valType 2 record holding a `Uint<128>` (16 bytes, little-endian). */
+  export pure circuit uint128Record<#K>(key: Bytes<K>, value: Uint<128>): MetadataRecord<K, 16> {
+    return typedRecord<K, 16>(key, 2, value as Bytes<16>);
+  }
+
+  /** valType 3 record. The value must be one complete UTF-8 JSON value. */
+  export pure circuit jsonRecord<#K, #V>(key: Bytes<K>, value: Bytes<V>): MetadataRecord<K, V> {
+    return typedRecord<K, V>(key, 3, value);
+  }
+
+  /** valType 4 record. The value must be an RFC 3986 URI (scheme required; ASCII). */
+  export pure circuit uriRecord<#K, #V>(key: Bytes<K>, value: Bytes<V>): MetadataRecord<K, V> {
+    return typedRecord<K, V>(key, 4, value);
+  }
+
+  /** valType 5 (Null) record: a tombstone. Whatever its key, it withdraws the whole identity. */
+  export pure circuit nullRecord<#K>(key: Bytes<K>): MetadataRecord<K, 0> {
+    return typedRecord<K, 0>(key, 5, default<Bytes<0>>);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Common fields ("Common fields")
+  // ---------------------------------------------------------------------------
+
+  /** `name`: UTF-8, not empty (N = 0 is a compile error). */
+  export pure circuit nameRecord<#N>(name: Bytes<N>): MetadataRecord<4, N> {
+    const nameIsNotEmpty = slice<1>(name, 0);
+    return utf8Record<4, N>("name", name);
+  }
+
+  /** `symbol`: UTF-8, not empty (S = 0 is a compile error). */
+  export pure circuit symbolRecord<#S>(symbol: Bytes<S>): MetadataRecord<6, S> {
+    const symbolIsNotEmpty = slice<1>(symbol, 0);
+    return utf8Record<6, S>("symbol", symbol);
+  }
+
+  /** `decimals` as `Uint<8>`. */
+  export pure circuit decimalsRecord(decimals: Uint<8>): MetadataRecord<8, 1> {
+    return uintRecord<8>("decimals", decimals);
+  }
+
+  /**
+   * `standards`: identifiers separated by single spaces, e.g. "mip-0004 mip-0011". The list
+   * format (no empty identifier, no control characters) is not checked in circuit.
+   */
+  export pure circuit standardsRecord<#T>(standards: Bytes<T>): MetadataRecord<9, T> {
+    return utf8Record<9, T>("standards", standards);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Payloads: header + 1-4 records + zero padding (Compact has no variadics)
+  // ---------------------------------------------------------------------------
+
+  export pure circuit payload1<#K1, #V1>(h: MetadataHeader, r1: MetadataRecord<K1, V1>): Bytes<256> {
+    return serialize<[MetadataHeader, MetadataRecord<K1, V1>], 256>([h, r1]);
+  }
+
+  export pure circuit payload2<#K1, #V1, #K2, #V2>(
+    h: MetadataHeader,
+    r1: MetadataRecord<K1, V1>,
+    r2: MetadataRecord<K2, V2>
+  ): Bytes<256> {
+    return serialize<[MetadataHeader, MetadataRecord<K1, V1>, MetadataRecord<K2, V2>], 256>([h, r1, r2]);
+  }
+
+  export pure circuit payload3<#K1, #V1, #K2, #V2, #K3, #V3>(
+    h: MetadataHeader,
+    r1: MetadataRecord<K1, V1>,
+    r2: MetadataRecord<K2, V2>,
+    r3: MetadataRecord<K3, V3>
+  ): Bytes<256> {
+    return serialize<[MetadataHeader, MetadataRecord<K1, V1>, MetadataRecord<K2, V2>, MetadataRecord<K3, V3>], 256>(
+      [h, r1, r2, r3]);
+  }
+
+  export pure circuit payload4<#K1, #V1, #K2, #V2, #K3, #V3, #K4, #V4>(
+    h: MetadataHeader,
+    r1: MetadataRecord<K1, V1>,
+    r2: MetadataRecord<K2, V2>,
+    r3: MetadataRecord<K3, V3>,
+    r4: MetadataRecord<K4, V4>
+  ): Bytes<256> {
+    return serialize<[MetadataHeader, MetadataRecord<K1, V1>, MetadataRecord<K2, V2>, MetadataRecord<K3, V3>,
+                      MetadataRecord<K4, V4>], 256>([h, r1, r2, r3, r4]);
+  }
+
+  /** `name`, `symbol`, `decimals` (one event, MIP Appendix A without `standards`). */
+  export pure circuit commonFields<#N, #S>(
+    domainSep: Bytes<32>,
+    kind: Uint<8>,
+    name: Bytes<N>,
+    symbol: Bytes<S>,
+    decimals: Uint<8>
+  ): Bytes<256> {
+    return payload3<4, N, 6, S, 8, 1>(
+      header(domainSep, kind), nameRecord<N>(name), symbolRecord<S>(symbol), decimalsRecord(decimals));
+  }
+
+  /** `name`, `symbol`, `decimals`, `standards` (one event, as in MIP Appendix A / test A1). */
+  export pure circuit commonFieldsWithStandards<#N, #S, #T>(
+    domainSep: Bytes<32>,
+    kind: Uint<8>,
+    name: Bytes<N>,
+    symbol: Bytes<S>,
+    decimals: Uint<8>,
+    standards: Bytes<T>
+  ): Bytes<256> {
+    return payload4<4, N, 6, S, 8, 1, 9, T>(
+      header(domainSep, kind),
+      nameRecord<N>(name),
+      symbolRecord<S>(symbol),
+      decimalsRecord(decimals),
+      standardsRecord<T>(standards));
+  }
+
+  /**
+   * The identity-wide tombstone: one Null record at key `name`. Consumers hide the identity
+   * `(network, this contract, domainSep, kind)` and clear all its fields; the next non-Null
+   * record makes it visible again with only that field ("Applying records").
+   */
+  export pure circuit tombstone(domainSep: Bytes<32>, kind: Uint<8>): Bytes<256> {
+    return payload1<4, 0>(header(domainSep, kind), nullRecord<4>("name"));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Emission ("Event", "Publishing")
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Emits `Misc { name: EVENT_NAME(), payload }`. The only place that calls `emit`; the
+   * payload is disclosed (everything emitted is public). Callers guard it.
+   */
+  export circuit emitPayload(payload: Bytes<256>): [] {
+    emit(Misc { name: EVENT_NAME(), payload: disclose(payload) });
+  }
+}
