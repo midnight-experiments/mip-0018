@@ -1,0 +1,61 @@
+# MIP-0018 proposal notes
+
+Things this reference implementation found that should be **defined or updated upstream** in MIP-0018.
+They are notes for the MIP authors, not changes made here: the MIP text stays the authority, and every behaviour in this repository follows the pinned text below until a note is accepted upstream.
+
+| | |
+|---|---|
+| MIP text these notes refer to | [`midnightntwrk/midnight-improvement-proposals@b147c627e1bb15b5d15cc73cf30c2a36afd34dbb` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/b147c627e1bb15b5d15cc73cf30c2a36afd34dbb/mips/mip-0018-on-chain-token-metadata.md) (SHA-256 `9ffba7e6a3123cd6683e5a779ac3b73c8a31a9724367cd98ee120be78720d842`) |
+| How to add a note | One section per note: MIP section, problem, evidence, proposed change, what this repository does meanwhile, status. Append; never delete — change the status instead. |
+| Statuses | `NEEDS-DECISION` (options below, the authors choose) · `PROPOSED` (concrete text suggested) · `ACCEPTED-UPSTREAM` (merged into the MIP; link the commit) · `WITHDRAWN` |
+
+---
+
+## N1 — Define a valid URI (`valType` 4) the way ERC-721 does: RFC 3986 `URI`
+
+- **MIP section**: Value types (`valType` 4: "A UTF-8 absolute URI (RFC 3986)").
+- **Problem**: the sentence admits several readings. RFC 3986 `absolute-URI` has no fragment while `URI` does; RFC 3986 is ASCII-only while the MIP says UTF-8 (which suggests RFC 3987 IRIs). Because a value that breaks its type's rule rejects the **whole event**, two consumers that read it differently disagree on every record of that event.
+- **Evidence**: 26 realistic values checked against 9 validators (WHATWG `URL`, fast-uri, uri-js, Python `urllib.parse`, `rfc3986`, `rfc3987`, a strict RFC 3986 grammar). 15 values get the same verdict everywhere; 11 split the libraries: a fragment (under the `absolute-URI` reading), non-ASCII host/path/query, a space, a backslash, an empty authority, an out-of-range port, a leading space, a bad percent-escape. Two independent strict-grammar validators agree on all 26. Data and harnesses: `vectors/informative/uri/` (added with the vectors).
+- **Decision for this repository**: follow ERC-721, whose `tokenURI` says "URIs are defined in RFC 3986" — i.e. the RFC 3986 `URI` rule: a scheme is required, a fragment is allowed, characters are ASCII (non-ASCII characters percent-encoded, host names in their ASCII form). Relative references are rejected (as vector R5 already requires).
+- **Proposed text**: "| 4 | URI | A URI as defined in RFC 3986 (the `URI` rule of §3, as used by ERC-721 `tokenURI`): a scheme is required and a fragment is allowed. All characters are ASCII; characters outside ASCII MUST be percent-encoded, and host names converted to their ASCII form, before emitting. |"
+- **Alternatives considered**: RFC 3987 IRI (matches "UTF-8" but few validators); keep `absolute-URI` (rejects fragments every library accepts); "parses as a WHATWG URL" (lenient and normalising, disagrees with RFC libraries); a minimal "scheme + no space/control bytes" rule (simple, but accepts strings no parser accepts).
+- **Meanwhile**: the reference consumer enforces the RFC 3986 `URI` rule with a strict grammar; the 26 cases are informative vectors with that verdict.
+- **Status**: PROPOSED
+
+## N2 — Say that raw ledger log data has its trailing zero bytes removed
+
+- **MIP section**: Payload ("every byte after the last record, up to byte 256, is zero") and Consuming ("How consumers obtain events is defined by MIP-0002").
+- **Problem**: the ledger and the Compact runtime store a logged `Misc` item (`name ‖ payload`, 288 bytes) **without its trailing zero bytes**. A consumer that reads events from raw transactions, node data or the runtime (instead of the indexer, whose `payload` is already 256 bytes) sees a shorter byte string and may reject a valid payload as truncated, or mis-split `name` and `payload`.
+- **Evidence**: ledger source (log items are stored without trailing zeros) and the Compact runtime (`CircuitResults.context.events` returns the shortened data); the indexer's `MiscContractEvent.payload` is padded to 256. Re-confirmed on this repository's own Stagenet cases (to be linked from `deployments/stagenet/`).
+- **Proposed text** (Consuming, or MIP-0002 if it belongs there): "Some sources return a `Misc` item's 288 data bytes without trailing zero bytes. Consumers MUST zero-extend the data to 288 bytes before taking `name` (bytes 0–31) and `payload` (bytes 32–287)."
+- **Meanwhile**: the reference reader zero-extends every raw item to 288 bytes.
+- **Status**: PROPOSED
+
+## N3 — State that kinds 1 and 2 share one color under the same `domainSep`
+
+- **MIP section**: Token identity and authority — Lookup.
+- **Problem**: the MIP derives both native kinds' color with one formula but never says so explicitly; readers may expect two colors and build a table keyed by color alone.
+- **Evidence**: one formula in the Compact standard library (`tokenType`) and in the ledger, with no kind input; to be shown on this repository's own Stagenet case that mints both kinds under one `domainSep` (to be linked from `deployments/stagenet/`).
+- **Proposed text** (informative, after "A color held by a user resolves …"): "A shielded and an unshielded mint with the same `domainSep` have the same color; the kind is given by what the user holds (a shielded coin → kind 1, an unshielded UTXO → kind 2), not by the color."
+- **Meanwhile**: the lookup table records which kinds were minted under each color.
+- **Status**: PROPOSED (editorial)
+
+## N4 — Dependencies: state the toolchain as a minimum
+
+- **MIP section**: Implementation — Dependencies ("Compact 0.34.0 / language 0.26.0 / runtime 0.19.0, Midnight ledger v9").
+- **Problem**: read literally it pins one compiler; Compact 0.35.0 (language 0.27.0, runtime 0.20.0, same ledger target) is already released.
+- **Proposed text**: "MIP-0002 `Misc` events: Compact 0.34.0 or later (language 0.26.0, runtime 0.19.0 or later), Midnight ledger v9."
+- **Meanwhile**: the repository states the minimum and the exact versions it is built and tested with (`toolchain.json`).
+- **Status**: PROPOSED (editorial)
+
+---
+
+## Considered — no change proposed
+
+| Topic | Decision |
+|---|---|
+| JSON details for `valType` 3 (BOM, surrounding whitespace, duplicate names) | Each consumer uses its own JSON parser; mainstream parsers converge. No change. |
+| No upper bound on `decimals` | Not a limit for this MIP; the standards a token follows define good practice. No change. |
+| Events from failed transaction segments | Consumers only ever see events the ledger accepted and executed. No change. |
+| Getter equality ("SHOULD emit the same values those getters return") cannot be checked today | Enforceable once contract getters can be executed by consumers. No change. |
+| Color lookup needs mint data the public indexer does not expose | The MIP already assigns this to indexers; this repository ships a reference scanner that builds the color table from a start block. No change. |
