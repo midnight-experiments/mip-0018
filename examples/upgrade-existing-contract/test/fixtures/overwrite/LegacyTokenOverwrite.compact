@@ -1,0 +1,29 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// TEST FIXTURE (scripts/local-upgrade.sh, "no overwrite"): ANOTHER publishMetadata() for LegacyToken — same ledger
+// layout, other literals, so another verifier key. Once ../../../upgrade's publishMetadata key is on the contract, a
+// VerifierKeyInsert of this key under the same name must be refused: by `mip0018 upgrade` before submission, and by
+// the ledger (VerifierKeyAlreadyPresent) when forced. Never inserted successfully anywhere.
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+import "../../../../../packages/compact/src/Mip0018" prefix Mip0018_;
+
+// ---- ledger layout: copied verbatim from ../../../legacy/LegacyToken.compact ----
+export sealed ledger domain: Bytes<32>;
+export ledger owner: Bytes<32>;
+export ledger totalMinted: Uint<128>;
+export ledger mintCount: Counter;
+// ---- end of ledger layout ----
+
+witness ownerSecret(): Bytes<32>;
+
+pure circuit ownerId(secret: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<2, Bytes<32>>>([pad(32, "legacy-token:owner"), secret]);
+}
+
+export circuit publishMetadata(): [] {
+  assert(ownerId(ownerSecret()) == owner, "LegacyToken: caller is not the owner");
+  Mip0018_emitPayload(Mip0018_commonFields<11, 4>(domain, Mip0018_KIND_SHIELDED(), "Other Token", "OTHR", 6));
+}

@@ -610,7 +610,6 @@ export async function cmdUpgrade(argv: string[]): Promise<number> {
     const stepTag = str(v, 'step');
     try {
       const pf = await preflightUpgrade(run, up, circuit);
-      recordUpgrade(run, up, circuit, slot, pf, portablePath);
       for (const n of pf.notes) log(`note: ${n}`);
       if (!pf.ok) {
         for (const p of pf.problems) log(`preflight: ${p}`);
@@ -629,6 +628,8 @@ export async function cmdUpgrade(argv: string[]): Promise<number> {
         force: v.force === true,
         ...(stepTag ? { stepId: `${stepTag}:insert` } : {}),
       });
+      // The circuit is on chain with this build's key: later `publish` calls go through this build.
+      recordUpgrade(run, up, circuit, slot, pf, portablePath);
       if (!v['no-call'])
         await callStep(run, {
           circuit,
