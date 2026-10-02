@@ -1,0 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Compile-fail fixture: records must fit in 256 bytes
+pragma language_version >= 0.26.0;
+import CompactStandardLibrary;
+import "../../src/Mip0018Pure" prefix P_;
+export circuit f(v: Bytes<220>): [] { P_emitPayload(P_payload1<224, 0>(P_header(pad(32, "a"), 3), P_bytesRecord<1, 220, 224>("v", v))); }

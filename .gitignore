@@ -5,8 +5,8 @@ node_modules/
 dist/
 coverage/
 
-# Compact compiler output. Policy for committed artefacts (keys, zkir) is decided in S2;
-# until then nothing under managed/ is committed.
+# Compact compiler output is never committed (decision Q24): builds are deterministic,
+# and the verifier-key hashes of every circuit are recorded in docs/costs.json.
 managed/
 
 # Local chain stack: generated ports, state and logs (docker/local-stack/)

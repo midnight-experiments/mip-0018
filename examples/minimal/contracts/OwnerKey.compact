@@ -1,0 +1,63 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// MIP-0018 minimal example 2 — OWNER KEY (no OpenZeppelin).
+//
+// One owner (account id = hash of a secret key held in the owner's private state) may publish,
+// rename (`setMetadata`) and withdraw (`withdrawMetadata`) the token's metadata, and mint.
+// Anyone may transfer; transfers and mints never emit metadata (MIP "Publishing").
+// OpenZeppelin users get the same with `Ownable` (examples/openzeppelin).
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+import "../../../packages/compact/src/Mip0018" prefix Mip0018_;
+import "MinimalToken" prefix Token_;
+
+export { Token_balances };
+
+export sealed ledger domain: Bytes<32>;
+export ledger owner: Bytes<32>;
+
+constructor(domainSep: Bytes<32>, initialOwner: Bytes<32>) {
+  domain = disclose(domainSep);
+  owner = disclose(initialOwner);
+}
+
+circuit assertOwner(): [] {
+  assert(Token_caller() == owner, "OwnerKey: caller is not the owner");
+}
+
+export circuit publishMetadata(): [] {
+  assertOwner();
+  Mip0018_emitPayload(Mip0018_commonFieldsWithStandards<10, 4, 8>(
+    domain, Mip0018_KIND_LEDGER(), "Acme Token", "ACME", 6, "mip-0004"));
+}
+
+/**
+ * Rename: a new `name` and `symbol` (one event; other fields keep their values). The sizes are part
+ * of the circuit: this one takes a 10-byte name and a 4-byte symbol; validate UTF-8 off chain.
+ */
+export circuit setMetadata(name: Bytes<10>, symbol: Bytes<4>): [] {
+  assertOwner();
+  Mip0018_emitPayload(Mip0018_payload2<4, 10, 6, 4>(
+    Mip0018_header(domain, Mip0018_KIND_LEDGER()), Mip0018_nameRecord<10>(name), Mip0018_symbolRecord<4>(symbol)));
+}
+
+/** Withdraw: the identity-wide tombstone (consumers hide the token and clear all its fields). */
+export circuit withdrawMetadata(): [] {
+  assertOwner();
+  Mip0018_emitPayload(Mip0018_tombstone(domain, Mip0018_KIND_LEDGER()));
+}
+
+export circuit mint(to: Bytes<32>, amount: Uint<64>): [] {
+  assertOwner();
+  Token__mint(to, amount);
+}
+
+export circuit transfer(to: Bytes<32>, amount: Uint<64>): [] {
+  Token_transfer(to, amount);
+}
+
+export pure circuit accountId(sk: Bytes<32>): Bytes<32> {
+  return Token_accountId(sk);
+}

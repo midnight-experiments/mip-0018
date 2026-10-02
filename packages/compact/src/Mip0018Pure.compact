@@ -1,0 +1,232 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// MIP-0018 On-Chain Token Metadata Emission — Compact module, ALTERNATIVE API:
+// individual pure circuits that return bytes, composed with `Bytes[...]` spreads.
+//
+// Pinned MIP text: midnightntwrk/midnight-improvement-proposals@b147c627e1bb15b5d15cc73cf30c2a36afd34dbb
+// (mips/mip-0018-on-chain-token-metadata.md, PR #340).
+//
+// Prefer the default module `Mip0018` (typed records serialized by Compact). This module
+// produces exactly the same bytes and exists because it does not use `serialize` on
+// non-event types: Compact 0.35.0 accepts that, but its standard-library documentation still
+// says `serialize` "can only be instantiated for an event type". If a later compiler enforces
+// the documentation, this module keeps working. It is self-contained (it does not import
+// `Mip0018`) for the same reason.
+//
+// Compact has no arithmetic on generic sizes, so each builder takes the size of what it
+// returns as an extra generic argument and the COMPILER CHECKS IT:
+//
+//   record:  R = 3 + K + V              e.g. utf8Record<4, 10, 17>("name", "Acme Token")
+//   payload: 33 + sum(records) + P = 256 e.g. payload4<17, 13, 12, 20, 161>(...)
+//
+// A wrong R or P is a compile error ("mismatch between actual return type Bytes<17> and
+// declared return type Bytes<16>"). Records can also be spread inline:
+//
+//   const p: Bytes<256> = Bytes[...header(domain, 3), ...nameRecord<10, 17>("Acme Token"),
+//                               ...pad(206, "")];
+//
+// Runtime-valued records cost about 1.5x the rows of the typed module (docs/costs.md);
+// literal payloads cost the same (the compiler folds them).
+//
+// Same caveats as `Mip0018`: UTF-8/JSON/URI validity of values is not checked in circuit;
+// access control is the contract's choice; never emit from normal token operations.
+// Built and tested with Compact 0.35.0 (language 0.27.0) and --feature-zkir-v3.
+
+pragma language_version >= 0.26.0;
+
+module Mip0018Pure {
+  import CompactStandardLibrary;
+
+  // ---------------------------------------------------------------------------
+  // Constants ("Event", "Token identity and authority", "Value types")
+  // ---------------------------------------------------------------------------
+
+  export pure circuit EVENT_NAME(): Bytes<32> {
+    return pad(32, "mip-0018:token-metadata[v1]");
+  }
+
+  export pure circuit KIND_SHIELDED(): Uint<8> {
+    return 1;
+  }
+
+  export pure circuit KIND_UNSHIELDED(): Uint<8> {
+    return 2;
+  }
+
+  export pure circuit KIND_LEDGER(): Uint<8> {
+    return 3;
+  }
+
+  export pure circuit VALTYPE_BYTES(): Uint<8> {
+    return 0;
+  }
+
+  export pure circuit VALTYPE_UTF8(): Uint<8> {
+    return 1;
+  }
+
+  export pure circuit VALTYPE_UINT(): Uint<8> {
+    return 2;
+  }
+
+  export pure circuit VALTYPE_JSON(): Uint<8> {
+    return 3;
+  }
+
+  export pure circuit VALTYPE_URI(): Uint<8> {
+    return 4;
+  }
+
+  export pure circuit VALTYPE_NULL(): Uint<8> {
+    return 5;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Header and records ("Payload")
+  // ---------------------------------------------------------------------------
+
+  /** `domainSep (32) | kind (1)`. Asserts kind is 1, 2 or 3. */
+  export pure circuit header(domainSep: Bytes<32>, kind: Uint<8>): Bytes<33> {
+    assert(kind >= 1 && kind <= 3, "MIP-0018: kind must be 1, 2 or 3");
+    return Bytes[...domainSep, kind];
+  }
+
+  // `keyLen | key | valType | valLen | value`; R = 3 + K + V is checked by the compiler.
+  // An empty key (K = 0), a key or value longer than 255 bytes are compile errors.
+  pure circuit rawRecord<#K, #V, #R>(key: Bytes<K>, valType: Uint<8>, value: Bytes<V>): Bytes<R> {
+    const keyIsNotEmpty = slice<1>(key, 0);
+    return Bytes[K, ...key, valType, V, ...value];
+  }
+
+  export pure circuit bytesRecord<#K, #V, #R>(key: Bytes<K>, value: Bytes<V>): Bytes<R> {
+    return rawRecord<K, V, R>(key, 0, value);
+  }
+
+  export pure circuit utf8Record<#K, #V, #R>(key: Bytes<K>, value: Bytes<V>): Bytes<R> {
+    return rawRecord<K, V, R>(key, 1, value);
+  }
+
+  /** `Uint<8>` value (1 byte); R = 4 + K. */
+  export pure circuit uintRecord<#K, #R>(key: Bytes<K>, value: Uint<8>): Bytes<R> {
+    return rawRecord<K, 1, R>(key, 2, value as Bytes<1>);
+  }
+
+  /** `Uint<128>` value (16 bytes, little-endian); R = 19 + K. */
+  export pure circuit uint128Record<#K, #R>(key: Bytes<K>, value: Uint<128>): Bytes<R> {
+    return rawRecord<K, 16, R>(key, 2, value as Bytes<16>);
+  }
+
+  export pure circuit jsonRecord<#K, #V, #R>(key: Bytes<K>, value: Bytes<V>): Bytes<R> {
+    return rawRecord<K, V, R>(key, 3, value);
+  }
+
+  export pure circuit uriRecord<#K, #V, #R>(key: Bytes<K>, value: Bytes<V>): Bytes<R> {
+    return rawRecord<K, V, R>(key, 4, value);
+  }
+
+  /** Null (tombstone) record; R = 3 + K. */
+  export pure circuit nullRecord<#K, #R>(key: Bytes<K>): Bytes<R> {
+    return rawRecord<K, 0, R>(key, 5, default<Bytes<0>>);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Common fields ("Common fields")
+  // ---------------------------------------------------------------------------
+
+  /** `name` record; R = 7 + N; N = 0 is a compile error. */
+  export pure circuit nameRecord<#N, #R>(name: Bytes<N>): Bytes<R> {
+    const nameIsNotEmpty = slice<1>(name, 0);
+    return utf8Record<4, N, R>("name", name);
+  }
+
+  /** `symbol` record; R = 9 + S; S = 0 is a compile error. */
+  export pure circuit symbolRecord<#S, #R>(symbol: Bytes<S>): Bytes<R> {
+    const symbolIsNotEmpty = slice<1>(symbol, 0);
+    return utf8Record<6, S, R>("symbol", symbol);
+  }
+
+  /** `decimals` record as `Uint<8>`: always 12 bytes. */
+  export pure circuit decimalsRecord(decimals: Uint<8>): Bytes<12> {
+    return uintRecord<8, 12>("decimals", decimals);
+  }
+
+  /** `standards` record; R = 12 + T. */
+  export pure circuit standardsRecord<#T, #R>(standards: Bytes<T>): Bytes<R> {
+    return utf8Record<9, T, R>("standards", standards);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Payloads: header + 1-4 records + P zero bytes; 33 + records + P = 256 is checked.
+  // ---------------------------------------------------------------------------
+
+  export pure circuit payload1<#A, #P>(h: Bytes<33>, r1: Bytes<A>): Bytes<256> {
+    return Bytes[...h, ...r1, ...default<Bytes<P>>];
+  }
+
+  export pure circuit payload2<#A, #B, #P>(h: Bytes<33>, r1: Bytes<A>, r2: Bytes<B>): Bytes<256> {
+    return Bytes[...h, ...r1, ...r2, ...default<Bytes<P>>];
+  }
+
+  export pure circuit payload3<#A, #B, #C, #P>(h: Bytes<33>, r1: Bytes<A>, r2: Bytes<B>, r3: Bytes<C>): Bytes<256> {
+    return Bytes[...h, ...r1, ...r2, ...r3, ...default<Bytes<P>>];
+  }
+
+  export pure circuit payload4<#A, #B, #C, #D, #P>(
+    h: Bytes<33>,
+    r1: Bytes<A>,
+    r2: Bytes<B>,
+    r3: Bytes<C>,
+    r4: Bytes<D>
+  ): Bytes<256> {
+    return Bytes[...h, ...r1, ...r2, ...r3, ...r4, ...default<Bytes<P>>];
+  }
+
+  /**
+   * `name`, `symbol`, `decimals`. RN = 7 + N, RS = 9 + S, P = 195 - N - S
+   * (33 + RN + RS + 12 + P = 256).
+   */
+  export pure circuit commonFields<#N, #S, #RN, #RS, #P>(
+    domainSep: Bytes<32>,
+    kind: Uint<8>,
+    name: Bytes<N>,
+    symbol: Bytes<S>,
+    decimals: Uint<8>
+  ): Bytes<256> {
+    return payload3<RN, RS, 12, P>(
+      header(domainSep, kind), nameRecord<N, RN>(name), symbolRecord<S, RS>(symbol), decimalsRecord(decimals));
+  }
+
+  /**
+   * `name`, `symbol`, `decimals`, `standards`. RN = 7 + N, RS = 9 + S, RT = 12 + T,
+   * P = 183 - N - S - T (A1: <10, 4, 8, 17, 13, 20, 161>).
+   */
+  export pure circuit commonFieldsWithStandards<#N, #S, #T, #RN, #RS, #RT, #P>(
+    domainSep: Bytes<32>,
+    kind: Uint<8>,
+    name: Bytes<N>,
+    symbol: Bytes<S>,
+    decimals: Uint<8>,
+    standards: Bytes<T>
+  ): Bytes<256> {
+    return payload4<RN, RS, 12, RT, P>(
+      header(domainSep, kind),
+      nameRecord<N, RN>(name),
+      symbolRecord<S, RS>(symbol),
+      decimalsRecord(decimals),
+      standardsRecord<T, RT>(standards));
+  }
+
+  /** The identity-wide tombstone: one Null record at key `name` (7 bytes) + 216 zero bytes. */
+  export pure circuit tombstone(domainSep: Bytes<32>, kind: Uint<8>): Bytes<256> {
+    return payload1<7, 216>(header(domainSep, kind), nullRecord<4, 7>("name"));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Emission
+  // ---------------------------------------------------------------------------
+
+  /** Emits `Misc { name: EVENT_NAME(), payload }` (disclosed). The only `emit`. */
+  export circuit emitPayload(payload: Bytes<256>): [] {
+    emit(Misc { name: EVENT_NAME(), payload: disclose(payload) });
+  }
+}
