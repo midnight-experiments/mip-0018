@@ -157,3 +157,43 @@ export function fromPortable(p: string): string {
 }
 
 export const KIND_NAME: Record<number, string> = { 1: 'native shielded', 2: 'native unshielded', 3: 'ledger' };
+
+/** The public facts of a run record the wallet-free commands use (read as plain JSON: no signer code). */
+export interface RecordInfo {
+  path: string;
+  network: { id: string; genesisHash: string };
+  contract: { name: string; address?: string };
+  steps: { id: string; kind: string; circuit?: string; state: string; tx?: { hash: string }; expectedEvents?: unknown[] }[];
+}
+
+export function readRecord(path: string): RecordInfo {
+  let r: RecordInfo & { kind?: string; schema?: number };
+  try {
+    r = JSON.parse(readFileSync(path, 'utf8'));
+  } catch (e) {
+    throw new UsageError(`--record ${path}: ${(e as Error).message}`);
+  }
+  if (r.kind !== 'mip0018-run-record' || r.schema !== 1) throw new UsageError(`${path} is not a version-1 mip0018 run record`);
+  return { ...r, path };
+}
+
+/** The contract address of a record (refuses a record of another network). */
+export function recordContract(r: RecordInfo, profile: NetworkProfile): string {
+  if (r.network.id !== profile.id) throw new UsageError(`${r.path} was made on ${r.network.id}, not ${profile.id}`);
+  if (!r.contract.address) throw new UsageError(`${r.path} has no contract address (not deployed)`);
+  return r.contract.address;
+}
+
+/** The step of a record whose transaction to verify: `--step`, or the only call step with logged events. */
+export function recordStep(r: RecordInfo, stepId?: string): { id: string; tx: string } {
+  if (stepId !== undefined) {
+    const s = r.steps.find((x) => x.id === stepId);
+    if (!s) throw new UsageError(`${r.path} has no step "${stepId}" (steps: ${r.steps.map((x) => x.id).join(', ')})`);
+    if (!s.tx?.hash) throw new UsageError(`step "${stepId}" of ${r.path} has no transaction (state ${s.state})`);
+    return { id: s.id, tx: s.tx.hash };
+  }
+  const c = r.steps.filter((x) => x.kind === 'call' && x.tx?.hash && (x.expectedEvents?.length ?? 0) > 0);
+  if (c.length !== 1)
+    throw new UsageError(`give --step: ${r.path} has ${c.length} call steps with events (${c.map((x) => x.id).join(', ') || 'none'})`);
+  return { id: c[0]!.id, tx: c[0]!.tx!.hash };
+}

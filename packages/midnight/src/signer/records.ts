@@ -65,6 +65,8 @@ export interface RunRecord {
     constructorArgs?: unknown;
     address?: string;
     privateStateId?: string;
+    /** Set when this record was attached to a contract it did not deploy (`--attach`): where the address came from. */
+    attached?: { from: string; at: string };
   };
   signer?: { unshieldedAddress: string };
   steps: StepRecord[];

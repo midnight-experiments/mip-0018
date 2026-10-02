@@ -27,7 +27,7 @@ import { normHex } from '../hex.ts';
 import { Indexer } from '../indexer.ts';
 import { checkIdentity, IdentityError, normGenesis } from '../network.ts';
 import { decodeTransaction, miscLogsOf } from '../raw.ts';
-import { circuitArgs, fromJsonLoose } from './args.ts';
+import { circuitArgs, fromJsonLoose, resolvePlaceholders } from './args.ts';
 import type { AdapterContext, ContractAdapter } from './adapter.ts';
 import { contractView, eventsInTx, pollFor, transactionState, wouldChange } from './check.ts';
 import { removeVerifierKey } from './maintenance.ts';
@@ -148,6 +148,14 @@ function ttlOf(tx: FinalizedTransaction): string | undefined {
   const intents = (tx as unknown as { intents?: Map<number, { ttl: Date }> }).intents;
   if (!intents || intents.size === 0) return undefined;
   return new Date(Math.max(...[...intents.values()].map((i) => i.ttl.getTime()))).toISOString();
+}
+
+/** The signer's public keys, for adapters and argument placeholders (hex, no 0x). */
+export function signerContext(run: Run): { coinPublicKey: string; unshieldedAddress: string } {
+  return {
+    coinPublicKey: String(run.o.session.shieldedSecretKeys.coinPublicKey).replace(/^0x/u, ''),
+    unshieldedAddress: String(run.o.session.keystore.getAddress()).replace(/^0x/u, ''),
+  };
 }
 
 function crashHook(run: Run, step: StepRecord): void {
@@ -311,8 +319,9 @@ export async function deployStep(
   const signingKey: SigningKey = sampleSigningKey();
   const privateState = a?.initialPrivateState?.();
   const privateStateId = a?.privateStateId ?? (privateState !== undefined ? run.o.artifacts.name : undefined);
-  const ctx: AdapterContext<unknown> = { privateState, coinPublicKey: String(run.o.session.shieldedSecretKeys.coinPublicKey), metadata };
-  const args = a?.constructorArgs ? a.constructorArgs(constructorJson, ctx) : (fromJsonLoose(constructorJson) as unknown[]);
+  const ctx: AdapterContext<unknown> = { privateState, ...signerContext(run), metadata };
+  const json = resolvePlaceholders(constructorJson, { ...signerContext(run), adapter: a?.values?.(ctx) }) as unknown[];
+  const args = a?.constructorArgs ? a.constructorArgs(json, ctx) : (fromJsonLoose(json) as unknown[]);
   const hooks = journal(run, step, async (_tx, d) => {
     if (d.deploys.length !== 1) throw new StepError(`deploy transaction holds ${d.deploys.length} deploys`, 'refused');
     const address = d.deploys[0]!.address;
@@ -414,10 +423,11 @@ export async function callStep(run: Run, input: CallInput): Promise<StepRecord> 
   }
   const ctx: AdapterContext<unknown> = {
     privateState: privateState ?? undefined,
-    coinPublicKey: String(run.o.session.shieldedSecretKeys.coinPublicKey),
+    ...signerContext(run),
     contractAddress: address,
   };
-  const args = a?.circuitArgs?.(input.circuit, input.args, ctx) ?? circuitArgs(run.o.artifacts.managedDir, input.circuit, input.args);
+  const json = resolvePlaceholders(input.args, { ...signerContext(run), adapter: a?.values?.(ctx) }) as unknown[];
+  const args = a?.circuitArgs?.(input.circuit, json, ctx) ?? circuitArgs(run.o.artifacts.managedDir, input.circuit, json);
   const current = await new Indexer(run.o.ep.profile.indexer, run.o.ep.profile.indexerWs).allContractEvents(address, {});
   const hooks = journal(run, step, async (_tx, d) => {
     const logs = miscLogsOf(d, address).filter((l) => l.name !== undefined && l.payload !== undefined);

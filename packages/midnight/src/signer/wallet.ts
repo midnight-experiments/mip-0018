@@ -242,7 +242,18 @@ export interface PublicIdentity {
   dust: string;
   nightUtxos: number;
   nightUtxosRegisteredForDust: number;
+  /** Unshielded balances per token type (hex) — NIGHT and every native unshielded token (kind 2 colors). */
+  unshieldedBalances: Record<string, string>;
+  /** Shielded balances per token type (hex) — every native shielded token the wallet holds (kind 1 colors). */
+  shieldedBalances: Record<string, string>;
 }
+
+const balanceMap = (b: unknown): Record<string, string> =>
+  Object.fromEntries(
+    Object.entries((b ?? {}) as Record<string, bigint>)
+      .map(([k, v]) => [String(k).toLowerCase().replace(/^0x/u, ''), String(v)] as [string, string])
+      .sort(([a], [c]) => (a < c ? -1 : 1)),
+  );
 
 /**
  * Bech32m of a wallet SDK address object through ITS OWN class codec. `MidnightBech32m.encode` looks the codec up by a
@@ -265,6 +276,8 @@ export const describeWallet = (session: WalletSession, state: FacadeState): Publ
     dust: state.dust.balance(new Date()).toString(),
     nightUtxos: nightCoins.length,
     nightUtxosRegisteredForDust: nightCoins.filter((c) => c.meta.registeredForDustGeneration).length,
+    unshieldedBalances: balanceMap(state.unshielded.balances),
+    shieldedBalances: balanceMap((state.shielded as unknown as { balances?: unknown }).balances),
   };
 };
 

@@ -18,10 +18,12 @@ import {
   filePrivateStateProvider,
   fromJsonLoose,
   fromJsonTyped,
+  hasPlaceholders,
   limiter,
   loadRecord,
   masterSeed,
   readProtectedFile,
+  resolvePlaceholders,
   saveRecord,
   seedFromHexFile,
   seedFromMnemonicFile,
@@ -71,7 +73,9 @@ describe('argument conversion', () => {
 
   it('converts typed values and refuses wrong sizes/ranges', () => {
     expect(fromJsonTyped({ $utf8: 'ACME' }, { 'type-name': 'Bytes', length: 4 })).toEqual(new TextEncoder().encode('ACME'));
-    expect(fromJsonTyped({ $utf8: 'AB' }, { 'type-name': 'Bytes', length: 4 })).toEqual(Uint8Array.from([0x41, 0x42, 0, 0]));
+    // shorter text is refused (zero padding would become part of a MIP-0018 value) unless padding is asked for
+    expect(() => fromJsonTyped({ $utf8: 'AB' }, { 'type-name': 'Bytes', length: 4 })).toThrow(/needs exactly 4/);
+    expect(fromJsonTyped({ $utf8: 'AB', pad: true }, { 'type-name': 'Bytes', length: 4 })).toEqual(Uint8Array.from([0x41, 0x42, 0, 0]));
     expect(() => fromJsonTyped({ $utf8: 'ACMEX' }, { 'type-name': 'Bytes', length: 4 })).toThrow(ArgsError);
     expect(() => fromJsonTyped('0x0102', { 'type-name': 'Bytes', length: 3 })).toThrow(/needs 3 bytes/);
     expect(fromJsonTyped('18446744073709551615', { 'type-name': 'Uint', maxval: '18446744073709551615' })).toBe(18446744073709551615n);
@@ -109,6 +113,42 @@ describe('argument conversion', () => {
       { wit_OwnableSK: (c: { privateState: unknown }) => [c.privateState, new Uint8Array(32)] },
     );
     expect(oz).toBeTruthy();
+  });
+
+  it('resolves placeholders before conversion ($signer, $random, $adapter) and refuses unknown ones', () => {
+    const ctx = {
+      coinPublicKey: 'aa'.repeat(32),
+      unshieldedAddress: 'bb'.repeat(32),
+      adapter: { ownerAccount: { is_left: true, left: '0x' + 'cc'.repeat(32), right: { bytes: '0x' + '00'.repeat(32) } } },
+      random: (n: number) => new Uint8Array(n).fill(7),
+    };
+    const json = [
+      { bytes: { $signer: 'coinPublicKey' } },
+      { bytes: { $signer: 'unshieldedAddress' } },
+      { $random: 4 },
+      { $adapter: 'ownerAccount' },
+      1000,
+      { $utf8: 'ACME' },
+    ];
+    expect(hasPlaceholders(json)).toBe(true);
+    expect(hasPlaceholders([1, '0x00', { $utf8: 'A' }])).toBe(false);
+    expect(resolvePlaceholders(json, ctx)).toEqual([
+      { bytes: '0x' + 'aa'.repeat(32) },
+      { bytes: '0x' + 'bb'.repeat(32) },
+      '0x07070707',
+      ctx.adapter.ownerAccount,
+      1000,
+      { $utf8: 'ACME' },
+    ]);
+    expect(() => resolvePlaceholders([{ $signer: 'secretKey' }], ctx)).toThrow(ArgsError);
+    expect(() => resolvePlaceholders([{ $signer: 'coinPublicKey' }], {})).toThrow(/not available/);
+    expect(() => resolvePlaceholders([{ $random: 0 }], ctx)).toThrow(ArgsError);
+    expect(() => resolvePlaceholders([{ $adapter: 'nope' }], ctx)).toThrow(/offers ownerAccount/);
+    // a fresh random value per resolution (default source)
+    const a = resolvePlaceholders({ $random: 32 }, {}) as string;
+    const b = resolvePlaceholders({ $random: 32 }, {}) as string;
+    expect(a).toMatch(/^0x[0-9a-f]{64}$/u);
+    expect(a).not.toBe(b);
   });
 
   it('typed-JSON convention for constructor arguments', () => {

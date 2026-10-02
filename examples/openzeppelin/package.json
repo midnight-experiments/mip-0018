@@ -21,6 +21,7 @@
     "@midnight-ntwrk/midnight-js-node-zk-config-provider": "5.0.0-rc.2",
     "@mip0018/codec": "0.1.0",
     "@mip0018/consumer": "0.1.0",
+    "@mip0018/midnight": "0.1.0",
     "@types/node": "24.19.1",
     "typescript": "6.0.3",
     "vitest": "5.0.3"

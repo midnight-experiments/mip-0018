@@ -8,7 +8,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
-import { checkIdentity, verifyEmission, type EventExpectation } from '@mip0018/midnight';
+import { checkIdentity, normAddress, verifyEmission, type EventExpectation } from '@mip0018/midnight';
 import {
   StepError,
   callStep,
@@ -23,6 +23,7 @@ import {
   openWallet,
   registerDust,
   removeVerifierKeyStep,
+  signerContext,
   waitForSync,
   type CompiledArtifacts,
   type ContractAdapter,
@@ -45,6 +46,7 @@ import {
   parse,
   portablePath,
   profileFrom,
+  readRecord,
   repoRoot,
   short,
   str,
@@ -167,6 +169,10 @@ export async function cmdWallet(argv: string[]): Promise<number> {
           ['NIGHT', `${id.night} STAR in ${id.nightUtxos} UTxO(s), ${id.nightUtxosRegisteredForDust} registered for DUST`],
           ['DUST', `${id.dust} SPECK`],
         ]);
+      if (!v.json) {
+        for (const [t, b] of Object.entries(id.unshieldedBalances)) out(`unshielded  ${t}  ${b}`);
+        for (const [t, b] of Object.entries(id.shieldedBalances)) out(`shielded    ${t}  ${b}`);
+      }
       return EXIT.ok;
     }
     const r = await registerDust(session, { estimateOnly: v.estimate === true });
@@ -219,7 +225,18 @@ async function contractSource(v: Values, recordPath?: string): Promise<ContractS
   return { artifacts: { name: basename(dir), managedDir: dir } };
 }
 
+/** A deploy or a call needs the compiled verifier keys (a `--skip-zk` build has none). */
+function requireKeys(src: ContractSource): void {
+  if (existsSync(join(src.artifacts.managedDir, 'keys'))) return;
+  const c = src.adapter?.compile;
+  const how = c
+    ? `npm run -s ${c.script} -w ${c.workspace}${c.args?.length ? ` -- ${c.args.join(' ')}` : ''}`
+    : 'compact compile (without --skip-zk)';
+  throw new UsageError(`${src.artifacts.managedDir} has no keys/ (a --skip-zk build?): compile with keys first: ${how}`);
+}
+
 async function withRun<T>(v: Values, recordPath: string, src: ContractSource, f: (run: Run) => Promise<T>): Promise<T> {
+  requireKeys(src);
   const log = logger(v);
   const ep = endpoints(v);
   const ps = privateStatePath(v);
@@ -293,6 +310,42 @@ export async function cmdDeploy(argv: string[]): Promise<number> {
   });
 }
 
+// ---------------------------------------------------------------------------------------------------------- attach
+
+/** `--attach <address|@record>` → the contract address (normalized). */
+function attachAddress(v: Values): { address: string; from: string } | undefined {
+  const a = str(v, 'attach');
+  if (a === undefined) return undefined;
+  if (a.startsWith('@')) {
+    const r = readRecord(a.slice(1));
+    if (!r.contract.address) throw new UsageError(`${a.slice(1)} has no contract address`);
+    return { address: normAddress(r.contract.address), from: portablePath(a.slice(1)) };
+  }
+  try {
+    return { address: normAddress(a), from: 'command line' };
+  } catch (e) {
+    throw new UsageError(`--attach: ${(e as Error).message}`);
+  }
+}
+
+/** Binds a fresh record to an existing contract (it deploys nothing; the before-check still requires the contract). */
+function attachRecord(run: Run, a: { address: string; from: string }, src: ContractSource): void {
+  const c = run.record.contract;
+  if (c.address !== undefined) {
+    if (c.address !== a.address) throw new UsageError(`${run.o.recordPath} is bound to ${c.address}, not ${a.address}`);
+    return;
+  }
+  if (run.record.steps.some((s) => s.kind === 'deploy'))
+    throw new UsageError(`${run.o.recordPath} has a deploy step; --attach needs a new record`);
+  c.address = a.address;
+  c.attached = { from: a.from, at: new Date().toISOString() };
+  const ad = src.adapter;
+  const psId = ad?.privateStateId ?? (ad?.initialPrivateState ? src.artifacts.name : undefined);
+  if (psId !== undefined) c.privateStateId = psId;
+  run.save();
+  run.log(`record attached to ${a.address} (from ${a.from})`);
+}
+
 // --------------------------------------------------------------------------------------------------------- publish
 
 export const PUBLISH_USAGE = `
@@ -307,7 +360,11 @@ After: completed only when exactly those events are observed in that transaction
   --step <id>           step name (default circuit + hash of the arguments; reuse an id to resume it, use a new
                         id to publish the same arguments again)
   --force               skip the "already present" check (re-emit identical values on purpose)
+  --attach <address|@record>  start a NEW record for a contract this record did not deploy (with --example,
+                        --adapter or --contract): e.g. another signer calling an owner-only circuit; the signer's
+                        own private state is used (a fresh one if it has none: not the owner)
   --adapter / --contract  override what the record names
+  --args placeholders   {"$signer": "coinPublicKey" | "unshieldedAddress"}, {"$random": N}, {"$adapter": "<name>"}
 ${SIGNER_HELP}
 Exit: 0 completed (or already present) · 1 failed or refused · 2 usage · 4 outcome unknown (re-run)
 `;
@@ -319,10 +376,12 @@ export async function cmdPublish(argv: string[]): Promise<number> {
       ...SIGNER_OPTIONS,
       contract: { type: 'string' },
       adapter: { type: 'string' },
+      example: { type: 'string' },
       record: { type: 'string' },
       circuit: { type: 'string' },
       args: { type: 'string' },
       step: { type: 'string' },
+      attach: { type: 'string' },
       force: { type: 'boolean', default: false },
     },
     PUBLISH_USAGE,
@@ -331,9 +390,13 @@ export async function cmdPublish(argv: string[]): Promise<number> {
   const circuit = str(v, 'circuit', true)!;
   const args = (jsonArg(v, 'args') ?? []) as unknown[];
   if (!Array.isArray(args)) throw new UsageError('--args must be a JSON array');
-  const src = await contractSource(v, recordPath);
+  const attach = attachAddress(v);
+  if (attach && !str(v, 'example') && !str(v, 'adapter') && !str(v, 'contract'))
+    throw new UsageError('--attach needs --example, --adapter or --contract (what the contract is)');
+  const src = await contractSource(v, attach ? undefined : recordPath);
   return withRun(v, recordPath, src, async (run) => {
     try {
+      if (attach) attachRecord(run, attach, src);
       await callStep(run, { circuit, args, ...(str(v, 'step') ? { stepId: str(v, 'step')! } : {}) });
       return EXIT.ok;
     } catch (e) {
@@ -393,14 +456,18 @@ export async function cmdRemoveCircuit(argv: string[]): Promise<number> {
 // -------------------------------------------------------------------------------------------- deploy-and-publish
 
 export const DAP_USAGE = `
-mip0018 deploy-and-publish --example <name> [--metadata <json>] --network <id> --record <file> [--compile] [--no-verify]
+mip0018 deploy-and-publish (--example <name> | --adapter <file>) [--metadata <json>] --network <id> --record <file>
+                           [--compile] [--no-verify]
 
-The request's "deploy + emit" in one command: (compile when managed/ is missing or --compile) → deploy → every
-publish call the example's adapter derives from --metadata → verify each publish transaction (wallet-free checks,
-expecting exactly the metadata's payload). Each step is guarded by the before/after checks; re-run to resume.
-The example is examples/<name>, examples/openzeppelin/<name> or test-contracts/<name> with a mip0018.adapter.ts.
+The request's "deploy + emit" in one command: compile (with keys, when managed/ has none or --compile) → deploy →
+every call the example's adapter lists (e.g. mints, then the publish) → verify each emitting transaction
+(wallet-free checks, expecting exactly the adapter's payloads). Each step is guarded by the before/after checks;
+re-run the same command to resume. The example is examples/<name>, examples/openzeppelin/<name> or
+test-contracts/<name> with a mip0018.adapter.ts.
 
-  --metadata <json|@file>  {"domainSep": "0x…", "kind": 1|2|3, "name", "symbol", "decimals", "standards"}
+  --metadata <json|@file>  {"domainSep": "0x…", "kind": 1|2|3, "name", "symbol", "decimals", "standards"} — for
+                           examples whose values are compiled in (all of this repository's), it must equal the
+                           example's own metadata (default) or the command is refused before anything runs
 ${SIGNER_HELP}`;
 
 export async function cmdDeployAndPublish(argv: string[]): Promise<number> {
@@ -423,44 +490,45 @@ export async function cmdDeployAndPublish(argv: string[]): Promise<number> {
   const metadata = jsonArg(v, 'metadata') as MetadataInput | undefined;
   const src = await contractSource(v);
   const log = logger(v);
-  if (v.compile || !existsSync(join(src.artifacts.managedDir, 'contract', 'index.js'))) {
-    const c = src.adapter?.compile;
-    if (!c) throw new UsageError(`${src.artifacts.managedDir} is missing and the adapter says nothing about compiling`);
-    log(`compiling: npm run ${c.script} -w ${c.workspace}`);
-    const r = spawnSync('npm', ['run', '-s', c.script, '-w', c.workspace], { cwd: repoRoot(), stdio: ['ignore', 'inherit', 'inherit'] });
+  const adapter = src.adapter!;
+  // The adapter checks --metadata against what the contract can emit BEFORE anything is compiled or signed.
+  const deployArgs = adapter.deployArgs?.(metadata) ?? [];
+  const dir = src.artifacts.managedDir;
+  if (v.compile || !existsSync(join(dir, 'contract', 'index.js')) || !existsSync(join(dir, 'keys'))) {
+    const c = adapter.compile;
+    if (!c) throw new UsageError(`${dir} has no keys and the adapter says nothing about compiling`);
+    const args = ['run', '-s', c.script, '-w', c.workspace, ...(c.args?.length ? ['--', ...c.args] : [])];
+    log(`compiling with keys: npm ${args.join(' ')}`);
+    const r = spawnSync('npm', args, { cwd: repoRoot(), stdio: ['ignore', 'inherit', 'inherit'] });
     if (r.status !== 0) return EXIT.failed;
   }
-  const adapter = src.adapter!;
   return withRun(v, recordPath, src, async (run) => {
     let code: number = EXIT.ok;
     const verified: unknown[] = [];
     try {
-      await deployStep(run, adapter.deployArgs?.(metadata) ?? [], metadata);
-      const ctx = {
-        coinPublicKey: String(run.o.session.shieldedSecretKeys.coinPublicKey),
-        metadata,
-        contractAddress: run.record.contract.address,
-      };
+      await deployStep(run, deployArgs, metadata);
+      const ctx = { ...signerContext(run), metadata, contractAddress: run.record.contract.address };
       for (const p of adapter.publish?.(metadata, ctx) ?? []) {
-        const step = await callStep(run, { circuit: p.circuit, args: p.args });
+        const step = await callStep(run, { circuit: p.circuit, args: p.args, ...(p.stepId ? { stepId: p.stepId } : {}) });
         if (v['no-verify'] || !step.tx) continue;
-        const expect: EventExpectation | undefined = metadata
-          ? {
-              metadata: {
-                domainSep: metadata.domainSep,
-                kind: metadata.kind,
-                name: metadata.name,
-                symbol: metadata.symbol,
-                decimals: metadata.decimals,
-                standards: metadata.standards,
-              },
-            }
-          : undefined;
+        let expect: EventExpectation[] | EventExpectation | undefined = p.expect;
+        if (expect === undefined && metadata)
+          expect = {
+            metadata: {
+              domainSep: metadata.domainSep,
+              kind: metadata.kind,
+              name: metadata.name,
+              symbol: metadata.symbol,
+              decimals: metadata.decimals,
+              standards: metadata.standards,
+            },
+          };
+        if (Array.isArray(expect) && expect.length === 0) continue; // emits nothing (e.g. a mint): the after-check saw zero events
         const r = await verifyEmission({
           profile: run.o.ep.profile,
           contract: run.record.contract.address!,
           tx: step.tx.hash,
-          expect,
+          expect, // an array is checked event by event, including the count
           waitMs: 60_000,
         });
         verified.push(r);

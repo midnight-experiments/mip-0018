@@ -5,12 +5,17 @@
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import {
+  compareState,
+  expectedStateFrom,
   listMetadata,
   loadState,
   lookupColor,
+  normAddress,
+  projectState,
   reduceScannedEvents,
   scan,
   statePath,
+  tokenTypeHex,
   verifyEmission,
   type EventExpectation,
   type ListReport,
@@ -30,6 +35,9 @@ import {
   out,
   parse,
   profileFrom,
+  readRecord,
+  recordContract,
+  recordStep,
   repoRoot,
   short,
   str,
@@ -38,7 +46,7 @@ import {
 // ---------------------------------------------------------------------------------------------------------- verify
 
 export const VERIFY_USAGE = `
-mip0018 verify --network <stagenet|undeployed> --contract <address> --tx <hash> [options]
+mip0018 verify --network <stagenet|undeployed> (--contract <address> --tx <hash> | --record <file> [--step <id>]) [options]
 
 Checks one emission without a wallet: the contract's Misc event(s) in that transaction (indexer), the event name,
 the contract address from the event record, the decoded payload (accept / reject / ignore with the reason), the raw
@@ -48,6 +56,8 @@ hash, finality and the raw bytes inside the block's extrinsic.
   --expect <json|@file>   expectation per event (object = the only event, array = per event in order):
                           {"metadata": {"domainSep","kind","name","symbol","decimals","standards"}} | {"payload": hex}
                           | {"result": "accept|reject|ignore", "reason": …} | {"records": [...]} | {"domainSep","kind"}
+  --record <file>         take the contract address and the transaction from a run record (public JSON)
+  --step <id>             the record's step (default: its only call step that logged events)
   --wait <seconds>        keep polling the indexer for the transaction (default 0)
   --no-extrinsic-check    skip chain_getBlock
   --json                  JSON report
@@ -112,6 +122,8 @@ export async function cmdVerify(argv: string[]): Promise<number> {
       ...NETWORK_OPTIONS,
       contract: { type: 'string' },
       tx: { type: 'string' },
+      record: { type: 'string' },
+      step: { type: 'string' },
       expect: { type: 'string' },
       wait: { type: 'string' },
       'no-extrinsic-check': { type: 'boolean', default: false },
@@ -119,8 +131,17 @@ export async function cmdVerify(argv: string[]): Promise<number> {
     VERIFY_USAGE,
   );
   const profile = profileFrom(v);
-  const contract = str(v, 'contract', true)!;
-  const tx = str(v, 'tx', true)!;
+  let contract = str(v, 'contract');
+  let tx = str(v, 'tx');
+  const recordPath = str(v, 'record');
+  if (recordPath !== undefined) {
+    if (contract !== undefined || tx !== undefined) throw new UsageError('--record excludes --contract and --tx');
+    const r = readRecord(recordPath);
+    contract = recordContract(r, profile);
+    tx = recordStep(r, str(v, 'step')).tx;
+  } else if (str(v, 'step') !== undefined) throw new UsageError('--step needs --record');
+  if (contract === undefined) throw new UsageError('--contract (or --record) is required');
+  if (tx === undefined) throw new UsageError('--tx (or --record) is required');
   const expect = jsonArg(v, 'expect') as EventExpectation | EventExpectation[] | undefined;
   const r = await verifyEmission({
     profile,
@@ -138,17 +159,22 @@ export async function cmdVerify(argv: string[]): Promise<number> {
 // ------------------------------------------------------------------------------------------------------------ list
 
 export const LIST_USAGE = `
-mip0018 list --network <stagenet|undeployed> --contract <address> [options]
+mip0018 list --network <stagenet|undeployed> (--contract <address> | --record <file>) [options]
 
 Every MIP-0018 event of a contract in chain order and the current metadata per token identity (reference consumer):
 visibility, fields (usable or not), color for kinds 1 and 2, symbol groups and the source events. Pages the indexer
 until an empty page; refuses rather than truncates. The indexer serves finalized blocks only, so the state is the
 finalized one (--finalized is accepted and always true).
 
+  --record <file>       the contract of a run record
+  --expect <json|@file> the expected state (identities, groups[, counts]) or a metadata.json (its "expected"):
+                        compared by (domainSep, kind); exit 1 with the differences when it does not match
   --to-block <height>   state as of that block (inclusive)
   --history             also show replaced values (marked history)
   --max-events <n>      refuse above n events (default 100000)
   --json                JSON report
+
+Exit: 0 ok · 1 the indexer tip differs from the node, or --expect does not match · 2 usage
 `;
 
 function fieldText(f: IdentityView['fields'][number]): string {
@@ -211,6 +237,8 @@ export async function cmdList(argv: string[]): Promise<number> {
     {
       ...NETWORK_OPTIONS,
       contract: { type: 'string' },
+      record: { type: 'string' },
+      expect: { type: 'string' },
       'to-block': { type: 'string' },
       history: { type: 'boolean', default: false },
       'max-events': { type: 'string' },
@@ -218,16 +246,36 @@ export async function cmdList(argv: string[]): Promise<number> {
     },
     LIST_USAGE,
   );
+  const profile = profileFrom(v);
+  let contract = str(v, 'contract');
+  const recordPath = str(v, 'record');
+  if (recordPath !== undefined) {
+    if (contract !== undefined) throw new UsageError('--record excludes --contract');
+    contract = recordContract(readRecord(recordPath), profile);
+  }
+  if (contract === undefined) throw new UsageError('--contract (or --record) is required');
+  const expectJson = jsonArg(v, 'expect');
+  let expected;
+  try {
+    expected = expectJson === undefined ? undefined : expectedStateFrom(expectJson);
+  } catch (e) {
+    throw new UsageError(`--expect: ${(e as Error).message}`);
+  }
   const r = await listMetadata({
-    profile: profileFrom(v),
-    contract: str(v, 'contract', true)!,
+    profile,
+    contract,
     toBlock: int(v, 'to-block'),
     history: v.history === true,
     maxEvents: int(v, 'max-events'),
   });
-  if (v.json) emitJson(r);
-  else printList(r);
-  return r.snapshot.tipMatchesNode ? EXIT.ok : EXIT.failed;
+  const expectation = expected ? compareState(projectState(r.identities, r.groups, r.counts), expected) : undefined;
+  if (v.json) emitJson(expectation ? { ...r, expectation } : r);
+  else {
+    printList(r);
+    if (expectation) kv([['expected', expectation.ok ? 'matches' : `DIFFERS:\n  ${expectation.differences.join('\n  ')}`]]);
+  }
+  if (!r.snapshot.tipMatchesNode) return EXIT.failed;
+  return expectation && !expectation.ok ? EXIT.failed : EXIT.ok;
 }
 
 // ----------------------------------------------------------------------------------------------------------- index
@@ -327,12 +375,15 @@ export async function cmdIndex(argv: string[]): Promise<number> {
 // ---------------------------------------------------------------------------------------------------------- lookup
 
 export const LOOKUP_USAGE = `
-mip0018 lookup --color <hex> --state <dir> [--kind 1|2] [--network <id> …] [--json]
+mip0018 lookup (--color <hex> | (--contract <address> | --record <file>) --domain-sep <hex>) --state <dir>
+               [--kind 1|2] [--network <id> …] [--json]
 
 Resolves a color (the 32-byte token type of a shielded coin or unshielded UTXO) through the scanner's table to the
 token identity (contract, domainSep, kind) and its current metadata: live from the indexer when --network is given
 (the contract's whole history), otherwise from the MIP-0018 events the scan recorded (scanned range only).
 Kind 3 (ledger tokens) has no color: list the contract's kind-3 events with \`mip0018 list\` instead.
+With --contract/--record and --domain-sep the color is computed (tokenType(domainSep, contract)) and looked up:
+the table must hold exactly that contract and domainSep for it.
 
 Exit: 0 resolved · 2 usage (e.g. --kind 3) · 3 not minted in the scanned range
 `;
@@ -340,7 +391,15 @@ Exit: 0 resolved · 2 usage (e.g. --kind 3) · 3 not minted in the scanned range
 export async function cmdLookup(argv: string[]): Promise<number> {
   const v = parse(
     argv,
-    { ...NETWORK_OPTIONS, color: { type: 'string' }, state: { type: 'string' }, kind: { type: 'string' } },
+    {
+      ...NETWORK_OPTIONS,
+      color: { type: 'string' },
+      contract: { type: 'string' },
+      record: { type: 'string' },
+      'domain-sep': { type: 'string' },
+      state: { type: 'string' },
+      kind: { type: 'string' },
+    },
     LOOKUP_USAGE,
   );
   const kindArg = int(v, 'kind');
@@ -350,8 +409,36 @@ export async function cmdLookup(argv: string[]): Promise<number> {
   const stateDir = str(v, 'state', true)!;
   const s = loadState(stateDir);
   if (!s) throw new UsageError(`no index state in ${stateDir} (run mip0018 index first)`);
-  const color = str(v, 'color', true)!;
+  let color = str(v, 'color');
+  let computedFrom: { contract: string; domainSep: string } | undefined;
+  const ds = str(v, 'domain-sep');
+  if (ds !== undefined) {
+    if (color !== undefined) throw new UsageError('--domain-sep computes the color: drop --color');
+    let contract = str(v, 'contract');
+    const recordPath = str(v, 'record');
+    if (recordPath !== undefined) {
+      const rec = readRecord(recordPath);
+      if (rec.network.id !== s.network.id)
+        throw new UsageError(`${recordPath} is for ${rec.network.id}; the index state for ${s.network.id}`);
+      if (!rec.contract.address) throw new UsageError(`${recordPath} has no contract address`);
+      contract = rec.contract.address;
+    }
+    if (contract === undefined) throw new UsageError('--domain-sep needs --contract or --record');
+    try {
+      color = tokenTypeHex(ds, contract);
+    } catch (e) {
+      throw new UsageError((e as Error).message);
+    }
+    computedFrom = { contract: normAddress(contract), domainSep: ds.replace(/^0x/u, '').toLowerCase() };
+  }
+  if (color === undefined) throw new UsageError('--color (or --contract/--record with --domain-sep) is required');
   const r = lookupColor(s, color, kindArg as 1 | 2 | undefined);
+  if (r.found && computedFrom && (r.entry!.contractAddress !== computedFrom.contract || r.entry!.domainSep !== computedFrom.domainSep)) {
+    process.stderr.write(
+      `mip0018: the table maps ${color} to ${r.entry!.contractAddress}/${r.entry!.domainSep}, not ${computedFrom.contract}/${computedFrom.domainSep}\n`,
+    );
+    return EXIT.failed;
+  }
   if (!r.found) {
     if (v.json) emitJson(r);
     else out(`color ${r.color} was not minted in the scanned range [${r.scanned.from}, ${r.scanned.to}] of ${r.scanned.network}`);

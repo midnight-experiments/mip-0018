@@ -2,7 +2,7 @@
 //
 // mip0018 — the MIP-0018 reference CLI.
 //
-//   wallet-free:  verify · list · index · lookup · vectors run
+//   wallet-free:  verify · list · index · lookup · vectors run · recheck
 //   signer:       wallet status|register-dust · deploy · publish · remove-circuit · deploy-and-publish
 //
 // Run it through npm in the pinned image: `docker/run.sh mip0018 -- <command> …` (wallet-free) or
@@ -20,6 +20,7 @@ wallet-free (no secret, any container):
   index                mint scanner: from a start height, build color → (contract, domainSep, kinds) + events
   lookup               resolve a color through the scanner's table to the identity and its metadata
   vectors run          run the test vectors against a consumer (runner contract)
+  recheck              re-check a recorded case folder (verify, list, keys, colors) from its case.json
 
 signer (docker/signer.sh; wallet secret from a file):
   wallet status        public addresses and balances
@@ -47,6 +48,8 @@ export async function main(argv: string[]): Promise<number> {
         return await cmdLookup(rest);
       case 'vectors':
         return cmdVectors(rest);
+      case 'recheck':
+        return await (await import('./recheck.ts')).cmdRecheck(rest);
       case 'wallet':
       case 'deploy':
       case 'publish':

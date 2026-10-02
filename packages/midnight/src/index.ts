@@ -14,3 +14,5 @@ export * from './color.ts';
 export * from './verify.ts';
 export * from './list.ts';
 export * from './scanner.ts';
+export * from './expect-state.ts';
+export * from './contract-state.ts';

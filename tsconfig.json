@@ -17,7 +17,10 @@
     "vitest.config.ts",
     "examples/**/scripts/**/*.ts",
     "test-contracts/*/scripts/**/*.ts",
-    "packages/*/scripts/**/*.ts"
+    "packages/*/scripts/**/*.ts",
+    "examples/**/*.adapter.ts",
+    "test-contracts/*/*.adapter.ts",
+    "deployments/**/*.ts"
   ],
   "exclude": ["**/node_modules/**", "**/managed/**", "**/dist/**"]
 }

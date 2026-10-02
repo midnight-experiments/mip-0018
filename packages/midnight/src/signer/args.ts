@@ -5,7 +5,9 @@
 // Circuit arguments are converted WITH their types, read from the compiler's `compiler/contract-info.json`
 // (`circuits[].arguments[].type`), so a wrong size or range is refused before anything is proved:
 //
-//   Bytes<N>     "0x…" / hex of exactly N bytes, or {"$utf8": "text"} (UTF-8, zero-padded to N; longer is refused)
+//   Bytes<N>     "0x…" / hex of exactly N bytes, or {"$utf8": "text"}: UTF-8 of EXACTLY N bytes — shorter text is
+//                refused, because zero padding becomes part of a MIP-0018 value ("SPS" in Bytes<4> is "SPS\0");
+//                {"$utf8": "text", "pad": true} zero-pads on purpose (e.g. a pad(32, "…") domain separator)
 //   Uint<…>      number, decimal string or {"$bigint": "…"} → bigint (0 ≤ v ≤ maxval)
 //   Field        same as Uint (no range check beyond ≥ 0)
 //   Boolean      true / false
@@ -19,12 +21,76 @@
 // convention: "0x…" → bytes, {"$utf8": "text", "pad": N} → UTF-8 bytes zero-padded to N, numbers and
 // {"$bigint"} → bigint, {"$string": "…"} → string (escape), other strings → string, booleans, arrays and objects
 // recursively.
+//
+// Placeholders (resolved FIRST, for constructor and circuit arguments alike, so one command line works for any
+// signer — e.g. "mint to myself"): an object with exactly one of these keys is replaced by a JSON value:
+//
+//   {"$signer": "coinPublicKey"}       the signer wallet's shielded coin public key ("0x…", 32 bytes)
+//   {"$signer": "unshieldedAddress"}   the signer wallet's unshielded user address ("0x…", 32 bytes)
+//   {"$random": N}                     N fresh random bytes ("0x…"; e.g. a shielded mint's nonce), 1 ≤ N ≤ 1024
+//   {"$adapter": "<name>"}             a value the contract adapter offers (e.g. the owner's account id)
+//
+// The run record keeps the arguments AS GIVEN (with the placeholders): the step id stays the same on a re-run.
 
+import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 export class ArgsError extends Error {
   override name = 'ArgsError';
+}
+
+/** What placeholders resolve against. */
+export interface PlaceholderContext {
+  /** Shielded coin public key of the signer (hex, no 0x). */
+  coinPublicKey?: string;
+  /** Unshielded user address of the signer (hex, no 0x). */
+  unshieldedAddress?: string;
+  /** Named JSON values the adapter offers (`{"$adapter": name}`). */
+  adapter?: Record<string, unknown>;
+  /** Random source (tests). */
+  random?: (n: number) => Uint8Array;
+}
+
+const PLACEHOLDER_KEYS = ['$signer', '$random', '$adapter'] as const;
+
+/** Whether a JSON value contains a placeholder anywhere. */
+export function hasPlaceholders(v: unknown): boolean {
+  if (Array.isArray(v)) return v.some(hasPlaceholders);
+  if (v && typeof v === 'object') {
+    const keys = Object.keys(v);
+    if (keys.length === 1 && (PLACEHOLDER_KEYS as readonly string[]).includes(keys[0]!)) return true;
+    return Object.values(v).some(hasPlaceholders);
+  }
+  return false;
+}
+
+/** Replaces every placeholder in a JSON value (see the header). Unknown names are refused. */
+export function resolvePlaceholders(v: unknown, ctx: PlaceholderContext): unknown {
+  if (Array.isArray(v)) return v.map((x) => resolvePlaceholders(x, ctx));
+  if (!v || typeof v !== 'object') return v;
+  const o = v as Record<string, unknown>;
+  const keys = Object.keys(o);
+  if (keys.length === 1 && keys[0] === '$signer') {
+    const what = o.$signer;
+    const hex = what === 'coinPublicKey' ? ctx.coinPublicKey : what === 'unshieldedAddress' ? ctx.unshieldedAddress : undefined;
+    if (what !== 'coinPublicKey' && what !== 'unshieldedAddress')
+      throw new ArgsError(`{"$signer": ${JSON.stringify(what)}}: one of "coinPublicKey", "unshieldedAddress"`);
+    if (hex === undefined) throw new ArgsError(`{"$signer": "${what}"} is not available here (no wallet)`);
+    return `0x${hex.replace(/^0x/u, '')}`;
+  }
+  if (keys.length === 1 && keys[0] === '$random') {
+    const n = o.$random;
+    if (typeof n !== 'number' || !Number.isInteger(n) || n < 1 || n > 1024) throw new ArgsError('{"$random": N} needs 1 ≤ N ≤ 1024');
+    return `0x${Buffer.from((ctx.random ?? ((k: number) => Uint8Array.from(randomBytes(k))))(n)).toString('hex')}`;
+  }
+  if (keys.length === 1 && keys[0] === '$adapter') {
+    const name = String(o.$adapter);
+    if (!ctx.adapter || !(name in ctx.adapter))
+      throw new ArgsError(`{"$adapter": "${name}"}: the adapter offers ${Object.keys(ctx.adapter ?? {}).join(', ') || 'no values'}`);
+    return ctx.adapter[name];
+  }
+  return Object.fromEntries(Object.entries(o).map(([k, x]) => [k, resolvePlaceholders(x, ctx)]));
 }
 
 export type CompactType =
@@ -83,8 +149,13 @@ export function fromJsonTyped(v: unknown, t: CompactType, what = 'argument'): un
     case 'Bytes': {
       const n = (t as { length: number }).length;
       if (v && typeof v === 'object' && typeof (v as { $utf8?: unknown }).$utf8 === 'string') {
-        const b = new TextEncoder().encode((v as { $utf8: string }).$utf8);
-        if (b.length > n) throw new ArgsError(`${what}: "${(v as { $utf8: string }).$utf8}" is ${b.length} bytes, more than Bytes<${n}>`);
+        const text = (v as { $utf8: string }).$utf8;
+        const b = new TextEncoder().encode(text);
+        if (b.length > n) throw new ArgsError(`${what}: "${text}" is ${b.length} bytes, more than Bytes<${n}>`);
+        if (b.length < n && (v as { pad?: unknown }).pad !== true)
+          throw new ArgsError(
+            `${what}: "${text}" is ${b.length} bytes, Bytes<${n}> needs exactly ${n} (zero padding would become part of the value; add "pad": true to pad on purpose)`,
+          );
         const out = new Uint8Array(n);
         out.set(b);
         return out;
