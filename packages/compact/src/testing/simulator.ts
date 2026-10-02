@@ -72,15 +72,19 @@ const COIN_PUBLIC_KEY = '0'.repeat(64);
 
 export class Simulator<PS = unknown> {
   readonly address: string;
+  readonly module: ContractModule;
+  private readonly contract: InstanceType<ContractModule['Contract']>;
   private state: rt.ContractState | rt.ChargedState;
   private privateState: PS;
 
   private constructor(
-    readonly module: ContractModule,
-    private readonly contract: InstanceType<ContractModule['Contract']>,
+    module: ContractModule,
+    contract: InstanceType<ContractModule['Contract']>,
     initial: rt.ConstructorResult,
     address: string,
   ) {
+    this.module = module;
+    this.contract = contract;
     this.address = address;
     this.state = initial.currentContractState;
     this.privateState = initial.currentPrivateState as PS;

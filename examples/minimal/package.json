@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "compile": "node scripts/compile.ts",
-    "create-and-destroy": "node scripts/create-and-destroy.ts",
+    "create-and-destroy": "tsx scripts/create-and-destroy.ts",
     "test": "vitest run"
   },
   "dependencies": {

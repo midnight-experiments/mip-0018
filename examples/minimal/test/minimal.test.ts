@@ -38,7 +38,12 @@ const deploy = async (c: MinimalContract, args: unknown[], caller: Uint8Array) =
 /** accountId(sk) computed by the contract's own exported pure circuit. */
 const accountId = (sim: Simulator<MinimalPrivateState>, sk: Uint8Array) => sim.module.pureCircuits.accountId!(sk) as Uint8Array;
 
-const as = async <R>(sim: Simulator<MinimalPrivateState>, caller: Uint8Array, circuit: string, ...args: unknown[]): Promise<CallOutcome<R>> => {
+const as = async <R>(
+  sim: Simulator<MinimalPrivateState>,
+  caller: Uint8Array,
+  circuit: string,
+  ...args: unknown[]
+): Promise<CallOutcome<R>> => {
   sim.currentPrivateState = ps(caller);
   return sim.call<R>(circuit, ...args);
 };
@@ -97,7 +102,9 @@ describe('OwnerKey', () => {
       toHex(encodePayload({ domainSep: DOMAIN, kind: Kind.Ledger }, commonRecords({ name: 'Beta Token', symbol: 'BETA' }))),
     );
     const withdrawn = await as(sim, ALICE, 'withdrawMetadata');
-    expect(toHex(withdrawn.misc[0]!.payload)).toBe(toHex(encodePayload({ domainSep: DOMAIN, kind: Kind.Ledger }, [record.tombstone('name')])));
+    expect(toHex(withdrawn.misc[0]!.payload)).toBe(
+      toHex(encodePayload({ domainSep: DOMAIN, kind: Kind.Ledger }, [record.tombstone('name')])),
+    );
     for (const out of [renamed, withdrawn]) {
       expect(out.misc).toHaveLength(1);
       expect(toHex(out.misc[0]!.name)).toBe(toHex(EVENT_NAME));

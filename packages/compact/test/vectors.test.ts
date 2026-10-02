@@ -172,7 +172,10 @@ describe.each(CONSTRUCTIONS)('$label', ({ contract }) => {
   it('commonFields (no standards) equals the codec', async () => {
     const sim = await deploy();
     const out = await sim.call('commonFields', DS11, 1n, utf8('Acme Token'), utf8('ACME'), 18n);
-    const want = encodePayload({ domainSep: DS11, kind: Kind.NativeShielded }, commonRecords({ name: 'Acme Token', symbol: 'ACME', decimals: 18 }));
+    const want = encodePayload(
+      { domainSep: DS11, kind: Kind.NativeShielded },
+      commonRecords({ name: 'Acme Token', symbol: 'ACME', decimals: 18 }),
+    );
     single(out.misc, sim.address, toHex(want));
   });
 

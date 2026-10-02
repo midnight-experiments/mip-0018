@@ -60,7 +60,7 @@ export const ensureCompiled = (source: string, outDir: string, o: CompileOptions
   } catch (e) {
     rmSync(tmp, { recursive: true, force: true });
     const err = e as { stdout?: string; stderr?: string; message: string };
-    throw new Error(`compact ${args.join(' ')} failed:\n${err.stdout ?? ''}${err.stderr ?? err.message}`);
+    throw new Error(`compact ${args.join(' ')} failed:\n${err.stdout ?? ''}${err.stderr ?? err.message}`, { cause: e });
   }
   rmSync(outDir, { recursive: true, force: true });
   try {

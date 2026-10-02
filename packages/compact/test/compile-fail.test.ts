@@ -14,8 +14,14 @@ const OUT_OF_BOUNDS = 'slice index 0 plus length 1 is out-of-bounds for a Bytes 
 
 const CASES: [fixture: string, message: string | RegExp][] = [
   ['ConstructorEmitsDirectly', 'constructor cannot emit an event but emits event Misc'],
-  ['ConstructorEmitsViaModule', /constructor cannot emit an event but calls \(directly or indirectly\) emitPayload, which emits\s+event Misc/u],
-  ['PureCircuitEmits', /circuit publish is marked pure but is actually impure because it calls \(directly or indirectly\)\s+impure circuit emitPayload/u],
+  [
+    'ConstructorEmitsViaModule',
+    /constructor cannot emit an event but calls \(directly or indirectly\) emitPayload, which emits\s+event Misc/u,
+  ],
+  [
+    'PureCircuitEmits',
+    /circuit publish is marked pure but is actually impure because it calls \(directly or indirectly\)\s+impure circuit emitPayload/u,
+  ],
   ['TypedEmptyKey', OUT_OF_BOUNDS],
   ['TypedEmptyName', OUT_OF_BOUNDS],
   ['TypedEmptySymbol', OUT_OF_BOUNDS],
@@ -28,7 +34,10 @@ const CASES: [fixture: string, message: string | RegExp][] = [
   ['PureWrongRecordSize', /mismatch between actual return type Bytes<17> and declared return type Bytes<16> of circuit\s+rawRecord/u],
   ['PureWrongPadding', /mismatch between actual return type Bytes<255> and declared return type Bytes<256> of circuit\s+payload1/u],
   ['PureOverflow', /mismatch between actual return type Bytes<257> and declared return type Bytes<256> of circuit\s+payload1/u],
-  ['UndisclosedRawEmit', /potential witness-value disclosure must be declared but is not[\s\S]*emit operation might disclose the witness value/u],
+  [
+    'UndisclosedRawEmit',
+    /potential witness-value disclosure must be declared but is not[\s\S]*emit operation might disclose the witness value/u,
+  ],
 ];
 
 describe('compile-time rejection (Compact 0.35.0, ZKIR v3)', () => {
