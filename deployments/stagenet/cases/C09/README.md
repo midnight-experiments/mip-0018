@@ -37,8 +37,11 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/C09
 ```
 
-## Transactions (filled in by S5)
+## Transactions (Stagenet, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
+Contract `MyFungibleToken` at `98a90519419e2ebb514b7c6ce87ee7f6f4f9753d9ee6f533c5d1c25b9d437dcf` (attached from deployments/stagenet/cases/C01/record.json); signer mn_addr_stagenet1vmwmprvxd0m7uet2dtasq24rl2u2xecmkss3x5zndvm9vglea40qqgdz2d.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `non-owner-set-metadata` | call `setMetadata` | — | — | refused before submission (no transaction) | — | — |
 
