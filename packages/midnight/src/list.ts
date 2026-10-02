@@ -67,6 +67,9 @@ export function reduceEvents(
   keepHistory = false,
 ): { state: MetadataState; listed: ListedEvent[] } {
   const state = new MetadataState({ tokenType, keepHistory });
+  // Chain order: block, transaction, event. Within a transaction the indexer's event ids follow the ledger's execution
+  // order (MIP "Applying records": guaranteed parts by ascending segment, then successful fallible segments); `verify`
+  // checks that per transaction against the raw ledger order (test/event-order.test.ts).
   const sorted = [...evs].sort(
     (a, b) => a.transaction.block.height - b.transaction.block.height || a.transaction.id - b.transaction.id || a.id - b.id,
   );

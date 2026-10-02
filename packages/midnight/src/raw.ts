@@ -11,9 +11,10 @@
 //     N2) and the transcript effects `shieldedMints` / `unshieldedMints` (domainSep → amount);
 //   * contract deploys (address) and maintenance updates (address, counter, updates).
 //
-// Ordering is deterministic and follows the ledger's event order (midnight-ledger `semantics.rs`): first the
-// guaranteed phase — intents in ascending segment id, actions in intent order, operations in program order — then
-// each fallible segment in ascending segment id. Within one transcript, mints are listed in ascending domainSep.
+// Ordering is deterministic and follows the ledger's event order (midnight-ledger `semantics.rs`), which MIP-0018
+// states in "Applying records" since 78ecbb4: first the guaranteed phase — intents in ascending segment id, actions in
+// intent order, operations in program order — then each fallible segment in ascending segment id (test:
+// test/event-order.test.ts). Within one transcript, mints are listed in ascending domainSep.
 // `applied()` keeps only what actually took effect: guaranteed parts unless the transaction FAILED; a fallible part
 // only when its segment succeeded.
 
