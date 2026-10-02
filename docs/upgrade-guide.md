@@ -159,14 +159,22 @@ Facts the tool relies on (ledger v9, `midnight-ledger` 9.1.0.0-rc.3):
   version of the circuit's proving system; a mismatch is included but fails. midnight-js 5.0.0-rc.2's
   `insertVerifierKey()` / `submitInsertVerifierKeyTx` always write `v3`, so the tool builds the
   `MaintenanceUpdate` itself with the right version and submits it through midnight-js `submitTx`
-  (questions Q23; proposal note N5). Old circuits keep their own slot: a contract may hold `v3` keys
-  for its original circuits and a `v4` key for the new one.
+  (questions Q23; proposal note N5). Old circuits keep their own slot: ledger v9 verifies both
+  generations, so a contract compiled to ZKIR v2 can hold `v3` keys for its original circuits and a `v4`
+  key for the new one (not exercised here: the template's `mint` is ZKIR v3 too).
 - **Authority and counter.** The update carries the authority's current counter and enough committee
-  signatures (each at its committee index); an applied update increments the counter.
-- **Fallible segment.** Maintenance updates apply only in a fallible segment: a refused update is still
-  included and its fee paid.
+  signatures (each at its committee index); an applied update increments the counter. A signature by a
+  key that is not the authority's is refused by the node before inclusion — no fee (observed:
+  `1010: Invalid Transaction: Custom error: 135`, `MalformedError::InvalidCommitteeSignature`).
+- **Fallible segment.** Maintenance updates apply only in a fallible segment: an update the ledger
+  refuses is still included (`PARTIAL_SUCCESS`) and its whole fee paid.
 - **No overwrite.** `VerifierKeyInsert` never replaces a key already present in that slot
-  (`VerifierKeyAlreadyPresent`). Replacing a circuit takes a `VerifierKeyRemove` and then an insert.
+  (`VerifierKeyAlreadyPresent`) — whether the new key is the same or another. Replacing a circuit takes
+  a `VerifierKeyRemove` and then an insert. Observed: both attempts `PARTIAL_SUCCESS`, key and counter
+  unchanged.
+- **Cost.** An insert writes the verifier key (2,121 bytes here) into the contract state:
+  ≈ 0.59 DUST on the local chain, against ≈ 0.04 DUST for a `VerifierKeyRemove` and ≈ 0.16 DUST for the
+  `publishMetadata()` call (Stagenet figures: case U1).
 - **Insert before anything touches it.** Until the key is on chain, `findDeployedContract` with the
   upgrade build refuses the contract (the circuit is missing).
 
@@ -210,4 +218,4 @@ MIP0018_DOCKER_PREFIX=<prefix> MIP0018_E2E_DIR=<empty dir outside the repo> \
   examples/upgrade-existing-contract/scripts/local-upgrade.sh
 ```
 
-Local results: [`examples/upgrade-existing-contract/README.md`](../examples/upgrade-existing-contract/README.md#local-run).
+Local results (44/44): [`examples/upgrade-existing-contract/README.md`](../examples/upgrade-existing-contract/README.md#local-run).

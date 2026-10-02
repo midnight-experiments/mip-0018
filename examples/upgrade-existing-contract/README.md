@@ -39,4 +39,21 @@ docker/run.sh mip0018 -- list   --network <id> --contract <address>
 
 ## Local run
 
-Filled in from `scripts/local-upgrade.sh` (see the S6 plan for the run log).
+`scripts/local-upgrade.sh` on the local chain (official `midnight-node` 2.0.0-rc.4, indexer 4.4.0-rc.1,
+proof servers 9.0.0-rc.8 / rc.6), 2026-10-02, the dev chain's public genesis wallet: **44 PASS / 0 FAIL**.
+
+| Step | Result | Fee (DUST) |
+|---|---|---:|
+| deploy `LegacyToken` (domainSep `0x5e…5e`) | contract `34446d4b…4023f58`, entry points `{mint}`, authority 1 key / threshold 1 / counter 0 | 0.928 |
+| owner `mint` 1000 to wallet A | no `Misc` event; wallet A holds 1000 of color `16f0bc7f…f432c688` = `rawTokenType(domainSep, address)` | 0.237 |
+| insert signed by a key outside the committee | refused by `mip0018 upgrade` before submission; forced: **rejected by the node** (`1010: Invalid Transaction: Custom error: 135`, `InvalidCommitteeSignature`), nothing changed | 0 |
+| **`VerifierKeyInsert(publishMetadata, v4)`** | `SUCCESS`; entry points `{mint, publishMetadata}`; mint key unchanged; counter 1; **ledger data hash unchanged** | 0.592 |
+| **`publishMetadata()`** through the upgrade build | one event bound to the original address; `verify` (kind 1, "Legacy Token", "LGCY", 6) exit 0; `list`: identity color = the held coin's color | 0.165 |
+| holder's view | wallet A still holds 1000 of that color; the mint scanner shows it minted before the insert; `lookup` of the color → the new metadata | — |
+| re-insert the same key / another build's key | both refused before submission; forced: **`PARTIAL_SUCCESS`** (ledger: no overwrite), key, counter and data unchanged, still one event | 0.599 / 0.605 |
+| the same command again, a new run, `publish` again | every step skipped by its before-check; no transaction | 0 |
+
+The local chain is discarded after the run; the script writes every identifier (transactions, blocks, fees,
+colors, key hashes) to `$MIP0018_E2E_DIR/summary.json` and its checks to `results.txt`. Unit and runtime tests:
+`docker/run.sh exec 'npx vitest run examples/upgrade-existing-contract packages/midnight/test/upgrade-units.test.ts'`
+(21 + 9).
