@@ -2,13 +2,14 @@
 //
 // Wallet-free view of a deployed contract, for before/after an upgrade (docs/upgrade-guide.md, step 1):
 //
-//   node scripts/inspect.ts --network stagenet|undeployed --contract <address> [--ledger <managed dir>]...
+//   node scripts/inspect.ts --network stagenet|undeployed (--contract <address> | --record <run record>) [--ledger <managed dir>]...
 //
 // Prints JSON: the entry points with the SHA-256 of their verifier keys, the maintenance authority (committee size,
 // threshold, counter — a frozen authority cannot add a circuit), the SHA-256 of the ledger data (what every holder's
 // balance and the token's domain live in) and, per --ledger build, the state decoded through that build's ledger()
 // accessor. Reads the indexer only (undeployed: MIP0018_INDEXER_URL / MIP0018_NODE_URL).
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { ContractState } from '@midnightntwrk/ledger-v9';
 import { Indexer, decodeDeployedLedger, resolveProfile, toJson } from '@mip0018/midnight';
@@ -17,10 +18,14 @@ const { values } = parseArgs({
   options: {
     network: { type: 'string', default: 'undeployed' },
     contract: { type: 'string' },
+    record: { type: 'string' },
     ledger: { type: 'string', multiple: true, default: [] },
   },
 });
-if (!values.contract) throw new Error('--contract <address> is required');
+// --record: the contract address of a mip0018 run record (public JSON), e.g. a Stagenet case's record.json
+if (!values.contract && values.record)
+  values.contract = (JSON.parse(readFileSync(values.record, 'utf8')) as { contract: { address?: string } }).contract.address;
+if (!values.contract) throw new Error('--contract <address> (or --record <run record with a deployed contract>) is required');
 const profile = resolveProfile(values.network);
 const row = await new Indexer(profile.indexer, profile.indexerWs).contractState(values.contract);
 if (!row) {

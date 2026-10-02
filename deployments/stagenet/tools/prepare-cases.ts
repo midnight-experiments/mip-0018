@@ -24,7 +24,7 @@
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
-import { classifyEvent, fromHex } from '@mip0018/codec';
+import { classifyEvent, commonRecords, encodePayload, fromHex } from '@mip0018/codec';
 import { MetadataState } from '@mip0018/consumer';
 import { compareState, projectState, tokenType, type ExpectedIdentity, type ExpectedState } from '@mip0018/midnight';
 import type { PublishCall } from '@mip0018/midnight/signer';
@@ -55,10 +55,12 @@ type Step = {
   id: string;
   runner: 'signer' | 'wallet-free';
   wallet?: 'wallet1' | 'wallet2';
+  /** A wallet-free repository script run with node instead of a `mip0018` command (argv = its options). */
+  script?: string;
   argv: string[];
   expectExit: number;
   /** The transaction this step submits (none when refused or wallet-free). */
-  submits?: 'deploy' | 'call' | 'verifier-key-remove';
+  submits?: 'deploy' | 'call' | 'verifier-key-remove' | 'verifier-key-insert+call';
   /** Save stdout here (relative to {out}). */
   stdout?: string;
   /** A failing step must fail for this reason: a text its output (stdout or stderr) contains. */
@@ -666,7 +668,7 @@ function build(): { cases: CaseDef[] } {
       source: { tool: 'mip0018 index / lookup' },
       dependsOn: ['C02', 'C03', 'C04', 'C05'],
       notes: [
-        'U1 (S6b, upgrade) adds its own lookup here when it runs.',
+        "U1 (S6b, the upgrade case, run after the matrix) scans its own block range and looks up its color in its own folder (cases/U1: steps index and lookup), so this scan stays the matrix's range.",
         'The index state lands in {out}/index/index-state.json (deployments/stagenet/cases/IDX/index/ on Stagenet).',
       ],
       steps,
@@ -684,8 +686,172 @@ function build(): { cases: CaseDef[] } {
       },
     });
   }
+
+  // U1 — existing-contract upgrade (S6b): LegacyToken deployed WITHOUT an emitting circuit, a mint, then
+  // VerifierKeyInsert(publishMetadata) by the maintenance authority and the call (examples/upgrade-existing-contract)
+  {
+    const ds = `0x${Buffer.from(U1_DOMAIN).toString('hex').padEnd(64, '0')}`;
+    const payload = Buffer.from(
+      encodePayload({ domainSep: fromHex(ds), kind: 1 }, commonRecords({ name: 'Legacy Token', symbol: 'LGCY', decimals: 6 })),
+    ).toString('hex');
+    const cl = classifyEvent({ type: 'Misc', name: fromHex(EVENT_NAME_HEX), payload: fromHex(payload) });
+    const publishExpect: Expectation[] = [
+      { result: cl.result, ...('reason' in cl ? { reason: cl.reason } : {}), name: EVENT_NAME_HEX, payload, domainSep: ds, kind: 1 },
+    ];
+    const expected = reduce([[{ name: EVENT_NAME_HEX, payload }]]);
+    const identity = expected.identities[0]!;
+    const EX = 'examples/upgrade-existing-contract';
+    const UP = ['--record', REC, '--source', `${EX}/upgrade`, '--circuit', 'publishMetadata'];
+    const inspect = (id: string, note: string): Step => ({
+      id,
+      runner: 'wallet-free',
+      script: `${EX}/scripts/inspect.ts`,
+      argv: [
+        '--network',
+        'stagenet',
+        '--record',
+        REC,
+        '--ledger',
+        `${EX}/managed/LegacyToken`,
+        '--ledger',
+        `${EX}/managed/LegacyTokenMetadata`,
+      ],
+      expectExit: 0,
+      stdout: `observed-${id}.json`,
+      note,
+    });
+    cases.push({
+      id: 'U1',
+      title:
+        'Existing-contract upgrade (S6): deploy a token without an emitting circuit, mint, VerifierKeyInsert(publishMetadata), publish',
+      demonstrates:
+        'MIP "Existing contracts": a maintenance VerifierKeyInsert adds publishMetadata() to a deployed kind-1 token; the event is bound to the ORIGINAL address, so the color of the coins minted before the upgrade is the identity\'s color; address, domainSep, coins and the other circuit stay as they were. A key outside the maintenance committee is refused.',
+      conclusion:
+        'same contract address before/after; entry points {mint} → {mint, publishMetadata} with the mint key unchanged; ledger data unchanged; 1 visible kind-1 identity ("Legacy Token", "LGCY", 6) whose color = the color of the coins wallet 1 received from the pre-upgrade mint; the scanner finds that mint before the insert and lookup resolves the color to the new metadata; the insert signed by another key is refused before submission and, forced, rejected by the node.',
+      source: {
+        example: EX,
+        deployed: `${EX}/legacy/LegacyToken.compact`,
+        upgrade: `${EX}/upgrade/LegacyTokenMetadata.compact`,
+        guide: 'docs/upgrade-guide.md',
+      },
+      notes: [
+        `domainSep = pad(32, "${U1_DOMAIN}") (a LegacyToken constructor argument; publishMetadata() reads it from the ledger).`,
+        "The wrong-signer key is a throwaway ledger sampleSigningKey() in the signer state directory (0600) — never wallet material; it is not in the contract's one-key committee.",
+        'On Stagenet only the free negatives run (owner plan S6b): the refused insert (no transaction) and the forced one the node rejects (no fee). The paid overwrite attempts (≈ 0.6 DUST each) are proven on the local chain (examples/upgrade-existing-contract/README.md).',
+        "{firstHeight} = the deploy height − 1 and {lastHeight} = the highest inclusion height of this case's record: the scan covers the mint before the upgrade and the publish after it.",
+      ],
+      steps: [
+        deploy(['--adapter', `${EX}/legacy/mip0018.adapter.ts`, '--args', sh([ds])]),
+        {
+          id: 'mint',
+          runner: 'signer',
+          wallet: 'wallet1',
+          argv: [
+            'call',
+            NET,
+            S1,
+            '--record',
+            REC,
+            '--circuit',
+            'mint',
+            '--args',
+            sh([{ bytes: { $signer: 'coinPublicKey' } }, '1000', { $random: 32 }]),
+            '--step',
+            'mint',
+          ],
+          expectExit: 0,
+          submits: 'call',
+          note: 'owner mint of 1000 shielded coins to wallet 1 (emits nothing)',
+        },
+        { ...walletStatus(), note: 'wallet 1 holds the 1000 coins: their color as the wallet SDK sees it, BEFORE the upgrade' },
+        inspect(
+          'inspect-before',
+          'wallet-free snapshot before the upgrade: entry points {mint}, one-key authority (counter 0), ledger-data hash',
+        ),
+        {
+          id: 'wrong-signer',
+          runner: 'signer',
+          wallet: 'wallet1',
+          argv: ['upgrade', NET, S1, ...UP, '--maintenance-key-file', U1_WRONG_KEY, '--no-call', '--step', 'wrong-signer'],
+          expectExit: 1,
+          expectOutput: "not in the contract's committee",
+          note: 'insert signed by a key outside the committee: refused before submission (exit 1, no transaction)',
+        },
+        {
+          id: 'wrong-signer-forced',
+          runner: 'signer',
+          wallet: 'wallet1',
+          argv: [
+            'upgrade',
+            NET,
+            S1,
+            ...UP,
+            '--maintenance-key-file',
+            U1_WRONG_KEY,
+            '--no-call',
+            '--step',
+            'wrong-signer-forced',
+            '--force',
+          ],
+          expectExit: 1,
+          expectOutput: 'Custom error: 135',
+          note: 'the same, --force: the node rejects it (1010 Invalid Transaction, Custom error 135 = InvalidCommitteeSignature; local evidence) — not included, no fee',
+        },
+        {
+          id: 'upgrade',
+          runner: 'signer',
+          wallet: 'wallet1',
+          argv: ['upgrade', NET, S1, ...UP, '--step', 'upgrade'],
+          expectExit: 0,
+          submits: 'verifier-key-insert+call',
+          note: 'preflight (layout, decode, authority) → VerifierKeyInsert(publishMetadata, v4) signed by the deploy-time maintenance key (0600 private state) → publishMetadata() through the upgrade-only build (record steps upgrade:insert, upgrade:call)',
+        },
+        inspect('inspect-after', 'after: entry points {mint, publishMetadata}, mint key unchanged, counter 1, ledger-data hash unchanged'),
+        {
+          id: 'verify-publish',
+          runner: 'wallet-free',
+          argv: ['verify', NET, '--record', REC, '--step', 'upgrade:call', '--expect', '@{case}/expect/publish.json', '--wait', '120'],
+          expectExit: 0,
+        },
+        list(),
+        {
+          id: 'index',
+          runner: 'wallet-free',
+          argv: ['index', NET, '--from-height', '{firstHeight}', '--to-height', '{lastHeight}', '--state', '{out}/index', '--json'],
+          expectExit: 0,
+          stdout: 'index-summary.json',
+          note: '{firstHeight} = the deploy height − 1; {lastHeight} = the highest inclusion height of the record',
+        },
+        {
+          id: 'lookup',
+          runner: 'wallet-free',
+          argv: ['lookup', NET, '--record', REC, '--domain-sep', ds, '--kind', '1', '--state', '{out}/index', '--json'],
+          expectExit: 0,
+          stdout: 'lookup.json',
+          note: 'the color of the pre-upgrade coins → (this contract, domainSep, kind 1) → the metadata published after the upgrade',
+        },
+        {
+          ...walletStatus(),
+          id: 'wallet-status-after',
+          stdout: 'wallet-status-after.json',
+          note: 'wallet 1 still holds the 1000 coins of that color',
+        },
+      ],
+      recheck: {
+        verify: [{ record: 'record.json', step: 'upgrade:call', expect: 'expect/publish.json' }],
+        list: [{ record: 'record.json', expect: 'expected.json' }],
+        noTransaction: [{ record: 'record.json', step: 'wrong-signer:insert' }],
+        colors: [{ record: 'record.json', domainSep: ds, kind: 1, index: 'index', wallet: 'wallet-status.json', expectIdentity: identity }],
+      },
+      files: { 'expect/publish.json': publishExpect, 'expected.json': expected },
+    });
+  }
   return { cases };
 }
+
+const U1_DOMAIN = 'mip-0018:example:upgrade';
+/** Throwaway signing key (not wallet material) in the signer's state directory, written before the case runs. */
+const U1_WRONG_KEY = '/run/mip0018/state/u1-wrong-signer.key';
 
 // ------------------------------------------------------------------------------------------------- rendering
 
@@ -708,7 +874,9 @@ function renderStagenet(c: CaseDef, s: Step): string {
   const argv = s.argv
     .flatMap((a) => STAGENET[a] ?? [a])
     .map((a) => a.replace(/\{out:(\w+)\}/gu, 'deployments/stagenet/cases/$1').replace(/\{case\}|\{out\}/gu, dir));
-  const cmd = `${s.runner === 'signer' ? 'signer' : 'wallet_free'} ${argv.map(quote).join(' ')}`;
+  const cmd = s.script
+    ? `docker/run.sh exec ${quote(`node ${s.script} ${argv.map(quote).join(' ')}`)}`
+    : `${s.runner === 'signer' ? 'signer' : 'wallet_free'} ${argv.map(quote).join(' ')}`;
   return s.stdout ? `${cmd} > ${dir}/${s.stdout}` : cmd;
 }
 
@@ -752,14 +920,104 @@ function readme(c: CaseDef): string {
     `docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/${c.id}`,
     '```',
     '',
-    '## Transactions (filled in by S5)',
-    '',
-    '| Step | Transaction hash | Block | Fee (SPECK) |',
-    '|---|---|---|---|',
-    ...c.steps.filter((s) => s.submits).map((s) => `| \`${s.id}\` | _S5_ | _S5_ | _S5_ |`),
-    '',
+    ...recorded(c),
   ];
   return `${lines.join('\n')}\n`;
+}
+
+/** Thousands separators for a SPECK amount; ≈ DUST with 3 decimals (1 DUST = 10^15 SPECK). */
+const speck = (v: string) => BigInt(v).toLocaleString('en-US');
+const dust = (v: string) => (Number(BigInt(v) / 1_000_000_000_000n) / 1000).toFixed(3);
+
+/**
+ * The README's record section: from the case's run record(s) when S5 has written them (public data only), else the
+ * placeholder table. Rendering only reads the records, so `--check` stays exact once they are committed.
+ */
+function recorded(c: CaseDef): string[] {
+  const dir = join(CASES, c.id);
+  const p = join(dir, 'record.json');
+  if (c.id === 'IDX') {
+    const st = join(dir, 'index', 'index-state.json');
+    if (!existsSync(st)) return ['## Scan (filled in by S5)', '', '_S5_: the scanned range and the colors found.', ''];
+    const s = JSON.parse(readFileSync(st, 'utf8')) as {
+      fromHeight: number;
+      nextHeight: number;
+      colors: Record<
+        string,
+        {
+          contractAddress: string;
+          domainSep: string;
+          shielded?: { amount: string; firstMint: { height: number } };
+          unshielded?: { amount: string; firstMint: { height: number } };
+        }
+      >;
+    };
+    return [
+      '## Scan (Stagenet)',
+      '',
+      `Blocks ${s.fromHeight}–${s.nextHeight - 1} (state \`index/index-state.json\`). Colors minted in that range:`,
+      '',
+      '| Color | Contract | domainSep | Shielded (first mint) | Unshielded (first mint) |',
+      '|---|---|---|---|---|',
+      ...Object.entries(s.colors)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(
+          ([color, e]) =>
+            `| \`${color}\` | \`${e.contractAddress}\` | \`${e.domainSep}\` | ${e.shielded ? `${e.shielded.amount} (${e.shielded.firstMint.height})` : '—'} | ${e.unshielded ? `${e.unshielded.amount} (${e.unshielded.firstMint.height})` : '—'} |`,
+        ),
+      '',
+    ];
+  }
+  if (!existsSync(p))
+    return [
+      '## Transactions (filled in by S5)',
+      '',
+      '| Step | Transaction hash | Block | Fee (SPECK) |',
+      '|---|---|---|---|',
+      ...c.steps.filter((s) => s.submits).map((s) => `| \`${s.id}\` | _S5_ | _S5_ | _S5_ |`),
+      '',
+    ];
+  const r = JSON.parse(readFileSync(p, 'utf8')) as {
+    contract: { name: string; address?: string; attached?: { from: string } };
+    signer?: { unshieldedAddress: string };
+    steps: {
+      id: string;
+      kind: string;
+      circuit?: string;
+      state: string;
+      skipped?: string;
+      error?: string;
+      tx?: { hash: string };
+      inclusion?: { height: number; hash: string; status: string; fee?: string };
+    }[];
+  };
+  const fees = r.steps.map((s) => s.inclusion?.fee).filter((f): f is string => f !== undefined);
+  const total = fees.reduce((a, f) => a + BigInt(f), 0n).toString();
+  const what = (s: (typeof r.steps)[number]) => `${s.kind}${s.circuit ? ` \`${s.circuit}\`` : ''}`;
+  const outcome = (s: (typeof r.steps)[number]) =>
+    s.inclusion
+      ? s.inclusion.status
+      : s.skipped
+        ? `skipped (${s.skipped.split('\n')[0]!.slice(0, 80)})`
+        : s.error && !s.tx
+          ? 'refused before submission (no transaction)'
+          : s.error
+            ? `not included: ${s.error.split('\n')[0]!.slice(0, 100)}`
+            : s.state;
+  return [
+    '## Transactions (Stagenet, from `record.json`)',
+    '',
+    `Contract \`${r.contract.name}\` at \`${r.contract.address ?? '(not deployed)'}\`${r.contract.attached ? ` (attached from ${r.contract.attached.from})` : ''}${r.signer ? `; signer ${r.signer.unshieldedAddress}` : ''}.`,
+    '',
+    '| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |',
+    '|---|---|---|---|---|---:|---:|',
+    ...r.steps.map(
+      (s) =>
+        `| \`${s.id}\` | ${what(s)} | ${s.tx ? `\`${s.tx.hash}\`` : '—'} | ${s.inclusion ? `${s.inclusion.height} (\`${s.inclusion.hash.slice(0, 16)}…\`)` : '—'} | ${outcome(s).replace(/\|/gu, '\\|')} | ${s.inclusion?.fee ? speck(s.inclusion.fee) : '—'} | ${s.inclusion?.fee ? dust(s.inclusion.fee) : '—'} |`,
+    ),
+    ...(fees.length ? [`| **total** | | | | | **${speck(total)}** | **${dust(total)}** |`] : []),
+    '',
+  ];
 }
 
 function indexReadme(cases: CaseDef[]): string {

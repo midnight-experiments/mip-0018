@@ -8,7 +8,7 @@
 
 **Runs after**: C02, C03, C04, C05
 
-- U1 (S6b, upgrade) adds its own lookup here when it runs.
+- U1 (S6b, the upgrade case, run after the matrix) scans its own block range and looks up its color in its own folder (cases/U1: steps index and lookup), so this scan stays the matrix's range.
 - The index state lands in {out}/index/index-state.json (deployments/stagenet/cases/IDX/index/ on Stagenet).
 
 ## Steps (Stagenet)
@@ -43,8 +43,7 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/IDX
 ```
 
-## Transactions (filled in by S5)
+## Scan (filled in by S5)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
+_S5_: the scanned range and the colors found.
 
