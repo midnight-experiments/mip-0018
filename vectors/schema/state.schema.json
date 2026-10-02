@@ -111,7 +111,7 @@
       }
     },
     "group": {
-      "description": "Visible identities of one (network, contractAddress) whose usable `symbol` has these exact bytes. Every visible identity with a usable symbol is in exactly one group (single-member groups included).",
+      "description": "Visible identities of one (network, contractAddress) whose usable `symbol` has these exact bytes. Expectations list every visible identity with a usable symbol in exactly one group (single-member groups included); the runner compares only groups of two or more members, and a consumer that reports none passes (MIP Testing S9: no groups at all, or exactly the following groups).",
       "type": "object",
       "additionalProperties": false,
       "required": ["network", "contractAddress", "symbol_hex", "members"],

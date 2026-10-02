@@ -66,7 +66,7 @@
       "properties": {
         "id": { "$ref": "payload.schema.json#/$defs/vectorId" },
         "identities": {
-          "description": "Every identity the consumer tracks. A hidden identity without fields may be omitted.",
+          "description": "Every identity of the vector, with at least its common keys (other keys may be left out). A hidden identity without fields may be omitted.",
           "type": "array",
           "items": {
             "type": "object",
@@ -93,8 +93,16 @@
             }
           }
         },
-        "groups": { "type": "array", "items": { "$ref": "state.schema.json#/$defs/group" } },
-        "display": { "type": "array", "items": { "$ref": "state.schema.json#/$defs/display" } }
+        "groups": {
+          "description": "Optional: omit (or send null or []) when the consumer does not group symbols (MIP Testing S9).",
+          "type": ["array", "null"],
+          "items": { "$ref": "state.schema.json#/$defs/group" }
+        },
+        "display": {
+          "description": "Optional: omit (or send null) when the consumer does not display amounts (MIP Testing S8).",
+          "type": ["array", "null"],
+          "items": { "$ref": "state.schema.json#/$defs/display" }
+        }
       }
     },
     "errorResponse": {

@@ -77,11 +77,18 @@ export interface Report {
   results: VectorResult[];
   normative: { passed: number; total: number };
   informative: { passed: number; total: number };
+  /** Passed vectors with a check that did not apply to the consumer (no groups, no display), by vector id. */
+  notApplicable: Record<string, string[]>;
 }
 
 export function check(v: LoadedVector, response: Json): Comparison {
   if (response.id !== undefined && response.id !== null && response.id !== v.entry.id) {
-    return { ok: false, failures: [`response id ${String(response.id)} does not match request id ${v.entry.id}`], notes: [] };
+    return {
+      ok: false,
+      failures: [`response id ${String(response.id)} does not match request id ${v.entry.id}`],
+      notes: [],
+      notApplicable: [],
+    };
   }
   const expect = v.data.expect as Json;
   return v.entry.kind === 'payload' ? compareDecode(expect, response) : compareState(expect, response);
@@ -94,7 +101,7 @@ export async function runVectors(vectors: LoadedVector[], consumer: Consumer): P
     try {
       cmp = check(v, await consumer(requestFor(v)));
     } catch (e) {
-      cmp = { ok: false, failures: [`no response: ${(e as Error).message}`], notes: [] };
+      cmp = { ok: false, failures: [`no response: ${(e as Error).message}`], notes: [], notApplicable: [] };
     }
     results.push({ id: v.entry.id, testId: v.entry.testId, normative: v.entry.normative, kind: v.entry.kind, ...cmp });
   }
@@ -102,7 +109,9 @@ export async function runVectors(vectors: LoadedVector[], consumer: Consumer): P
     const rs = results.filter((r) => r.normative === normative);
     return { passed: rs.filter((r) => r.ok).length, total: rs.length };
   };
-  return { results, normative: tally(true), informative: tally(false) };
+  const notApplicable: Record<string, string[]> = {};
+  for (const r of results) if (r.ok && r.notApplicable.length > 0) notApplicable[r.id] = r.notApplicable;
+  return { results, normative: tally(true), informative: tally(false), notApplicable };
 }
 
 export function formatReport(report: Report, opts: { notes?: boolean } = {}): string {
@@ -111,18 +120,23 @@ export function formatReport(report: Report, opts: { notes?: boolean } = {}): st
     const tag = r.ok ? 'PASS' : r.normative ? 'FAIL' : 'FAIL (informative)';
     lines.push(`${tag.padEnd(18)} ${r.id.padEnd(16)} [${r.testId}]`);
     for (const f of r.failures) lines.push(`    - ${f}`);
+    for (const n of r.notApplicable) lines.push(`    n/a: ${n}`);
     if (opts.notes === true) for (const n of r.notes) lines.push(`    note: ${n}`);
   }
   lines.push('');
   lines.push('By MIP test id (normative):');
-  const byTest = new Map<string, { passed: number; total: number }>();
+  const byTest = new Map<string, { passed: number; total: number; na: number }>();
   for (const r of report.results.filter((x) => x.normative)) {
-    const t = byTest.get(r.testId) ?? { passed: 0, total: 0 };
+    const t = byTest.get(r.testId) ?? { passed: 0, total: 0, na: 0 };
     t.total++;
     if (r.ok) t.passed++;
+    if (r.ok && r.notApplicable.length > 0) t.na++;
     byTest.set(r.testId, t);
   }
-  for (const [testId, t] of byTest) lines.push(`  ${testId.padEnd(8)} ${t.passed}/${t.total} ${t.passed === t.total ? 'ok' : 'FAILED'}`);
+  for (const [testId, t] of byTest)
+    lines.push(
+      `  ${testId.padEnd(8)} ${t.passed}/${t.total} ${t.passed === t.total ? 'ok' : 'FAILED'}${t.na > 0 ? ` (${t.na} with a check not applicable)` : ''}`,
+    );
   const n = report.normative;
   const i = report.informative;
   lines.push('');

@@ -255,7 +255,8 @@ export class MetadataState {
 
   /**
    * Symbol groups: visible identities of one (network, contractAddress) with the same usable `symbol`, compared as
-   * exact bytes. Every visible identity with a usable symbol is in exactly one group (single-member groups included).
+   * exact bytes. Every visible identity with a usable symbol is in exactly one group (single-member groups included —
+   * a choice of this reference; the vector runner compares only groups of two or more members, MIP Testing S9).
    */
   groups(): SymbolGroup[] {
     const groups = new Map<string, SymbolGroup>();

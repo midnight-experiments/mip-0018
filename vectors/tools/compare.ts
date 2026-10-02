@@ -4,15 +4,29 @@
 // - `reason` and `offset` of a decode result are informative: a difference is a note, never a failure.
 // - Identities: a hidden identity with no fields is equivalent to an absent one (a consumer may delete instead of
 //   hide). The remaining identities must match exactly as a set, keyed by (network, contractAddress, domainSep, kind).
-// - Fields: valType and value_hex always; `usable` when the expectation has it; extra or missing keys fail.
-// - Groups: compared as a set of (network, contractAddress, symbol_hex) → set of (domainSep, kind).
-// - Display: every expected entry must be present (matched by identity + raw) with equal decimals and text.
+// - Fields: valType and value_hex always; `usable` when the expectation has it. The four common keys (`name`,
+//   `symbol`, `decimals`, `standards`) must be reported; any other key is optional (MIP "Consuming": "Indexers MAY
+//   index only some tokens or keys") — a missing one is a note, a reported one must match. A reported key the
+//   expectation does not have fails.
+// - Groups (MIP Testing S9: "Grouping is a SHOULD, so two outcomes are valid: no groups at all, or exactly the
+//   following groups"): only groups of two or more members are compared, on both sides. A consumer that reports no
+//   such group (no `groups`, an empty list, or single-member groups only) passes, with the check marked not
+//   applicable; otherwise its multi-member groups must equal the expected ones exactly, as a set of
+//   (network, contractAddress, symbol_hex) → set of (domainSep, kind).
+// - Display (MIP Testing S8: "A consumer that displays amounts …"): a consumer that omits `display` (or sends null)
+//   does not display amounts and the check is marked not applicable; otherwise every expected entry must be present
+//   (matched by identity + raw) with equal decimals and text.
 
 export interface Comparison {
   ok: boolean;
   failures: string[];
   notes: string[];
+  /** Checks of this vector that do not apply to the consumer (it does not group symbols / display amounts). */
+  notApplicable: string[];
 }
+
+/** The MIP's common keys (Common fields): `name`, `symbol`, `decimals`, `standards`, as hex. */
+export const COMMON_KEYS_HEX: ReadonlySet<string> = new Set(['6e616d65', '73796d626f6c', '646563696d616c73', '7374616e6461726473']);
 
 type Json = Record<string, unknown>;
 
@@ -30,10 +44,10 @@ function recordEnd(r: Json): number | undefined {
 export function compareDecode(expect: Json, got: Json): Comparison {
   const failures: string[] = [];
   const notes: string[] = [];
-  if (typeof got.error === 'string') return { ok: false, failures: [`consumer error: ${got.error}`], notes };
+  if (typeof got.error === 'string') return { ok: false, failures: [`consumer error: ${got.error}`], notes, notApplicable: [] };
   if (got.result !== expect.result) {
     failures.push(`result: expected ${String(expect.result)}, got ${String(got.result)}`);
-    return { ok: false, failures, notes };
+    return { ok: false, failures, notes, notApplicable: [] };
   }
   if (expect.reason !== undefined && got.reason !== expect.reason)
     notes.push(`reason (informative): expected ${String(expect.reason)}, got ${String(got.reason)}`);
@@ -66,7 +80,7 @@ export function compareDecode(expect: Json, got: Json): Comparison {
       end = recordEnd(got.records[got.records.length - 1] as Json);
     if (end !== expect.contentEnd) failures.push(`contentEnd: expected ${String(expect.contentEnd)}, got ${String(end)}`);
   }
-  return { ok: failures.length === 0, failures, notes };
+  return { ok: failures.length === 0, failures, notes, notApplicable: [] };
 }
 
 function identityKey(o: Json): string {
@@ -77,7 +91,7 @@ function isEmptyHidden(o: Json): boolean {
   return o.visible === false && (!isObj(o.fields) || Object.keys(o.fields).length === 0);
 }
 
-function compareIdentities(expected: Json[], got: unknown, failures: string[]): void {
+function compareIdentities(expected: Json[], got: unknown, failures: string[], notes: string[]): void {
   if (!Array.isArray(got)) {
     failures.push('identities: missing or not an array');
     return;
@@ -114,7 +128,11 @@ function compareIdentities(expected: Json[], got: unknown, failures: string[]): 
       const gv = gfLower.get(key);
       const label = evo.key_text !== undefined ? `${key} (${String(evo.key_text)})` : key;
       if (!isObj(gv)) {
-        failures.push(`identity ${k}: field ${label} missing`);
+        if (COMMON_KEYS_HEX.has(key)) failures.push(`identity ${k}: field ${label} missing`);
+        else
+          notes.push(
+            `identity ${k}: field ${label} not reported (allowed: not a common key; "Indexers MAY index only some tokens or keys")`,
+          );
         continue;
       }
       if (gv.valType !== evo.valType)
@@ -131,25 +149,38 @@ function compareIdentities(expected: Json[], got: unknown, failures: string[]): 
       failures.push(`identity ${k}: not expected (reported ${act.get(k)?.visible === true ? 'visible' : 'hidden with fields'})`);
 }
 
-function groupMap(groups: Json[]): Map<string, string> {
+/** Groups of two or more members: (network, contractAddress, symbol_hex) → sorted members. Duplicate keys fail. */
+function multiMemberGroups(groups: Json[], failures: string[] | undefined): Map<string, string> {
   const m = new Map<string, string>();
   for (const g of groups) {
+    if (!isObj(g)) {
+      failures?.push('groups: entry is not an object');
+      continue;
+    }
     const key = [g.network, lower(g.contractAddress), lower(g.symbol_hex)].join('|');
     const members = (Array.isArray(g.members) ? (g.members as Json[]) : [])
       .map((x) => `${String(lower(x.domainSep))}/${String(x.kind)}`)
       .sort();
+    if (members.length < 2) continue; // a single-member group is not compared (S9: "no groups at all" is valid)
+    if (m.has(key)) failures?.push(`group ${key}: reported twice`);
     m.set(key, members.join(','));
   }
   return m;
 }
 
-function compareGroups(expected: Json[], got: unknown, failures: string[]): void {
-  if (!Array.isArray(got)) {
-    failures.push('groups: missing or not an array');
+function compareGroups(expected: Json[], got: unknown, failures: string[], notApplicable: string[]): void {
+  if (got !== undefined && got !== null && !Array.isArray(got)) {
+    failures.push('groups: not an array');
     return;
   }
-  const e = groupMap(expected);
-  const g = groupMap(got as Json[]);
+  const e = multiMemberGroups(expected, undefined);
+  const g = multiMemberGroups((got ?? []) as Json[], failures);
+  if (g.size === 0) {
+    notApplicable.push(
+      `groups: the consumer reports no group of two or more members — valid: "Grouping is a SHOULD, so two outcomes are valid: no groups at all, or exactly the following groups" (expected ${e.size} such group(s))`,
+    );
+    return;
+  }
   for (const [k, members] of e) {
     const gm = g.get(k);
     if (gm === undefined) failures.push(`group ${k}: missing (expected members ${members})`);
@@ -158,8 +189,16 @@ function compareGroups(expected: Json[], got: unknown, failures: string[]): void
   for (const [k, members] of g) if (!e.has(k)) failures.push(`group ${k}: not expected (members ${members})`);
 }
 
-function compareDisplay(expected: Json[], got: unknown, failures: string[]): void {
-  const list = Array.isArray(got) ? (got as Json[]) : [];
+function compareDisplay(expected: Json[], got: unknown, failures: string[], notApplicable: string[]): void {
+  if (got === undefined || got === null) {
+    notApplicable.push('display: not reported — the consumer does not display amounts (S8: "A consumer that displays amounts …")');
+    return;
+  }
+  if (!Array.isArray(got)) {
+    failures.push('display: not an array');
+    return;
+  }
+  const list = got as Json[];
   for (const e of expected) {
     const k = `${identityKey(e)}|${String(e.raw)}`;
     const g = list.find((x) => isObj(x) && `${identityKey(x)}|${String(x.raw)}` === k);
@@ -174,9 +213,11 @@ function compareDisplay(expected: Json[], got: unknown, failures: string[]): voi
 
 export function compareState(expect: Json, got: Json): Comparison {
   const failures: string[] = [];
-  if (typeof got.error === 'string') return { ok: false, failures: [`consumer error: ${got.error}`], notes: [] };
-  compareIdentities(expect.identities as Json[], got.identities, failures);
-  if (expect.groups !== undefined) compareGroups(expect.groups as Json[], got.groups, failures);
-  if (expect.display !== undefined) compareDisplay(expect.display as Json[], got.display, failures);
-  return { ok: failures.length === 0, failures, notes: [] };
+  const notes: string[] = [];
+  const notApplicable: string[] = [];
+  if (typeof got.error === 'string') return { ok: false, failures: [`consumer error: ${got.error}`], notes, notApplicable };
+  compareIdentities(expect.identities as Json[], got.identities, failures, notes);
+  if (expect.groups !== undefined) compareGroups(expect.groups as Json[], got.groups, failures, notApplicable);
+  if (expect.display !== undefined) compareDisplay(expect.display as Json[], got.display, failures, notApplicable);
+  return { ok: failures.length === 0, failures, notes, notApplicable };
 }

@@ -99,9 +99,10 @@ repository-defined and informative:
 - `expect.identities[]` is `{network, contractAddress, domainSep, kind, visible, colored?, fields:{<key_hex>:{valType, value_hex, usable?}}}`;
   `usable` is given for the four common keys (`name`, `symbol`, `decimals`, `standards`); `colored` says whether a
   color `tokenType(domainSep, contractAddress)` is derived (kinds 1 and 2 only).
-- `expect.groups[]` (S9 only) is `{network, contractAddress, symbol_hex, members:[{domainSep, kind}]}`: every visible
-  identity with a usable `symbol` is in exactly one group of its `(network, contractAddress)` and exact symbol bytes
-  (single-member groups included).
+- `expect.groups[]` (S9 only) is `{network, contractAddress, symbol_hex, members:[{domainSep, kind}]}`, written the way
+  the reference consumer reports groups: every visible identity with a usable `symbol` is in exactly one group of its
+  `(network, contractAddress)` and exact symbol bytes, single-member groups included. Only the groups of two or more
+  members are compared (see the runner contract): they are the groups the MIP's S9 names.
 - `expect.display[]` is `{network, contractAddress, domainSep, kind, raw, decimals, text}`: `raw` displayed with that
   identity's current usable `decimals`.
 
@@ -115,15 +116,35 @@ A consumer in any language is tested by a small adapter program:
    - `{"id", "op":"decode", "type", "name_hex", "payload_hex"}` → classify and decode one event; respond
      `{"id", "result", "reason"?, "offset"?, "header"?, "records"?, "contentEnd"?}` with the payload-vector `expect` shape.
    - `{"id", "op":"state", "steps":[…], "display"?:[{network, contractAddress, domainSep, kind, raw}]}` → start from an
-     empty state, apply the steps, and respond `{"id", "identities":[…], "groups":[…], "display":[…]}` with the
-     state-vector `expect` shape. Report every identity you track; a hidden identity without fields may be omitted.
+     empty state, apply the steps, and respond `{"id", "identities":[…], "groups"?:[…], "display"?:[…]}` with the
+     state-vector `expect` shape. Report every identity of the vector (a hidden identity without fields may be
+     omitted) with at least its common keys (`name`, `symbol`, `decimals`, `standards`); other keys may be left out.
+     Omit `groups` (or send `[]`) if the consumer does not group symbols, and omit `display` if it does not display
+     amounts.
+   - A `name_hex`/`payload_hex` may be shorter than 32/256 bytes (informative zero-extension vectors): zero-extend it,
+     as the MIP's Consuming section requires.
    - Respond `{"id", "error":"…"}` if a request cannot be processed (the vector fails).
 3. Comparison: only properties present in `expect` are compared; hex is compared case-insensitively; `reason` and
    `offset` differences are notes (`--notes`), never failures; a hidden identity without fields equals an absent one;
-   any missing or extra identity, field or group fails; `usable` is compared where expected.
-4. The runner prints PASS/FAIL per vector and a per-test-id summary, and exits **0** when every normative vector passes,
-   **1** when any normative vector fails, **2** on usage, integrity (`SHA256SUMS`) or harness errors. Informative
-   failures are reported but do not change the exit status.
+   a missing or extra identity fails; `usable` is compared where expected.
+   - **Fields**: a missing common key (`name`, `symbol`, `decimals`, `standards`) fails; any other key is optional —
+     not reporting it is a note, because "Indexers MAY index only some tokens or keys" (MIP, Consuming) — and a reported
+     key must equal the expectation; a reported key the expectation does not have fails.
+   - **Groups (S9)**: only groups of two or more members are compared, on both sides. The MIP's S9 says "Grouping is a
+     SHOULD, so two outcomes are valid: no groups at all, or exactly the following groups": a consumer that reports
+     no such group passes and the group check is reported as not applicable; otherwise its multi-member groups must
+     equal the expected ones exactly (same `(network, contractAddress, symbol_hex)`, same members).
+   - **Display (S8)**: the MIP's S8 applies to "a consumer that displays amounts": a consumer that omits `display`
+     passes and the display check is reported as not applicable; a consumer that sends `display` must give every
+     expected entry.
+4. The runner prints PASS/FAIL per vector (with an `n/a:` line for each check that did not apply) and a per-test-id
+   summary, and exits **0** when every normative vector passes, **1** when any normative vector fails, **2** on usage,
+   integrity (`SHA256SUMS`) or harness errors. Informative failures are reported but do not change the exit status.
+   The JSON report (`--json`) lists the not-applicable checks under `notApplicable`.
+
+These rules changed with the re-pin to `78ecbb4` (sub-plan S9; questions file Q33, audit finding F-M1): earlier the
+runner also required single-member groups, every key and `display`. The expected files were not changed; the
+reference consumer still reports everything and passes either way.
 
 Run it (Node ≥ 24; from the repository root):
 
