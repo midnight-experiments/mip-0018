@@ -24,7 +24,7 @@ up metadata, and real cases on Stagenet.
 | Proposal | [midnightntwrk/midnight-improvement-proposals PR #340](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340) — "Update MIP-0018 with community feedback" (open; the link moves to the merged file when #340 merges) |
 | Pinned text | [`b147c627e1bb15b5d15cc73cf30c2a36afd34dbb` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/b147c627e1bb15b5d15cc73cf30c2a36afd34dbb/mips/mip-0018-on-chain-token-metadata.md) |
 | SHA-256 of the pinned text | `9ffba7e6a3123cd6683e5a779ac3b73c8a31a9724367cd98ee120be78720d842` (`docker/run.sh check:mip-pin`) |
-| Authority | The pinned text decides every byte and rule. What this repository found that should be defined or changed upstream is in [`MIP-PROPOSAL-NOTES.md`](MIP-PROPOSAL-NOTES.md) (notes N1–N19); nothing is proposed upstream from here. |
+| Authority | The pinned text decides every byte and rule. What this repository found that should be defined or changed upstream is in [`MIP-PROPOSAL-NOTES.md`](MIP-PROPOSAL-NOTES.md) (notes N1–N19, each with the owner's review: `OWNER-APPROVED` or `WITHDRAWN`); nothing is proposed upstream from here. |
 
 ## MIP section → repository
 

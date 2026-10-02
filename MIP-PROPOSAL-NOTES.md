@@ -7,7 +7,8 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 |---|---|
 | MIP text these notes refer to | [`midnightntwrk/midnight-improvement-proposals@b147c627e1bb15b5d15cc73cf30c2a36afd34dbb` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/b147c627e1bb15b5d15cc73cf30c2a36afd34dbb/mips/mip-0018-on-chain-token-metadata.md) (SHA-256 `9ffba7e6a3123cd6683e5a779ac3b73c8a31a9724367cd98ee120be78720d842`) |
 | How to add a note | One section per note: MIP section, problem, evidence, proposed change, what this repository does meanwhile, status. Append; never delete — change the status instead. |
-| Statuses | `NEEDS-DECISION` (options below, the authors choose) · `PROPOSED` (concrete text suggested) · `ACCEPTED-UPSTREAM` (merged into the MIP; link the commit) · `WITHDRAWN` |
+| Statuses | `NEEDS-DECISION` (options below, the authors choose) · `PROPOSED` (concrete text suggested) · `OWNER-APPROVED` (the project owner approved the text to take upstream) · `ACCEPTED-UPSTREAM` (merged into the MIP; link the commit) · `WITHDRAWN` (with the reason) |
+| Owner review | 2026-10-02 — approved: N1, N2, N3, N4, N5 (informative), N7, N8 (shortened), N10 (shortened), N11, N12 (reworded), N13, N16 (shortened); withdrawn as out of scope or skipped: N6, N9, N14, N15, N17, N18, N19 |
 
 ---
 
@@ -20,7 +21,8 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 - **Proposed text**: "| 4 | URI | A URI as defined in RFC 3986 (the `URI` rule of §3, as used by ERC-721 `tokenURI`): a scheme is required and a fragment is allowed. All characters are ASCII; characters outside ASCII MUST be percent-encoded, and host names converted to their ASCII form, before emitting. |"
 - **Alternatives considered**: RFC 3987 IRI (matches "UTF-8" but few validators); keep `absolute-URI` (rejects fragments every library accepts); "parses as a WHATWG URL" (lenient and normalising, disagrees with RFC libraries); a minimal "scheme + no space/control bytes" rule (simple, but accepts strings no parser accepts).
 - **Meanwhile**: the reference consumer enforces the RFC 3986 `URI` rule with a strict grammar; the 26 cases are informative vectors with that verdict.
-- **Status**: PROPOSED
+- **Owner review (2026-10-02)**: "OK" — approved as proposed.
+- **Status**: OWNER-APPROVED
 
 ## N2 — Say that raw ledger log data has its trailing zero bytes removed
 
@@ -30,7 +32,8 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 - **Further evidence (Stagenet cases, 2026-10-02)**: the same on every emitter shape of the matrix — case C10's A1 event (id 53557, [`deployments/stagenet/cases/C10`](deployments/stagenet/cases/C10/README.md)) carries 127 item bytes in its ledger `raw`; raw-emitter vector A2a (C07, event 53498) 286 of 288 (its last two bytes are zero); A2b (C07, event 53504), whose last payload byte is non-zero, carries all 288. The indexer's `name`/`payload` fields are zero-extended in every case, and `mip0018 verify` matched each indexed event with the zero-extended `log` op of the raw transaction (31 transactions, `observed-verify-*.json`).
 - **Proposed text** (Consuming, or MIP-0002 if it belongs there): "Some sources return a `Misc` item's 288 data bytes without trailing zero bytes. Consumers MUST zero-extend the data to 288 bytes before taking `name` (bytes 0–31) and `payload` (bytes 32–287)."
 - **Meanwhile**: the reference reader zero-extends every raw item to 288 bytes.
-- **Status**: PROPOSED
+- **Owner review (2026-10-02)**: "OK" — approved as proposed.
+- **Status**: OWNER-APPROVED
 
 ## N3 — State that kinds 1 and 2 share one color under the same `domainSep`
 
@@ -40,7 +43,8 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 - **Further evidence (examples and CLI)**: on the local chain the multi-kind example's shielded and unshielded mints under one `domainSep` resolve, through the mint scanner, to one color entry carrying both kinds (`deployments/stagenet/cases/IDX`, steps `lookup-C04-shielded` / `lookup-C04-unshielded`; local run in the S4 plan), and the wallet SDK itself lists that one color among both its shielded and its unshielded balances (`wallet status`).
 - **Proposed text** (informative, after "A color held by a user resolves …"): "A shielded and an unshielded mint with the same `domainSep` have the same color; the kind is given by what the user holds (a shielded coin → kind 1, an unshielded UTXO → kind 2), not by the color."
 - **Meanwhile**: the lookup table records which kinds were minted under each color.
-- **Status**: PROPOSED (editorial)
+- **Owner review (2026-10-02)**: "OK" — approved as proposed.
+- **Status**: OWNER-APPROVED (editorial)
 
 ## N4 — Dependencies: state the toolchain as a minimum
 
@@ -49,7 +53,8 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 - **Proposed text**: "MIP-0002 `Misc` events: Compact 0.34.0 or later (language 0.26.0, runtime 0.19.0 or later), Midnight ledger v9."
 - **Evidence**: this repository emits with Compact 0.35.0 (language 0.27.0, runtime 0.20.0) and `--feature-zkir-v3`; the emitted event equals A1 byte-for-byte on the local stack and on Stagenet (case S0-SPIKE, and the Stagenet cases [C06](deployments/stagenet/cases/C06/README.md) and [C10](deployments/stagenet/cases/C10/README.md), whose `publishMetadata()` events are Appendix A byte-for-byte).
 - **Meanwhile**: the repository states the minimum and the exact versions it is built and tested with (`toolchain.json`).
-- **Status**: PROPOSED (editorial)
+- **Owner review (2026-10-02)**: "OK" — approved as proposed.
+- **Status**: OWNER-APPROVED (editorial)
 
 ## N5 — Existing contracts: the inserted verifier key must use the key version of the circuit's proving system
 
@@ -58,9 +63,10 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 - **Evidence**: local stack, this repository's S0 spike: midnight-js `removeVerifierKey()` of a ZKIR-v3 `publishMetadata` → `FailFallible`, key still present; the same `MaintenanceUpdate` with `VerifierKeyRemove(publishMetadata, v4)` → `SucceedEntirely`, key gone; the same `v4` removal on Stagenet (case S0-SPIKE, block 710814; case [C10](deployments/stagenet/cases/C10/README.md), block 715183, 0.039 DUST, after which the circuit has no key and a call is refused). Ledger: `ContractOperationVersion::{V3, V4}`, `ContractOperationVersionedVerifierKey::{V3, V4}`.
 - **Further evidence**: local run of this template (2026-10-02) — `VerifierKeyInsert(publishMetadata, v4)` of a Compact 0.35.0 `--feature-zkir-v3` circuit into a deployed contract whose original circuit also has a `v4` key: `SUCCESS` (≈ 0.59 DUST), counter 0 → 1, ledger data unchanged; then the call through midnight-js `findDeployedContract` with the upgrade-only build is proven, accepted (≈ 0.16 DUST) and emits the expected event bound to the original address (README "Local run").
 - **Stagenet evidence (case [U1](deployments/stagenet/cases/U1/README.md), 2026-10-02)**: `VerifierKeyInsert(publishMetadata, v4)` of the same Compact 0.35.0 ZKIR-v3 key into a `LegacyToken` deployed without it (`11010832…d63b`): `SUCCESS` in block 715428 (0.911 DUST), entry points `{mint}` → `{mint, publishMetadata}`, mint key and ledger data unchanged, authority counter 0 → 1; the call through the upgrade-only build (block 715433) emits the expected event bound to the original address, whose identity color equals the color of the coins minted before the insert.
-- **Proposed text** (informative, after step 2): "The verifier key is inserted at the key version of the circuit's proving system (on ledger v9: `v3` for ZKIR v2 circuits, `v4` for ZKIR v3 circuits). Check that the tool building the maintenance update supports that version."
+- **Proposed text** (informative, after step 2): "Informative: the verifier key is inserted under the key version of the circuit's proving system, and that version is bumped when the proving system changes (on ledger v9: `v3` for ZKIR v2 circuits, `v4` for ZKIR v3 circuits)."
 - **Meanwhile**: the upgrade template (S6) and the create-and-destroy example build the maintenance update with the ledger API and an explicit version (`test-contracts/toolchain-spike/src/lib/maintenance.ts`).
-- **Status**: PROPOSED (informative)
+- **Owner review (2026-10-02)**: "if displayed — bump version — but should be marked as informative." The text is informative only and says the key version is bumped with the proving system.
+- **Status**: OWNER-APPROVED (informative)
 
 ## N6 — `standards`: say that the identifier rule is a byte rule (other Unicode spaces and controls are allowed)
 
@@ -69,7 +75,8 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 - **Evidence**: informative vectors `vectors/informative/state/INF-STD-6.json` (U+00A0) and `INF-STD-7.json` (U+0085), both usable under the byte rule; the reference consumer implements the byte rule.
 - **Proposed text**: "An identifier is non-empty and contains no byte in `0x00`–`0x20` or `0x7f` (ASCII space and control characters). Other characters, including non-ASCII spaces and controls, are allowed; identifiers SHOULD use printable ASCII."
 - **Meanwhile**: the reference consumer applies the byte rule exactly as the parenthesis states; the two vectors are informative.
-- **Status**: PROPOSED (editorial)
+- **Owner review (2026-10-02)**: "this is out of scope of the MIP." The reference consumer keeps applying the byte rule exactly as the MIP states it.
+- **Status**: WITHDRAWN
 
 ## N7 — Testing: say which consumers S8 (display) and S9 (symbol grouping) apply to
 
@@ -78,16 +85,18 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 - **Evidence**: this repository's runner reports S8 and S9 like every other normative vector (`vectors/state/S8.json`, `S9a`–`S9d`); a consumer without grouping fails S9a–S9d only.
 - **Proposed text** (Testing, before the state rules): "S8 applies to consumers that display amounts and S9 to consumers that group symbols; a consumer that does neither passes the other vectors."
 - **Meanwhile**: the vectors keep S8 and S9 normative as the MIP says; the runner's per-test-id summary lets a consumer show exactly which of these it does not implement.
-- **Status**: PROPOSED (editorial)
+- **Owner review (2026-10-02)**: "OK" — approved as proposed.
+- **Status**: OWNER-APPROVED (editorial)
 
 ## N8 — Publishing: name "removed after use" as a third way to protect an emitting circuit
 
 - **MIP section**: Publishing ("Who may call an emitting circuit is the contract's choice. Anyone who can call it can rename or withdraw the token, so it SHOULD be access-controlled or publish-once.").
 - **Problem**: Midnight offers a third protection that needs no guard in the circuit: the contract's maintenance authority removes the emitting circuit's verifier key (`VerifierKeyRemove`) right after the deployer's first call, so nobody can call it again. It is cheaper than an owner check and simpler than a publish-once flag, and the owner of this reference chose it for the minimal example. It is only safe when the circuit's payload is **constant**: until the key is removed, anyone holding the compiled artefacts can call the circuit, and with runtime parameters they could publish anything (with a constant payload they can only re-emit the same values). The MIP's sentence does not mention it, and does not warn that an unguarded circuit with parameters is unsafe even briefly.
 - **Evidence**: `examples/minimal/contracts/CreateAndDestroy.compact` — runtime tests (`examples/minimal/test/minimal.test.ts`: any caller re-emits exactly the A1 bytes before removal) and an end-to-end run on the local chain (`examples/minimal/scripts/create-and-destroy.ts`, 2026-10-01: deploy → `publishMetadata()` → one `Misc` event = A1 → `VerifierKeyRemove(publishMetadata, v4)` `SucceedEntirely` → a second call is refused, `Operation 'publishMetadata' is undefined`, still one event; `transfer` keeps its key). Stagenet: case S0-SPIKE (removal in block 710814) and case [C10](deployments/stagenet/cases/C10/README.md) (2026-10-02: the unguarded constant `publishMetadata()` emitted Appendix A in block 715177, its key was removed in block 715183, and a later call is refused before submission — "has no verifier key"; operations left: `transfer`). The deployed operation holds only the verifier key (1,353-byte key → 1,362-byte operation), not the circuit's ZKIR, so callers need the artefacts — which DApps ship. The removal must use the `v4` key slot for ZKIR v3 circuits (note N5).
-- **Proposed text** (Publishing, replacing the third bullet): "Who may call an emitting circuit is the contract's choice. Anyone who can call it can rename or withdraw the token, so it SHOULD be access-controlled, publish-once, or removed after use (for example, a `publishMetadata()` whose payload is constant, whose verifier key the maintenance authority removes right after the deployer's call). An emitting circuit that is not access-controlled SHOULD NOT take the metadata as parameters."
+- **Proposed text** (Publishing, replacing the third bullet): "Who may call an emitting circuit is the contract's choice. Anyone who can call it can rename or withdraw the token, so it SHOULD be access-controlled, publish-once, or removed after use (for example, a `publishMetadata()` whose payload is constant, whose verifier key the maintenance authority removes right after the deployer's call)."
 - **Meanwhile**: `packages/compact/README.md` documents the three patterns with these caveats; `examples/minimal` implements all three.
-- **Status**: PROPOSED
+- **Owner review (2026-10-02)**: "ok but the last 'An emitting circuit that is not access-controlled SHOULD NOT take the metadata as parameters' is going too far: not protecting this call should be obvious and is out of scope of this MIP; the recommendation was made." The last sentence is removed.
+- **Status**: OWNER-APPROVED
 
 ## N9 — Payload: do not tie the Compact construction to `serialize` of non-event types
 
@@ -96,7 +105,8 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 - **Evidence**: `packages/compact` builds the payload both ways (`Mip0018.compact` with `serialize`, `Mip0018Pure.compact` with spreads). Executed in compact-runtime 0.20.0 they emit identical bytes, equal to the vectors A1–A5 and S1 and to the reference encoder for 729 generated payloads (every value size 1–219, multi-record shapes; `test/equivalence.test.ts`). Size errors are compile errors in both (`test/compile-fail.test.ts`). Cost: identical for constant payloads (k = 6); with runtime values `serialize` is cheaper (25,857 vs 39,207 rows for the four common fields, `docs/costs.md`).
 - **Proposed text**: "… so a Compact emitter builds each payload from fixed-size fields (for example `Uint<8>` lengths and `Bytes<K>` keys), concatenated in order and zero-padded to 256 bytes — for example with the serialization the Compact compiler provides for those types, or with byte-vector concatenation — so that every length is checked at compile time."
 - **Meanwhile**: the default module uses `serialize` (owner decision Q3: "ideally we can serialize with Compact"); the pure-circuit module is the fallback, and a compile test would catch a compiler that restricts `serialize`.
-- **Status**: PROPOSED (informative)
+- **Owner review (2026-10-02)**: "this is tricky: we want to delegate all serialization to Compact, and make no claims ourselves." The MIP keeps delegating serialization to the Compact compiler; this repository still tests both constructions.
+- **Status**: WITHDRAWN
 
 ## N10 — Lookup: count only mints that took effect, read from the transaction's effects
 
@@ -115,13 +125,11 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
   mint-txs.json`, blocks 508540 / 508544) decode to the color the indexer serves as the UTXO `tokenType`; the local
   end-to-end run checks every mint of the run appears once with the right `(contract, domainSep, kinds)`.
 - **Further evidence (examples and CLI)**: a published-but-never-minted identity (token-family bronze) is colored by the consumer (kind 1) but `lookup` answers "not minted in the scanned range" (exit 3): the color a consumer derives and the colors that exist on chain are different sets, as N10 says. **Stagenet (case [IDX](deployments/stagenet/cases/IDX/README.md), 2026-10-02)**: the scanner read blocks 714485–715183 (699 blocks, 58 contract calls, 0 decode errors) and found exactly the 7 applied mints of the matrix (5 colors) plus one mint of another Stagenet contract; bronze (C05, published, never minted) is "not minted in the scanned range"; every minted color's entry equals the wallet SDK's own view of the coins/UTXOs wallet 1 received (`wallet-status.json` of C02–C05).
-- **Proposed text** (Lookup, informative): "A mint is a `shieldedMints` or `unshieldedMints` effect of a contract
-  call in a part of the transaction that was applied: the guaranteed part of a transaction that did not fail, or a
-  fallible segment that succeeded. Mint events a contract emits (MIP-0002 `ShieldedMint` / `UnshieldedMint`) and
-  UTXO token types are not sources for this table."
+- **Proposed text** (Lookup, informative): "A mint is a `shieldedMints` or `unshieldedMints` effect of a contract call."
 - **Meanwhile**: `mip0018 index` counts exactly those mints (`partApplied` in `raw.ts`) and ignores emitted mint
   events.
-- **Status**: PROPOSED
+- **Owner review (2026-10-02)**: "saying that 'A mint is a `shieldedMints` or `unshieldedMints` effect of a contract call' is enough: the segment wording adds nothing, and naming the negative cases adds no value (we cannot list them all)." The proposed text is reduced to that sentence.
+- **Status**: OWNER-APPROVED (informative)
 
 ## N11 — "Event within the transaction": name the order a raw-transaction reader must use
 
@@ -140,7 +148,8 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
   execution order: the guaranteed part of every intent (in ascending segment id), then each successful fallible
   segment (in ascending segment id); within a part, actions and their operations in order."
 - **Meanwhile**: `raw.ts` uses that order; indexer-based commands use the indexer's event id.
-- **Status**: PROPOSED
+- **Owner review (2026-10-02)**: "OK" — approved as proposed.
+- **Status**: OWNER-APPROVED
 
 ## N12 — Common fields: getter equality when the getters cannot change and the token is renamed
 
@@ -157,8 +166,9 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 
 - **Meanwhile**: the examples publish the constructor literals (getter-consistent) and document that a rename supersedes the `sealed` getters (`examples/openzeppelin/README.md`, "Renames do not change the getters").
 - **Decision for this repository** (project owner, 2026-10-02): option (a). Getter equality applies when a token first publishes its metadata; MIPs that define specific token standards may define how their tokens behave and override MIP-0018's defaults case by case.
-- **Proposed text** (Common fields, replacing the getter sentence): "A token that also exposes MIP-0004, MIP-0011 or MIP-0014 getters SHOULD emit the same values those getters return when it first publishes them. A later update, such as a rename, is the token's current metadata for consumers of this MIP even where the getters cannot change. A MIP that defines a token standard MAY restrict or override these defaults for its tokens."
-- **Status**: PROPOSED
+- **Proposed text** (Common fields, replacing the getter sentence): "A token that also exposes standard getters (for example those of MIP-0004, MIP-0011 or MIP-0014) SHOULD emit the same values those getters return when it first publishes them. A later update, such as a rename, is the token's current metadata for consumers of this MIP even where the getters cannot change. A MIP that defines a token standard MAY restrict or override the behaviour of this MIP for tokens that declare that standard in the emitted `standards` field."
+- **Owner review (2026-10-02)**: "also exposes, for example, MIP-0004, MIP-0011 … getters; a MIP that defines a token standard MAY restrict or override the behaviour of this MIP through the emitted `standards` field." Wording applied.
+- **Status**: OWNER-APPROVED
 
 ## N13 — Payload: a fixed-size field must be exactly as long as its key or value
 
@@ -168,7 +178,8 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 - **Further evidence (examples and CLI)**: the tooling side now enforces it too: the CLI's `{"$utf8": "…"}` argument for a `Bytes<N>` circuit parameter must be exactly N bytes; a shorter text is refused ("zero padding would become part of the value") unless `"pad": true` asks for padding on purpose (`packages/midnight/src/signer/args.ts`, unit test in `packages/midnight/test/signer-units.test.ts`). Every rename in the examples' adapters, the walkthrough and the Stagenet cases goes through this rule.
 - **Proposed text** (informative, after the Compact sentence of the Payload section): "Each fixed-size field must be exactly as long as the key or value it carries: a shorter value padded with zero bytes is a different value (for example `"AGL"` sent as a `Bytes<4>` is `"AGL\0"`), and consumers accept it as such."
 - **Meanwhile**: the module's typed builders take the sizes as generic arguments checked by the compiler; the OpenZeppelin README says "never pad a value with zeros"; tests compare every emitted value exactly.
-- **Status**: PROPOSED (informative)
+- **Owner review (2026-10-02)**: "OK" — approved as proposed.
+- **Status**: OWNER-APPROVED (informative)
 
 ## N14 — Implementation Plan step 4: say where kind 2 comes from
 
@@ -177,7 +188,8 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 - **Evidence**: `examples/openzeppelin/native-unshielded` and `multi-kind` use the standard library's `mintUnshieldedToken` with OpenZeppelin `Ownable`; the module works for kind 2 unchanged (runtime tests: the minted UTXO's color equals `tokenType(domainSep, contractAddress)` and the consumer's color). All three listed modules take the extension unchanged (compile with Compact 0.35.0 + ZKIR v3 against 0.4.0-alpha.5, no compiler message).
 - **Proposed text**: "… as an optional extension of `NativeShieldedToken`, `NativeShieldedTokenFamily` and `FungibleToken`, and of a native unshielded token module once the library has one (until then, kind 2 tokens call `mintUnshieldedToken` directly)."
 - **Meanwhile**: documented in `examples/openzeppelin/native-unshielded/README.md`. Nothing is proposed to OpenZeppelin from this repository (owner decision Q6).
-- **Status**: PROPOSED (editorial)
+- **Owner review (2026-10-02)**: "No — skip."
+- **Status**: WITHDRAWN
 
 ## N15 — Existing contracts, step 1: say what "against the contract's existing ledger layout" requires, and that nothing on chain checks it
 
@@ -186,16 +198,18 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 - **Evidence**: `test/upgrade.test.ts` (compact-runtime 0.20.0, one shared state as on chain after the insert): an upgrade source with `domain` and `owner` swapped (both `Bytes<32>`) compiles; its `ledger()` reads other values under the same names; its owner check reads the domain (owner refused); an unguarded variant emits an **accepted** event whose `domainSep` is the owner's id — metadata for an identity nobody holds. `test/layout.test.ts`: the compiler's recorded layout (`compiler/contract-info.json` → `ledger`) detects reorder, rename, retype, other storage, missing/extra fields and imported modules with ledger fields.
 - **Proposed text** (step 1, after the first sentence): "The source MUST declare the deployed contract's ledger fields — including those of the modules it imports — exactly as deployed: the same fields, in the same order, with the same types. The ledger does not check this; a different layout makes the circuit read other state, for example a `domainSep` that is not the token's. Compilers record the layout they chose, so tools can compare the two builds before the update is signed."
 - **Meanwhile**: `scripts/check-layout.ts` and `mip0018 upgrade` compare the compiled layouts and decode the deployed state through both builds before signing.
-- **Status**: PROPOSED
+- **Owner review (2026-10-02)**: "It is not in the reach of this MIP to define how contracts are updated, just that it is possible." The layout check stays a tooling feature of this repository (`docs/upgrade-guide.md`).
+- **Status**: WITHDRAWN
 
 ## N16 — Existing contracts: "does not need redeployment" holds only with a usable maintenance authority
 
 - **MIP section**: Backwards Compatibility Assessment — Existing contracts ("A contract deployed before then has no emitting circuit, but it does not need redeployment: its maintenance authority can add one.").
 - **Problem**: a contract's maintenance authority may be frozen: an empty committee (the ledger default), a threshold above the committee size, or keys nobody holds any more. Such a contract can never take a maintenance update, so it cannot add a circuit.
 - **Evidence**: ledger 9.1.0.0-rc.3 — `ContractMaintenanceAuthority` default is an empty committee with threshold 1; verification requires `signatures ≥ threshold` from committee keys (`ledger/src/verify.rs`). Local run: an insert signed by a key outside the one-key committee is refused by `mip0018 upgrade` before submission and, forced, rejected by the node with `1010: Invalid Transaction: Custom error: 135` (`MalformedError::InvalidCommitteeSignature`, midnight-node `ledger/src/versions/common/types.rs`), nothing changed (README "Local run"); unit tests of `checkAuthority`. The same on Stagenet (case [U1](deployments/stagenet/cases/U1/README.md), 2026-10-02): refused before submission, and forced, rejected by the node with `Custom error: 135`, not included, no fee.
-- **Proposed text**: "… but it does not need redeployment if its maintenance authority can still sign: its maintenance authority can add one. A contract whose authority is frozen (an empty committee, an unreachable threshold, or lost keys) cannot add a circuit and needs a new deployment to adopt this MIP."
+- **Proposed text** (Existing contracts, after "its maintenance authority can add one."): "Note: a valid maintenance authority is required."
 - **Meanwhile**: `checkAuthority` refuses frozen authorities, foreign keys and thresholds above 1 before anything is submitted; the upgrade guide lists the check.
-- **Status**: PROPOSED
+- **Owner review (2026-10-02)**: "OK, but just in a short form, as a note: 'a valid maintenance authority is required'." The proposed text is reduced to that note.
+- **Status**: OWNER-APPROVED (editorial)
 
 ## N17 — Existing contracts, step 2: inserting never replaces; what an upgrade cannot add
 
@@ -204,7 +218,8 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 - **Evidence**: local run (README "Local run"): re-inserting the same key and inserting another build's `publishMetadata` key are both refused by `mip0018 upgrade` before submission and, forced, included as `PARTIAL_SUCCESS` (the fallible segment with the update failed; fees ≈ 0.60 DUST each, the same as a successful insert); the key, the authority counter and the ledger data stay unchanged. `test/layout.test.ts`: adding a `published: Boolean` field (a publish-once flag) breaks the layout.
 - **Proposed text** (informative, after step 2): "A `VerifierKeyInsert` never replaces an existing key; to change an added circuit, remove its key first. An added circuit cannot add ledger fields, so it cannot be made publish-once; guard it with the contract's existing access control, or give it a constant payload and remove its key after the call."
 - **Meanwhile**: the template reuses the token's owner check; `mip0018 upgrade` refuses an insert over another key before submission.
-- **Status**: PROPOSED
+- **Owner review (2026-10-02)**: "No — out of the scope of the MIP."
+- **Status**: WITHDRAWN
 
 ## N18 — Security Considerations: the maintenance authority controls the metadata too
 
@@ -213,7 +228,8 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 - **Evidence**: ledger semantics of `VerifierKeyRemove` / `VerifierKeyInsert` (any entry point); the local run inserts a circuit into a deployed token with the deploy-time key alone.
 - **Proposed text** (Unauthorized updates, new sentence): "A contract's maintenance authority can replace its emitting circuits, so it can change the metadata as well; metadata is fixed only when no one can call an emitting circuit and no one holds the maintenance authority." (Whether and how an authority can be given up — e.g. a `ReplaceAuthority` to an empty committee — was not exercised here.)
 - **Meanwhile**: documented in `docs/upgrade-guide.md` (Limits: Trust).
-- **Status**: WITHDRAWN (project owner, 2026-10-02: possible, but it cannot be verified in circuit — an implementation design question, not part of the MIP; kept in `docs/upgrade-guide.md`, Limits: Trust)
+- **Owner review (2026-10-02)**: first review — "possible, but it cannot be verified in circuit; an implementation design question, not part of the MIP" (kept in `docs/upgrade-guide.md`, Limits: Trust); second review — "No — out of scope."
+- **Status**: WITHDRAWN
 
 ## N19 — Spam and cost: give issuers the order of magnitude of a metadata transaction
 
@@ -235,7 +251,8 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
   emitting circuit's size or the payload's length; each emitting circuit adds its verifier key to the contract's
   deployment cost."
 - **Meanwhile**: `docs/costs.md` publishes the measured figures (local and Stagenet) with the circuit sizes.
-- **Status**: PROPOSED (informative; figures are network- and time-dependent, so the authors may prefer to link a
+- **Owner review (2026-10-02)**: "No — out of scope." The measured fees stay in `docs/costs.md`.
+- **Status**: WITHDRAWN
   measurement instead of quoting numbers)
 
 ---

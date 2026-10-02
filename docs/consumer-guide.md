@@ -201,7 +201,7 @@ the usable values.
 ### `standards`
 
 A list of identifiers separated by single spaces; an identifier is non-empty and has no byte in `0x00`–`0x20` or
-`0x7f` (other Unicode spaces are bytes above `0x7f`, so they are allowed — note N6). An empty value claims nothing; a
+`0x7f` (other Unicode spaces are bytes above `0x7f`, so they are allowed by the MIP's byte rule). An empty value claims nothing; a
 malformed value is unusable, not empty. `parseStandards` implements it.
 
 The list is **self-declared**. You MAY use an identifier you recognise to pick a UI or adapter you already trust; you
