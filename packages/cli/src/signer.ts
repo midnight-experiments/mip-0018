@@ -61,6 +61,7 @@ const SIGNER_OPTIONS = {
   'dev-genesis-wallet': { type: 'boolean', default: false },
   'state-dir': { type: 'string' },
   'private-state': { type: 'string' },
+  'wallet-cache': { type: 'string' },
 } as const;
 
 const SIGNER_HELP = `
@@ -72,6 +73,8 @@ Signer options (signer container only):
   --wallet-proof-server <url>  DUST spends (or MIP0018_WALLET_PROOF_SERVER_URL; official 9.0.0-rc.6, Q21)
   --state-dir <dir>            private state directory outside the repository (or MIP0018_STATE_DIR)
   --private-state <file>       maintenance keys + witness private state (default <state-dir>/mip0018-private-state.json)
+  --wallet-cache <file>        optional 0600 wallet sync cache outside the repository (restores the sub-wallets; on a
+                               public network a re-run then syncs only the new blocks)
 `;
 
 function endpoints(v: Values): SignerEndpoints {
@@ -91,8 +94,11 @@ async function wallet(v: Values, ep: SignerEndpoints, log: (m: string, x?: unkno
     },
     ep.profile,
   );
+  const cache = str(v, 'wallet-cache');
+  if (cache !== undefined && !relative(repoRoot(), resolve(cache)).startsWith('..'))
+    throw new UsageError(`${cache} is inside the repository; the wallet cache holds secrets`);
   log('opening the wallet and syncing (minutes on a public network)');
-  return openWallet(ep, seed);
+  return openWallet(ep, seed, { ...(cache ? { cachePath: resolve(cache) } : {}), log });
 }
 
 function privateStatePath(v: Values): string {

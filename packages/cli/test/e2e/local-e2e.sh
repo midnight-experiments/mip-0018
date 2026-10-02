@@ -286,6 +286,20 @@ expect_rc "undeployed profile refuses a Stagenet URL (usage)" 2 "$rc"
 rc=0; signer guard-usage publish $B --record /e2e/records/emitter.json --bogus || rc=$?
 expect_rc "unknown option rejected before anything runs (usage)" 2 "$rc"
 
+# --------------------------------------------------------------------------------------------------- wallet cache
+say "wallet sync cache"
+rc=0; signer cache-1 wallet status $B --wallet-cache /run/mip0018/state/b.wallet-cache --json || rc=$?
+expect_rc "wallet status writes the 0600 sync cache" 0 "$rc"
+rc=0; signer cache-2 wallet status $B --wallet-cache /run/mip0018/state/b.wallet-cache --json || rc=$?
+expect_rc "wallet status again" 0 "$rc"
+check "second run restored the wallet from the cache" grep -q "restored from its 0600 sync cache" "$LOGS/cache-2.err"
+check "cache file is mode 0600 and restored addresses are equal" py "
+import json,os,stat
+assert stat.S_IMODE(os.stat('$STATE/b.wallet-cache').st_mode)==0o600
+a=json.load(open('$LOGS/cache-1.out')); b=json.load(open('$LOGS/cache-2.out'))
+assert all(a[k]==b[k] for k in ['unshieldedAddress','shieldedAddress','dustAddress','coinPublicKey','night','nightUtxos'])
+"
+
 # ------------------------------------------------------------------------------------------------------- secrets
 say "secret scan"
 check "no secret value in any log, record or index state" py "
@@ -299,7 +313,7 @@ def walk(v):
   elif isinstance(v,list):
     for x in v: walk(x)
   elif isinstance(v,str) and len(v)>=32: secrets.add(v.lower())
-for f in glob.glob('$STATE/*.json'):
+for f in glob.glob('$STATE/*.json'):  # private-state files (the wallet cache is checked for its mode only)
   d=json.load(open(f)); walk(d.get('signingKeys',{})); walk(d.get('states',{}))
 secrets={s for s in secrets if len(s)>=32}
 assert secrets, 'no secret values collected'

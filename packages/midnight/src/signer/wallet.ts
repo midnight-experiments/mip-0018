@@ -34,7 +34,9 @@ import type { MidnightProvider, UnboundTransaction, WalletProvider } from '@midn
 import * as Rx from 'rxjs';
 import { Indexer } from '../indexer.ts';
 import type { NetworkProfile } from '../network.ts';
-import { seedFromHexFile, seedFromMnemonicFile } from './secrets.ts';
+import { existsSync } from 'node:fs';
+import { decodeTyped, encodeTyped } from './private-state.ts';
+import { readProtectedFile, seedFromHexFile, seedFromMnemonicFile, writeProtectedFile } from './secrets.ts';
 
 export interface SignerEndpoints {
   profile: NetworkProfile;
@@ -46,6 +48,8 @@ export interface SignerEndpoints {
 
 export interface WalletSession {
   readonly facade: WalletFacade;
+  /** 0600 sync cache (serialized sub-wallet states) written on close, when the wallet was opened with one. */
+  readonly cachePath?: string;
   readonly keystore: UnshieldedKeystore;
   readonly shieldedSecretKeys: ZswapSecretKeys;
   readonly dustSecretKey: DustSecretKey;
@@ -85,7 +89,26 @@ const currentDustParameters = async (profile: NetworkProfile) => {
 };
 
 /** Opens the wallet of a BIP-32 master seed (the seed buffer is zeroed). */
-export const openWallet = async (ep: SignerEndpoints, seed: Uint8Array): Promise<WalletSession> => {
+type WalletCache = {
+  kind: 'mip0018-wallet-cache';
+  networkId: string;
+  unshieldedAddress: string;
+  shielded: unknown;
+  unshielded: unknown;
+  dust: unknown;
+};
+
+/**
+ * Opens the wallet of a BIP-32 master seed (the seed buffer is zeroed). With `cachePath` (a 0600 file in the signer's
+ * private state directory) the three sub-wallets are restored from their serialized states and only sync the rest;
+ * a cache of another wallet or network, or one that does not restore, is ignored (fresh sync). The cache holds
+ * wallet secrets: it is written with mode 0600 and never printed.
+ */
+export const openWallet = async (
+  ep: SignerEndpoints,
+  seed: Uint8Array,
+  o: { cachePath?: string; log?: (m: string) => void } = {},
+): Promise<WalletSession> => {
   const hd = HDWallet.fromSeed(seed);
   seed.fill(0);
   if (hd.type !== 'seedOk') throw new WalletError('the master seed cannot be used for HD derivation');
@@ -97,25 +120,75 @@ export const openWallet = async (ep: SignerEndpoints, seed: Uint8Array): Promise
   const keystore = createKeystore({ kind: 'schnorr', secret: derived.keys[Roles.NightExternal] }, ep.profile.networkId);
   for (const k of Object.values(derived.keys)) (k as Uint8Array).fill(0);
 
+  let cache: WalletCache | undefined;
+  if (o.cachePath && existsSync(o.cachePath)) {
+    try {
+      const c = decodeTyped(JSON.parse(readProtectedFile(o.cachePath).toString('utf8'))) as WalletCache;
+      if (
+        c.kind === 'mip0018-wallet-cache' &&
+        c.networkId === ep.profile.networkId &&
+        c.unshieldedAddress === keystore.getBech32Address().asString()
+      )
+        cache = c;
+      else o.log?.('wallet cache belongs to another wallet or network: ignored');
+    } catch (e) {
+      o.log?.(`wallet cache unreadable (${(e as Error).message}): ignored`);
+    }
+  }
   const dustParameters = await currentDustParameters(ep.profile);
-  const facade = await WalletFacade.init({
-    configuration: {
-      networkId: ep.profile.networkId,
-      costParameters: { feeBlocksMargin: 5 },
-      relayURL: new URL(ep.profile.rpcWs),
-      provingServerUrl: new URL(ep.walletProofServer),
-      indexerClientConnection: { indexerHttpUrl: ep.profile.indexer, indexerWsUrl: ep.profile.indexerWs },
-      txHistoryStorage: new InMemoryTransactionHistoryStorage(WalletEntrySchema, mergeWalletEntries),
-    },
-    shielded: (c) => ShieldedWallet(c).startWithSecretKeys(shieldedSecretKeys),
-    unshielded: (c) => UnshieldedWallet(c).startWithPublicKey(PublicKey.fromKeyStore(keystore)),
-    dust: (c) => DustWallet(c).startWithSecretKey(dustSecretKey, dustParameters),
-  });
+  const configuration = {
+    networkId: ep.profile.networkId,
+    costParameters: { feeBlocksMargin: 5 },
+    relayURL: new URL(ep.profile.rpcWs),
+    provingServerUrl: new URL(ep.walletProofServer),
+    indexerClientConnection: { indexerHttpUrl: ep.profile.indexer, indexerWsUrl: ep.profile.indexerWs },
+    txHistoryStorage: new InMemoryTransactionHistoryStorage(WalletEntrySchema, mergeWalletEntries),
+  };
+  const init = (c?: WalletCache) =>
+    WalletFacade.init({
+      configuration,
+      shielded: (x) => (c ? ShieldedWallet(x).restore(c.shielded as never) : ShieldedWallet(x).startWithSecretKeys(shieldedSecretKeys)),
+      unshielded: (x) =>
+        c ? UnshieldedWallet(x).restore(c.unshielded as never) : UnshieldedWallet(x).startWithPublicKey(PublicKey.fromKeyStore(keystore)),
+      dust: (x) => (c ? DustWallet(x).restore(c.dust as never) : DustWallet(x).startWithSecretKey(dustSecretKey, dustParameters)),
+    });
+  let facade: WalletFacade;
+  try {
+    facade = await init(cache);
+    if (cache) o.log?.('wallet restored from its 0600 sync cache');
+  } catch (e) {
+    if (!cache) throw e;
+    o.log?.(`wallet cache did not restore (${(e as Error).message}): fresh sync`);
+    facade = await init(undefined);
+  }
   await facade.start(shieldedSecretKeys, dustSecretKey);
-  return { facade, keystore, shieldedSecretKeys, dustSecretKey, networkId: ep.profile.networkId };
+  return {
+    facade,
+    keystore,
+    shieldedSecretKeys,
+    dustSecretKey,
+    networkId: ep.profile.networkId,
+    ...(o.cachePath ? { cachePath: o.cachePath } : {}),
+  };
 };
 
 export const closeWallet = async (session: WalletSession): Promise<void> => {
+  if (session.cachePath) {
+    try {
+      const f = session.facade as unknown as Record<'shielded' | 'unshielded' | 'dust', { serializeState(): Promise<unknown> }>;
+      const c: WalletCache = {
+        kind: 'mip0018-wallet-cache',
+        networkId: session.networkId,
+        unshieldedAddress: session.keystore.getBech32Address().asString(),
+        shielded: await f.shielded.serializeState(),
+        unshielded: await f.unshielded.serializeState(),
+        dust: await f.dust.serializeState(),
+      };
+      writeProtectedFile(session.cachePath, JSON.stringify(encodeTyped(c)));
+    } catch {
+      /* a cache is an optimisation; never fail a command because of it */
+    }
+  }
   await session.facade.stop();
   session.shieldedSecretKeys.clear();
   session.dustSecretKey.clear();
