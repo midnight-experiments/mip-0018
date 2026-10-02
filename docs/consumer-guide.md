@@ -209,6 +209,11 @@ earlier one (vectors `S5a`–`S5c`). A field that was never set has no value: **
 decimals — without `decimals`, show raw amounts or nothing. `identity.common` in the reference consumer holds exactly
 the usable values.
 
+If the token also has standard getters (`name()`, `symbol()`, `decimals()` of MIP-0004/0011/0014), the events are what
+this MIP serves: "A later update, such as a rename, is the token's current metadata for consumers of this MIP even
+where the getters cannot change" (Common fields, since `78ecbb4`; note N12). A MIP that defines a token standard may
+restrict or override that for tokens that declare the standard in `standards`.
+
 ### `standards`
 
 A list of identifiers separated by single spaces; an identifier is non-empty and has no byte in `0x00`–`0x20` or

@@ -37,6 +37,17 @@ keys, and colors (`tokenType(domainSep, contract)` in the mint scanner's table, 
 balances, and on the live identity). Exit 0 = every check passes; 4 = not yet indexed/final. All cases (C01–C10,
 IDX, U1) passed on 2026-10-02, also from a clean checkout in a container without any secret.
 
+### Re-checked against `78ecbb4`
+
+The cases were prepared and run under the MIP text `b147c62` (their `case.json` files say so and stay as recorded).
+On 2026-10-02 the repository moved its pin to the owner's update of PR #340, `78ecbb4`, which changed no payload byte,
+layout or validation rule but added the Consuming rule "consumers MUST treat missing trailing bytes as zero" and
+fixed the event order within a transaction (sub-plan S9). Every case was re-checked with the re-pinned code (zero
+extension in `verify`/`list`, the new pin) at 16:22–16:25Z, one case at a time: **12/12 pass, 71/71 checks** — C01 2,
+C02 3, C03 3, C04 4, C05 6, C06 11, C07 23, C08 2, C09 2, C10 4, IDX 7, U1 4 — with no `expected.json` changed. The
+`list` check compares the reference consumer's own state with `expected.json` strictly (single-member groups and every
+field included), so it is stricter than the vector runner's S9 rule.
+
 ## Cases
 
 Expected conclusions were written **before** any transaction, from the vectors and the reference reducer
