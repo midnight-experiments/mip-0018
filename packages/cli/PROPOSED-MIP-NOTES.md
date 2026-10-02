@@ -13,7 +13,8 @@ two "considered — no change" rows.
   examples' adapters, the walkthrough and the Stagenet cases goes through this rule.
 - **N3 (kinds 1 and 2 share one color)** — on the local chain the multi-kind example's shielded and unshielded mints
   under one `domainSep` resolve, through the mint scanner, to one color entry carrying both kinds
-  (`deployments/stagenet/cases/IDX`, recheck rows `C04-shielded` / `C04-unshielded`; local run in the S4 plan).
+  (`deployments/stagenet/cases/IDX`, steps `lookup-C04-shielded` / `lookup-C04-unshielded`; local run in the S4 plan),
+  and the wallet SDK itself lists that one color among both its shielded and its unshielded balances (`wallet status`).
 - **N10 (Lookup counts only mints that took effect)** — a published-but-never-minted identity (token-family bronze)
   is colored by the consumer (kind 1) but `lookup` answers "not minted in the scanned range" (exit 3): the color a
   consumer derives and the colors that exist on chain are different sets, as N10 says.
