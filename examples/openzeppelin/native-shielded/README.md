@@ -94,6 +94,7 @@ docker/run.sh exec 'npx vitest run examples/openzeppelin/native-shielded'
 | Test | Shows |
 |---|---|
 | metadata.json payloads | every expected payload equals the reference encoder |
+| exact values | every emitted event of every step, decoded with `@mip0018/codec`: header and each key and value equal `metadata.json` exactly (no zero padding, `decimals` 1 byte) |
 | publish | payload = `metadata.json`; header `domainSep` = the constructor's `domainSep` (`NativeShieldedToken__domain`), kind 1; the constructor literals |
 | **color** | `rawTokenType(domainSep, contractAddress)` from the official runtime = the color of the coin `mint` returns = the color of its Zswap output = `tokenColor()` = the color the reference consumer derives for the kind-1 identity; the shielded mint effect is keyed by the event's `domainSep` |
 | steps and lifecycle | mint → publish → rename → withdraw → withdraw again → revive: bytes, mint effects and consumer state equal `metadata.json` |

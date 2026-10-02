@@ -91,6 +91,7 @@ reference consumer (`@mip0018/consumer`):
 
 | Test | Shows |
 |---|---|
+| exact values | every emitted event of every step, decoded with `@mip0018/codec`: header and each key and value equal `metadata.json` exactly (no zero padding, `decimals` 1 byte) |
 | publish | `publishMetadata(domain)` emits one event under that `domain`, kind 1, payload = `metadata.json` |
 | **colors** | for each type: minted coin color = Zswap output color = `tokenColor(domain)` = `rawTokenType(domain, contractAddress)` = the consumer's color for that identity; three distinct colors; each mint effect keyed by its `domain` |
 | **independence** | after minting gold and silver and publishing all three: three identities, one `MEDAL` group. Withdrawing silver hides only silver (again: no change); renaming gold to "Gold Medals" / `GOLDM` moves only gold to its own group; republishing silver revives it with the family values — untouched types keep the same fields at the same chain positions after every step, and the state equals `metadata.json` |

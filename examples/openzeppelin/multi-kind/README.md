@@ -99,6 +99,7 @@ reference consumer (`@mip0018/consumer`, MIP vectors S6 and S9 on a real contrac
 
 | Test | Shows |
 |---|---|
+| exact values | every emitted event of every step, decoded with `@mip0018/codec`: header and each key and value equal `metadata.json` exactly (no zero padding, `decimals` 1 byte) |
 | publish | one call, three events (kinds 1, 2, 3), one `domainSep`, payloads = `metadata.json` |
 | **colors** | the shielded coin and the unshielded UTXO have the same color = `rawTokenType(domainSep, contractAddress)` = the color the consumer derives for kinds 1 and 2; kind 3 has none and its mint has no native effect |
 | **grouping and independence** | after the steps: three identities, one `ACD` group. Then: renaming kind 3 to symbol `ACL` moves only kind 3 out of the group; renaming kind 1 changes only kind 1; withdrawing kind 2 hides only kind 2 (twice: no further change); republishing restores one group of three — the untouched identities keep the same fields at the same chain positions after every step, and the state equals `metadata.json` |

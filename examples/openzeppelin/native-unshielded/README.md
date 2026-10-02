@@ -93,6 +93,7 @@ docker/run.sh exec 'npx vitest run examples/openzeppelin/native-unshielded'
 | Test | Shows |
 |---|---|
 | metadata.json payloads | every expected payload equals the reference encoder |
+| exact values | every emitted event of every step, decoded with `@mip0018/codec`: header and each key and value equal `metadata.json` exactly (no zero padding, `decimals` 1 byte) |
 | publish | payload = `metadata.json`; header `domainSep` = `_domain`, kind 2; the constructor literals; the contract's `_domain` / `_decimals` state holds the same values |
 | **color** | `rawTokenType(domainSep, contractAddress)` = the color `mintUnshieldedToken` returns = the color of the UTXO the transaction creates for the holder (claimed unshielded spend) = `tokenColor()` = the color the reference consumer derives for the kind-2 identity; the unshielded mint effect is keyed by the event's `domainSep` |
 | steps and lifecycle | mint → publish → rename → withdraw → withdraw again → revive: bytes, mint effects and consumer state equal `metadata.json` |
