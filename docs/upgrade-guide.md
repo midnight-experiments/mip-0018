@@ -12,8 +12,10 @@ This guide is the operational form of those three steps. The template is
 [`examples/upgrade-existing-contract`](../examples/upgrade-existing-contract) (a native shielded token
 deployed without any MIP-0018 circuit, and the upgrade-only source that adds `publishMetadata()`); the
 tool is `mip0018 upgrade` ([`packages/cli`](../packages/cli)). Everything below was run on the local
-chain (official images, [`docker/local-stack`](../docker/local-stack)); the Stagenet case is U1 in
-[`deployments/stagenet`](../deployments/stagenet) (recorded after the Stagenet matrix).
+chain (official images, [`docker/local-stack`](../docker/local-stack)) and on Stagenet: case
+[U1](../deployments/stagenet/cases/U1/README.md) (2026-10-02, contract `11010832…d63b`: deploy, mint, foreign-key
+insert refused and rejected, `VerifierKeyInsert` + `publishMetadata()`, same address and color; re-check with
+`docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/U1`).
 
 ## What changes and what does not
 
@@ -164,8 +166,8 @@ Facts the tool relies on (ledger v9, `midnight-ledger` 9.1.0.0-rc.3):
   key for the new one (not exercised here: the template's `mint` is ZKIR v3 too).
 - **Authority and counter.** The update carries the authority's current counter and enough committee
   signatures (each at its committee index); an applied update increments the counter. A signature by a
-  key that is not the authority's is refused by the node before inclusion — no fee (observed:
-  `1010: Invalid Transaction: Custom error: 135`, `MalformedError::InvalidCommitteeSignature`).
+  key that is not the authority's is refused by the node before inclusion — no fee (observed locally and on
+  Stagenet, case U1: `1010: Invalid Transaction: Custom error: 135`, `MalformedError::InvalidCommitteeSignature`).
 - **Fallible segment.** Maintenance updates apply only in a fallible segment: an update the ledger
   refuses is still included (`PARTIAL_SUCCESS`) and its whole fee paid.
 - **No overwrite.** `VerifierKeyInsert` never replaces a key already present in that slot
@@ -173,8 +175,8 @@ Facts the tool relies on (ledger v9, `midnight-ledger` 9.1.0.0-rc.3):
   a `VerifierKeyRemove` and then an insert. Observed: both attempts `PARTIAL_SUCCESS`, key and counter
   unchanged.
 - **Cost.** An insert writes the verifier key (2,121 bytes here) into the contract state:
-  ≈ 0.59 DUST on the local chain, against ≈ 0.04 DUST for a `VerifierKeyRemove` and ≈ 0.16 DUST for the
-  `publishMetadata()` call (Stagenet figures: case U1).
+  ≈ 0.59 DUST on the local chain and **0.911 DUST on Stagenet** (case U1), against ≈ 0.04 DUST for a
+  `VerifierKeyRemove` and ≈ 0.16 DUST (local) / 0.176 DUST (Stagenet) for the `publishMetadata()` call.
 - **Insert before anything touches it.** Until the key is on chain, `findDeployedContract` with the
   upgrade build refuses the contract (the circuit is missing).
 

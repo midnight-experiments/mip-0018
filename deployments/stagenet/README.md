@@ -9,22 +9,22 @@ command** against the public endpoints (spec FR-050…FR-053, SC-004, SC-005).
 | | |
 |---|---|
 | Network | Midnight Stagenet, network id `stagenet` |
-| Genesis hash | `0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491` (`chain_getBlockHash(0)`, checked before the first transaction and again after the matrix) |
+| Genesis hash | `0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491` (`chain_getBlockHash(0)`, checked before the first transaction, after the matrix and after U1) |
 | Node | `Midnight Node` `2.0.0-d9729c13`, runtime `midnight` specVersion 2000000, transactionVersion 4 (ledger 9.1.0.0-rc.3) |
 | Indexer | `https://indexer.stagenet.shielded.tools/api/v4/graphql` (schema 4.4.0-rc.1, protocolVersion 2000000; ingests finalized blocks only) |
 | Node RPC | `https://rpc.stagenet.shielded.tools` |
 | Proof servers (local, official images, Q21) | `midnightntwrk/proof-server:9.0.0-rc.8@sha256:2666c7bd…` (contract circuits, ZKIR v3) and `:9.0.0-rc.6@sha256:38a819ea…` (the wallet's DUST spends) — Stagenet has no public prover |
 | Toolchain | Compact 0.35.0 `--feature-zkir-v3`, compact-runtime 0.20.0, midnight-js 5.0.0-rc.2, wallet SDK 2.0.0-beta.2 (Q22), ledger-v9 1.0.0-rc.5 ([`toolchain.json`](../../toolchain.json)) |
-| Observations | [`network.json`](network.json) — one entry per check (`deployments/stagenet/tools/network-identity.ts`): 2026-10-02 07:54Z finalized 714,397 (before the first transaction), 09:15Z finalized 715,212 (after the matrix) |
+| Observations | [`network.json`](network.json) — one entry per check (`deployments/stagenet/tools/network-identity.ts`): 2026-10-02 07:54Z finalized 714,397 (before the first transaction), 09:15Z finalized 715,212 (after the matrix), 09:43Z finalized 715,486 (after U1) — same genesis, node build and runtime each time |
 | Signers | wallet 1 (issuer/owner) `mn_addr_stagenet1vw57646su9y5z6myarm93m6kcn62j97z0yma94lfkhmta6pz5h5q6utr3k`; wallet 2 (non-owner in C09) `mn_addr_stagenet1vmwmprvxd0m7uet2dtasq24rl2u2xecmkss3x5zndvm9vglea40qqgdz2d` — test wallets of this repository, 5,000 NIGHT each, registered for DUST |
-| Date | 2026-10-02 (UTC), matrix blocks 714,495–715,183 |
+| Date | 2026-10-02 (UTC), matrix blocks 714,495–715,183, upgrade case U1 715,403–715,433 |
 
 ## Re-check (wallet-free)
 
 ```sh
 docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/<ID>
 # every case:
-for c in C01 C02 C03 C04 C05 C06 C07 C08 C09 C10 IDX; do
+for c in C01 C02 C03 C04 C05 C06 C07 C08 C09 C10 IDX U1; do
   docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/$c || echo "FAILED $c"
 done
 ```
@@ -34,8 +34,8 @@ expectation (the indexed event = the raw transaction's `log` op, hash and identi
 finality, exact name/payload and accept/reject/ignore with the reason), `list` of the contract against
 `expected.json` (C06 also as of each step's block), steps that had to be refused (no transaction), removed verifier
 keys, and colors (`tokenType(domainSep, contract)` in the mint scanner's table, in the signer wallet's recorded
-balances, and on the live identity). Exit 0 = every check passes; 4 = not yet indexed/final. All cases passed on
-2026-10-02, also from a clean checkout in a container without any secret.
+balances, and on the live identity). Exit 0 = every check passes; 4 = not yet indexed/final. All cases (C01–C10,
+IDX, U1) passed on 2026-10-02, also from a clean checkout in a container without any secret.
 
 ## Cases
 
@@ -57,10 +57,12 @@ table (from its `record.json`) and the re-check command.
 | [C09](cases/C09/README.md) | Access control: wallet 2 calls C01's owner-only `setMetadata` | (C01's) | 0 | — | **pass** — refused before submission ("Ownable: caller is not the owner"), no transaction; C01 unchanged | 0 |
 | [C10](cases/C10/README.md) | Create-and-destroy (Q4): unguarded constant `publishMetadata()` (Appendix A bytes), then `VerifierKeyRemove` | `048ec49aacdde9ef2fee1bd51c651df46d3224578e36a1e89bdbb88842edf0f6` | 3 | 715171–715183 | **pass** — one event = A1; key gone; second publish refused before submission | 2.238 |
 | [IDX](cases/IDX/README.md) | Mint scanner from a start height + color lookup (MIP "Lookup", F8), wallet-free | — | 0 | scanned 714485–715183 | **pass** — every minted color of C02–C05 resolves to its contract/domainSep/kind and metadata; bronze "not minted" | 0 |
+| [U1](cases/U1/README.md) | Existing-contract upgrade (MIP "Existing contracts", S6): a token deployed WITHOUT an emitting circuit gets `publishMetadata()` by a maintenance `VerifierKeyInsert` | `11010832a39954d9ccce48f6b5fce25fc789abb1d700ee45b26b69af3e5dd63b` | 4 | 715403–715433 | **pass** — same address; ledger data unchanged; the pre-upgrade coins' color `89a55592…ffb0` = the identity's color; scanner + lookup; foreign-key insert refused, forced one rejected by the node (`Custom error: 135`) | 2.762 |
 
-Matrix C01–C10: **53 transactions, all `SUCCESS`, 51.93 DUST** (fees per transaction in each case README and in
-[`docs/costs.md`](../../docs/costs.md#fees-on-stagenet)). Every deployed verifier key equals the SHA-256 the
-repository's cost tables list for that circuit (deterministic builds, Q24).
+Matrix C01–C10: **53 transactions, all `SUCCESS`, 51.93 DUST**; U1: 4 included transactions (all `SUCCESS`), 2.76 DUST
+(fees per transaction in each case README and in [`docs/costs.md`](../../docs/costs.md#fees-on-stagenet)). Every
+deployed verifier key that the repository's cost tables list equals the SHA-256 listed there (deterministic builds,
+Q24); `LegacyToken.mint` and the inserted `publishMetadata` key equal the upgrade template's local build.
 
 **Mint scanner state** (case IDX): [`cases/IDX/index/index-state.json`](cases/IDX/index/index-state.json), start
 height **714485** (the first matrix transaction's block − 10), end 715183; built by

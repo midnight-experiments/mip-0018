@@ -16,8 +16,9 @@ existing notes were waiting for (N2, N3, N4, N5, N8, N10) was linked into those 
   [`docs/costs.md`](../../docs/costs.md#fees-on-stagenet)): every transaction emitting one MIP-0018 event cost
   0.169–0.179 DUST whatever its circuit (k = 6 literal A1 … k = 16 raw emitter; full 256-byte payloads and short ones
   alike — the 34 single-event transactions of C01–C10 plus S0-SPIKE); one call emitting three events 0.193 DUST (C04); two events 0.181 (C08); a tombstone
-  0.174 (C06). Deploying the same tokens cost 2.0 DUST (2 circuits) to 7.0 DUST (10 circuits, OpenZeppelin), i.e.
-  ≈ 0.6–0.9 DUST per additional verifier key; a `VerifierKeyRemove` 0.039 DUST.
+  0.174 (C06). Deploying the tokens cost 1.5 DUST (1 circuit) to 7.0 DUST (10 circuits, OpenZeppelin), i.e.
+  ≈ 0.6–0.9 DUST per additional verifier key; adding one later with a `VerifierKeyInsert` 0.911 DUST (U1); a
+  `VerifierKeyRemove` 0.039 DUST.
 - **Proposed text** (informative, after the Spam-and-cost sentence): "For orientation: on Midnight Stagenet
   (ledger 9.1) a transaction that emits one metadata event cost about 0.17 DUST in 2026, largely independent of the
   emitting circuit's size or the payload's length; each emitting circuit adds its verifier key to the contract's

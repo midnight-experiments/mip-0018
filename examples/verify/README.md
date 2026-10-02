@@ -222,13 +222,13 @@ result ok (7/7)
 
 Every Stagenet case re-checked (2026-10-02, also from a clean checkout in a wallet-free container — see
 [`deployments/stagenet/README.md`](../../deployments/stagenet/README.md)): C01 2/2, C02 3/3, C03 3/3, C04 4/4, C05 6/6,
-C06 11/11, C07 23/23, C08 2/2, C09 2/2, C10 4/4, IDX 7/7.
+C06 11/11, C07 23/23, C08 2/2, C09 2/2, C10 4/4, IDX 7/7, U1 4/4 (the existing-contract upgrade).
 
 ## Stagenet cases
 
 | Case | What | Re-check |
 |---|---|---|
-| [C01](../../deployments/stagenet/cases/C01/README.md)–[C10](../../deployments/stagenet/cases/C10/README.md), [IDX](../../deployments/stagenet/cases/IDX/README.md) | see the [case index](../../deployments/stagenet/cases/README.md) | `mip0018 recheck --network stagenet --case deployments/stagenet/cases/<ID>` |
+| [C01](../../deployments/stagenet/cases/C01/README.md)–[C10](../../deployments/stagenet/cases/C10/README.md), [IDX](../../deployments/stagenet/cases/IDX/README.md), [U1](../../deployments/stagenet/cases/U1/README.md) | see the [case index](../../deployments/stagenet/cases/README.md) | `mip0018 recheck --network stagenet --case deployments/stagenet/cases/<ID>` |
 
 Addresses, transactions, blocks and fees: the case table in [`deployments/stagenet/README.md`](../../deployments/stagenet/README.md)
 and each case's README (rendered from its `record.json`).

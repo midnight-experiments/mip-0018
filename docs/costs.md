@@ -168,6 +168,10 @@ included transaction, as recorded in each case's `record.json`. k from the table
 | C10 | deploy `CreateAndDestroy` (2 circuits) | — | 1 | 2,024,952,380,274,544 | 2.025 |
 | C10 | `CreateAndDestroy.publishMetadata` | 14 | 1 | 174,756,276,986,532 | 0.175 |
 | C10 | `VerifierKeyRemove(publishMetadata, v4)` on `CreateAndDestroy` | — | 1 | 38,781,766,700,352 | 0.039 |
+| U1 | deploy `LegacyToken` (1 circuit) | — | 1 | 1,455,940,559,672,381 | 1.456 |
+| U1 | `LegacyToken.mint` | 14 | 1 | 218,844,261,128,440 | 0.219 |
+| U1 | `VerifierKeyInsert(publishMetadata, v4)` on `LegacyToken` (2,121-byte key) | — | 1 | 911,152,349,650,192 | 0.911 |
+| U1 | `LegacyToken.publishMetadata` (upgrade build `LegacyTokenMetadata`) | 15 | 1 | 176,285,080,555,533 | 0.176 |
 
 What the receipts show:
 
@@ -177,10 +181,12 @@ What the receipts show:
   the circuit's k; k costs the issuer proving time and prover-key size instead (tables above). A mint costs a little
   more (0.21–0.27 DUST: it also creates the coin / UTXO / ledger balance).
 - **Deploys dominate**: a deploy stores every circuit's verifier key, so its fee grows with the number of circuits —
-  2.0–2.1 DUST for 2 circuits (raw emitter, create-and-destroy), 4.7 for 5 (`OwnerKey`), 6.1–7.0 for the 8–10 circuit
+  1.5 DUST for 1 circuit (`LegacyToken`, U1), 2.0–2.1 DUST for 2 circuits (raw emitter, create-and-destroy), 4.7 for 5 (`OwnerKey`), 6.1–7.0 for the 8–10 circuit
   OpenZeppelin examples. Adding metadata circuits to a token therefore costs mostly at deployment (≈ 0.6–0.9 DUST
   per additional verifier key here), and an existing contract can add one later with a `VerifierKeyInsert` (case U1).
-- **Removing a key is cheap** (`VerifierKeyRemove`, 0.039 DUST — create-and-destroy, C10).
+- **Removing a key is cheap** (`VerifierKeyRemove`, 0.039 DUST — create-and-destroy, C10); **inserting one costs
+  about a deploy's share per key** (`VerifierKeyInsert` of a 2,121-byte key, 0.911 DUST — the existing-contract
+  upgrade, U1; ≈ 0.59 DUST locally).
 - Stagenet fees were ≈ 1.17× the local chain's for the same matrix (C01–C10: 51.93 DUST over 53 transactions on
-  Stagenet vs ≈ 44.4 DUST locally); a contract's verifier keys deployed on Stagenet equal, byte for byte, the
-  SHA-256s in `costs.json` (49/49 in C01–C10 — the builds are deterministic).
+  Stagenet vs ≈ 44.4 DUST locally; U1 2.76 DUST over 4 transactions); every deployed verifier key listed in a
+  `costs.json` equals, byte for byte, the SHA-256 recorded there (the builds are deterministic; Q24).

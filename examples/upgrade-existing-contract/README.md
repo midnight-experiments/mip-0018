@@ -53,6 +53,22 @@ proof servers 9.0.0-rc.8 / rc.6), 2026-10-02, the dev chain's public genesis wal
 | re-insert the same key / another build's key | both refused before submission; forced: **`PARTIAL_SUCCESS`** (ledger: no overwrite), key, counter and data unchanged, still one event | 0.599 / 0.605 |
 | the same command again, a new run, `publish` again | every step skipped by its before-check; no transaction | 0 |
 
+## Stagenet run (case U1)
+
+The same steps on Stagenet, 2026-10-02, wallet 1 of this repository (only the free negatives: the paid overwrite
+attempts above are not repeated there). Commands, record and observations:
+[`deployments/stagenet/cases/U1`](../../deployments/stagenet/cases/U1/README.md); re-check without a wallet:
+`docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/U1`.
+
+| Step | Result | Fee (DUST) |
+|---|---|---:|
+| deploy `LegacyToken` (domainSep `pad(32, "mip-0018:example:upgrade")`) | contract `11010832a39954d9ccce48f6b5fce25fc789abb1d700ee45b26b69af3e5dd63b`, block 715403; entry points `{mint}`, authority 1 key / threshold 1 / counter 0 | 1.456 |
+| owner `mint` 1000 to wallet 1 | block 715409; wallet 1 holds 1000 of color `89a5559202e2d7c111150d84bbcae4c4beb56733373e1935ac74ce565f17ffb0` | 0.219 |
+| insert signed by a key outside the committee | refused before submission (no transaction); forced: **rejected by the node** (`1010: Invalid Transaction: Custom error: 135`), not included | 0 |
+| **`VerifierKeyInsert(publishMetadata, v4)`** | tx `4383f3cd…1d1ff2`, block 715428, `SUCCESS`; entry points `{mint, publishMetadata}`, mint key unchanged, counter 1, **ledger data hash unchanged** | 0.911 |
+| **`publishMetadata()`** through the upgrade build | tx `884cc30b…4c85124`, block 715433; one event bound to the original address; `verify` exit 0; `list`: identity color = the held coins' color | 0.176 |
+| holder's view | wallet 1 still holds 1000 of that color; the scanner (blocks 715402–715433) shows it minted at 715409, before the insert; `lookup` → "Legacy Token" / "LGCY" / 6 | — |
+
 The local chain is discarded after the run; the script writes every identifier (transactions, blocks, fees,
 colors, key hashes) to `$MIP0018_E2E_DIR/summary.json` and its checks to `results.txt`. Unit and runtime tests:
 `docker/run.sh exec 'npx vitest run examples/upgrade-existing-contract packages/midnight/test/upgrade-units.test.ts'`
