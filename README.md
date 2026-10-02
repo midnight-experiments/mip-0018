@@ -90,6 +90,7 @@ servers) runs the issuer side without funds; the full walkthrough is
 [`examples/publish-and-emit`](examples/publish-and-emit/README.md):
 
 ```sh
+docker/run.sh compile:spike               # compile the spike contract with keys (needed once per clone)
 docker/local-stack/up.sh                  # random loopback ports ≥ 10000
 . docker/local-stack/ports.env
 MIP0018_DOCKER_NETWORK=$MIP0018_STACK_NETWORK docker/run.sh spike:local

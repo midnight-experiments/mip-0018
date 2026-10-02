@@ -371,11 +371,33 @@ export async function deployStep(
 export const callStepId = (circuit: string, json: unknown[]) =>
   `call:${circuit}:${createHash('sha256').update(JSON.stringify(json)).digest('hex').slice(0, 12)}`;
 
+/**
+ * Whether a call whose expected events are missing has failed or may still appear: an included `PARTIAL_SUCCESS`
+ * transaction never gains events later, any other status is waited for.
+ */
+export function missingEventsVerdict(status: string | undefined, expected: number, observed: number): 'ok' | 'failed' | 'wait' {
+  if (observed >= expected) return 'ok';
+  return status === 'PARTIAL_SUCCESS' ? 'failed' : 'wait';
+}
+
 async function afterCall(run: Run, step: StepRecord): Promise<StepRecord> {
   const address = run.record.contract.address!;
   await inclusionOf(run, step);
   if (step.inclusion?.status === 'FAILURE') return finish(run, step, { inclusion: step.inclusion }, false, 'the transaction FAILED');
   const expected = step.expectedEvents ?? [];
+  if (step.inclusion?.status === 'PARTIAL_SUCCESS' && expected.length > 0) {
+    // The indexer stores a transaction's events with the transaction itself: when the segment that logs them failed,
+    // they will never appear, so this is a failure, not an "unknown" to reconcile later (audit F-N2).
+    const now = await eventsInTx(run.o.ep.profile, address, step.tx!.hash);
+    if (missingEventsVerdict(step.inclusion.status, expected.length, now.length) === 'failed')
+      return finish(
+        run,
+        step,
+        { inclusion: step.inclusion, events: now.map((e) => ({ id: e.id, name: e.name, payload: e.payload })) },
+        false,
+        `included as PARTIAL_SUCCESS but only ${now.length} of ${expected.length} expected event(s) exist: the segment that logs them failed`,
+      );
+  }
   const seen = await pollFor(async () => {
     const evs = await eventsInTx(run.o.ep.profile, address, step.tx!.hash);
     return evs.length >= expected.length ? evs : undefined;

@@ -30,7 +30,8 @@ const ipv6 =
   `|(?:(?:${h16}:){0,4}${h16})?::${ls32}` +
   `|(?:(?:${h16}:){0,5}${h16})?::${h16}` +
   `|(?:(?:${h16}:){0,6}${h16})?::)`;
-const ipvFuture = `v[0-9A-Fa-f]+\\.[${unreserved}${subDelims}:]+`;
+// ABNF literals are case-insensitive (RFC 5234 §2.3): "v" also matches "V".
+const ipvFuture = `[vV][0-9A-Fa-f]+\\.[${unreserved}${subDelims}:]+`;
 const ipLiteral = `\\[(?:${ipv6}|${ipvFuture})\\]`;
 const regName = `(?:[${unreserved}${subDelims}]|${pctEncoded})*`;
 const host = `(?:${ipLiteral}|${ipv4}|${regName})`;

@@ -30,6 +30,7 @@ describe('grammar', () => {
     'https://192.168.0.1/',
     'https://[2001:db8::7]/x',
     'https://[v1.fe]/',
+    'http://[V7.abc]/', // ABNF literals are case-insensitive: IPvFuture may start with "V" (audit F-N1)
     'urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66',
     'did:example:123456789abcdefghi',
     'a+b-c.d:x',

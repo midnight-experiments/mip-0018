@@ -147,7 +147,7 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 - **MIP section**: Common fields ("A token that also exposes MIP-0004, MIP-0011 or MIP-0014 getters SHOULD emit the same values those getters return") and Publishing ("… and for extraordinary updates, such as a rename").
 - **Problem**: the MIP's own adoption targets (Implementation Plan step 4: OpenZeppelin `NativeShieldedToken`, `NativeShieldedTokenFamily`, `FungibleToken`) store `name` and `symbol` as `sealed` ledger fields: the getters can never change after deployment. Any MIP-0018 rename of such a token therefore emits values its getters do not return — the rename the Publishing section allows breaks the Common-fields SHOULD. A reader cannot tell which wins, and an issuer cannot both rename and conform.
 - **Evidence**: `examples/openzeppelin/*/contracts/*.compact` (OpenZeppelin 0.4.0-alpha.5): `setMetadata` renames; the runtime tests show the event state after a rename while `name()` / `symbol()` keep the constructor values (`_name`/`_symbol` are `export sealed ledger … Opaque<"string">` in `NativeShieldedTokenCore` and `FungibleToken`). The equality itself cannot be checked in circuit (`Opaque<"string">` cannot be converted to bytes; findings F6).
-- **Options** (for the authors):
+- **Options** (considered):
 
   | Option | Text | Effect |
   |---|---|---|
@@ -156,7 +156,9 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
   | (c) No change | — | The two sentences stay in tension |
 
 - **Meanwhile**: the examples publish the constructor literals (getter-consistent) and document that a rename supersedes the `sealed` getters (`examples/openzeppelin/README.md`, "Renames do not change the getters").
-- **Status**: NEEDS-DECISION (recommendation: (a); owner question Q28 in the project questions file)
+- **Decision for this repository** (project owner, 2026-10-02): option (a). Getter equality applies when a token first publishes its metadata; MIPs that define specific token standards may define how their tokens behave and override MIP-0018's defaults case by case.
+- **Proposed text** (Common fields, replacing the getter sentence): "A token that also exposes MIP-0004, MIP-0011 or MIP-0014 getters SHOULD emit the same values those getters return when it first publishes them. A later update, such as a rename, is the token's current metadata for consumers of this MIP even where the getters cannot change. A MIP that defines a token standard MAY restrict or override these defaults for its tokens."
+- **Status**: PROPOSED
 
 ## N13 — Payload: a fixed-size field must be exactly as long as its key or value
 
