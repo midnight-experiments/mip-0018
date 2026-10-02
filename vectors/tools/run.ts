@@ -15,6 +15,9 @@
  *   --timeout <ms>       per-request timeout (default 10000)
  *   --no-verify          do not check SHA256SUMS first
  *
+ * Relative paths (the consumer command, --dir, --json) are resolved against the directory the command was started
+ * from — `INIT_CWD` when run through `npm run` (npm runs workspace scripts inside the workspace folder).
+ *
  * Exit status: 0 = every normative vector passed; 1 = at least one normative vector failed; 2 = usage, integrity
  * or harness error. Informative failures are reported but do not change the exit status.
  */
@@ -24,6 +27,9 @@ import { resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 import { VECTORS_DIR, verifySums } from './common.ts';
 import { formatReport, loadVectors, runVectors, type Json } from './runner-core.ts';
+
+/** Where the user started the command (npm sets INIT_CWD; scripts of a workspace otherwise run in its folder). */
+const BASE_CWD = process.env.INIT_CWD ?? process.cwd();
 
 interface Args {
   consumer?: string;
@@ -50,7 +56,7 @@ function parseArgs(argv: string[]): Args {
         a.consumer = next();
         break;
       case '--dir':
-        a.dir = resolve(next());
+        a.dir = resolve(BASE_CWD, next());
         break;
       case '--only':
         a.only.push(...next().split(',').filter(Boolean));
@@ -62,7 +68,7 @@ function parseArgs(argv: string[]): Args {
         a.notes = true;
         break;
       case '--json':
-        a.json = next();
+        a.json = resolve(BASE_CWD, next());
         break;
       case '--timeout':
         a.timeout = Number(next());
@@ -89,7 +95,7 @@ class LineConsumer {
 
   constructor(command: string, timeoutMs: number) {
     this.timeoutMs = timeoutMs;
-    this.child = spawn('sh', ['-c', command], { stdio: ['pipe', 'pipe', 'pipe'] });
+    this.child = spawn('sh', ['-c', command], { cwd: BASE_CWD, stdio: ['pipe', 'pipe', 'pipe'] });
     this.child.stderr.on('data', (d: Buffer) => process.stderr.write(d));
     this.child.stdin.on('error', () => undefined);
     const rl = createInterface({ input: this.child.stdout });

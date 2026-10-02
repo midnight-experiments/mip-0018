@@ -58,6 +58,18 @@ describe('runner CLI', () => {
     expect(r.stdout).toMatch(/does not match request id/);
   });
 
+  it('resolves a relative consumer command against INIT_CWD (npm runs workspace scripts in the workspace folder)', () => {
+    const abs = consumerScript(`console.log(JSON.stringify({ id: req.id, result: 'ignore' }));`).split(' ')[1]!;
+    const rel = abs.slice(dir.length + 1);
+    const r = spawnSync(process.execPath, [RUN, '--only', 'IGNORE', '--consumer', `${process.execPath} ./${rel}`], {
+      encoding: 'utf8',
+      cwd: VECTORS_DIR,
+      env: { ...process.env, INIT_CWD: dir },
+    });
+    expect(r.stdout).toMatch(/normative: 5\/5 passed/);
+    expect(r.status).toBe(0);
+  });
+
   it('usage errors exit 2', () => {
     expect(run([]).status).toBe(2);
   });

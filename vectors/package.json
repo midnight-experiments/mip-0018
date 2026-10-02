@@ -11,6 +11,8 @@
   "exports": {
     "./runner": "./tools/runner-core.ts",
     "./compare": "./tools/compare.ts",
+    "./validate": "./tools/validate.ts",
+    "./common": "./tools/common.ts",
     "./manifest.json": "./manifest.json"
   },
   "scripts": {
