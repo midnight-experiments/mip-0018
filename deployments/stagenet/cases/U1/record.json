@@ -2,7 +2,7 @@
   "kind": "mip0018-run-record",
   "schema": 1,
   "createdAt": "2026-10-02T09:34:34.447Z",
-  "updatedAt": "2026-10-02T09:36:34.453Z",
+  "updatedAt": "2026-10-02T09:37:57.110Z",
   "network": {
     "id": "stagenet",
     "networkId": "stagenet",
@@ -21,6 +21,67 @@
     "address": "11010832a39954d9ccce48f6b5fce25fc789abb1d700ee45b26b69af3e5dd63b",
     "constructorArgs": [
       "0x6d69702d303031383a6578616d706c653a757067726164650000000000000000"
+    ],
+    "upgrades": [
+      {
+        "circuit": "publishMetadata",
+        "slot": "v4",
+        "contract": "LegacyTokenMetadata",
+        "managedDir": "examples/upgrade-existing-contract/managed/LegacyTokenMetadata",
+        "adapter": "examples/upgrade-existing-contract/upgrade/mip0018.adapter.ts",
+        "verifierKeySha256": "2022dbdf1225ef657e010533dfa0fa0ac1496bcd7b31ff4864299fc9633964e9",
+        "checks": {
+          "at": "2026-10-02T09:37:27.783Z",
+          "ok": true,
+          "problems": [],
+          "notes": [],
+          "layout": [
+            {
+              "index": 0,
+              "legacy": "domain: Cell<Bytes<32>>",
+              "upgrade": "domain: Cell<Bytes<32>>",
+              "same": true
+            },
+            {
+              "index": 1,
+              "legacy": "owner: Cell<Bytes<32>>",
+              "upgrade": "owner: Cell<Bytes<32>>",
+              "same": true
+            },
+            {
+              "index": 2,
+              "legacy": "totalMinted: Cell<Uint<128>>",
+              "upgrade": "totalMinted: Cell<Uint<128>>",
+              "same": true
+            },
+            {
+              "index": 3,
+              "legacy": "mintCount: Counter",
+              "upgrade": "mintCount: Counter",
+              "same": true
+            }
+          ],
+          "decoded": [
+            {
+              "name": "domain",
+              "value": "6d69702d303031383a6578616d706c653a757067726164650000000000000000"
+            },
+            {
+              "name": "owner",
+              "value": "8ba5922e939af04779a53bb0bb8805f0b1a8557a0e11183bb4bfaa5dfe22a098"
+            },
+            {
+              "name": "totalMinted",
+              "value": "1000"
+            },
+            {
+              "name": "mintCount",
+              "value": "1"
+            }
+          ],
+          "otherCircuits": []
+        }
+      }
     ]
   },
   "steps": [
@@ -223,6 +284,129 @@
         "ttl": "2026-10-02T10:06:31.000Z"
       },
       "error": "(FiberFailure) SubmissionError: Transaction submission error <- Fail <- SubmissionError: SubmissionError: Transaction submission error <- SubmissionError: SubmissionError: Transaction submission failed <- RpcError: 1010: Invalid Transaction: Custom error: 135 <- Custom error: 135 <- Transaction submission failed <- Transaction submission error"
+    },
+    {
+      "id": "upgrade:insert",
+      "kind": "verifier-key-insert",
+      "circuit": "publishMetadata",
+      "args": {
+        "slot": "v4",
+        "verifierKeySha256": "2022dbdf1225ef657e010533dfa0fa0ac1496bcd7b31ff4864299fc9633964e9",
+        "key": "deploy-time key (private-state file)"
+      },
+      "state": "completed",
+      "attempts": [
+        {
+          "at": "2026-10-02T09:37:06.046Z",
+          "event": "submitting 4383f3cdca5b0936df6a742997bc7708d9e83ad55463c124083c40f4c21d1ff2"
+        },
+        {
+          "at": "2026-10-02T09:37:26.254Z",
+          "event": "node accepted 006efe561710577d208715af030f8a10a91391a2388f75f790d613296e1212ee35"
+        },
+        {
+          "at": "2026-10-02T09:37:27.024Z",
+          "event": "midnight-js submitTx: SucceedEntirely at block 715428"
+        },
+        {
+          "at": "2026-10-02T09:37:27.782Z",
+          "event": "completed: publishMetadata now has the inserted v4 verifier key (sha256 2022dbdf1225ef65…)"
+        }
+      ],
+      "startedAt": "2026-10-02T09:37:04.589Z",
+      "observed": {
+        "inclusion": {
+          "height": 715428,
+          "hash": "57acf696592fad7413fd5ef3a253616b00283b0d880ecddfd1789cbbdf76bd0b",
+          "status": "SUCCESS",
+          "fee": "911152349650192"
+        },
+        "operations": [
+          "mint",
+          "publishMetadata"
+        ],
+        "keySha256": "2022dbdf1225ef657e010533dfa0fa0ac1496bcd7b31ff4864299fc9633964e9",
+        "authorityCounter": "1"
+      },
+      "tx": {
+        "hash": "4383f3cdca5b0936df6a742997bc7708d9e83ad55463c124083c40f4c21d1ff2",
+        "identifiers": [
+          "00e164ce5f54c7bbe5de7a0a740ac5f5c082cec364fd003ba9c578526714866a21",
+          "006efe561710577d208715af030f8a10a91391a2388f75f790d613296e1212ee35"
+        ],
+        "ttl": "2026-10-02T10:07:05.000Z",
+        "txId": "006efe561710577d208715af030f8a10a91391a2388f75f790d613296e1212ee35"
+      },
+      "inclusion": {
+        "height": 715428,
+        "hash": "57acf696592fad7413fd5ef3a253616b00283b0d880ecddfd1789cbbdf76bd0b",
+        "status": "SUCCESS",
+        "fee": "911152349650192"
+      },
+      "completedAt": "2026-10-02T09:37:27.782Z"
+    },
+    {
+      "id": "upgrade:call",
+      "kind": "call",
+      "circuit": "publishMetadata",
+      "args": [],
+      "state": "completed",
+      "attempts": [
+        {
+          "at": "2026-10-02T09:37:37.562Z",
+          "event": "submitting 884cc30b3079e56fc6dafc4a540f535c90982ff8a46add508b28be3db4c85124"
+        },
+        {
+          "at": "2026-10-02T09:37:55.620Z",
+          "event": "node accepted 001e93b3b2ac5e655e30c2895180cbecbe1bd6890cd20d4b1b847372524fe8d641"
+        },
+        {
+          "at": "2026-10-02T09:37:56.370Z",
+          "event": "midnight-js: SucceedEntirely at block 715433"
+        },
+        {
+          "at": "2026-10-02T09:37:57.110Z",
+          "event": "completed: 1 expected Misc event(s) observed in 884cc30b3079e56fc6dafc4a540f535c90982ff8a46add508b28be3db4c85124"
+        }
+      ],
+      "startedAt": "2026-10-02T09:37:27.955Z",
+      "expectedEvents": [
+        {
+          "name": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+          "payload": "6d69702d303031383a6578616d706c653a75706772616465000000000000000001046e616d65010c4c656761637920546f6b656e0673796d626f6c01044c47435908646563696d616c730201060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "tx": {
+        "hash": "884cc30b3079e56fc6dafc4a540f535c90982ff8a46add508b28be3db4c85124",
+        "identifiers": [
+          "009fef05c89534e78a0b7e8a4a1a18c8d375cb3c0090780009eb5696537a7aebc4",
+          "001e93b3b2ac5e655e30c2895180cbecbe1bd6890cd20d4b1b847372524fe8d641"
+        ],
+        "ttl": "2026-10-02T10:37:29.000Z",
+        "txId": "001e93b3b2ac5e655e30c2895180cbecbe1bd6890cd20d4b1b847372524fe8d641"
+      },
+      "inclusion": {
+        "height": 715433,
+        "hash": "6f367590a54a633d59cd1280e39dbc5b5db26933e5b015097227ba722f722fce",
+        "status": "SUCCESS",
+        "fee": "176285080555533"
+      },
+      "observed": {
+        "inclusion": {
+          "height": 715433,
+          "hash": "6f367590a54a633d59cd1280e39dbc5b5db26933e5b015097227ba722f722fce",
+          "status": "SUCCESS",
+          "fee": "176285080555533"
+        },
+        "events": [
+          {
+            "id": 53568,
+            "name": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+            "payload": "6d69702d303031383a6578616d706c653a75706772616465000000000000000001046e616d65010c4c656761637920546f6b656e0673796d626f6c01044c47435908646563696d616c730201060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      "completedAt": "2026-10-02T09:37:57.110Z"
     }
   ],
   "signer": {

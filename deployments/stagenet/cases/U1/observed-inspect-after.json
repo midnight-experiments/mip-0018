@@ -1,0 +1,58 @@
+{
+  "contract": "11010832a39954d9ccce48f6b5fce25fc789abb1d700ee45b26b69af3e5dd63b",
+  "exists": true,
+  "block": {
+    "height": 715433,
+    "hash": "6f367590a54a633d59cd1280e39dbc5b5db26933e5b015097227ba722f722fce"
+  },
+  "lastAction": "ContractCall",
+  "lastTx": "884cc30b3079e56fc6dafc4a540f535c90982ff8a46add508b28be3db4c85124",
+  "operations": {
+    "mint": "b1dbe2b73135b3e586df2d1377e41c49520c45f4f2ac6581ae1c9b0ce5b3e53d",
+    "publishMetadata": "2022dbdf1225ef657e010533dfa0fa0ac1496bcd7b31ff4864299fc9633964e9"
+  },
+  "maintenanceAuthority": {
+    "committeeSize": 1,
+    "threshold": 1,
+    "counter": "1"
+  },
+  "dataSha256": "1ae75649c819b2360ba4670bb563565a05a257a3ce934ce542010a177c7c5374",
+  "decoded": {
+    "examples/upgrade-existing-contract/managed/LegacyToken": [
+      {
+        "name": "domain",
+        "value": "6d69702d303031383a6578616d706c653a757067726164650000000000000000"
+      },
+      {
+        "name": "owner",
+        "value": "8ba5922e939af04779a53bb0bb8805f0b1a8557a0e11183bb4bfaa5dfe22a098"
+      },
+      {
+        "name": "totalMinted",
+        "value": "1000"
+      },
+      {
+        "name": "mintCount",
+        "value": "1"
+      }
+    ],
+    "examples/upgrade-existing-contract/managed/LegacyTokenMetadata": [
+      {
+        "name": "domain",
+        "value": "6d69702d303031383a6578616d706c653a757067726164650000000000000000"
+      },
+      {
+        "name": "owner",
+        "value": "8ba5922e939af04779a53bb0bb8805f0b1a8557a0e11183bb4bfaa5dfe22a098"
+      },
+      {
+        "name": "totalMinted",
+        "value": "1000"
+      },
+      {
+        "name": "mintCount",
+        "value": "1"
+      }
+    ]
+  }
+}

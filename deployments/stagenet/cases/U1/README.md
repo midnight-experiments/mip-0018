@@ -48,11 +48,17 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/U1
 ```
 
-## Transactions (filled in by S5)
+## Transactions (Stagenet, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
-| `deploy` | _S5_ | _S5_ | _S5_ |
-| `mint` | _S5_ | _S5_ | _S5_ |
-| `upgrade` | _S5_ | _S5_ | _S5_ |
+Contract `LegacyToken` at `11010832a39954d9ccce48f6b5fce25fc789abb1d700ee45b26b69af3e5dd63b`; signer mn_addr_stagenet1vw57646su9y5z6myarm93m6kcn62j97z0yma94lfkhmta6pz5h5q6utr3k.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `deploy` | deploy | `bee9d826bfe8256bbd065c69b55ed84f56364b7d29394faf5810b6f5f4a08cbb` | 715403 (`e32951f0a62d62ee…`) | SUCCESS | 1,455,940,559,672,381 | 1.456 |
+| `mint` | call `mint` | `173ad3b6344edc42b9468a42e001cff52dc9fb1136a51a9e3c1275ed6a2b3ad7` | 715409 (`14f1539416be38eb…`) | SUCCESS | 218,844,261,128,440 | 0.219 |
+| `wrong-signer:insert` | verifier-key-insert `publishMetadata` | — | — | refused before submission (no transaction) | — | — |
+| `wrong-signer-forced:insert` | verifier-key-insert `publishMetadata` | `1c2be0e245f694865424cf28b7787bde5582ff83dbccbc126b31efa5f4c6bbcb` | — | not included: 1010: Invalid Transaction: Custom error: 135 | — | — |
+| `upgrade:insert` | verifier-key-insert `publishMetadata` | `4383f3cdca5b0936df6a742997bc7708d9e83ad55463c124083c40f4c21d1ff2` | 715428 (`57acf696592fad74…`) | SUCCESS | 911,152,349,650,192 | 0.911 |
+| `upgrade:call` | call `publishMetadata` | `884cc30b3079e56fc6dafc4a540f535c90982ff8a46add508b28be3db4c85124` | 715433 (`6f367590a54a633d…`) | SUCCESS | 176,285,080,555,533 | 0.176 |
+| **total** | | | | | **2,762,222,251,006,546** | **2.762** |
 

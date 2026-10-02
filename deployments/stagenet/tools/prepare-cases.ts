@@ -1024,7 +1024,7 @@ function recorded(c: CaseDef): string[] {
         : s.error && !s.tx
           ? 'refused before submission (no transaction)'
           : s.error
-            ? `not included: ${s.error.split('\n')[0]!.slice(0, 100)}`
+            ? `not included: ${(/\d{4}: Invalid Transaction[^<]*/u.exec(s.error)?.[0] ?? s.error.split('\n')[0]!).trim().slice(0, 100)}`
             : s.state;
   return [
     '## Transactions (Stagenet, from `record.json`)',

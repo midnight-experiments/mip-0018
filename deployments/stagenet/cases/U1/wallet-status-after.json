@@ -1,0 +1,22 @@
+{
+  "network": "stagenet",
+  "unshieldedAddress": "mn_addr_stagenet1vw57646su9y5z6myarm93m6kcn62j97z0yma94lfkhmta6pz5h5q6utr3k",
+  "coinPublicKey": "cec613623fdcc8b1d27f2b8560bfa8ec1594053c0c549df15072e875fc81c2e7",
+  "shieldedAddress": "mn_shield-addr_stagenet1emrpxc3lmnytr5nl9wzkp0agas2egpfup32fmu2swt58tlypctn4lgtpafg22anv2y4f0wf7lqu2s00fg8ndp0qaxnez29xzexmd2qcm9wudk",
+  "dustAddress": "mn_dust_stagenet1wwjujztruwqkkem9mgdl26kx4w4ksdjx7qyrgmcegxve44468ex52wvf9a6",
+  "night": "5000000000",
+  "dust": "1904596798238589949",
+  "nightUtxos": 1,
+  "nightUtxosRegisteredForDust": 1,
+  "shieldedBalances": {
+    "042399246139df031a4780c684df8eaecd48b7e03a195bfe986cf22766bcbc16": "100000",
+    "81db4eef83089c5403c6af29d926d57ee6b6359ff7dc291dd19cb4c3e9cf7aa1": "3",
+    "89a5559202e2d7c111150d84bbcae4c4beb56733373e1935ac74ce565f17ffb0": "1000",
+    "8c74ec4a937d296f8234a2373812c2df3d962dba06dfe98cda390f9dea38491d": "5",
+    "be34ef4b78717b031040bf625e04ee033106efae4c766915d3cac2b7fda8f11b": "1000000"
+  },
+  "unshieldedTokenBalances": {
+    "042399246139df031a4780c684df8eaecd48b7e03a195bfe986cf22766bcbc16": "100000",
+    "8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484": "1000000"
+  }
+}
