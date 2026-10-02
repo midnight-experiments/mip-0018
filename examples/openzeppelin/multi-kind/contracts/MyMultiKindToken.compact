@@ -1,0 +1,90 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// One asset in three representations from one contract, all under ONE domain separator:
+//   * native shielded coins     — OpenZeppelin `NativeShieldedToken`;
+//   * native unshielded UTXOs   — the Compact standard library's `mintUnshieldedToken` (OpenZeppelin
+//                                 Compact Contracts 0.4.0-alpha.5 has no native unshielded module);
+//   * ledger balances           — OpenZeppelin `FungibleToken`;
+// owned with OpenZeppelin `Ownable`. A user may hold all three at once. There is no conversion
+// between them here (OpenZeppelin's `NativeTokenConverter` is not on main).
+//
+// Compile with Compact 0.35.0, --feature-zkir-v3 and --compact-path <repo>/node_modules
+// (examples/openzeppelin/README.md).
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+import "@openzeppelin/compact-contracts/access/Ownable" prefix Ownable_;
+import "@openzeppelin/compact-contracts/token/NativeShieldedToken" prefix NativeShieldedToken_;
+import "@openzeppelin/compact-contracts/token/FungibleToken" prefix FungibleToken_;
+import "@mip0018/compact/src/Mip0018" prefix Mip0018_;
+
+export { Either, ContractAddress, ZswapCoinPublicKey, ShieldedCoinInfo, UserAddress };
+
+constructor(
+  domainSep: Bytes<32>,
+  name_: Opaque<"string">,
+  symbol_: Opaque<"string">,
+  decimals_: Uint<8>,
+  initialOwner: Either<Bytes<32>, ContractAddress>
+) {
+  Ownable_initialize(initialOwner);
+  NativeShieldedToken_initialize(domainSep, name_, symbol_, decimals_);
+  FungibleToken_initialize(name_, symbol_, decimals_);
+}
+
+export circuit mintShielded(recipient: ZswapCoinPublicKey, amount: Uint<64>, nonce: Bytes<32>): ShieldedCoinInfo {
+  Ownable_assertOnlyOwner();
+  return NativeShieldedToken__mint(recipient, amount, nonce);
+}
+
+export circuit mintUnshielded(recipient: UserAddress, amount: Uint<64>): Bytes<32> {
+  Ownable_assertOnlyOwner();
+  return mintUnshieldedToken(
+    NativeShieldedToken__domain, disclose(amount), right<ContractAddress, UserAddress>(disclose(recipient)));
+}
+
+export circuit mintLedger(account: Either<Bytes<32>, ContractAddress>, value: Uint<128>): [] {
+  Ownable_assertOnlyOwner();
+  FungibleToken__mint(account, value);
+}
+
+export circuit transfer(to: Either<Bytes<32>, ContractAddress>, value: Uint<128>): Boolean {
+  return FungibleToken_transfer(to, value);
+}
+
+export circuit balanceOf(account: Either<Bytes<32>, ContractAddress>): Uint<128> {
+  return FungibleToken_balanceOf(account);
+}
+
+// MIP-0018 metadata. Each representation is its own token identity (kind 1, 2, 3) with its own
+// event, all under the token's domain separator and with one symbol, so consumers show them as
+// one asset (MIP "Symbol grouping") while each keeps its own metadata.
+
+// Call right after deployment (a constructor cannot emit): three events in one transaction. The
+// same literals as the constructor's `name_` and `symbol_`; `decimals` from the token's state.
+export circuit publishMetadata(): [] {
+  Ownable_assertOnlyOwner();
+  Mip0018_emitPayload(Mip0018_commonFields<11, 3>(
+    NativeShieldedToken__domain, Mip0018_KIND_SHIELDED(), "Acme Dollar", "ACD", NativeShieldedToken__decimals));
+  Mip0018_emitPayload(Mip0018_commonFields<11, 3>(
+    NativeShieldedToken__domain, Mip0018_KIND_UNSHIELDED(), "Acme Dollar", "ACD", NativeShieldedToken__decimals));
+  Mip0018_emitPayload(Mip0018_commonFields<11, 3>(
+    NativeShieldedToken__domain, Mip0018_KIND_LEDGER(), "Acme Dollar", "ACD", FungibleToken__decimals));
+}
+
+// Rename one representation (kind 1, 2 or 3): a new 11-byte name and 3-byte symbol. The other
+// representations keep their metadata; a new symbol moves only this one out of the group.
+export circuit setMetadata(kind: Uint<8>, newName: Bytes<11>, newSymbol: Bytes<3>): [] {
+  Ownable_assertOnlyOwner();
+  Mip0018_emitPayload(Mip0018_payload2<4, 11, 6, 3>(
+    Mip0018_header(NativeShieldedToken__domain, kind),
+    Mip0018_nameRecord<11>(newName),
+    Mip0018_symbolRecord<3>(newSymbol)));
+}
+
+// Withdraw one representation's metadata (kind 1, 2 or 3); the others are unchanged.
+export circuit withdrawMetadata(kind: Uint<8>): [] {
+  Ownable_assertOnlyOwner();
+  Mip0018_emitPayload(Mip0018_tombstone(NativeShieldedToken__domain, kind));
+}

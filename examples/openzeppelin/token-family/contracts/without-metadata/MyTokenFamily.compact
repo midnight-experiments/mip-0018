@@ -1,0 +1,48 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// A family of native shielded tokens from one contract, built from OpenZeppelin Compact Contracts
+// 0.4.0-alpha.5: `NativeShieldedTokenFamily` (many token types; each call names its 32-byte
+// `domain`) owned with `Ownable`. Every token type shares the family's name, symbol and decimals
+// (OpenZeppelin's "one brand" rule); each domain has its own color `tokenType(domain, <this contract>)`.
+//
+// Compile with Compact 0.35.0, --feature-zkir-v3 and --compact-path <repo>/node_modules
+// (examples/openzeppelin/README.md).
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+import "@openzeppelin/compact-contracts/access/Ownable" prefix Ownable_;
+import "@openzeppelin/compact-contracts/token/NativeShieldedTokenFamily" prefix NativeShieldedTokenFamily_;
+
+export { Either, ContractAddress, ZswapCoinPublicKey, ShieldedCoinInfo };
+
+constructor(
+  name_: Opaque<"string">,
+  symbol_: Opaque<"string">,
+  decimals_: Uint<8>,
+  initialOwner: Either<Bytes<32>, ContractAddress>
+) {
+  Ownable_initialize(initialOwner);
+  NativeShieldedTokenFamily_initialize(name_, symbol_, decimals_);
+}
+
+export circuit name(): Opaque<"string"> {
+  return NativeShieldedTokenFamily_name();
+}
+
+export circuit symbol(): Opaque<"string"> {
+  return NativeShieldedTokenFamily_symbol();
+}
+
+export circuit decimals(): Uint<8> {
+  return NativeShieldedTokenFamily_decimals();
+}
+
+export circuit tokenColor(domain: Bytes<32>): Bytes<32> {
+  return NativeShieldedTokenFamily_tokenColor(domain);
+}
+
+export circuit mint(domain: Bytes<32>, recipient: ZswapCoinPublicKey, amount: Uint<64>, nonce: Bytes<32>): ShieldedCoinInfo {
+  Ownable_assertOnlyOwner();
+  return NativeShieldedTokenFamily__mint(domain, recipient, amount, nonce);
+}

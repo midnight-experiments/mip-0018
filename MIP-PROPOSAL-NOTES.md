@@ -35,7 +35,7 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 
 - **MIP section**: Token identity and authority — Lookup.
 - **Problem**: the MIP derives both native kinds' color with one formula but never says so explicitly; readers may expect two colors and build a table keyed by color alone.
-- **Evidence**: one formula in the Compact standard library (`tokenType`) and in the ledger, with no kind input; to be shown on this repository's own Stagenet case that mints both kinds under one `domainSep` (to be linked from `deployments/stagenet/`).
+- **Evidence**: one formula in the Compact standard library (`tokenType`) and in the ledger, with no kind input; runtime test `examples/openzeppelin/multi-kind/test/multi-kind.test.ts` — one contract mints a shielded coin and an unshielded UTXO under one `domainSep`, both carry the same 32-byte color, equal to `rawTokenType(domainSep, contractAddress)` and to the color the reference consumer derives for the kind-1 and kind-2 identities; the Stagenet case for the same contract (S5 case C04) will be linked from `deployments/stagenet/`.
 - **Proposed text** (informative, after "A color held by a user resolves …"): "A shielded and an unshielded mint with the same `domainSep` have the same color; the kind is given by what the user holds (a shielded coin → kind 1, an unshielded UTXO → kind 2), not by the color."
 - **Meanwhile**: the lookup table records which kinds were minted under each color.
 - **Status**: PROPOSED (editorial)
@@ -137,6 +137,40 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 - **Meanwhile**: `raw.ts` uses that order; indexer-based commands use the indexer's event id.
 - **Status**: PROPOSED
 
+## N12 — Common fields: getter equality when the getters cannot change and the token is renamed
+
+- **MIP section**: Common fields ("A token that also exposes MIP-0004, MIP-0011 or MIP-0014 getters SHOULD emit the same values those getters return") and Publishing ("… and for extraordinary updates, such as a rename").
+- **Problem**: the MIP's own adoption targets (Implementation Plan step 4: OpenZeppelin `NativeShieldedToken`, `NativeShieldedTokenFamily`, `FungibleToken`) store `name` and `symbol` as `sealed` ledger fields: the getters can never change after deployment. Any MIP-0018 rename of such a token therefore emits values its getters do not return — the rename the Publishing section allows breaks the Common-fields SHOULD. A reader cannot tell which wins, and an issuer cannot both rename and conform.
+- **Evidence**: `examples/openzeppelin/*/contracts/*.compact` (OpenZeppelin 0.4.0-alpha.5): `setMetadata` renames; the runtime tests show the event state after a rename while `name()` / `symbol()` keep the constructor values (`_name`/`_symbol` are `export sealed ledger … Opaque<"string">` in `NativeShieldedTokenCore` and `FungibleToken`). The equality itself cannot be checked in circuit (`Opaque<"string">` cannot be converted to bytes; findings F6).
+- **Options** (for the authors):
+
+  | Option | Text | Effect |
+  |---|---|---|
+  | (a) Getter equality at first publication | "… SHOULD emit the same values those getters return when it first publishes them. A later rename is the token's current metadata for consumers of this MIP, even where the getters cannot change." | Renames of OpenZeppelin tokens conform; wallets that also read getters know which wins |
+  | (b) No renames for immutable getters | "A token whose getters cannot change SHOULD NOT rename through these events." | Keeps the SHOULD absolute; OpenZeppelin tokens can never rename |
+  | (c) No change | — | The two sentences stay in tension |
+
+- **Meanwhile**: the examples publish the constructor literals (getter-consistent) and document that a rename supersedes the `sealed` getters (`examples/openzeppelin/README.md`, "Renames do not change the getters").
+- **Status**: NEEDS-DECISION (recommendation: (a); owner question Q28 in the project questions file)
+
+## N13 — Payload: a fixed-size field must be exactly as long as its key or value
+
+- **MIP section**: Payload ("Keys and values are exact byte strings … zero bytes inside a key or value are significant" and "a Compact emitter builds each payload from fixed-size fields (for example `Uint<8>` lengths and `Bytes<K>` keys)").
+- **Problem**: the natural Compact mistake — a `Bytes<K>` wider than the text it carries — appends zero bytes that become part of the key or value (`"AGL"` in a `Bytes<4>` is `"AGL\0"`). The result is still a valid payload (NUL is valid UTF-8), so consumers accept it and show a different symbol, or treat a padded key as an unknown key. Nothing in the payload rules catches it; only the emitter can prevent it. (Found independently by the scripts and examples slices of this repository.)
+- **Evidence**: `examples/openzeppelin/test/exact-values.test.ts` — with this repository's module a literal of the wrong length does not compile, and compact-runtime 0.20.0 refuses a too-short argument (`expected value of type Bytes<9>`), but a rename argument zero-padded to the circuit's size is emitted as `"Short\0\0\0\0"` and accepted by the reference codec; every example now decodes every emitted event and compares each value with its `metadata.json` exactly.
+- **Proposed text** (informative, after the Compact sentence of the Payload section): "Each fixed-size field must be exactly as long as the key or value it carries: a shorter value padded with zero bytes is a different value (for example `"AGL"` sent as a `Bytes<4>` is `"AGL\0"`), and consumers accept it as such."
+- **Meanwhile**: the module's typed builders take the sizes as generic arguments checked by the compiler; the OpenZeppelin README says "never pad a value with zeros"; tests compare every emitted value exactly.
+- **Status**: PROPOSED (informative)
+
+## N14 — Implementation Plan step 4: say where kind 2 comes from
+
+- **MIP section**: Implementation Plan, step 4 ("Propose the module to OpenZeppelin Compact Contracts as an optional extension of `NativeShieldedToken`, `NativeShieldedTokenFamily` and `FungibleToken`").
+- **Problem**: the list covers kinds 1 and 3 only. OpenZeppelin Compact Contracts 0.4.0-alpha.5 has no native unshielded (MIP-0014, kind 2) module on `main` (earlier `NativeUnshieldedToken` drafts exist only on stale branches for an older ledger), so an OpenZeppelin user has no base for a kind-2 token, and readers may assume kind 2 is not meant to be covered.
+- **Evidence**: `examples/openzeppelin/native-unshielded` and `multi-kind` use the standard library's `mintUnshieldedToken` with OpenZeppelin `Ownable`; the module works for kind 2 unchanged (runtime tests: the minted UTXO's color equals `tokenType(domainSep, contractAddress)` and the consumer's color). All three listed modules take the extension unchanged (compile with Compact 0.35.0 + ZKIR v3 against 0.4.0-alpha.5, no compiler message).
+- **Proposed text**: "… as an optional extension of `NativeShieldedToken`, `NativeShieldedTokenFamily` and `FungibleToken`, and of a native unshielded token module once the library has one (until then, kind 2 tokens call `mintUnshieldedToken` directly)."
+- **Meanwhile**: documented in `examples/openzeppelin/native-unshielded/README.md`. Nothing is proposed to OpenZeppelin from this repository (owner decision Q6).
+- **Status**: PROPOSED (editorial)
+
 ---
 
 ## Considered — no change proposed
@@ -150,3 +184,6 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 | Color lookup needs mint data the public indexer does not expose | The MIP already assigns this to indexers; this repository ships a reference scanner that builds the color table from a start block. No change. |
 | Circuit cost of emitting (S2 measurements: a constant payload costs only the `emit`, k = 6 / 48 rows; any runtime byte, even a `domainSep` read from the ledger, k = 14 / ≈ 14,000 rows; four runtime common fields k = 15) | Implementation guidance, not protocol: documented in `docs/costs.md` and the module README. No change. |
 | An empty key (`keyLen` 0) is a valid Compact generic size (`Bytes<0>`) | Emitter-library concern: the reference module makes it a compile error (`slice<1>(key, 0)` guard). The MIP's "1–255" stands. No change. |
+| OpenZeppelin's `NativeShieldedTokenFamily` keeps one family-wide name/symbol ("one brand"); published getter-consistently, all types of a family fall into one symbol group | The MIP already says grouping is presentation only and does not make members interchangeable; an issuer who wants separate groups gives each type its own symbol (`setMetadata(domain, …)` in `examples/openzeppelin/token-family`). No change. |
+| One asset in three kinds needs three events (one per identity): one circuit emitting all three costs k = 16 (≈ 57,000 rows) vs k = 15 per single-event call | By design (each kind has its own lifecycle, MIP Rationale "A `kind` byte"). Documented in `examples/openzeppelin/multi-kind`. No change. |
+| OpenZeppelin claims no MIP standard, so the examples publish no `standards` (questions Q25) | `standards` is self-declared by design. No change. |

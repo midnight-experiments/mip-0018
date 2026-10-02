@@ -25,6 +25,7 @@
     "check:pins": "node tools/check-pins.mjs",
     "check:mip-pin": "node tools/check-mip-pin.mjs",
     "check:conformance-matrix": "node tools/check-conformance-matrix.mjs",
+    "check:example-readmes": "npm run -s check:readmes -w examples/openzeppelin",
     "compile:spike": "npm run compile -w test-contracts/toolchain-spike --",
     "spike:local": "npm run local -w test-contracts/toolchain-spike --",
     "spike:stagenet": "npm run stagenet -w test-contracts/toolchain-spike --",

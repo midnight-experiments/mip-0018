@@ -1,0 +1,55 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// A fungible (ledger) token built from OpenZeppelin Compact Contracts 0.4.0-alpha.5:
+// `FungibleToken` (public balances, ERC-20 shape) owned with `Ownable`.
+//
+// Compile with Compact 0.35.0, --feature-zkir-v3 and --compact-path <repo>/node_modules
+// (examples/openzeppelin/README.md).
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+import "@openzeppelin/compact-contracts/access/Ownable" prefix Ownable_;
+import "@openzeppelin/compact-contracts/token/FungibleToken" prefix FungibleToken_;
+
+export { Either, ContractAddress };
+
+constructor(
+  name_: Opaque<"string">,
+  symbol_: Opaque<"string">,
+  decimals_: Uint<8>,
+  initialOwner: Either<Bytes<32>, ContractAddress>
+) {
+  Ownable_initialize(initialOwner);
+  FungibleToken_initialize(name_, symbol_, decimals_);
+}
+
+export circuit name(): Opaque<"string"> {
+  return FungibleToken_name();
+}
+
+export circuit symbol(): Opaque<"string"> {
+  return FungibleToken_symbol();
+}
+
+export circuit decimals(): Uint<8> {
+  return FungibleToken_decimals();
+}
+
+export circuit balanceOf(account: Either<Bytes<32>, ContractAddress>): Uint<128> {
+  return FungibleToken_balanceOf(account);
+}
+
+export circuit mint(account: Either<Bytes<32>, ContractAddress>, value: Uint<128>): [] {
+  Ownable_assertOnlyOwner();
+  FungibleToken__mint(account, value);
+}
+
+export circuit transfer(to: Either<Bytes<32>, ContractAddress>, value: Uint<128>): Boolean {
+  return FungibleToken_transfer(to, value);
+}
+
+export circuit burn(account: Either<Bytes<32>, ContractAddress>, value: Uint<128>): [] {
+  Ownable_assertOnlyOwner();
+  FungibleToken__burn(account, value);
+}
