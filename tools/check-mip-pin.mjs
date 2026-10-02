@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // Fetches the MIP text at the pinned commit (no cache) and checks its SHA-256
-// against toolchain.json; checks that README.md and MIP-PROPOSAL-NOTES.md cite
+// against toolchain.json; checks that README.md cites
 // the same commit and hash and that README.md links PR #340 (Q12); checks that
 // every other copy of the pin agrees with toolchain.json: the vector manifest,
 // every vector's `mip.commit`, the vector schemas and the vector tools.
@@ -15,7 +15,7 @@ const { sha256, mip } = await loadPinnedMip({ useCache: false });
 const problems = [];
 const read = (rel) => readFileSync(join(repoRoot, rel), 'utf8');
 if (sha256 !== mip.sha256) problems.push(`MIP text at ${mip.commit} hashes to ${sha256}, toolchain.json pins ${mip.sha256}`);
-for (const file of ['README.md', 'MIP-PROPOSAL-NOTES.md']) {
+for (const file of ['README.md']) {
   const text = read(file);
   if (!text.includes(mip.commit)) problems.push(`${file} does not cite the pinned commit ${mip.commit}`);
   if (!text.includes(mip.sha256)) problems.push(`${file} does not cite the pinned SHA-256 ${mip.sha256}`);
@@ -47,5 +47,5 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  `OK MIP-0018 @ ${mip.commit} sha256 ${sha256}; README, notes, vector manifest, ${manifest.vectors.length} vectors, schemas and generator agree`,
+  `OK MIP-0018 @ ${mip.commit} sha256 ${sha256}; README, vector manifest, ${manifest.vectors.length} vectors, schemas and generator agree`,
 );

@@ -65,7 +65,7 @@ construction). Access control is still OpenZeppelin `Ownable`.
   `tokenType(domainSep, contractAddress)`, is exactly the color of the UTXOs the holder receives.
 - **Same color as a shielded mint** — a shielded mint under the same `domainSep` by the same contract
   has the same color; the kind comes from what the user holds (an unshielded UTXO → kind 2). See
-  [`multi-kind`](../multi-kind/README.md) and `MIP-PROPOSAL-NOTES.md` N3.
+  [`multi-kind`](../multi-kind/README.md) and the MIP's Lookup section.
 - **Same literals, `decimals` from state, fixed sizes, no `standards`** — as in
   [`fungible-token`](../fungible-token/README.md). This contract stores `name`/`symbol` as
   `Opaque<"string">` like OpenZeppelin's modules do, so the circuit repeats them as literals.

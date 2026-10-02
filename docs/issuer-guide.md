@@ -43,7 +43,7 @@ What to put in the event:
   `decimals()`), publish the same values when you first publish. Nothing on chain checks this; the OpenZeppelin
   examples take both from one `metadata.json` and read `decimals` from the token state. "A later update, such as a
   rename, is the token's current metadata for consumers of this MIP even where the getters cannot change" (MIP Common
-  fields, since `78ecbb4`; note N12) — OpenZeppelin's `sealed` getters keep the old values after a rename. A MIP that
+  fields, since `78ecbb4`) — OpenZeppelin's `sealed` getters keep the old values after a rename. A MIP that
   defines a token standard may restrict or override this for tokens that declare it in `standards`.
 
 When to emit (MIP "Publishing"): once after deployment (a Compact constructor cannot emit), and for extraordinary
@@ -115,7 +115,7 @@ e.g. `docker/run.sh exec 'npm run -s compile -w examples/openzeppelin -- --keys 
 ## 3. Choose who may publish
 
 Anyone who can call an emitting circuit can rename or withdraw the token, so the MIP says it "SHOULD be
-access-controlled, publish-once, or removed after use" (Publishing; "removed after use" since `78ecbb4`, note N8; owner
+access-controlled, publish-once, or removed after use" (Publishing; "removed after use" since `78ecbb4`; owner
 decision Q4). Four patterns, all tested; sizes from [`docs/costs.md`](costs.md):
 
 | Pattern | Example | Rename / withdraw later | `publishMetadata()` size | Caveats |
@@ -258,7 +258,7 @@ From the Stagenet receipts ([`docs/costs.md`](costs.md#fees-on-stagenet)):
 ## 7. Existing contracts
 
 A token deployed without an emitting circuit does not need a redeployment if it has a usable maintenance authority
-(the MIP's own note since `78ecbb4`: "a valid maintenance authority is required"; note N16):
+(the MIP's own note since `78ecbb4`: "a valid maintenance authority is required"):
 compile an upgrade-only `publishMetadata()` against its exact ledger layout, insert its verifier key with
 `VerifierKeyInsert`, call it — address, `domainSep` and color stay the same. See the
 [upgrade guide](upgrade-guide.md) (`mip0018 upgrade`) and Stagenet case [U1](../deployments/stagenet/cases/U1/README.md).

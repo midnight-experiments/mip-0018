@@ -32,6 +32,6 @@ I1/I2 vectors byte-for-byte and `@mip0018/codec` classifies each as the vector s
 malformed then a valid event (S7); a non-owner call fails with `Ownable: caller is not the owner` and
 emits nothing. Note what the wire does: trailing zero bytes of `name ‖ payload` are trimmed, content
 or padding alike (A2a travels as 286 bytes because its last two content bytes, `valType` and
-`valLen`, are zero) — consumers zero-extend to 288 bytes (`MIP-PROPOSAL-NOTES.md`, N2).
+`valLen`, are zero) — consumers zero-extend to 288 bytes (MIP Consuming: missing trailing bytes are zero).
 
 Costs (k, rows, keys): [`docs/costs.md`](../../docs/costs.md).

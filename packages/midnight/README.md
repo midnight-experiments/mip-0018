@@ -38,4 +38,3 @@ Two entry points:
 
 Tests: `test/*.test.ts` (unit, no chain; Stagenet responses replayed from `test/fixtures/stagenet/`, recorded by
 `test/fixtures/record-stagenet.ts`). The end-to-end test on a local chain is `packages/cli/test/e2e/local-e2e.sh`.
-Notes for the MIP text found while building this: N10 and N11 in the root [`MIP-PROPOSAL-NOTES.md`](../../MIP-PROPOSAL-NOTES.md).

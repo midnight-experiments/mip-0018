@@ -33,7 +33,7 @@ Value types, as implemented:
 | 1 UTF-8 | strict UTF-8 (RFC 3629: no overlongs, surrogates or code points above U+10FFFF); a BOM is kept as a character |
 | 2 unsigned integer | 1–31 bytes, little-endian → `bigint` |
 | 3 JSON | strict UTF-8, then the platform parser (`JSON.parse`) must accept the text as one value (owner ruling F2) |
-| 4 URI | strict UTF-8, then the RFC 3986 `URI` rule: scheme required, fragment allowed, no relative references, ASCII only — the MIP's own text since `78ecbb4` (from note N1; owner ruling Q20 followed ERC-721). Never fetched or normalised |
+| 4 URI | strict UTF-8, then the RFC 3986 `URI` rule: scheme required, fragment allowed, no relative references, ASCII only — the MIP's own text since `78ecbb4` (owner ruling Q20 followed ERC-721). Never fetched or normalised |
 | 5 Null | `valLen` 0 (a tombstone) |
 | 6–255 | reserved: reject |
 

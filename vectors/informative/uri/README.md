@@ -8,7 +8,7 @@ whole event, so two consumers that read it differently disagree on every record 
 This repository followed the owner's ruling (Q20): **the RFC 3986 `URI` rule, as ERC-721 `tokenURI` uses it** — a
 scheme is required, a fragment is allowed, every character is ASCII (non-ASCII characters percent-encoded, host names
 in their ASCII form). Relative references are rejected, as normative vector R5e requires. Since `78ecbb4` this is the
-MIP's own text (from note **N1** in `MIP-PROPOSAL-NOTES.md`): "A URI as defined in RFC 3986: a scheme is required, a
+MIP's own text: "A URI as defined in RFC 3986: a scheme is required, a
 fragment is allowed, and relative references are not. All characters are ASCII; characters outside ASCII MUST be
 percent-encoded, and host names converted to their ASCII form, before emitting." The 26 verdicts below are unchanged.
 

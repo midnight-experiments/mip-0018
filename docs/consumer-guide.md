@@ -159,7 +159,7 @@ Stagenet [C08](../deployments/stagenet/cases/C08/README.md)).
 | 1 UTF-8 string | strict UTF-8 (no overlongs, surrogates or code points above U+10FFFF); may be empty |
 | 2 unsigned integer | 1–31 bytes, little-endian; decode every width to a big integer (`06` and `06` + 15 zero bytes are both 6) |
 | 3 JSON | strict UTF-8, then your platform's JSON parser must accept the text as exactly one value (owner ruling F2) |
-| 4 URI | strict UTF-8, then the RFC 3986 `URI` rule — the MIP's own text since `78ecbb4` ("a scheme is required, a fragment is allowed, and relative references are not. All characters are ASCII"; from note N1, owner ruling Q20 following ERC-721): `https://acme.example/logo.png#v2` and `ipfs://…` accept; `https://ä.example/`, `https://acme.example/a b.png` and `/relative/path` reject ([26 informative cases](../vectors/informative/uri/README.md)) |
+| 4 URI | strict UTF-8, then the RFC 3986 `URI` rule — the MIP's own text since `78ecbb4` ("a scheme is required, a fragment is allowed, and relative references are not. All characters are ASCII"; owner ruling Q20 following ERC-721): `https://acme.example/logo.png#v2` and `ipfs://…` accept; `https://ä.example/`, `https://acme.example/a b.png` and `/relative/path` reject ([26 informative cases](../vectors/informative/uri/README.md)) |
 | 5 Null | `valLen` 0 (a tombstone) |
 | 6–255 | reserved: reject the event |
 
@@ -211,7 +211,7 @@ the usable values.
 
 If the token also has standard getters (`name()`, `symbol()`, `decimals()` of MIP-0004/0011/0014), the events are what
 this MIP serves: "A later update, such as a rename, is the token's current metadata for consumers of this MIP even
-where the getters cannot change" (Common fields, since `78ecbb4`; note N12). A MIP that defines a token standard may
+where the getters cannot change" (Common fields, since `78ecbb4`). A MIP that defines a token standard may
 restrict or override that for tokens that declare the standard in `standards`.
 
 ### `standards`
@@ -233,8 +233,8 @@ or networks.
 
 Grouping is a SHOULD. The MIP's Testing text (S9, since `78ecbb4`) says "two outcomes are valid: no groups at all, or
 exactly the following groups", so a consumer that does not group passes S9, and the vector runner compares only groups
-of two or more members. Whether an identity alone with its symbol is a "group of one" is not settled by the MIP (note
-N20); the reference consumer reports such groups, the runner ignores them.
+of two or more members. Whether an identity alone with its symbol is a "group of one" is not settled by the MIP;
+the reference consumer reports such groups, the runner ignores them.
 
 ### Amounts
 
@@ -247,7 +247,7 @@ N20); the reference consumer reports such groups, the runner ignores them.
 Kinds 1 (shielded coins) and 2 (unshielded UTXOs) have a color, `tokenType(domainSep, contractAddress)`; kind 3
 (ledger tokens) has none. "A shielded and an unshielded mint with the same `domainSep` have the same color; the kind
 is given by what the user holds (a shielded coin → kind 1, an unshielded UTXO → kind 2), not by the color" (MIP Lookup,
-since `78ecbb4`; note N3).
+since `78ecbb4`).
 
 ## 6. Untrusted input
 
@@ -291,7 +291,7 @@ A wallet holding a shielded coin or an unshielded UTXO knows only its color. To 
 2. **Build a table from mints**: for every successful contract call, the `shieldedMints` / `unshieldedMints` effects
    (`domainSep → amount`) of the parts of the transaction that were applied give `color → (contractAddress,
    domainSep)`. "A mint is a `shieldedMints` or `unshieldedMints` effect of a contract call" (MIP Lookup, since
-   `78ecbb4`; note N10): mint events a contract emits and UTXO token types are not sources for this table.
+   `78ecbb4`): mint events a contract emits and UTXO token types are not sources for this table.
 3. **Resolve** a held color through the table to `(contractAddress, domainSep)`, take kind 1 for a coin or 2 for a UTXO,
    and read that identity's events (steps 1–5).
 

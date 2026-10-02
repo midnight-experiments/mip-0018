@@ -86,7 +86,7 @@ metadata events" (every example tests that these emit nothing).
   (`examples/minimal/contracts/PublishOnce.compact`).
 - **Renames do not change the getters.** `name()` / `symbol()` return the `sealed` constructor values
   forever; after `setMetadata` the MIP-0018 metadata is the current one. The MIP says so since
-  `78ecbb4` (Common fields, from note N12): a token with standard getters "SHOULD emit the same values
+  `78ecbb4` (Common fields): a token with standard getters "SHOULD emit the same values
   those getters return when it first publishes them. A later update, such as a rename, is the token's
   current metadata for consumers of this MIP even where the getters cannot change." A MIP that defines
   a token standard MAY restrict or override this for tokens that declare that standard in `standards`.
@@ -97,7 +97,7 @@ metadata events" (every example tests that these emit nothing).
   `_domain`, …): read it through circuits (`balanceOf`, `tokenColor`) or re-export the fields.
 - **Never pad a value with zeros.** MIP-0018 compares keys and values as exact bytes: `"AGL"` in a
   `Bytes<4>` is `"AGL\0"`, a different symbol (the MIP's Payload section says so since `78ecbb4`, from
-  note N13). With the module's builders a literal of the wrong length
+  MIP Payload section). With the module's builders a literal of the wrong length
   does not compile, and the runtime refuses a too-short argument — but an argument zero-padded to the
   circuit's size is emitted with its zeros. Make every generic size the value's UTF-8 byte length (the
   tests decode every emitted event and compare each value with `metadata.json`;

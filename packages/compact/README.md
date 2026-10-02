@@ -122,7 +122,7 @@ const { misc } = await sim.call('publishMetadata');
 ```
 
 The runtime (like the ledger) trims trailing zero bytes of `name ‖ payload`; `Simulator` zero-extends
-to 288 bytes before splitting, as the indexer does (`MIP-PROPOSAL-NOTES.md`, N2).
+to 288 bytes before splitting, as the indexer does (MIP Consuming: missing trailing bytes are zero).
 
 ## Tests
 

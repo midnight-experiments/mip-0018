@@ -7,8 +7,8 @@
 //
 //   * contract calls: the `log` operations of the guaranteed and fallible transcripts (each `log` pops the value
 //     pushed right before it: the VersionedLogItem `[version, eventType, data]`; for `Misc` the data cell is the
-//     288-byte `name ‖ payload` with trailing zero bytes stripped — it is zero-extended back to 288 here, MIP note
-//     N2) and the transcript effects `shieldedMints` / `unshieldedMints` (domainSep → amount);
+//     288-byte `name ‖ payload` with trailing zero bytes stripped — it is zero-extended back to 288 here, per the
+//     MIP's Consuming section) and the transcript effects `shieldedMints` / `unshieldedMints` (domainSep → amount);
 //   * contract deploys (address) and maintenance updates (address, counter, updates).
 //
 // Ordering is deterministic and follows the ledger's event order (midnight-ledger `semantics.rs`), which MIP-0018

@@ -15,17 +15,17 @@ up metadata, and real cases on Stagenet.
 | A token issuer adding metadata to a contract | [Issuer guide](docs/issuer-guide.md), then [`examples/publish-and-emit`](examples/publish-and-emit/README.md) |
 | A wallet, explorer or indexer developer | [Consumer guide](docs/consumer-guide.md), then [`examples/verify`](examples/verify/README.md) and the [vectors](vectors/README.md) |
 | The maintainer of an already-deployed token | [Upgrade guide](docs/upgrade-guide.md) |
-| A MIP reviewer | [Stagenet cases](deployments/stagenet/README.md), [conformance matrix](docs/conformance-matrix.md), [`MIP-PROPOSAL-NOTES.md`](MIP-PROPOSAL-NOTES.md), [costs](docs/costs.md) |
+| A MIP reviewer | [Stagenet cases](deployments/stagenet/README.md), [conformance matrix](docs/conformance-matrix.md), [costs](docs/costs.md) |
 
 ## The MIP this repository implements
 
 | | |
 |---|---|
-| Proposal | [midnightntwrk/midnight-improvement-proposals PR #340](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340) — "Update MIP-0018 with community feedback" (open; the link moves to the merged file when #340 merges) |
-| Pinned text | [`78ecbb4b1ba57371e84fe45f705991ab7b996a61` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/78ecbb4b1ba57371e84fe45f705991ab7b996a61/mips/mip-0018-on-chain-token-metadata.md) — the head of PR #340 on 2026-10-02, which carries the owner-approved proposal notes |
+| Proposal | [midnightntwrk/midnight-improvement-proposals PR #340](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340) — "Update MIP-0018 with community feedback" (the final version of the MIP text, per the owner) |
+| Pinned text | [`78ecbb4b1ba57371e84fe45f705991ab7b996a61` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/78ecbb4b1ba57371e84fe45f705991ab7b996a61/mips/mip-0018-on-chain-token-metadata.md) — the head of PR #340 on 2026-10-02, the final version of the MIP text |
 | SHA-256 of the pinned text | `b9092746ecf5660496535688a2dea152eb23d932b6eeb6b5a182c23426eec1a1` (`docker/run.sh check:mip-pin` also checks that the vectors, schemas and docs cite this pin) |
-| Previous pin | [`b147c627e1bb15b5d15cc73cf30c2a36afd34dbb`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/b147c627e1bb15b5d15cc73cf30c2a36afd34dbb/mips/mip-0018-on-chain-token-metadata.md) (SHA-256 `9ffba7e6a3123cd6683e5a779ac3b73c8a31a9724367cd98ee120be78720d842`): the text [`MIP-PROPOSAL-NOTES.md`](MIP-PROPOSAL-NOTES.md) was written against and the Stagenet cases were prepared under. The payload layout and its validation rules did not change; the new consumer rule is to zero-extend a short `name`/`payload` before decoding — see [What changed in `78ecbb4`](MIP-PROPOSAL-NOTES.md#what-changed-in-78ecbb4) |
-| Authority | The pinned text decides every byte and rule. What this repository found that should be defined or changed upstream is in [`MIP-PROPOSAL-NOTES.md`](MIP-PROPOSAL-NOTES.md) (notes N1–N20, each with its status: the owner put N1, N2, N3, N4, N7, N8, N10, N11, N12, N13 and N16 into PR #340 at `78ecbb4` (`IN-UPSTREAM-PR`); N5 is approved but not in the PR; N20 (single-member symbol groups) is `PROPOSED`; the rest are `WITHDRAWN`); nothing is proposed upstream from here. |
+| Previous pin | [`b147c627e1bb15b5d15cc73cf30c2a36afd34dbb`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/b147c627e1bb15b5d15cc73cf30c2a36afd34dbb/mips/mip-0018-on-chain-token-metadata.md) (SHA-256 `9ffba7e6a3123cd6683e5a779ac3b73c8a31a9724367cd98ee120be78720d842`): the text the Stagenet cases were prepared under. The payload layout and its validation rules did not change; the new consumer rule is to zero-extend a short `name`/`payload` before decoding |
+| Authority | The pinned text decides every byte and rule. The findings from building this reference were folded into the MIP text itself (PR #340 at `78ecbb4`). |
 
 ## MIP section → repository
 
@@ -34,7 +34,7 @@ up metadata, and real cases on Stagenet.
 | Event (name, "must ignore") | [`packages/codec`](packages/codec/README.md) `classifyEvent` | vectors `I1a`–`I3` ([codec](packages/codec/test/vectors.test.ts), [consumer](packages/consumer/test/vectors.test.ts)) | [C07](deployments/stagenet/cases/C07/README.md) (`[v2]` and foreign names) | done |
 | Payload (layout, the three checks, whole-event rejection) | [`packages/codec`](packages/codec/README.md) `decodePayload`, `encodePayload` | vectors `A1`–`A5`, `R1`–`R6`; [fuzz](packages/codec/test/fuzz.test.ts); [rule mutations](packages/consumer/test/mutations.test.ts) | [C07](deployments/stagenet/cases/C07/README.md), [C08](deployments/stagenet/cases/C08/README.md) | done |
 | Payload — Compact emitter ("exactly these bytes") | [`packages/compact`](packages/compact/README.md): typed constructor (default) + pure-circuit alternative | [byte equality with the vectors](packages/compact/test/vectors.test.ts), [729 generated payloads](packages/compact/test/equivalence.test.ts), [16 compile errors](packages/compact/test/compile-fail.test.ts) | [C06](deployments/stagenet/cases/C06/README.md), [C10](deployments/stagenet/cases/C10/README.md) (Appendix A bytes on chain) | done |
-| Value types (incl. the RFC 3986 `URI` rule — MIP text since `78ecbb4`, from note N1 / Q20; JSON via the platform parser) | [`packages/codec`](packages/codec/README.md) `checkValue`, `isRfc3986Uri` | [values](packages/codec/test/values.test.ts), [URI](packages/codec/test/uri.test.ts); vectors `R5a`–`R5h`, [26 informative URI cases](vectors/informative/uri/README.md) | [C07](deployments/stagenet/cases/C07/README.md) | done |
+| Value types (incl. the RFC 3986 `URI` rule — MIP text since `78ecbb4`, owner ruling Q20; JSON via the platform parser) | [`packages/codec`](packages/codec/README.md) `checkValue`, `isRfc3986Uri` | [values](packages/codec/test/values.test.ts), [URI](packages/codec/test/uri.test.ts); vectors `R5a`–`R5h`, [26 informative URI cases](vectors/informative/uri/README.md) | [C07](deployments/stagenet/cases/C07/README.md) | done |
 | Token identity and authority; Lookup | [`packages/consumer`](packages/consumer/README.md) (identity), [`packages/midnight`](packages/midnight/README.md) (`tokenType`, mint scanner), CLI `index` / `lookup` | [colors and raw mints](packages/midnight/test/raw-color.test.ts), [scanner](packages/midnight/test/verify-list-scan.test.ts); vectors `S6a`, `S6b`; native examples' color tests | [C02](deployments/stagenet/cases/C02/README.md)–[C05](deployments/stagenet/cases/C05/README.md), [IDX](deployments/stagenet/cases/IDX/README.md), [U1](deployments/stagenet/cases/U1/README.md) | done |
 | Keys, Applying records, Common fields, Symbol grouping | [`packages/consumer`](packages/consumer/README.md) `MetadataState`, `formatAmount`, `parseStandards` | state vectors `S1`–`S9` ([consumer](packages/consumer/test/vectors.test.ts)), [state](packages/consumer/test/state.test.ts), [common fields](packages/consumer/test/common.test.ts), [rule mutations](packages/consumer/test/mutations.test.ts) | [C04](deployments/stagenet/cases/C04/README.md) (group), [C05](deployments/stagenet/cases/C05/README.md), [C06](deployments/stagenet/cases/C06/README.md) (lifecycle) | done |
 | Publishing (no events in normal operation; access control; few events) | [`packages/compact`](packages/compact/README.md), [`examples/minimal`](examples/minimal/README.md), [`examples/openzeppelin`](examples/openzeppelin/README.md), CLI `deploy` / `publish` / `remove-circuit` / `deploy-and-publish` | [minimal](examples/minimal/test/minimal.test.ts), OpenZeppelin examples' tests, [signer units](packages/midnight/test/signer-units.test.ts); local chain: [`examples-e2e.sh`](packages/cli/test/e2e/examples-e2e.sh), [`local-e2e.sh`](packages/cli/test/e2e/local-e2e.sh) | [C01](deployments/stagenet/cases/C01/README.md)–[C06](deployments/stagenet/cases/C06/README.md), [C09](deployments/stagenet/cases/C09/README.md) (non-owner refused), [C10](deployments/stagenet/cases/C10/README.md) (create and destroy) | done |
@@ -104,7 +104,7 @@ so teardown removes exactly what it created ([`CONTRIBUTING.md`](CONTRIBUTING.md
 ## Toolchain
 
 MIP-0018 needs MIP-0002 `Misc` events, so it **requires Compact 0.34.0 or later** (language 0.26.0, runtime 0.19.0 or
-later — the MIP's Dependencies line since `78ecbb4`, from note N4).
+later — the MIP's Dependencies line since `78ecbb4`).
 This repository is **built and tested with Compact 0.35.0** (language 0.27.0, runtime 0.20.0) **and ZKIR v3**
 (`--feature-zkir-v3`), pinned with every other version in [`toolchain.json`](toolchain.json). Only official binaries
 are used: the Compact release from `midnightntwrk/compact`, `midnightntwrk/*` Docker images pinned by digest, and
@@ -142,5 +142,5 @@ it is cited.
 
 ## Contributing, security, licence
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) (Docker-only workflow, how to add a note to `MIP-PROPOSAL-NOTES.md`) and
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) (Docker-only workflow) and
 [`SECURITY.md`](SECURITY.md) (secrets, untrusted payloads, reporting). Licensed under the [Apache License 2.0](LICENSE).

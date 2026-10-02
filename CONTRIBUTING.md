@@ -23,14 +23,6 @@ Before opening or updating a pull request: `docker/run.sh ci lint typecheck test
 
 Every byte and rule comes from the pinned MIP-0018 text (`toolchain.json` → `mip`). If the code needs a decision the MIP does not make, or the MIP should change, do not invent the rule silently:
 
-### Adding a note to `MIP-PROPOSAL-NOTES.md`
-
-1. Append a section `## N<next number> — <one-line title>` (never renumber or delete; change the status instead).
-2. Fill in: **MIP section**, **Problem**, **Evidence** (vectors, chain cases, code paths), **Proposed text** (or the options when the authors must choose), **Meanwhile** (what this repository does until the MIP decides), **Status** (`NEEDS-DECISION`, `PROPOSED`, `ACCEPTED-UPSTREAM` with the commit, or `WITHDRAWN`).
-3. Link the note from the code or test that depends on it.
-
-Nothing is proposed upstream from this repository; the notes are for the MIP authors.
-
 ## Commits
 
 Plain, descriptive commit messages. Do not commit generated Docker state, logs, wallet files or anything secret.

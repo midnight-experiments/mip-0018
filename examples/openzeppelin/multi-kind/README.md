@@ -76,7 +76,7 @@ together because they share the contract and the `symbol` ("Symbol grouping").
   renamed or withdrawn alone. A kind other than 1, 2 or 3 fails the module's `header()` assertion.
 - **Same color for kinds 1 and 2** — both native mints use `tokenType(domainSep, contractAddress)`, so
   a shielded coin and an unshielded UTXO of this asset have the same 32-byte color; a wallet knows the
-  kind from what it holds (`MIP-PROPOSAL-NOTES.md` N3, shown by this example's tests).
+  kind from what it holds (MIP Lookup, shown by this example's tests).
 
 ## Deploy, mint and publish
 

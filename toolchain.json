@@ -9,7 +9,7 @@
     "path": "mips/mip-0018-on-chain-token-metadata.md",
     "url": "https://raw.githubusercontent.com/midnightntwrk/midnight-improvement-proposals/78ecbb4b1ba57371e84fe45f705991ab7b996a61/mips/mip-0018-on-chain-token-metadata.md",
     "sha256": "b9092746ecf5660496535688a2dea152eb23d932b6eeb6b5a182c23426eec1a1",
-    "note": "Linked through the open PR #340 (Q12); move the link to the merged file when #340 merges. CI checks the pinned commit's hash, not the moving PR head. Pinned to the PR head 78ecbb4 (2026-10-02, the owner's update with the approved proposal notes); previous pin b147c627e1bb15b5d15cc73cf30c2a36afd34dbb (SHA-256 9ffba7e6a3123cd6683e5a779ac3b73c8a31a9724367cd98ee120be78720d842), which MIP-PROPOSAL-NOTES.md was written against."
+    "note": "MIP PR #340 at 78ecbb4 is the final version of the MIP text (owner, 2026-10-02). CI checks the pinned commit's hash. Previous pin b147c627e1bb15b5d15cc73cf30c2a36afd34dbb (the Stagenet cases were prepared under it; payload layout and validation rules unchanged)."
   },
   "compact": {
     "version": "0.35.0",
@@ -18,7 +18,9 @@
     "runtime": "0.20.0",
     "ledgerTarget": "ledger-9.1.0.0-rc.3",
     "zkir": "zkir-3.1.0-rc.1",
-    "flags": ["--feature-zkir-v3"],
+    "flags": [
+      "--feature-zkir-v3"
+    ],
     "minimumForMisc": "0.34.0 (language 0.26.0, runtime 0.19.0)",
     "release": {
       "tag": "compactc-v0.35.0",

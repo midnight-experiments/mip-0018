@@ -11,7 +11,7 @@ extras, a JSON Schema for each format, an independent generator and a runner any
 | Integrity | `SHA256SUMS` covers every fixture, schema and the manifest (`cd vectors && sha256sum -c SHA256SUMS`) |
 
 The MIP text is the authority. Where this folder had to choose something the MIP does not determine, the choice is
-labelled informative and, if it should be settled upstream, recorded as a note in `MIP-PROPOSAL-NOTES.md`.
+labelled informative.
 
 ## Layout
 
@@ -19,7 +19,7 @@ labelled informative and, if it should be settled upstream, recorded as a note i
 |---|---|
 | `payload/<id>.json` + `<id>.bin` | Normative payload vectors (A1–A5, R1–R6, the ignore rule): one observed event and the expected classify/decode result. `.bin` holds the same 256 payload bytes (the informative zero-extension vectors' `.bin` holds the bytes as observed) |
 | `state/<id>.json` | Normative state vectors (S1–S9, plus state companions of A3–A5): a sequence of observed events in chain order and the state that must result |
-| `informative/uri/` | The 26 URI cases with the RFC 3986 `URI` verdict (owner ruling Q20 = ERC-721's rule, note N1) and the investigation data; see its README |
+| `informative/uri/` | The 26 URI cases with the RFC 3986 `URI` verdict (owner ruling Q20 = ERC-721's rule, now MIP text) and the investigation data; see its README |
 | `informative/state/` | `standards` list format and common-field forms derived from the MIP text but not in its Testing list (`INF-STD-6/7`: the byte rule for identifiers) |
 | `informative/zero-extension/` | The MIP's Consuming rule (`78ecbb4`): a `name` or `payload` with its trailing zero bytes dropped, as some sources return it, gives exactly the full form's result; a 257-byte payload is rejected and a 33-byte name is another name |
 | `schema/` | JSON Schemas (2020-12): `payload.schema.json`, `state.schema.json`, `runner.schema.json` (protocol), `manifest.schema.json` |
@@ -174,7 +174,7 @@ node vectors/tools/validate.ts
 ## Informative vectors and repository conventions
 
 - **URI (`valType` 4)** — `informative/uri/`: RFC 3986 `URI` (scheme required, fragment allowed, no relative
-  references, ASCII only); 16 accept, 10 reject. This is now the MIP's own text (`78ecbb4`, from note N1; the owner's
+  references, ASCII only); 16 accept, 10 reject. This is now the MIP's own text (`78ecbb4`; the owner's
   ruling Q20 followed ERC-721, which defines URIs by RFC 3986).
 - **Zero extension** — `informative/zero-extension/` (`INF-ZEXT-*`): the MIP's Consuming section (`78ecbb4`) says
   "Some sources drop trailing zero bytes; consumers MUST treat missing trailing bytes as zero, so that every `name` is
@@ -188,9 +188,7 @@ node vectors/tools/validate.ts
 - **`standards` and common fields** — `informative/state/`: trailing/leading spaces and tabs are malformed (unusable),
   an empty value claims nothing (usable), duplicates are allowed; wrong types/forms of `name`, `symbol`, `decimals`
   are unusable. `INF-STD-6/7`: identifiers containing U+00A0 or U+0085 are usable under the MIP's byte rule ("no byte
-  in 0x00–0x20 or 0x7f"), which the reference applies exactly as written. (Their `basis` field still names "note N5":
-  the note was renumbered N6 when the notes were merged and later withdrawn by the owner as out of scope; the vector
-  files are only re-pinned, never edited.)
+  in 0x00–0x20 or 0x7f"), which the reference applies exactly as written.
 - **JSON (`valType` 3)** — no informative vectors: each consumer uses its platform's JSON parser on the strictly decoded
   UTF-8 text (owner ruling).
 - **Display formatting** beyond S8 (trailing zeros, very large `decimals`) is a presentation choice of each consumer

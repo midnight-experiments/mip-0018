@@ -14,7 +14,6 @@ procedure, its checks and its limits: **[`docs/upgrade-guide.md`](../../docs/upg
 | [`scripts/inspect.ts`](scripts/inspect.ts) | wallet-free view of a deployed contract: entry points + verifier-key hashes, maintenance authority, ledger-data hash, decoded fields |
 | [`scripts/local-upgrade.sh`](scripts/local-upgrade.sh) | the local end-to-end proof (below) |
 | [`test/`](test) | layout check (12 cases) and the upgrade against the deployed state in compact-runtime (9 cases) |
-| [`MIP-PROPOSAL-NOTES.md`](../../MIP-PROPOSAL-NOTES.md) (N5 and N16 owner-approved; N15, N17, N18 withdrawn as out of scope) | what this template suggested for the MIP text |
 
 ## The commands
 

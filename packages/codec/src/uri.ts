@@ -1,4 +1,4 @@
-// valType 4: the RFC 3986 `URI` rule, as ERC-721 `tokenURI` uses it (owner ruling Q20; proposal note N1):
+// valType 4: the RFC 3986 `URI` rule, as ERC-721 `tokenURI` uses it (owner ruling Q20; MIP-0018 Value types):
 //
 //   URI = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
 //

@@ -123,7 +123,7 @@ source events
 expected    matches
 ```
 
-Three identities from one transaction, one symbol group, and kinds 1 and 2 share one color (MIP note N3) — wallet 1
+Three identities from one transaction, one symbol group, and kinds 1 and 2 share one color (MIP Lookup) — wallet 1
 holds that color both as a shielded coin and as an unshielded UTXO (`deployments/stagenet/cases/C04/wallet-status.json`).
 
 The state at an earlier block, with replaced values as history (case C06 as of its rename, block 714804):

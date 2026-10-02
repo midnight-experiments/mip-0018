@@ -12,7 +12,7 @@
     "normative": { "type": "boolean" },
     "description": { "type": "string", "minLength": 1 },
     "basis": {
-      "description": "Informative vectors only: where the expected result comes from (MIP text, owner ruling, proposal note).",
+      "description": "Informative vectors only: where the expected result comes from (MIP text or owner ruling).",
       "type": "string",
       "minLength": 1
     },

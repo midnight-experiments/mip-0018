@@ -1111,7 +1111,7 @@ stateVector({
 // Informative vectors (normative = false)
 // ===============================================================================================================
 
-// ---- URI cases (owner ruling Q20: RFC 3986 `URI` rule as ERC-721 uses it; proposal note N1) ----
+// ---- URI cases (owner ruling Q20: RFC 3986 `URI` rule as ERC-721 uses it; MIP Value types) ----
 // Verdicts transcribed from the F1 investigation and cross-checked below against both independent grammars.
 const URI_ACCEPT = new Set([
   'c01',
@@ -1151,7 +1151,7 @@ for (const [caseId, value] of uriCases) {
   const r = rec('uri', URI, value);
   const description = `URI (valType 4) value ${JSON.stringify(value)}: ${accept ? 'accepted' : 'rejected'} under the RFC 3986 URI rule (scheme required, fragment allowed, ASCII only).`;
   const basis =
-    'Owner ruling Q20 (follow ERC-721: RFC 3986 `URI`), proposal note N1. Verdict = strict RFC 3986 grammar (investigation/rfc3986.mjs) = Python rfc3987 rule URI (investigation/py.json); they agree on 26/26.';
+    'Owner ruling Q20 (follow ERC-721: RFC 3986 `URI`), MIP-0018 Value types. Verdict = strict RFC 3986 grammar (investigation/rfc3986.mjs) = Python rfc3987 rule URI (investigation/py.json); they agree on 26/26.';
   if (accept) {
     acceptVector({ id, testId: 'INF-URI', normative: false, description, basis, recs: [r], dir: 'informative/uri' });
   } else {
@@ -1170,7 +1170,7 @@ for (const [caseId, value] of uriCases) {
 }
 emit(
   'informative/uri/verdicts.json',
-  json({ rule: 'RFC 3986 URI (scheme required, fragment allowed, ASCII only)', basis: 'Q20 / N1', cases: uriVerdicts }),
+  json({ rule: 'RFC 3986 URI (scheme required, fragment allowed, ASCII only)', basis: 'Q20 / MIP-0018 Value types', cases: uriVerdicts }),
 );
 
 // ---- standards list format and common-field forms (derived from "Common fields"; not in the MIP Testing list) ----
@@ -1192,7 +1192,7 @@ stdVector('INF-STD-2', ' mip-0004', false, '" mip-0004" (leading space: an empty
 stdVector('INF-STD-3', 'mip-0004\tmip-0011', false, '"mip-0004<TAB>mip-0011" (0x09 is a control byte)');
 stdVector('INF-STD-4', '', true, '"" (empty: no standards claimed, not malformed)');
 stdVector('INF-STD-5', 'mip-0004 mip-0004 erc-20', true, '"mip-0004 mip-0004 erc-20" (duplicates carry no meaning)');
-const N5_BASIS = `${STD_BASIS} The byte rule allows other Unicode spaces and controls (U+00A0, U+0085); the project withdrew the note asking the MIP to say so (N6, out of scope).`;
+const N5_BASIS = `${STD_BASIS} The byte rule allows other Unicode spaces and controls (U+00A0, U+0085).`;
 stdVector('INF-STD-6', 'mip-0004 x y', true, '"mip-0004 x<U+00A0>y" (no-break space, bytes c2 a0: no byte in 0x00-0x20/0x7f)', N5_BASIS);
 stdVector(
   'INF-STD-7',
