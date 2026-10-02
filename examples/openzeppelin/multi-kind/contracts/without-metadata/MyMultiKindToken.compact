@@ -1,0 +1,57 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// One asset in three representations from one contract, all under ONE domain separator:
+//   * native shielded coins     — OpenZeppelin `NativeShieldedToken`;
+//   * native unshielded UTXOs   — the Compact standard library's `mintUnshieldedToken` (OpenZeppelin
+//                                 Compact Contracts 0.4.0-alpha.5 has no native unshielded module);
+//   * ledger balances           — OpenZeppelin `FungibleToken`;
+// owned with OpenZeppelin `Ownable`. A user may hold all three at once. There is no conversion
+// between them here (OpenZeppelin's `NativeTokenConverter` is not on main).
+//
+// Compile with Compact 0.35.0, --feature-zkir-v3 and --compact-path <repo>/node_modules
+// (examples/openzeppelin/README.md).
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+import "@openzeppelin/compact-contracts/access/Ownable" prefix Ownable_;
+import "@openzeppelin/compact-contracts/token/NativeShieldedToken" prefix NativeShieldedToken_;
+import "@openzeppelin/compact-contracts/token/FungibleToken" prefix FungibleToken_;
+
+export { Either, ContractAddress, ZswapCoinPublicKey, ShieldedCoinInfo, UserAddress };
+
+constructor(
+  domainSep: Bytes<32>,
+  name_: Opaque<"string">,
+  symbol_: Opaque<"string">,
+  decimals_: Uint<8>,
+  initialOwner: Either<Bytes<32>, ContractAddress>
+) {
+  Ownable_initialize(initialOwner);
+  NativeShieldedToken_initialize(domainSep, name_, symbol_, decimals_);
+  FungibleToken_initialize(name_, symbol_, decimals_);
+}
+
+export circuit mintShielded(recipient: ZswapCoinPublicKey, amount: Uint<64>, nonce: Bytes<32>): ShieldedCoinInfo {
+  Ownable_assertOnlyOwner();
+  return NativeShieldedToken__mint(recipient, amount, nonce);
+}
+
+export circuit mintUnshielded(recipient: UserAddress, amount: Uint<64>): Bytes<32> {
+  Ownable_assertOnlyOwner();
+  return mintUnshieldedToken(
+    NativeShieldedToken__domain, disclose(amount), right<ContractAddress, UserAddress>(disclose(recipient)));
+}
+
+export circuit mintLedger(account: Either<Bytes<32>, ContractAddress>, value: Uint<128>): [] {
+  Ownable_assertOnlyOwner();
+  FungibleToken__mint(account, value);
+}
+
+export circuit transfer(to: Either<Bytes<32>, ContractAddress>, value: Uint<128>): Boolean {
+  return FungibleToken_transfer(to, value);
+}
+
+export circuit balanceOf(account: Either<Bytes<32>, ContractAddress>): Uint<128> {
+  return FungibleToken_balanceOf(account);
+}
