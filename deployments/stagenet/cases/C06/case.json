@@ -74,9 +74,11 @@
         "--expect",
         "@{case}/expect/publish.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-publish.json"
     },
     {
       "id": "list-after-publish",
@@ -126,9 +128,11 @@
         "--expect",
         "@{case}/expect/rename.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-rename.json"
     },
     {
       "id": "list-after-rename",
@@ -176,9 +180,11 @@
         "--expect",
         "@{case}/expect/withdraw.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-withdraw.json"
     },
     {
       "id": "list-after-withdraw",
@@ -228,9 +234,11 @@
         "--expect",
         "@{case}/expect/withdraw-again.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-withdraw-again.json"
     },
     {
       "id": "list-after-withdraw-again",
@@ -280,9 +288,11 @@
         "--expect",
         "@{case}/expect/revive.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-revive.json"
     },
     {
       "id": "list-after-revive",

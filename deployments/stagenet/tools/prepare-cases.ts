@@ -184,8 +184,9 @@ const call = (c: PublishCall, o: { force?: boolean; note?: string; expectExit?: 
 const verify = (step: string): Step => ({
   id: `verify-${step}`,
   runner: 'wallet-free',
-  argv: ['verify', NET, '--record', REC, '--step', step, '--expect', `@{case}/expect/${step}.json`, '--wait', '120'],
+  argv: ['verify', NET, '--record', REC, '--step', step, '--expect', `@{case}/expect/${step}.json`, '--wait', '120', '--json'],
   expectExit: 0,
+  stdout: `observed-verify-${step}.json`,
 });
 const list = (expectFile = 'expected.json', id = 'list', record = REC): Step => ({
   id,
@@ -810,8 +811,21 @@ function build(): { cases: CaseDef[] } {
         {
           id: 'verify-publish',
           runner: 'wallet-free',
-          argv: ['verify', NET, '--record', REC, '--step', 'upgrade:call', '--expect', '@{case}/expect/publish.json', '--wait', '120'],
+          argv: [
+            'verify',
+            NET,
+            '--record',
+            REC,
+            '--step',
+            'upgrade:call',
+            '--expect',
+            '@{case}/expect/publish.json',
+            '--wait',
+            '120',
+            '--json',
+          ],
           expectExit: 0,
+          stdout: 'observed-verify-publish.json',
         },
         list(),
         {
@@ -927,7 +941,7 @@ function readme(c: CaseDef): string {
 
 /** Thousands separators for a SPECK amount; ≈ DUST with 3 decimals (1 DUST = 10^15 SPECK). */
 const speck = (v: string) => BigInt(v).toLocaleString('en-US');
-const dust = (v: string) => (Number(BigInt(v) / 1_000_000_000_000n) / 1000).toFixed(3);
+const dust = (v: string) => (Number(BigInt(v)) / 1e15).toFixed(3);
 
 /**
  * The README's record section: from the case's run record(s) when S5 has written them (public data only), else the

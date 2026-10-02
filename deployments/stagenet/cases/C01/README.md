@@ -27,7 +27,7 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 |---|---|---|---|---|
 | 1 | `deploy` | wallet1 | 0 | `signer deploy --network stagenet --mnemonic-file /run/mip0018/secrets/stagenet-wallet.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --example fungible-token --record deployments/stagenet/cases/C01/record.json` |
 | 2 | `publish` | wallet1 | 0 | `signer publish --network stagenet --mnemonic-file /run/mip0018/secrets/stagenet-wallet.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --record deployments/stagenet/cases/C01/record.json --circuit publishMetadata --step publish` |
-| 3 | `verify-publish` | none | 0 | `wallet_free verify --network stagenet --record deployments/stagenet/cases/C01/record.json --step publish --expect @deployments/stagenet/cases/C01/expect/publish.json --wait 120` |
+| 3 | `verify-publish` | none | 0 | `wallet_free verify --network stagenet --record deployments/stagenet/cases/C01/record.json --step publish --expect @deployments/stagenet/cases/C01/expect/publish.json --wait 120 --json > deployments/stagenet/cases/C01/observed-verify-publish.json` |
 | 4 | `list` | none | 0 | `wallet_free list --network stagenet --record deployments/stagenet/cases/C01/record.json --expect @deployments/stagenet/cases/C01/expected.json --json > deployments/stagenet/cases/C01/observed-list.json` |
 
 ## Re-check (wallet-free, one command)
@@ -36,10 +36,13 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/C01
 ```
 
-## Transactions (filled in by S5)
+## Transactions (Stagenet, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
-| `deploy` | _S5_ | _S5_ | _S5_ |
-| `publish` | _S5_ | _S5_ | _S5_ |
+Contract `MyFungibleToken` at `98a90519419e2ebb514b7c6ce87ee7f6f4f9753d9ee6f533c5d1c25b9d437dcf`; signer mn_addr_stagenet1vw57646su9y5z6myarm93m6kcn62j97z0yma94lfkhmta6pz5h5q6utr3k.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `deploy` | deploy | `dff2630c1fe9e20ab2ccdf7006e3e9687568db89b052d808da2b3cd8dadae95b` | 714495 (`4e26b17baa74d085…`) | SUCCESS | 6,967,424,959,418,516 | 6.967 |
+| `publish` | call `publishMetadata` | `a6fff9fb3f034aea393ff37fcd4343c418c3bfcc7cb22c502c1c1a6ffbc55dfd` | 714501 (`787386ccc67dfc7c…`) | SUCCESS | 170,964,821,521,367 | 0.171 |
+| **total** | | | | | **7,138,389,780,939,883** | **7.138** |
 

@@ -70,9 +70,11 @@
         "--expect",
         "@{case}/expect/publish.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-publish.json"
     },
     {
       "id": "remove-key",

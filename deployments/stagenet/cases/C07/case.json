@@ -539,9 +539,11 @@
         "--expect",
         "@{case}/expect/A2a.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-A2a.json"
     },
     {
       "id": "verify-R1",
@@ -556,9 +558,11 @@
         "--expect",
         "@{case}/expect/R1.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-R1.json"
     },
     {
       "id": "verify-A2b",
@@ -573,9 +577,11 @@
         "--expect",
         "@{case}/expect/A2b.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-A2b.json"
     },
     {
       "id": "verify-R2a",
@@ -590,9 +596,11 @@
         "--expect",
         "@{case}/expect/R2a.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-R2a.json"
     },
     {
       "id": "verify-A3a",
@@ -607,9 +615,11 @@
         "--expect",
         "@{case}/expect/A3a.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-A3a.json"
     },
     {
       "id": "verify-R3a",
@@ -624,9 +634,11 @@
         "--expect",
         "@{case}/expect/R3a.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-R3a.json"
     },
     {
       "id": "verify-A3b",
@@ -641,9 +653,11 @@
         "--expect",
         "@{case}/expect/A3b.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-A3b.json"
     },
     {
       "id": "verify-R3b",
@@ -658,9 +672,11 @@
         "--expect",
         "@{case}/expect/R3b.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-R3b.json"
     },
     {
       "id": "verify-A3c",
@@ -675,9 +691,11 @@
         "--expect",
         "@{case}/expect/A3c.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-A3c.json"
     },
     {
       "id": "verify-R4a",
@@ -692,9 +710,11 @@
         "--expect",
         "@{case}/expect/R4a.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-R4a.json"
     },
     {
       "id": "verify-A4b",
@@ -709,9 +729,11 @@
         "--expect",
         "@{case}/expect/A4b.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-A4b.json"
     },
     {
       "id": "verify-R5a",
@@ -726,9 +748,11 @@
         "--expect",
         "@{case}/expect/R5a.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-R5a.json"
     },
     {
       "id": "verify-A5a",
@@ -743,9 +767,11 @@
         "--expect",
         "@{case}/expect/A5a.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-A5a.json"
     },
     {
       "id": "verify-R5e",
@@ -760,9 +786,11 @@
         "--expect",
         "@{case}/expect/R5e.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-R5e.json"
     },
     {
       "id": "verify-A5b",
@@ -777,9 +805,11 @@
         "--expect",
         "@{case}/expect/A5b.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-A5b.json"
     },
     {
       "id": "verify-R5h",
@@ -794,9 +824,11 @@
         "--expect",
         "@{case}/expect/R5h.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-R5h.json"
     },
     {
       "id": "verify-A5c",
@@ -811,9 +843,11 @@
         "--expect",
         "@{case}/expect/A5c.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-A5c.json"
     },
     {
       "id": "verify-R6b",
@@ -828,9 +862,11 @@
         "--expect",
         "@{case}/expect/R6b.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-R6b.json"
     },
     {
       "id": "verify-I1a",
@@ -845,9 +881,11 @@
         "--expect",
         "@{case}/expect/I1a.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-I1a.json"
     },
     {
       "id": "verify-I1b",
@@ -862,9 +900,11 @@
         "--expect",
         "@{case}/expect/I1b.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-I1b.json"
     },
     {
       "id": "verify-I2a",
@@ -879,9 +919,11 @@
         "--expect",
         "@{case}/expect/I2a.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-I2a.json"
     },
     {
       "id": "verify-I2b",
@@ -896,9 +938,11 @@
         "--expect",
         "@{case}/expect/I2b.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-I2b.json"
     },
     {
       "id": "list",

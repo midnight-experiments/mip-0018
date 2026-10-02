@@ -154,9 +154,11 @@
         "--expect",
         "@{case}/expect/publish-gold.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-publish-gold.json"
     },
     {
       "id": "verify-publish-silver",
@@ -171,9 +173,11 @@
         "--expect",
         "@{case}/expect/publish-silver.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-publish-silver.json"
     },
     {
       "id": "verify-publish-bronze",
@@ -188,9 +192,11 @@
         "--expect",
         "@{case}/expect/publish-bronze.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-publish-bronze.json"
     },
     {
       "id": "list",

@@ -27,7 +27,7 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 |---|---|---|---|---|
 | 1 | `deploy` | wallet1 | 0 | `signer deploy --network stagenet --mnemonic-file /run/mip0018/secrets/stagenet-wallet.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --example raw-emitter --record deployments/stagenet/cases/C08/record.json` |
 | 2 | `emit-two` | wallet1 | 0 | `signer publish --network stagenet --mnemonic-file /run/mip0018/secrets/stagenet-wallet.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --record deployments/stagenet/cases/C08/record.json --circuit emitTwo --args @deployments/stagenet/cases/C08/args/S7b.json --step emit-two --force` |
-| 3 | `verify-emit-two` | none | 0 | `wallet_free verify --network stagenet --record deployments/stagenet/cases/C08/record.json --step emit-two --expect @deployments/stagenet/cases/C08/expect/emit-two.json --wait 120` |
+| 3 | `verify-emit-two` | none | 0 | `wallet_free verify --network stagenet --record deployments/stagenet/cases/C08/record.json --step emit-two --expect @deployments/stagenet/cases/C08/expect/emit-two.json --wait 120 --json > deployments/stagenet/cases/C08/observed-verify-emit-two.json` |
 | 4 | `list` | none | 0 | `wallet_free list --network stagenet --record deployments/stagenet/cases/C08/record.json --expect @deployments/stagenet/cases/C08/expected.json --json > deployments/stagenet/cases/C08/observed-list.json` |
 
 ## Re-check (wallet-free, one command)

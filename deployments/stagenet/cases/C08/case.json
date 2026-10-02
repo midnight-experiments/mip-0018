@@ -75,9 +75,11 @@
         "--expect",
         "@{case}/expect/emit-two.json",
         "--wait",
-        "120"
+        "120",
+        "--json"
       ],
-      "expectExit": 0
+      "expectExit": 0,
+      "stdout": "observed-verify-emit-two.json"
     },
     {
       "id": "list",
