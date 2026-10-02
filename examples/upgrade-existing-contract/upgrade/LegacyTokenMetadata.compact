@@ -1,0 +1,54 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// MIP-0018 upgrade template — the UPGRADE-ONLY source for ../legacy/LegacyToken.compact.
+//
+// MIP-0018 "Backwards Compatibility Assessment — Existing contracts": compile a publishMetadata()
+// circuit against the contract's existing ledger layout; it reads the existing `domain` from state
+// and emits it as `domainSep`. This file is never deployed. It is compiled only to obtain
+// publishMetadata's verifier key, which the contract's maintenance authority adds to the deployed
+// LegacyToken with a `VerifierKeyInsert` (`mip0018 upgrade`); then the owner calls it.
+//
+// Rules (docs/upgrade-guide.md):
+//   1. The ledger declarations are copied VERBATIM from the deployed source: same fields, same
+//      order, same types, same modifiers (Compact assigns state paths by declaration order). Do not
+//      add, remove, rename or reorder a field — `scripts/check-layout.ts` fails if you do. A module
+//      imported here must not declare ledger fields (Mip0018 declares none).
+//   2. Export only the circuit(s) you insert: midnight-js refuses to call through a compiled
+//      contract whose circuits are not all on chain with the same keys.
+//   3. Reuse the contract's own access control (here: the owner check of LegacyToken, same
+//      witness, same account-id derivation). A new ledger field (e.g. a publish-once flag) is
+//      impossible: the deployed state has no room for it.
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+import "../../../packages/compact/src/Mip0018" prefix Mip0018_;
+
+// ---- ledger layout: copied verbatim from ../legacy/LegacyToken.compact ----
+/** The token's domain separator: color = tokenType(domain, this contract's address). */
+export sealed ledger domain: Bytes<32>;
+/** The owner's account id (see ownerId). */
+export ledger owner: Bytes<32>;
+/** Everything ever minted (base units). */
+export ledger totalMinted: Uint<128>;
+/** Number of mint calls. */
+export ledger mintCount: Counter;
+// ---- end of ledger layout ----
+
+/** The same witness as LegacyToken: the owner's secret. */
+witness ownerSecret(): Bytes<32>;
+
+/** The same account-id derivation as LegacyToken. */
+pure circuit ownerId(secret: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<2, Bytes<32>>>([pad(32, "legacy-token:owner"), secret]);
+}
+
+/**
+ * Owner-only: publishes the token's common fields for the identity (this contract, `domain`,
+ * kind 1). The contract address is the one the event is bound to (the deployed LegacyToken), so the
+ * consumer's color tokenType(domain, address) is the color of every coin minted before the upgrade.
+ */
+export circuit publishMetadata(): [] {
+  assert(ownerId(ownerSecret()) == owner, "LegacyToken: caller is not the owner");
+  Mip0018_emitPayload(Mip0018_commonFields<12, 4>(domain, Mip0018_KIND_SHIELDED(), "Legacy Token", "LGCY", 6));
+}
