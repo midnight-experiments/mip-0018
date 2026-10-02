@@ -239,6 +239,9 @@ const measureAll = async (): Promise<{ meta: Meta; rows: Row[] }> => {
     compileSeconds,
   };
   writeFileSync(JSON_PATH, `${JSON.stringify({ meta, rows }, null, 2)}\n`);
+  // Keep the file in the repository's Prettier style (`npm run lint` checks it).
+  const prettier = spawnSync(join(REPO, 'node_modules', '.bin', 'prettier'), ['--write', JSON_PATH], { encoding: 'utf8' });
+  if (prettier.status !== 0) throw new Error(`prettier failed: ${prettier.stderr}`);
   return { meta, rows };
 };
 
