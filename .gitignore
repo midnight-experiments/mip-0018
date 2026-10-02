@@ -1,0 +1,31 @@
+# Dependencies and caches
+node_modules/
+.cache/
+*.tsbuildinfo
+dist/
+coverage/
+
+# Compact compiler output. Policy for committed artefacts (keys, zkir) is decided in S2;
+# until then nothing under managed/ is committed.
+managed/
+
+# Local chain stack: generated ports, state and logs (docker/local-stack/)
+docker/local-stack/.state/
+docker/local-stack/ports.env
+*.log
+
+# Wallet material, private state and run records that may hold secrets.
+# Secrets live outside the repository (see SECURITY.md); these patterns are a backstop.
+*.mnemonic
+*.seed
+*.secret
+*.wallet-cache
+.env
+.env.*
+private/
+private-state/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

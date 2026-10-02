@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowJs": false
+  },
+  "include": [
+    "tools/**/*.ts",
+    "packages/*/src/**/*.ts",
+    "packages/*/test/**/*.ts",
+    "vectors/**/*.ts",
+    "examples/**/src/**/*.ts",
+    "examples/**/test/**/*.ts",
+    "test-contracts/*/src/**/*.ts",
+    "test-contracts/*/test/**/*.ts",
+    "vitest.config.ts"
+  ],
+  "exclude": ["**/node_modules/**", "**/managed/**", "**/dist/**"]
+}

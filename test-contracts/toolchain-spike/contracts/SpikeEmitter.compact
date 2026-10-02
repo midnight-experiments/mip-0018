@@ -1,0 +1,42 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// Toolchain spike (S0): the smallest MIP-0018 emitter.
+//
+// One unguarded circuit emits the payload of MIP-0018 test A1 (Appendix A:
+// domainSep = 0x11 x 32, kind 3, name "Acme Token", symbol "ACME",
+// decimals 6, standards "mip-0004"). It is meant for the "create and destroy"
+// pattern: deploy, call publishMetadata() once, then remove its verifier key
+// with a VerifierKeyRemove maintenance update so nobody can call it again.
+//
+// The payload is built with Compact's own serialization of fixed-size typed
+// records, so the compiler checks every length and the 256-byte bound.
+// Compile with Compact 0.35.0 and --feature-zkir-v3.
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+// keyLen | key | valType | valLen | value
+struct MetadataRecord<#K, #V> {
+  keyLen: Uint<8>;
+  key: Bytes<K>;
+  valType: Uint<8>;
+  valLen: Uint<8>;
+  value: Bytes<V>;
+}
+
+export circuit publishMetadata(): [] {
+  const domainSep: Bytes<32> = Bytes[
+    17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
+    17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17
+  ];
+  const kind: Uint<8> = 3;
+  const name = MetadataRecord<4, 10> { keyLen: 4, key: "name", valType: 1, valLen: 10, value: "Acme Token" };
+  const symbol = MetadataRecord<6, 4> { keyLen: 6, key: "symbol", valType: 1, valLen: 4, value: "ACME" };
+  const decimals = MetadataRecord<8, 1> { keyLen: 8, key: "decimals", valType: 2, valLen: 1, value: (6 as Uint<8>) as Bytes<1> };
+  const standards = MetadataRecord<9, 8> { keyLen: 9, key: "standards", valType: 1, valLen: 8, value: "mip-0004" };
+  const payload = serialize<[Bytes<32>, Uint<8>, MetadataRecord<4, 10>, MetadataRecord<6, 4>, MetadataRecord<8, 1>, MetadataRecord<9, 8>], 256>(
+    [domainSep, kind, name, symbol, decimals, standards]
+  );
+  emit(Misc { name: pad(32, "mip-0018:token-metadata[v1]"), payload: payload });
+}

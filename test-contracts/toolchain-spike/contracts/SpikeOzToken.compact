@@ -1,0 +1,54 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// Toolchain spike (S0): OpenZeppelin Compact Contracts 0.4.0-alpha.5
+// NativeShieldedToken + Ownable composed with a MIP-0018 emitter, compiled
+// with Compact 0.35.0 (language 0.27.0) and --feature-zkir-v3.
+//
+// publishMetadata() is owner-only and emits a kind-1 payload whose domainSep
+// is the token's own `_domain` and whose decimals record comes from the
+// token's `_decimals`. name/symbol are passed as fixed-size bytes because OZ
+// stores them as Opaque<"string">, which a circuit cannot serialize.
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+import "@openzeppelin/compact-contracts/access/Ownable" prefix Ownable_;
+import "@openzeppelin/compact-contracts/token/NativeShieldedToken" prefix NST_;
+
+export { ZswapCoinPublicKey, ContractAddress, Either, Maybe, ShieldedCoinInfo };
+
+struct MetadataRecord<#K, #V> {
+  keyLen: Uint<8>;
+  key: Bytes<K>;
+  valType: Uint<8>;
+  valLen: Uint<8>;
+  value: Bytes<V>;
+}
+
+constructor(
+  domainSep: Bytes<32>,
+  name_: Opaque<"string">,
+  symbol_: Opaque<"string">,
+  decimals_: Uint<8>,
+  initialOwner: Either<Bytes<32>, ContractAddress>
+) {
+  Ownable_initialize(initialOwner);
+  NST_initialize(domainSep, name_, symbol_, decimals_);
+}
+
+export circuit mint(recipient: ZswapCoinPublicKey, amount: Uint<64>, nonce: Bytes<32>): ShieldedCoinInfo {
+  Ownable_assertOnlyOwner();
+  return NST__mint(recipient, amount, nonce);
+}
+
+export circuit publishMetadata(name10: Bytes<10>, symbol4: Bytes<4>): [] {
+  Ownable_assertOnlyOwner();
+  const payload = serialize<[Bytes<32>, Uint<8>, MetadataRecord<4, 10>, MetadataRecord<6, 4>, MetadataRecord<8, 1>], 256>([
+    NST__domain,
+    1,
+    MetadataRecord<4, 10> { keyLen: 4, key: "name", valType: 1, valLen: 10, value: disclose(name10) },
+    MetadataRecord<6, 4> { keyLen: 6, key: "symbol", valType: 1, valLen: 4, value: disclose(symbol4) },
+    MetadataRecord<8, 1> { keyLen: 8, key: "decimals", valType: 2, valLen: 1, value: NST__decimals as Bytes<1> }
+  ]);
+  emit(Misc { name: pad(32, "mip-0018:token-metadata[v1]"), payload: payload });
+}
