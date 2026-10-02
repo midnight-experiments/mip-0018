@@ -33,7 +33,8 @@
     "check:secrets": "node tools/secret-scan.mjs --self-test && node tools/secret-scan.mjs --history",
     "vectors:generate": "npm run generate -w vectors --",
     "vectors:validate": "npm run validate -w vectors",
-    "vectors:run": "npm run run -w vectors --"
+    "vectors:run": "npm run run -w vectors --",
+    "mip0018": "node packages/cli/bin/mip0018.js"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -50,6 +51,7 @@
   "overrides": {
     "@midnight-ntwrk/compact-runtime": "0.20.0",
     "@midnightntwrk/onchain-runtime-v4": "4.0.0-rc.3",
-    "@midnightntwrk/ledger-v9": "1.0.0-rc.5"
+    "@midnightntwrk/ledger-v9": "1.0.0-rc.5",
+    "@midnightntwrk/wallet-sdk-address-format": "4.0.0-beta.2"
   }
 }

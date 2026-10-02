@@ -1,0 +1,76 @@
+{
+ "network": {
+  "id": "stagenet",
+  "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+  "indexer": "https://indexer.stagenet.shielded.tools/api/v4/graphql",
+  "rpc": "https://rpc.stagenet.shielded.tools"
+ },
+ "contract": "18097aeb608f35d83a65b2cad987084c97c6e9d1dc02973f2a6f6cc2fcdd76e1",
+ "transaction": "62bd33fd5fe18ca2ddd78922f4685eabac97f4de2418492daf753568cee8b059",
+ "outcome": "not-found",
+ "exitCode": 3,
+ "events": [],
+ "checks": [
+  {
+   "id": "identity",
+   "ok": true,
+   "message": "node genesis 0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491 (stagenet)"
+  },
+  {
+   "id": "indexed",
+   "ok": true,
+   "message": "transaction 62bd33fd5fe18ca2ddd78922f4685eabac97f4de2418492daf753568cee8b059 in block 710806 (0106027fd3da4ea72869185ff3ee98bced160295b440b5d18e56a4fa17018354), SUCCESS"
+  },
+  {
+   "id": "raw-hash",
+   "ok": true,
+   "message": "recomputed hash 62bd33fd5fe18ca2ddd78922f4685eabac97f4de2418492daf753568cee8b059"
+  },
+  {
+   "id": "raw-identifiers",
+   "ok": true,
+   "message": "2 identifiers recomputed"
+  },
+  {
+   "id": "completeness",
+   "ok": true,
+   "message": "0 applied Misc log(s) of the contract in the raw transaction, 0 indexed"
+  },
+  {
+   "id": "node-block-hash",
+   "ok": true,
+   "message": "node block 710806 = 0x0106027fd3da4ea72869185ff3ee98bced160295b440b5d18e56a4fa17018354"
+  },
+  {
+   "id": "node-extrinsic",
+   "ok": true,
+   "message": "raw transaction bytes are extrinsic 3 of block 710806"
+  },
+  {
+   "id": "events",
+   "ok": false,
+   "message": "the transaction holds no Misc event bound to 18097aeb608f35d83a65b2cad987084c97c6e9d1dc02973f2a6f6cc2fcdd76e1"
+  }
+ ],
+ "notes": [],
+ "indexerTip": {
+  "height": 711397,
+  "hash": "e13c7ce18fa81d9be3fe08856b7915e07cf11b7bf2d77246e49cdf55a7a52e78"
+ },
+ "inclusion": {
+  "height": 710806,
+  "hash": "0106027fd3da4ea72869185ff3ee98bced160295b440b5d18e56a4fa17018354",
+  "status": "SUCCESS",
+  "segments": null,
+  "nodeBlockHash": "0x0106027fd3da4ea72869185ff3ee98bced160295b440b5d18e56a4fa17018354",
+  "finalizedHeight": 711397,
+  "finalized": true,
+  "extrinsicIndex": 3
+ },
+ "rawTransaction": {
+  "hashRecomputed": "62bd33fd5fe18ca2ddd78922f4685eabac97f4de2418492daf753568cee8b059",
+  "identifiersMatch": true,
+  "miscLogsOfContract": 0,
+  "appliedMiscLogsOfContract": 0
+ }
+}

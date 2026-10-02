@@ -10,7 +10,8 @@ Proves the pinned toolchain end to end before any module API is frozen (spec FR-
 | `src/local.ts` | `spike:local` — deploy, call, check the indexed event equals A1 byte-for-byte, remove the verifier key, check a second call fails (local stack). |
 | `src/stagenet.ts`, `scripts/stagenet.sh` | The same on Stagenet in the signer container (no second call). Writes `records/stagenet.json` (public data only). |
 | `src/fund.ts` | `docker/local-stack/fund.sh` — funds a local test wallet from the dev genesis wallet and registers it for DUST. |
-| `src/lib/` | Wallet (SDK 2.0.0-beta.2) ↔ midnight-js 5.0.0-rc.2 adapter, wallet-free chain reads, the `v4` `VerifierKeyRemove` helper (Q23). |
+| `src/lib/` | Thin shims onto `@mip0018/midnight` (S4 promoted the wallet ↔ midnight-js adapter, the chain reads and the `v4` `VerifierKeyRemove` helper into the package); `spike.ts` keeps the S0 gate's own flow. |
+| `mip0018.adapter.ts`, `spike-oz-token.adapter.ts` | `mip0018` CLI adapters: SpikeEmitter (`deploy-and-publish --example toolchain-spike`) and SpikeOzToken (OZ `Ownable` witness `wit_OwnableSK`, owner secret only in the signer's 0600 private state). |
 
 Findings that shaped the pins (questions Q21–Q23): two official proof servers are needed today (rc.8 reads ZKIR 3.1 circuits; only rc.6 makes DUST-spend proofs node 2.0.0-rc.4 accepts); the wallet SDK rc line cannot sync against indexer 4.4.0-rc.1; midnight-js maintenance updates use the `v3` key slot while ZKIR-v3 keys live in `v4`.
 

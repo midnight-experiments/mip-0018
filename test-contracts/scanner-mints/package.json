@@ -1,0 +1,11 @@
+{
+  "name": "@mip-0018/scanner-mints",
+  "private": true,
+  "version": "0.0.0",
+  "description": "TEST-ONLY: native mints (shielded + unshielded) and native-kind metadata for the mint scanner's local end-to-end test (S4)",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "compile": "bash scripts/compile.sh"
+  }
+}

@@ -45,7 +45,11 @@ mkdir -p "$repo/node_modules"
 script="$1"
 shift
 extra=""
-if [ "${1:-}" = "--" ]; then shift; extra="$*"; fi
+# Quote each argument so JSON and spaces survive the inner `bash -c` (bash 3.2: printf %q).
+if [ "${1:-}" = "--" ]; then
+  shift
+  if [ "$#" -gt 0 ]; then extra="$(printf '%q ' "$@")"; fi
+fi
 
 name="${MIP0018_DOCKER_PREFIX}-signer-$(mip0018_rand)"
 # shellcheck disable=SC2086
