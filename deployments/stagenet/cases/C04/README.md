@@ -40,13 +40,16 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/C04
 ```
 
-## Transactions (filled in by S5)
+## Transactions (Stagenet, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
-| `deploy` | _S5_ | _S5_ | _S5_ |
-| `mint-shielded` | _S5_ | _S5_ | _S5_ |
-| `mint-unshielded` | _S5_ | _S5_ | _S5_ |
-| `mint-ledger` | _S5_ | _S5_ | _S5_ |
-| `publish` | _S5_ | _S5_ | _S5_ |
+Contract `MyMultiKindToken` at `86acf80ff386abb610aadbea0406039e7fe39893f440794c3c2bad86dd48570f`; signer mn_addr_stagenet1vw57646su9y5z6myarm93m6kcn62j97z0yma94lfkhmta6pz5h5q6utr3k.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `deploy` | deploy | `98ba298ec6b1b3d242370568bf09be4f6a6391f14286b8aa71b472c8f11f4762` | 714637 (`66bf0c201f750c9b…`) | SUCCESS | 6,862,539,443,348,953 | 6.863 |
+| `mint-shielded` | call `mintShielded` | `395076e79043745ffc02877f90f225a05eaa7437f798996aa1632bf454175ed1` | 714643 (`6d84ad98077bd491…`) | SUCCESS | 211,121,297,175,009 | 0.211 |
+| `mint-unshielded` | call `mintUnshielded` | `7895124817e86946fae9da9865c3d35923e45e587852b8253c6310e37db2f0a7` | 714649 (`bcb975e566ad3719…`) | SUCCESS | 222,971,902,036,569 | 0.223 |
+| `mint-ledger` | call `mintLedger` | `8640f459bfc4d1419f6dd4ba63cbb07827889a7d4744ea8dd4ee542ae69bb3f2` | 714655 (`6bef36df839b6d94…`) | SUCCESS | 268,203,515,612,567 | 0.268 |
+| `publish` | call `publishMetadata` | `13315bf9ef66ed0b69cba300acb04c9aca5a99cdd361fa2e53cd1704e1a95a06` | 714663 (`867c741cca150164…`) | SUCCESS | 192,837,905,228,409 | 0.193 |
+| **total** | | | | | **7,757,674,063,401,507** | **7.758** |
 
