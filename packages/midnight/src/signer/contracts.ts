@@ -542,6 +542,30 @@ const sha256 = (b: Uint8Array) => createHash('sha256').update(b).digest('hex');
 const NODE_REJECTION = /Invalid Transaction|InvalidTransaction|\b1010\b|Custom error/u;
 
 /**
+ * An error's message with its causes: the wallet SDK reports a node rejection as an Effect `FiberFailure` wrapping
+ * `SubmissionError("Transaction submission error")`, whose `cause` (the node client's error) holds the node's reason.
+ */
+export function describeError(e: unknown, depth = 0, seen = new Set<unknown>()): string {
+  if (e === null || e === undefined || depth > 8 || seen.has(e)) return '';
+  if (typeof e !== 'object') return String(e);
+  seen.add(e);
+  const o = e as Record<string | symbol, unknown>;
+  const parts: string[] = [];
+  const head = [o._tag, o.name, o.message].filter((x) => typeof x === 'string' && x !== '').join(': ');
+  if (head) parts.push(head);
+  for (const k of ['cause', 'error', 'defect', 'left', 'right', 'failure', 'data', 'details', 'reason']) {
+    const v = o[k];
+    if (v === undefined || v === null) continue;
+    parts.push(typeof v === 'object' ? describeError(v, depth + 1, seen) : String(v));
+  }
+  for (const sym of Object.getOwnPropertySymbols(o)) {
+    const v = o[sym];
+    if (v && typeof v === 'object') parts.push(describeError(v, depth + 1, seen));
+  }
+  return [...new Set(parts.filter((x) => x !== ''))].join(' <- ');
+}
+
+/**
  * VerifierKeyInsert (MIP-0018 "Existing contracts", step 2): adds a circuit's verifier key to the deployed contract,
  * signed by its maintenance authority. ZKIR-v3 keys go in the v4 slot (Q23).
  *
@@ -564,6 +588,13 @@ export async function insertVerifierKeyStep(run: Run, input: InsertInput): Promi
     args: { slot, verifierKeySha256: want, key: input.signingKey ? 'from --maintenance-key-file' : 'deploy-time key (private-state file)' },
   });
   if (step.state === 'completed') return step;
+  // Refusals are recorded (state stays `pending`, nothing was submitted) before the error is raised.
+  const refuse = (msg: string): never => {
+    step.error = msg;
+    note(step, `refused before submission: ${msg.slice(0, 300)}`);
+    run.save();
+    throw new StepError(msg, 'refused');
+  };
   const keyView = async () => {
     const st = await currentContractState(run.o.ep.profile, address);
     const k = onChainVerifierKey(st, circuit);
@@ -607,24 +638,22 @@ export async function insertVerifierKeyStep(run: Run, input: InsertInput): Promi
   if (step.tx && (await reconcile(run, step)) === 'included') return after();
   // before
   const v = await keyView().catch(() => undefined);
-  if (!v) throw new StepError(`contract ${address} is not on chain`, 'refused');
+  if (!v) return refuse(`contract ${address} is not on chain`);
   if (v.keySha256 === want && !input.force) {
     step.skipped = `${circuit} already has exactly this verifier key (before-check)`;
     note(step, step.skipped);
     return after();
   }
   if (v.keySha256 !== undefined && !input.force)
-    throw new StepError(
+    return refuse(
       `${circuit} already has another verifier key on ${address}; VerifierKeyInsert never overwrites (the ledger refuses with VerifierKeyAlreadyPresent) — nothing submitted`,
-      'refused',
     );
   const key = input.signingKey ?? ((await run.psp.getSigningKey(address)) as SigningKey | null) ?? undefined;
-  if (!key)
-    throw new StepError(`no maintenance signing key for ${address} in ${run.o.privateStatePath} (give --maintenance-key-file)`, 'refused');
+  if (!key) return refuse(`no maintenance signing key for ${address} in ${run.o.privateStatePath} (give --maintenance-key-file)`);
   const auth = checkAuthority(v.state.maintenanceAuthority, key);
   step.observed = { before: { keySha256: v.keySha256 ?? null, authority: { ...auth, reason: undefined } } };
   if (!auth.ok) {
-    if (!input.force) throw new StepError(`${auth.reason} — nothing submitted`, 'refused');
+    if (!input.force) return refuse(`${auth.reason} — nothing submitted`);
     note(step, `--force: submitting although ${auth.reason}`);
   }
   if (v.keySha256 !== undefined) note(step, `--force: submitting although ${circuit} already has a verifier key`);
@@ -643,7 +672,7 @@ export async function insertVerifierKeyStep(run: Run, input: InsertInput): Promi
     )) as unknown as { status: string; blockHeight: number };
     note(step, `midnight-js submitTx: ${r.status} at block ${r.blockHeight}`);
   } catch (e) {
-    const msg = `${(e as Error)?.name ?? 'Error'}: ${String((e as Error)?.message ?? e)}`.slice(0, 1500);
+    const msg = describeError(e).slice(0, 1500);
     if (step.tx && step.state === 'submitting' && NODE_REJECTION.test(msg)) {
       // The node refused the transaction at submission: it was never accepted into the pool, so it cannot be
       // included later (only this signer ever held it).

@@ -61,7 +61,8 @@ trap cleanup EXIT
 
 # --------------------------------------------------------------------------------------------------------- compile
 say "compiling LegacyToken and LegacyTokenMetadata with keys"
-rc=0; MIP0018_DOCKER_NETWORK=none "$repo/docker/run.sh" exec "npm run -s compile -w $EX && npm run -s check-layout -w $EX" >"$LOGS/compile.out" 2>"$LOGS/compile.err" || rc=$?
+# (network: key generation downloads the public ZK parameters once into the zk-params volume)
+rc=0; "$repo/docker/run.sh" exec "npm run -s compile -w $EX && npm run -s check-layout -w $EX" >"$LOGS/compile.out" 2>"$LOGS/compile.err" || rc=$?
 expect_rc "compile both contracts with keys; layout check OK" 0 "$rc"
 
 # ----------------------------------------------------------------------------------------------------------- stack
