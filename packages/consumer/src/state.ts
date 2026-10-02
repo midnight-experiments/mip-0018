@@ -3,8 +3,11 @@
 // - Events are applied in chain order per network: (block, tx, event) must strictly increase; records within an
 //   event apply in order. An out-of-order event throws `ChainOrderError` (the caller's bug, not the chain's).
 // - Every accepted event is retained per network, so a reorganization (`rollbackTo`) recomputes the state from the
-//   remaining canonical events — the only way to restore values a tombstone cleared.
+//   remaining canonical events — the only way to restore values a tombstone deleted.
 // - Token identity = (network, contractAddress from the event record, domainSep, kind).
+// - A Null record (tombstone) deletes its own field. A token identity exists only while at least one of its fields
+//   has a value: once its last field is deleted it is not referenced at all (listings, lookups, groups, history), as
+//   if it had never been described, and Null records alone never create one (MIP "Applying records").
 // - The color of kinds 1 and 2 comes from an injected `tokenType(domainSep, contractAddress)` (ledger-specific; this
 //   package stays dependency-free); kind 3 never gets a color and the hook is never called for it.
 import { toHex, ValType, type DecodedRecord, type Header, type IgnoreReason, type RejectReason } from '@mip0018/codec';
@@ -80,11 +83,11 @@ export interface IdentityView {
   contractAddress: string;
   domainSep: string;
   kind: number;
-  visible: boolean;
   /** Whether a color is derived for this identity (kinds 1 and 2). */
   colored: boolean;
   /** The color, when `colored` and a `tokenType` hook was given. */
   color: Uint8Array | null;
+  /** Every field with a current value; never empty (an identity without fields is not referenced). */
   fields: FieldView[];
   /** Usable values of the common fields only (no defaults, no fallbacks). */
   common: CommonFields;
@@ -115,7 +118,10 @@ export class ChainOrderError extends Error {
 
 export interface MetadataStateOptions {
   tokenType?: TokenTypeFn;
-  /** Keep replaced values as marked history (MAY). A tombstone drops it. Default false. */
+  /**
+   * Keep replaced values as marked history (MAY). A Null record drops its own field's history; when the identity's
+   * last field is deleted, the identity goes with all its history. Default false.
+   */
   keepHistory?: boolean;
   /** Testing only: disable reducer rules (rule-mutation test). */
   rules?: Partial<ConsumerRules>;
@@ -129,7 +135,6 @@ interface Identity {
   contractAddress: Uint8Array;
   domainSep: Uint8Array;
   kind: number;
-  visible: boolean;
   fields: Map<string, FieldValue>;
   history: Map<string, HistoryEntry[]>;
 }
@@ -235,12 +240,15 @@ export class MetadataState {
     for (const e of this.retained.get(network) ?? []) this.applyAccepted(network, e);
   }
 
-  /** Every identity that has had at least one accepted event (hidden ones included), in first-seen order. */
+  /**
+   * Every token identity that currently has at least one field, in the order they were (last) described. An identity
+   * whose last field was deleted is not listed, exactly as one that was never described.
+   */
   identities(): IdentityView[] {
     return [...this.identitiesByKey.values()].map((id) => this.view(id));
   }
 
-  /** One identity, or `undefined` if it never had an accepted event. */
+  /** One identity, or `undefined` if it has no field (never described, or every field deleted). */
   identity(network: string, contractAddress: Uint8Array | string, domainSep: Uint8Array | string, kind: number): IdentityView | undefined {
     const c = typeof contractAddress === 'string' ? contractAddress.toLowerCase() : toHex(contractAddress);
     const d = typeof domainSep === 'string' ? domainSep.toLowerCase() : toHex(domainSep);
@@ -248,20 +256,20 @@ export class MetadataState {
     return id === undefined ? undefined : this.view(id);
   }
 
-  /** Marked history of one field (only with `keepHistory`); emptied by a tombstone. */
+  /** Marked history of one field (only with `keepHistory`); emptied by a Null record at that key. */
   history(identityKey: string, keyHex: string): HistoryEntry[] {
     return [...(this.identitiesByKey.get(identityKey)?.history.get(keyHex.toLowerCase()) ?? [])];
   }
 
   /**
-   * Symbol groups: visible identities of one (network, contractAddress) with the same usable `symbol`, compared as
-   * exact bytes. Every visible identity with a usable symbol is in exactly one group (single-member groups included —
-   * a choice of this reference; the vector runner compares only groups of two or more members, MIP Testing S9).
+   * Symbol groups: identities of one (network, contractAddress) with the same usable `symbol`, compared as exact
+   * bytes. Every identity with a usable symbol is in exactly one group (single-member groups included — a choice of
+   * this reference; the vector runner compares only groups of two or more members, MIP Testing S9). An identity whose
+   * `symbol` was deleted has no symbol and is ungrouped; a removed identity is in no group.
    */
   groups(): SymbolGroup[] {
     const groups = new Map<string, SymbolGroup>();
     for (const id of this.identitiesByKey.values()) {
-      if (!id.visible) continue;
       const sym = id.fields.get(KEY_SYMBOL);
       if (sym === undefined) continue;
       const usable = this.rules.groupUsableOnly
@@ -286,7 +294,7 @@ export class MetadataState {
   /** Displays a raw amount of an identity with its current usable `decimals` (no default when there is none). */
   display(identity: IdentityView | undefined, raw: bigint): DisplayResult {
     const f = identity?.fields.find((x) => x.keyHex === KEY_DECIMALS);
-    if (identity === undefined || !identity.visible || f === undefined || f.usable !== true || f.integer === undefined)
+    if (identity === undefined || f === undefined || f.usable !== true || f.integer === undefined)
       return { decimals: null, text: null };
     if (!this.rules.displayDecimals) return { decimals: f.integer, text: raw.toString() }; // mutation only
     return { decimals: f.integer, text: formatAmount(raw, f.integer) };
@@ -305,20 +313,21 @@ export class MetadataState {
 
   private applyAccepted(network: string, e: Retained): string {
     const key = this.identityKey(network, toHex(e.contractAddress), toHex(e.header.domainSep), e.header.kind);
-    let id = this.identitiesByKey.get(key);
-    if (id === undefined) {
-      id = {
+    const create = (): Identity => {
+      const id: Identity = {
         key,
         network,
         contractAddress: e.contractAddress,
         domainSep: e.header.domainSep,
         kind: e.header.kind,
-        visible: false,
         fields: new Map(),
         history: new Map(),
       };
       this.identitiesByKey.set(key, id);
-    }
+      return id;
+    };
+    // Mutation only (keepEmptyIdentity): any accepted event creates the identity, and it stays without fields.
+    if (!this.rules.removeEmptyIdentity && !this.identitiesByKey.has(key)) create();
     const indexed = e.records.map((r, i) => ({ r, i }));
     if (!this.rules.recordOrder) indexed.reverse(); // mutation only
     for (const { r, i } of indexed) {
@@ -327,36 +336,35 @@ export class MetadataState {
       const keyHex = toHex(storedKey);
       const tombstone = r.valType === ValType.Null || (!this.rules.emptyIsValue && looksEmpty(r));
       if (tombstone) {
-        if (!this.rules.tombstoneHides) continue; // mutation only
-        if (!this.rules.tombstoneIdentityWide) {
-          id.fields.delete(keyHex); // mutation only: per-key delete
-          if (id.fields.size === 0) id.visible = false;
-          continue;
-        }
-        // Withdraw the whole identity: hide it, clear every field, drop its history. Repeating this changes nothing.
-        id.visible = false;
-        if (this.rules.tombstoneClears) {
+        if (!this.rules.tombstoneDeletes) continue; // mutation only: Null records ignored
+        // A Null record for a field that has no value has no effect — and never creates an identity.
+        const id = this.identitiesByKey.get(key);
+        if (id === undefined) continue;
+        if (this.rules.tombstonePerKey) {
+          // Delete this field: its value and its earlier values (history). Nothing falls back.
+          id.fields.delete(keyHex);
+          id.history.delete(keyHex);
+        } else {
+          // Mutation only (tombstoneIdentityWide, the rule of MIP 78ecbb4): delete every field of the identity.
           id.fields.clear();
           id.history.clear();
         }
+        // The last field is gone: the identity is no longer referenced anywhere, as if it had never been described.
+        if (id.fields.size === 0 && this.rules.removeEmptyIdentity) this.identitiesByKey.delete(key);
         continue;
       }
+      // A non-Null record describes the identity (again, with only this field if every field had been deleted).
+      const id = this.identitiesByKey.get(key) ?? create();
       const previous = id.fields.get(keyHex);
       const next: FieldValue = { key: storedKey.slice(), valType: r.valType, value: r.value, setAt: at };
       if (r.integer !== undefined) next.integer = r.integer;
       if (previous !== undefined) {
-        if (!this.rules.latestWins) {
-          id.visible = true; // mutation only: first value wins
-          continue;
-        }
+        if (!this.rules.latestWins) continue; // mutation only: first value wins
         if (!this.rules.noFallback && COMMON_KEYS.has(keyHex)) {
           // mutation only: keep an earlier usable value when the new one is unusable
           const prevOk = commonFieldUsable(keyHex, previous.valType, previous.value, this.rules) === true;
           const nextOk = commonFieldUsable(keyHex, next.valType, next.value, this.rules) === true;
-          if (prevOk && !nextOk) {
-            id.visible = true;
-            continue;
-          }
+          if (prevOk && !nextOk) continue;
         }
         if (this.keepHistory) {
           const h = id.history.get(keyHex) ?? [];
@@ -365,7 +373,6 @@ export class MetadataState {
         }
       }
       id.fields.set(keyHex, next);
-      id.visible = true; // the next non-Null record makes a withdrawn identity visible again with only that field
     }
     return key;
   }
@@ -396,7 +403,6 @@ export class MetadataState {
       contractAddress: toHex(id.contractAddress),
       domainSep: toHex(id.domainSep),
       kind: id.kind,
-      visible: id.visible,
       colored,
       color,
       fields,

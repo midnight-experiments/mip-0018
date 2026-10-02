@@ -52,6 +52,7 @@ function decodeResponse(id: unknown, req: Json, codecRules: CodecRules): Json {
   };
 }
 
+/** One identity of the state response. Only identities with at least one field exist (MIP "Applying records"). */
 function identityJson(v: IdentityView): Json {
   const fields: Json = {};
   for (const f of v.fields) {
@@ -64,7 +65,6 @@ function identityJson(v: IdentityView): Json {
     contractAddress: v.contractAddress,
     domainSep: v.domainSep,
     kind: v.kind,
-    visible: v.visible,
     colored: v.colored,
     fields,
   };

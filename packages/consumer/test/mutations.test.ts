@@ -53,6 +53,16 @@ describe('rule mutations', () => {
     });
   }
 
+  // The two tombstone mutations named by the per-key re-pin (MIP 274a84f, "Applying records"), with the vectors that
+  // must catch them.
+  // S1a cannot catch the identity-wide rule: its event touches one key only (name = "A", Null at name, name = "B").
+  it('mutation tombstoneIdentityWide (the rule of MIP 78ecbb4: a Null record at any key deletes every field) fails S3a, S3b, S4a, S9d', async () => {
+    expect(await failing({ rules: { tombstonePerKey: false } })).toEqual(['S3a', 'S3b', 'S4a', 'S9d']);
+  });
+  it('mutation keepEmptyIdentity (an identity whose last field was deleted is still reported, without fields) fails S3c, S4b', async () => {
+    expect(await failing({ rules: { removeEmptyIdentity: false } })).toEqual(['S3c', 'S4b']);
+  });
+
   afterAll(() => {
     console.log(`rule mutations (${summary.length}):\n${summary.join('\n')}`);
   });
