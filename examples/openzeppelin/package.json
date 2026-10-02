@@ -1,0 +1,26 @@
+{
+  "name": "@mip0018/examples-openzeppelin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MIP-0018 metadata added to OpenZeppelin Compact Contracts 0.4.0-alpha.5 tokens: fungible (kind 3), native shielded (kind 1), native unshielded (kind 2), one asset in three kinds, token family.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "compile": "node scripts/compile.ts",
+    "check:readmes": "node scripts/check-readmes.ts",
+    "costs": "node scripts/costs.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "0.20.0",
+    "@mip0018/compact": "0.1.0",
+    "@openzeppelin/compact-contracts": "0.4.0-alpha.5"
+  },
+  "devDependencies": {
+    "@mip0018/codec": "0.1.0",
+    "@mip0018/consumer": "0.1.0",
+    "@types/node": "24.19.1",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  }
+}
