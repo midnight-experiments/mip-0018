@@ -1,0 +1,11 @@
+pragma language_version >= 0.26.0;
+import CompactStandardLibrary;
+struct Rec<#K, #V> { keyLen: Uint<8>; key: Bytes<K>; valType: Uint<8>; valLen: Uint<8>; value: Bytes<V>; }
+pure circuit utf8Record<#K, #V>(key: Bytes<K>, value: Bytes<V>): Rec<K, V> {
+  return Rec<K, V> { keyLen: K, key: key, valType: 1, valLen: V, value: value };
+}
+pure circuit pRecord<#K, #V, #R>(key: Bytes<K>, value: Bytes<V>): Bytes<R> {
+  return Bytes[K, ...key, 1, V, ...value];
+}
+pure circuit e(): [] { emit(Misc { name: pad(32, "x"), payload: pad(256, "") }); }
+export circuit f(): [] { e(); }

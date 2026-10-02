@@ -1,0 +1,62 @@
+// S2a spike (throw-away): typed constructor. Records are generic structs
+// parameterised by key/value sizes; the payload is serialize<..., 256>.
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+module T {
+  import CompactStandardLibrary;
+
+  export struct Rec<#K, #V> {
+    keyLen: Uint<8>;
+    key: Bytes<K>;
+    valType: Uint<8>;
+    valLen: Uint<8>;
+    value: Bytes<V>;
+  }
+
+  export struct Header {
+    domainSep: Bytes<32>;
+    kind: Uint<8>;
+  }
+
+  export pure circuit header(domainSep: Bytes<32>, kind: Uint<8>): Header {
+    return Header { domainSep: domainSep, kind: kind };
+  }
+
+  export pure circuit utf8Record<#K, #V>(key: Bytes<K>, value: Bytes<V>): Rec<K, V> {
+    return Rec<K, V> { keyLen: K, key: key, valType: 1, valLen: V, value: value };
+  }
+
+  export pure circuit uintRecord<#K>(key: Bytes<K>, value: Uint<8>): Rec<K, 1> {
+    return Rec<K, 1> { keyLen: K, key: key, valType: 2, valLen: 1, value: value as Bytes<1> };
+  }
+
+  export pure circuit payload4<#K1, #V1, #K2, #V2, #K3, #V3, #K4, #V4>(
+    h: Header, r1: Rec<K1, V1>, r2: Rec<K2, V2>, r3: Rec<K3, V3>, r4: Rec<K4, V4>
+  ): Bytes<256> {
+    return serialize<[Header, Rec<K1, V1>, Rec<K2, V2>, Rec<K3, V3>, Rec<K4, V4>], 256>([h, r1, r2, r3, r4]);
+  }
+}
+
+import T;
+
+export circuit a1Literal(): [] {
+  const p = payload4<4, 10, 6, 4, 8, 1, 9, 8>(
+    header(pad(32, "\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11"), 3),
+    utf8Record<4, 10>("name", "Acme Token"),
+    utf8Record<6, 4>("symbol", "ACME"),
+    uintRecord<8>("decimals", 6),
+    utf8Record<9, 8>("standards", "mip-0004"));
+  emit(Misc { name: pad(32, "mip-0018:token-metadata[v1]"), payload: p });
+}
+
+export circuit a1Args(domainSep: Bytes<32>, name: Bytes<10>, symbol: Bytes<4>, decimals: Uint<8>, standards: Bytes<8>): [] {
+  const p = payload4<4, 10, 6, 4, 8, 1, 9, 8>(
+    header(domainSep, 3),
+    utf8Record<4, 10>("name", name),
+    utf8Record<6, 4>("symbol", symbol),
+    uintRecord<8>("decimals", decimals),
+    utf8Record<9, 8>("standards", standards));
+  emit(Misc { name: pad(32, "mip-0018:token-metadata[v1]"), payload: disclose(p) });
+}
