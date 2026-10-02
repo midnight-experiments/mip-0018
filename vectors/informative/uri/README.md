@@ -1,14 +1,16 @@
 # Informative URI vectors (`valType` 4)
 
-**Not normative.** The MIP says a type-4 value is "a UTF-8 absolute URI (RFC 3986)". That sentence admits several
-readings (RFC 3986 `absolute-URI` has no fragment, `URI` has one; RFC 3986 is ASCII-only while the MIP says UTF-8),
-and a value that breaks its type's rule rejects the whole event, so two consumers that read it differently disagree
-on every record of that event.
+**Not normative** (the MIP's Testing list has only R5's relative URI). Up to `b147c62` the MIP said a type-4 value is
+"a UTF-8 absolute URI (RFC 3986)". That sentence admitted several readings (RFC 3986 `absolute-URI` has no fragment,
+`URI` has one; RFC 3986 is ASCII-only while the MIP said UTF-8), and a value that breaks its type's rule rejects the
+whole event, so two consumers that read it differently disagree on every record of that event.
 
-This repository follows the owner's ruling (Q20): **the RFC 3986 `URI` rule, as ERC-721 `tokenURI` uses it** — a scheme
-is required, a fragment is allowed, every character is ASCII (non-ASCII characters percent-encoded, host names in
-their ASCII form). Relative references are rejected, as normative vector R5e already requires. The proposed MIP
-wording is note **N1** in `MIP-PROPOSAL-NOTES.md`.
+This repository followed the owner's ruling (Q20): **the RFC 3986 `URI` rule, as ERC-721 `tokenURI` uses it** — a
+scheme is required, a fragment is allowed, every character is ASCII (non-ASCII characters percent-encoded, host names
+in their ASCII form). Relative references are rejected, as normative vector R5e requires. Since `78ecbb4` this is the
+MIP's own text (from note **N1** in `MIP-PROPOSAL-NOTES.md`): "A URI as defined in RFC 3986: a scheme is required, a
+fragment is allowed, and relative references are not. All characters are ASCII; characters outside ASCII MUST be
+percent-encoded, and host names converted to their ASCII form, before emitting." The 26 verdicts below are unchanged.
 
 | File | Content |
 |---|---|

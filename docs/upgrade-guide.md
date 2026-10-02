@@ -1,7 +1,9 @@
 # Upgrade guide — add MIP-0018 metadata to an already-deployed contract
 
 MIP-0018, "Backwards Compatibility Assessment — Existing contracts": a contract deployed without an
-emitting circuit does not need redeployment; its **maintenance authority** can add one.
+emitting circuit does not need redeployment; its **maintenance authority** can add one. "Note: a valid
+maintenance authority is required." (MIP text since `78ecbb4`, from this repository's note N16; what "valid"
+means in practice is check 1 below.)
 
 1. Compile a `publishMetadata()` circuit against the contract's existing ledger layout. It reads the
    existing `domain` from state and emits it as `domainSep`.
@@ -45,7 +47,7 @@ docker/run.sh exec 'node examples/upgrade-existing-contract/scripts/inspect.ts -
 It prints the entry points (with the SHA-256 of each verifier key), the maintenance authority
 (committee size, threshold, counter) and the SHA-256 of the ledger data.
 
-1. **A usable maintenance authority.** The committee must not be empty and its threshold must be
+1. **A usable maintenance authority** (the MIP's "valid maintenance authority"). The committee must not be empty and its threshold must be
    reachable (≤ committee size, and you must hold that many keys; `mip0018 upgrade` signs with one key,
    so threshold 1). A contract with an **empty committee — the ledger's default, a "frozen" authority —
    can never take a maintenance update**: it cannot adopt MIP-0018 without redeployment (and a

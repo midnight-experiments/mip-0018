@@ -27,10 +27,16 @@ marks `@beta`:
   truncate the list.
 - The indexer ingests **finalized blocks only**, so what it returns is final. If you follow a node yourself, follow
   finalized blocks, or roll back and recompute on a reorganization (step 4).
-- `name` is 32 bytes and `payload` 256 bytes, as lowercase hex. If you read raw ledger log data instead (from a node
-  or a raw transaction), its trailing zero bytes are trimmed: zero-extend `name ‖ payload` to 288 bytes before splitting
-  (`splitMiscData`; note N2 in [`MIP-PROPOSAL-NOTES.md`](../MIP-PROPOSAL-NOTES.md)), and order the events of one
-  transaction as the ledger executes them (note N11).
+- `name` is 32 bytes and `payload` 256 bytes, as lowercase hex. **Some sources drop trailing zero bytes** — raw
+  ledger log data from a node or a raw transaction always does — and the MIP says (Consuming): "consumers MUST treat
+  missing trailing bytes as zero, so that every `name` is 32 bytes and every `payload` 256 bytes, before decoding".
+  Zero-extend a short `name` or `payload` (`classifyEvent` and `decodePayload` do it; `zeroExtend` on its own); for
+  raw ledger data, which is `name ‖ payload` trimmed as one item, zero-extend it to 288 bytes before splitting
+  (`splitMiscData`). A payload longer than 256 bytes is rejected; a name longer than 32 bytes is another name. The
+  A1 event of Stagenet case [C10](../deployments/stagenet/cases/C10/README.md) is 127 bytes in the ledger's raw data
+  (32 name + 95 content bytes). Informative vectors: `vectors/informative/zero-extension/`.
+- Order the events of one transaction as the ledger executes them — the MIP's own rule since `78ecbb4` ("Applying
+  records", step 4).
 - Completeness (MIP "Consuming"): a verified event does not prove that no later update or tombstone exists. Read every
   event of the contract, not a filtered subset.
 
@@ -117,7 +123,7 @@ docker/run.sh mip0018 -- list --network stagenet --contract 86acf80ff386abb610aa
 
 ## 2. Classify: is it a MIP-0018 v1 event?
 
-Consider an event only if its type is `Misc` and its name is exactly the 32 bytes
+Consider an event only if its type is `Misc` and its name (zero-extended to 32 bytes, step 1) is exactly the 32 bytes
 `pad(32, "mip-0018:token-metadata[v1]")` = `6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000`.
 **Ignore** everything else — other event types, other names, and other versions such as
 `mip-0018:token-metadata[v2]` (never decode a future version with v1 rules). Ignoring is not rejecting: an ignored
@@ -153,7 +159,7 @@ Stagenet [C08](../deployments/stagenet/cases/C08/README.md)).
 | 1 UTF-8 string | strict UTF-8 (no overlongs, surrogates or code points above U+10FFFF); may be empty |
 | 2 unsigned integer | 1–31 bytes, little-endian; decode every width to a big integer (`06` and `06` + 15 zero bytes are both 6) |
 | 3 JSON | strict UTF-8, then your platform's JSON parser must accept the text as exactly one value (owner ruling F2) |
-| 4 URI | strict UTF-8, then the RFC 3986 `URI` rule as ERC-721 `tokenURI` uses it (owner ruling Q20, note N1): scheme required, fragment allowed, ASCII only — `https://acme.example/logo.png#v2` and `ipfs://…` accept; `https://ä.example/`, `https://acme.example/a b.png` and `/relative/path` reject ([26 informative cases](../vectors/informative/uri/README.md)) |
+| 4 URI | strict UTF-8, then the RFC 3986 `URI` rule — the MIP's own text since `78ecbb4` ("a scheme is required, a fragment is allowed, and relative references are not. All characters are ASCII"; from note N1, owner ruling Q20 following ERC-721): `https://acme.example/logo.png#v2` and `ipfs://…` accept; `https://ä.example/`, `https://acme.example/a b.png` and `/relative/path` reject ([26 informative cases](../vectors/informative/uri/README.md)) |
 | 5 Null | `valLen` 0 (a tombstone) |
 | 6–255 | reserved: reject the event |
 
@@ -168,7 +174,12 @@ read the event, `contractAddress` comes from the **event record — never from t
 only its own tokens), `domainSep` and `kind` come from the header. Kinds 1, 2 and 3 of one asset are three identities.
 
 Apply accepted events in chain order — block, transaction within the block, event within the transaction, record
-within the event:
+within the event. Within a transaction, the MIP fixes the event order (since `78ecbb4`): "the guaranteed part of every
+intent (in ascending segment id), then each successful fallible segment (in ascending segment id); within a part,
+actions and their operations in order". The indexer's event ids follow it; if you decode raw transactions yourself,
+`decodeTransaction` + `applied` in `@mip0018/midnight` produce exactly that order (test
+[`event-order.test.ts`](../packages/midnight/test/event-order.test.ts)), and `mip0018 verify` checks per transaction
+that the indexer's order equals the ledger's.
 
 - **A record sets its field's current value**, replacing any earlier one. An event changes only the keys it carries; it
   is not a snapshot. A replaced value is never shown as current and never used as a fallback; you MAY keep it as
@@ -215,16 +226,23 @@ exact bytes (`ACME` ≠ `acme` ≠ ` ACME`). Groups are presentation only: each 
 symbol change or tombstone of one member changes no other. `state.groups()` returns them. Never group across contracts
 or networks.
 
+Grouping is a SHOULD. The MIP's Testing text (S9, since `78ecbb4`) says "two outcomes are valid: no groups at all, or
+exactly the following groups", so a consumer that does not group passes S9, and the vector runner compares only groups
+of two or more members. Whether an identity alone with its symbol is a "group of one" is not settled by the MIP (note
+N20); the reference consumer reports such groups, the runner ignores them.
+
 ### Amounts
 
 `formatAmount(raw, decimals)` divides exactly with big integers: with `decimals = 2`, `123456` shows as `1234.56`
-(vector `S8`). There is no cap on `decimals` (owner ruling F3): large values render exactly, without floating point.
+(vector `S8`, which applies to "a consumer that displays amounts"; an indexer that only serves raw fields omits
+`display` and the runner reports S8 as not applicable). There is no cap on `decimals` (owner ruling F3): large values render exactly, without floating point.
 
 ### Colors
 
 Kinds 1 (shielded coins) and 2 (unshielded UTXOs) have a color, `tokenType(domainSep, contractAddress)`; kind 3
-(ledger tokens) has none. Kinds 1 and 2 under the same `domainSep` share one color (note N3), so the color tells you the
-contract and `domainSep`, and what the user holds — a coin or a UTXO — tells you the kind.
+(ledger tokens) has none. "A shielded and an unshielded mint with the same `domainSep` have the same color; the kind
+is given by what the user holds (a shielded coin → kind 1, an unshielded UTXO → kind 2), not by the color" (MIP Lookup,
+since `78ecbb4`; note N3).
 
 ## 6. Untrusted input
 
@@ -267,7 +285,8 @@ A wallet holding a shielded coin or an unshielded UTXO knows only its color. To 
    ledger-v9 `rawTokenType`; `tokenType` in `@mip0018/midnight`). No payload field holds a color.
 2. **Build a table from mints**: for every successful contract call, the `shieldedMints` / `unshieldedMints` effects
    (`domainSep → amount`) of the parts of the transaction that were applied give `color → (contractAddress,
-   domainSep)`. Mint events a contract emits and UTXO token types are not sources for this table (note N10).
+   domainSep)`. "A mint is a `shieldedMints` or `unshieldedMints` effect of a contract call" (MIP Lookup, since
+   `78ecbb4`; note N10): mint events a contract emits and UTXO token types are not sources for this table.
 3. **Resolve** a held color through the table to `(contractAddress, domainSep)`, take kind 1 for a coin or 2 for a UTXO,
    and read that identity's events (steps 1–5).
 
@@ -303,7 +322,7 @@ that coins of its color exist (C05's bronze type).
 ## 9. Test your consumer with the vectors
 
 The [vectors](../vectors/README.md) are language-neutral JSON and binary fixtures for every normative MIP test (67)
-plus informative extras (34). To run them against your consumer, write a small adapter program in any language that
+plus informative extras (43). To run them against your consumer, write a small adapter program in any language that
 follows the [runner contract](../vectors/README.md#runner-contract): it reads one JSON request per line on stdin
 (`decode` one event, or `state` for a sequence of events in chain order) and writes one JSON response per line.
 [`packages/consumer/bin/vector-adapter.js`](../packages/consumer/bin/vector-adapter.js) (about 100 lines) is the
@@ -316,7 +335,10 @@ docker/run.sh exec 'node vectors/tools/run.ts --consumer "node packages/consumer
 
 The runner needs only Node ≥ 24, so it also runs outside Docker against your own adapter:
 `node vectors/tools/run.ts --consumer "./my-wallet-adapter" --normative-only --notes --json report.json`. Exit 0 means
-every normative vector passed; `reason` and `offset` differences are informative notes, never failures. Passing every
+every normative vector passed; `reason` and `offset` differences are informative notes, never failures. Report the
+four common keys of every identity; other keys may be left out ("Indexers MAY index only some tokens or keys"); omit
+`groups` if you do not group symbols and `display` if you do not display amounts — the runner then reports S9/S8 as
+not applicable instead of failing them. Passing every
 vector is the MIP's acceptance criterion for a consumer (the MIP asks for two independent ones; this repository
 provides the reference and the runner — a second consumer is left open, question Q7).
 

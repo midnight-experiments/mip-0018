@@ -8,8 +8,9 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 | MIP text these notes refer to | [`midnightntwrk/midnight-improvement-proposals@b147c627e1bb15b5d15cc73cf30c2a36afd34dbb` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/b147c627e1bb15b5d15cc73cf30c2a36afd34dbb/mips/mip-0018-on-chain-token-metadata.md) (SHA-256 `9ffba7e6a3123cd6683e5a779ac3b73c8a31a9724367cd98ee120be78720d842`) |
 | Current pin of this repository | [`midnightntwrk/midnight-improvement-proposals@78ecbb4b1ba57371e84fe45f705991ab7b996a61`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/78ecbb4b1ba57371e84fe45f705991ab7b996a61/mips/mip-0018-on-chain-token-metadata.md) (SHA-256 `b9092746ecf5660496535688a2dea152eb23d932b6eeb6b5a182c23426eec1a1`), the head of [PR #340](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340) on 2026-10-02: the owner's update that carries the approved notes ([what changed](#what-changed-in-78ecbb4)). The notes below keep their original wording and section references, which are those of `b147c62` |
 | How to add a note | One section per note: MIP section, problem, evidence, proposed change, what this repository does meanwhile, status. Append; never delete — change the status instead. |
-| Statuses | `NEEDS-DECISION` (options below, the authors choose) · `PROPOSED` (concrete text suggested) · `OWNER-APPROVED` (the project owner approved the text to take upstream) · `ACCEPTED-UPSTREAM` (merged into the MIP; link the commit) · `WITHDRAWN` (with the reason) |
+| Statuses | `NEEDS-DECISION` (options below, the authors choose) · `PROPOSED` (concrete text suggested) · `OWNER-APPROVED` (the project owner approved the text to take upstream) · `IN-UPSTREAM-PR` (the text is in the open MIP PR #340 at the pinned commit, not merged yet) · `ACCEPTED-UPSTREAM` (merged into the MIP; link the commit) · `WITHDRAWN` (with the reason) |
 | Owner review | 2026-10-02 — approved: N1, N2, N3, N4, N5 (informative), N7, N8 (shortened), N10 (shortened), N11, N12 (reworded), N13, N16 (shortened); withdrawn as out of scope or skipped: N6, N9, N14, N15, N17, N18, N19 |
+| In PR #340 @ `78ecbb4` | 2026-10-02 — N1, N2, N3, N4, N7, N8, N10, N11, N12, N13, N16 are `IN-UPSTREAM-PR`; N5 (approved, informative) is not included; N20 is new (`PROPOSED`, found while re-pinning) |
 
 ## What changed in `78ecbb4`
 
@@ -31,7 +32,7 @@ The owner updated PR #340 with the approved notes on 2026-10-02 (head `78ecbb4b1
 | N16 a valid maintenance authority | Included (owner's short note) | Backwards Compatibility — Existing contracts |
 | — | Editorial: `Requires: "MIP-0002: Public Contract Log Emission for Compact"` (colon added) | Header |
 
-Effect on this repository (sub-plan S9): the pin moved to `78ecbb4`; the codec and the vector adapter zero-extend a short `name` (to 32 bytes) and `payload` (to 256 bytes) and keep rejecting a longer payload; the vector comparator accepts a consumer that reports no symbol groups or omits `display` (S8 not applicable), as the new Testing text says; the conformance matrix follows the new MUST/SHOULD sentences. No vector expectation and no Stagenet expectation changed.
+Effect on this repository (sub-plan S9): the pin moved to `78ecbb4`; the codec and the vector adapter zero-extend a short `name` (to 32 bytes) and `payload` (to 256 bytes) and keep rejecting a longer payload; the vector comparator accepts a consumer that reports no symbol groups or omits `display` (S8 not applicable), as the new Testing text says; the conformance matrix follows the new MUST/SHOULD sentences. No vector expectation and no Stagenet expectation changed. One new note came out of the re-pin: [N20](#n20--symbol-grouping--s9-say-whether-an-identity-that-shares-its-symbol-with-no-other-identity-forms-a-group) (does a symbol alone form a group of one?).
 
 ---
 
@@ -45,7 +46,7 @@ Effect on this repository (sub-plan S9): the pin moved to `78ecbb4`; the codec a
 - **Alternatives considered**: RFC 3987 IRI (matches "UTF-8" but few validators); keep `absolute-URI` (rejects fragments every library accepts); "parses as a WHATWG URL" (lenient and normalising, disagrees with RFC libraries); a minimal "scheme + no space/control bytes" rule (simple, but accepts strings no parser accepts).
 - **Meanwhile**: the reference consumer enforces the RFC 3986 `URI` rule with a strict grammar; the 26 cases are informative vectors with that verdict.
 - **Owner review (2026-10-02)**: "OK" — approved as proposed.
-- **Status**: OWNER-APPROVED
+- **Status**: IN-UPSTREAM-PR — included in MIP PR #340 at `78ecbb4` (Value types, `valType` 4); not merged yet (owner-approved 2026-10-02)
 
 ## N2 — Say that raw ledger log data has its trailing zero bytes removed
 
@@ -56,7 +57,8 @@ Effect on this repository (sub-plan S9): the pin moved to `78ecbb4`; the codec a
 - **Proposed text** (Consuming, or MIP-0002 if it belongs there): "Some sources return a `Misc` item's 288 data bytes without trailing zero bytes. Consumers MUST zero-extend the data to 288 bytes before taking `name` (bytes 0–31) and `payload` (bytes 32–287)."
 - **Meanwhile**: the reference reader zero-extends every raw item to 288 bytes.
 - **Owner review (2026-10-02)**: "OK" — approved as proposed.
-- **Status**: OWNER-APPROVED
+- **In `78ecbb4`** (a MUST, per field: `name` 32 bytes, `payload` 256 bytes): the codec (`decodePayload`, `classifyEvent`, `zeroExtend`), the vector adapter and `mip0018 verify`/`list` zero-extend a short `name` or `payload`; a longer payload is rejected and a longer name is another name; informative vectors `vectors/informative/zero-extension/` (S9 of this repository's plan).
+- **Status**: IN-UPSTREAM-PR — included in MIP PR #340 at `78ecbb4` (Consuming — Reading events, as a MUST); not merged yet (owner-approved 2026-10-02)
 
 ## N3 — State that kinds 1 and 2 share one color under the same `domainSep`
 
@@ -67,7 +69,7 @@ Effect on this repository (sub-plan S9): the pin moved to `78ecbb4`; the codec a
 - **Proposed text** (informative, after "A color held by a user resolves …"): "A shielded and an unshielded mint with the same `domainSep` have the same color; the kind is given by what the user holds (a shielded coin → kind 1, an unshielded UTXO → kind 2), not by the color."
 - **Meanwhile**: the lookup table records which kinds were minted under each color.
 - **Owner review (2026-10-02)**: "OK" — approved as proposed.
-- **Status**: OWNER-APPROVED (editorial)
+- **Status**: IN-UPSTREAM-PR (editorial) — included in MIP PR #340 at `78ecbb4` (Token identity and authority — Lookup); not merged yet (owner-approved 2026-10-02)
 
 ## N4 — Dependencies: state the toolchain as a minimum
 
@@ -77,7 +79,7 @@ Effect on this repository (sub-plan S9): the pin moved to `78ecbb4`; the codec a
 - **Evidence**: this repository emits with Compact 0.35.0 (language 0.27.0, runtime 0.20.0) and `--feature-zkir-v3`; the emitted event equals A1 byte-for-byte on the local stack and on Stagenet (case S0-SPIKE, and the Stagenet cases [C06](deployments/stagenet/cases/C06/README.md) and [C10](deployments/stagenet/cases/C10/README.md), whose `publishMetadata()` events are Appendix A byte-for-byte).
 - **Meanwhile**: the repository states the minimum and the exact versions it is built and tested with (`toolchain.json`).
 - **Owner review (2026-10-02)**: "OK" — approved as proposed.
-- **Status**: OWNER-APPROVED (editorial)
+- **Status**: IN-UPSTREAM-PR (editorial) — included in MIP PR #340 at `78ecbb4` (Implementation — Dependencies); not merged yet (owner-approved 2026-10-02)
 
 ## N5 — Existing contracts: the inserted verifier key must use the key version of the circuit's proving system
 
@@ -89,7 +91,7 @@ Effect on this repository (sub-plan S9): the pin moved to `78ecbb4`; the codec a
 - **Proposed text** (informative, after step 2): "Informative: the verifier key is inserted under the key version of the circuit's proving system, and that version is bumped when the proving system changes (on ledger v9: `v3` for ZKIR v2 circuits, `v4` for ZKIR v3 circuits)."
 - **Meanwhile**: the upgrade template (S6) and the create-and-destroy example build the maintenance update with the ledger API and an explicit version (`test-contracts/toolchain-spike/src/lib/maintenance.ts`).
 - **Owner review (2026-10-02)**: "if displayed — bump version — but should be marked as informative." The text is informative only and says the key version is bumped with the proving system.
-- **Status**: OWNER-APPROVED (informative)
+- **Status**: OWNER-APPROVED (informative) — not included in PR #340 @ `78ecbb4`
 
 ## N6 — `standards`: say that the identifier rule is a byte rule (other Unicode spaces and controls are allowed)
 
@@ -109,7 +111,8 @@ Effect on this repository (sub-plan S9): the pin moved to `78ecbb4`; the codec a
 - **Proposed text** (Testing, before the state rules): "S8 applies to consumers that display amounts and S9 to consumers that group symbols; a consumer that does neither passes the other vectors."
 - **Meanwhile**: the vectors keep S8 and S9 normative as the MIP says; the runner's per-test-id summary lets a consumer show exactly which of these it does not implement.
 - **Owner review (2026-10-02)**: "OK" — approved as proposed.
-- **Status**: OWNER-APPROVED (editorial)
+- **In `78ecbb4`** (reworded by the owner): S8 "A consumer that displays amounts …"; S9 "Grouping is a SHOULD, so two outcomes are valid: no groups at all, or exactly the following groups". The vector runner follows it: a consumer without `display` or without groups passes S8/S9 (reported "not applicable"); only groups of two or more members are compared (see N20).
+- **Status**: IN-UPSTREAM-PR (editorial) — included in MIP PR #340 at `78ecbb4` (Testing — S8, S9, reworded); not merged yet (owner-approved 2026-10-02)
 
 ## N8 — Publishing: name "removed after use" as a third way to protect an emitting circuit
 
@@ -119,7 +122,7 @@ Effect on this repository (sub-plan S9): the pin moved to `78ecbb4`; the codec a
 - **Proposed text** (Publishing, replacing the third bullet): "Who may call an emitting circuit is the contract's choice. Anyone who can call it can rename or withdraw the token, so it SHOULD be access-controlled, publish-once, or removed after use (for example, a `publishMetadata()` whose payload is constant, whose verifier key the maintenance authority removes right after the deployer's call)."
 - **Meanwhile**: `packages/compact/README.md` documents the three patterns with these caveats; `examples/minimal` implements all three.
 - **Owner review (2026-10-02)**: "ok but the last 'An emitting circuit that is not access-controlled SHOULD NOT take the metadata as parameters' is going too far: not protecting this call should be obvious and is out of scope of this MIP; the recommendation was made." The last sentence is removed.
-- **Status**: OWNER-APPROVED
+- **Status**: IN-UPSTREAM-PR — included in MIP PR #340 at `78ecbb4` (Publishing); not merged yet (owner-approved 2026-10-02)
 
 ## N9 — Payload: do not tie the Compact construction to `serialize` of non-event types
 
@@ -152,7 +155,7 @@ Effect on this repository (sub-plan S9): the pin moved to `78ecbb4`; the codec a
 - **Meanwhile**: `mip0018 index` counts exactly those mints (`partApplied` in `raw.ts`) and ignores emitted mint
   events.
 - **Owner review (2026-10-02)**: "saying that 'A mint is a `shieldedMints` or `unshieldedMints` effect of a contract call' is enough: the segment wording adds nothing, and naming the negative cases adds no value (we cannot list them all)." The proposed text is reduced to that sentence.
-- **Status**: OWNER-APPROVED (informative)
+- **Status**: IN-UPSTREAM-PR (informative) — included in MIP PR #340 at `78ecbb4` (Token identity and authority — Lookup); not merged yet (owner-approved 2026-10-02)
 
 ## N11 — "Event within the transaction": name the order a raw-transaction reader must use
 
@@ -172,7 +175,7 @@ Effect on this repository (sub-plan S9): the pin moved to `78ecbb4`; the codec a
   segment (in ascending segment id); within a part, actions and their operations in order."
 - **Meanwhile**: `raw.ts` uses that order; indexer-based commands use the indexer's event id.
 - **Owner review (2026-10-02)**: "OK" — approved as proposed.
-- **Status**: OWNER-APPROVED
+- **Status**: IN-UPSTREAM-PR — included in MIP PR #340 at `78ecbb4` (Applying records); not merged yet (owner-approved 2026-10-02)
 
 ## N12 — Common fields: getter equality when the getters cannot change and the token is renamed
 
@@ -191,7 +194,7 @@ Effect on this repository (sub-plan S9): the pin moved to `78ecbb4`; the codec a
 - **Decision for this repository** (project owner, 2026-10-02): option (a). Getter equality applies when a token first publishes its metadata; MIPs that define specific token standards may define how their tokens behave and override MIP-0018's defaults case by case.
 - **Proposed text** (Common fields, replacing the getter sentence): "A token that also exposes standard getters (for example those of MIP-0004, MIP-0011 or MIP-0014) SHOULD emit the same values those getters return when it first publishes them. A later update, such as a rename, is the token's current metadata for consumers of this MIP even where the getters cannot change. A MIP that defines a token standard MAY restrict or override the behaviour of this MIP for tokens that declare that standard in the emitted `standards` field."
 - **Owner review (2026-10-02)**: "also exposes, for example, MIP-0004, MIP-0011 … getters; a MIP that defines a token standard MAY restrict or override the behaviour of this MIP through the emitted `standards` field." Wording applied.
-- **Status**: OWNER-APPROVED
+- **Status**: IN-UPSTREAM-PR — included in MIP PR #340 at `78ecbb4` (Common fields); not merged yet (owner-approved 2026-10-02)
 
 ## N13 — Payload: a fixed-size field must be exactly as long as its key or value
 
@@ -202,7 +205,7 @@ Effect on this repository (sub-plan S9): the pin moved to `78ecbb4`; the codec a
 - **Proposed text** (informative, after the Compact sentence of the Payload section): "Each fixed-size field must be exactly as long as the key or value it carries: a shorter value padded with zero bytes is a different value (for example `"AGL"` sent as a `Bytes<4>` is `"AGL\0"`), and consumers accept it as such."
 - **Meanwhile**: the module's typed builders take the sizes as generic arguments checked by the compiler; the OpenZeppelin README says "never pad a value with zeros"; tests compare every emitted value exactly.
 - **Owner review (2026-10-02)**: "OK" — approved as proposed.
-- **Status**: OWNER-APPROVED (informative)
+- **Status**: IN-UPSTREAM-PR (informative) — included in MIP PR #340 at `78ecbb4` (Payload); not merged yet (owner-approved 2026-10-02)
 
 ## N14 — Implementation Plan step 4: say where kind 2 comes from
 
@@ -232,7 +235,7 @@ Effect on this repository (sub-plan S9): the pin moved to `78ecbb4`; the codec a
 - **Proposed text** (Existing contracts, after "its maintenance authority can add one."): "Note: a valid maintenance authority is required."
 - **Meanwhile**: `checkAuthority` refuses frozen authorities, foreign keys and thresholds above 1 before anything is submitted; the upgrade guide lists the check.
 - **Owner review (2026-10-02)**: "OK, but just in a short form, as a note: 'a valid maintenance authority is required'." The proposed text is reduced to that note.
-- **Status**: OWNER-APPROVED (editorial)
+- **Status**: IN-UPSTREAM-PR (editorial) — included in MIP PR #340 at `78ecbb4` (Backwards Compatibility — Existing contracts); not merged yet (owner-approved 2026-10-02)
 
 ## N17 — Existing contracts, step 2: inserting never replaces; what an upgrade cannot add
 
@@ -276,7 +279,15 @@ Effect on this repository (sub-plan S9): the pin moved to `78ecbb4`; the codec a
 - **Meanwhile**: `docs/costs.md` publishes the measured figures (local and Stagenet) with the circuit sizes.
 - **Owner review (2026-10-02)**: "No — out of scope." The measured fees stay in `docs/costs.md`.
 - **Status**: WITHDRAWN
-  measurement instead of quoting numbers)
+
+## N20 — Symbol grouping / S9: say whether an identity that shares its symbol with no other identity forms a group
+
+- **MIP section**: Symbol grouping ("Indexers SHOULD group visible token identities that share `(network, contractAddress)` and have the same usable `symbol` …"; "An identity with no usable `symbol` is ungrouped.") and Testing S9 at `78ecbb4` ("… two outcomes are valid: no groups at all, or exactly the following groups.").
+- **Problem**: the text never says whether an identity with a usable `symbol` that no other identity of its contract shares is a group of one or ungrouped. S9 now asks for "exactly the following groups" and names only the `ACME` group, while its own setup has identities that are alone with their symbol (`ACME` on another contract and on another network, `acme`, ` ACME`). A consumer that reports a group of one for each of them — a natural reading of "every identity with a usable symbol is grouped" — has groups that are not "the following groups", so read literally it fails S9; a consumer that reports only groups of two or more passes. The two readings also give different answers to "which group is this token in?" in a UI.
+- **Evidence**: this repository's reference consumer reports single-member groups (`packages/consumer/src/state.ts` `groups()`); before the re-pin its vectors required them, which the independent audit flagged as a convention the MIP does not state (finding F-M1, questions Q33). The vector runner now compares only groups of two or more members, on both sides (`vectors/tools/compare.ts`; tests `vectors/test/compare.test.ts`, `packages/consumer/test/runner-rules.test.ts`), so both readings pass — but that is this repository's choice, not the MIP's.
+- **Proposed text** (Symbol grouping, after "An identity with no usable `symbol` is ungrouped."): "A group has at least two members: an identity whose usable `symbol` no other visible identity of its `(network, contractAddress)` shares is not in a group."
+- **Meanwhile**: the runner ignores single-member groups; the reference consumer keeps reporting them (they are never compared).
+- **Status**: PROPOSED (found by the S9 re-pin, 2026-10-02; not reviewed by the owner yet)
 
 ---
 
