@@ -9,9 +9,14 @@ const KEYWORD = /\b(MUST|SHOULD)\b/u;
 /** Collapses whitespace so wrapping and Markdown table escaping do not matter. */
 export const normalize = (s) => s.replace(/\\\|/gu, '|').replace(/\s+/gu, ' ').trim();
 
-/** Splits a paragraph or list item into sentences without breaking "e.g." or "i.e.". */
+/**
+ * Splits a paragraph or list item into sentences without breaking "e.g." or "i.e.", or a bold label such as
+ * "**S9. Symbol grouping.**" (a period inside `**…**` never ends a sentence).
+ */
 export const sentences = (line) => {
-  const protectedLine = line.replace(/\b(e\.g|i\.e|etc)\./gu, (m) => m.replace(/\./gu, '\uE000'));
+  const protectedLine = line
+    .replace(/\b(e\.g|i\.e|etc)\./gu, (m) => m.replace(/\./gu, '\uE000'))
+    .replace(/\*\*[^*]+\*\*/gu, (m) => m.replace(/\./gu, '\uE000'));
   return protectedLine
     .split(/(?<=[.!?])\s+(?=[A-Z*`"([])/u)
     .map((s) => s.replace(/\uE000/gu, '.').trim())

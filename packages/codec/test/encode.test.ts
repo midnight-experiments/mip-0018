@@ -83,6 +83,13 @@ describe('encodePayload', () => {
     expect(() => encodePayload({ domainSep: D11, kind: 3 }, [])).toThrow(InvalidRecord);
   });
 
+  it('refuses a URI with characters outside ASCII; its percent-encoded and ASCII-host forms are emitted (MIP valType 4, 78ecbb4)', () => {
+    for (const raw of ['https://ä.example/logo.png', 'https://acme.example/ä.png', 'https://acme.example/?q=ä'])
+      expect(() => encodePayload({ domainSep: D11, kind: 3 }, [record.uri('logo', raw)])).toThrow(InvalidRecord);
+    for (const ascii of ['https://xn--4ca.example/logo.png', 'https://acme.example/%C3%A4.png', 'https://acme.example/?q=%C3%A4'])
+      expect(encodePayload({ domainSep: D11, kind: 3 }, [record.uri('logo', ascii)])).toHaveLength(256);
+  });
+
   it('record constructors produce the MIP value types', () => {
     expect(record.tombstone().valType).toBe(5);
     expect(record.json('meta', 'null').valType).toBe(3);

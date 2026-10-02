@@ -10,6 +10,13 @@ describe('MIP requirement extraction', () => {
     ]);
   });
 
+  it('does not split inside a bold label', () => {
+    expect(sentences('**S9. Symbol grouping.** Grouping is a SHOULD. Kinds 1 and 3 form one group.')).toEqual([
+      '**S9. Symbol grouping.** Grouping is a SHOULD.',
+      'Kinds 1 and 3 form one group.',
+    ]);
+  });
+
   it('keeps only MUST/SHOULD sentences, with their section and level', () => {
     const md = [
       '# Title',

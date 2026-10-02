@@ -6,7 +6,7 @@ up metadata, and real cases on Stagenet.
 
 > **Status: complete — draft PR, awaiting review** ([PR #1](https://github.com/midnight-experiments/mip-0018/pull/1)).
 > Every MIP section below has code, tests and, where a chain is involved, a recorded Stagenet case; every MUST/SHOULD
-> is in the [conformance matrix](docs/conformance-matrix.md) (26 covered, 6 not testable here, each with the reason).
+> is in the [conformance matrix](docs/conformance-matrix.md) (29 covered, 6 not testable here, each with the reason).
 
 ## Where to start
 
@@ -40,16 +40,16 @@ up metadata, and real cases on Stagenet.
 | Publishing (no events in normal operation; access control; few events) | [`packages/compact`](packages/compact/README.md), [`examples/minimal`](examples/minimal/README.md), [`examples/openzeppelin`](examples/openzeppelin/README.md), CLI `deploy` / `publish` / `remove-circuit` / `deploy-and-publish` | [minimal](examples/minimal/test/minimal.test.ts), OpenZeppelin examples' tests, [signer units](packages/midnight/test/signer-units.test.ts); local chain: [`examples-e2e.sh`](packages/cli/test/e2e/examples-e2e.sh), [`local-e2e.sh`](packages/cli/test/e2e/local-e2e.sh) | [C01](deployments/stagenet/cases/C01/README.md)–[C06](deployments/stagenet/cases/C06/README.md), [C09](deployments/stagenet/cases/C09/README.md) (non-owner refused), [C10](deployments/stagenet/cases/C10/README.md) (create and destroy) | done |
 | Consuming (reading events, completeness, untrusted input) | [`packages/midnight`](packages/midnight/README.md) `verify`, `list`; CLI `verify` / `list` / `recheck` | [verify and list](packages/midnight/test/verify-list-scan.test.ts), [CLI](packages/cli/test/cli.test.ts), [fuzz](packages/codec/test/fuzz.test.ts) | every case: `recheck` | done |
 | Limitations (219-byte value, one identity per event) | [`packages/compact`](packages/compact/README.md) (size errors at compile time) | vectors `A2a`, `A2b`, `R2a`–`R2f` | [C07](deployments/stagenet/cases/C07/README.md) (`A2a`, `A2b`) | done |
-| Off-chain content | — (a requirement on future MIPs) | not testable here ([C-029](docs/conformance-matrix.md)) | — | n/a |
+| Off-chain content | — (a requirement on future MIPs) | not testable here ([C-031](docs/conformance-matrix.md)) | — | n/a |
 | Backwards compatibility — Existing contracts | [`examples/upgrade-existing-contract`](examples/upgrade-existing-contract/README.md), CLI `upgrade`, [upgrade guide](docs/upgrade-guide.md) | [upgrade](examples/upgrade-existing-contract/test/upgrade.test.ts), [layout](examples/upgrade-existing-contract/test/layout.test.ts); local chain: [`local-upgrade.sh`](examples/upgrade-existing-contract/scripts/local-upgrade.sh) | [U1](deployments/stagenet/cases/U1/README.md) | done |
-| Security Considerations | [consumer guide §6–7](docs/consumer-guide.md#6-untrusted-input), [`SECURITY.md`](SECURITY.md) | matrix rows C-030–C-032 | [C09](deployments/stagenet/cases/C09/README.md) | done (curation: not testable here) |
+| Security Considerations | [consumer guide §6–7](docs/consumer-guide.md#6-untrusted-input), [`SECURITY.md`](SECURITY.md) | matrix rows C-032–C-034 | [C09](deployments/stagenet/cases/C09/README.md) | done (curation: not testable here) |
 | Testing (normative vectors) | [`vectors/`](vectors/README.md): 67 normative + 34 informative, JSON Schemas, independent generator, [runner contract](vectors/README.md#runner-contract) | reference consumer 67/67 ([`vectors.test.ts`](packages/consumer/test/vectors.test.ts)); [generator `--check`](vectors/test/generate.test.ts) | [C07](deployments/stagenet/cases/C07/README.md) (22 vectors on chain) | done |
 | Implementation Plan 1 — Compact module and example issuers | [`packages/compact`](packages/compact/README.md), [`examples/`](examples/minimal/README.md) | as above | [C01](deployments/stagenet/cases/C01/README.md)–[C06](deployments/stagenet/cases/C06/README.md), [C10](deployments/stagenet/cases/C10/README.md) | done |
 | Implementation Plan 2 — vectors and a reference decoder; a second reader | [`vectors/`](vectors/README.md), [`packages/codec`](packages/codec/README.md), [`packages/consumer`](packages/consumer/README.md) | as above | — | done; a second, independent consumer is left open (question Q7) |
 | Implementation Plan 3 — a publisher on a public test network | [`deployments/stagenet/`](deployments/stagenet/README.md) | `recheck` per case | 12 cases | done |
 | Implementation Plan 4 — propose the module to OpenZeppelin | [`examples/openzeppelin`](examples/openzeppelin/README.md) shows the extension | — | — | not pursued: no upstream contribution from this repository (owner decision Q6) |
 | Implementation Plan 5 — upgrade template on a public test network | [`examples/upgrade-existing-contract`](examples/upgrade-existing-contract/README.md) | as above | [U1](deployments/stagenet/cases/U1/README.md) | done |
-| Every MUST / SHOULD | [`docs/conformance-matrix.md`](docs/conformance-matrix.md) | `docker/run.sh check:conformance-matrix` | — | 32 rows: 26 covered, 6 not testable here |
+| Every MUST / SHOULD | [`docs/conformance-matrix.md`](docs/conformance-matrix.md) | `docker/run.sh check:conformance-matrix` | — | 35 rows: 29 covered, 6 not testable here |
 
 ## Stagenet cases
 
