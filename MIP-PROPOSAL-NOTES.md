@@ -54,6 +54,7 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 - **MIP section**: Backwards Compatibility Assessment — Existing contracts (step 2: "Add its verifier key with a `VerifierKeyInsert` maintenance update").
 - **Problem**: on ledger v9 a contract operation holds verifier keys in two versioned slots: `v3` for circuits compiled to ZKIR v2 (the Compact default) and `v4` for circuits compiled with `--feature-zkir-v3`. A `VerifierKeyInsert`/`VerifierKeyRemove` must name the slot that matches the circuit; a mismatch is included on chain but its fallible segment fails, so the issuer pays a fee and nothing changes. The step reads as if any `VerifierKeyInsert` works, and the current SDK path makes the mismatch easy: midnight-js 5.0.0-rc.2 / compact-js 3.0.0-rc.3 always build `v3` maintenance updates.
 - **Evidence**: local stack, this repository's S0 spike: midnight-js `removeVerifierKey()` of a ZKIR-v3 `publishMetadata` → `FailFallible`, key still present; the same `MaintenanceUpdate` with `VerifierKeyRemove(publishMetadata, v4)` → `SucceedEntirely`, key gone; the same `v4` removal on Stagenet (case S0-SPIKE, block 710814). Ledger: `ContractOperationVersion::{V3, V4}`, `ContractOperationVersionedVerifierKey::{V3, V4}`.
+- **Further evidence**: local run of this template (2026-10-02) — `VerifierKeyInsert(publishMetadata, v4)` of a Compact 0.35.0 `--feature-zkir-v3` circuit into a deployed contract whose original circuit also has a `v4` key: `SUCCESS` (≈ 0.59 DUST), counter 0 → 1, ledger data unchanged; then the call through midnight-js `findDeployedContract` with the upgrade-only build is proven, accepted (≈ 0.16 DUST) and emits the expected event bound to the original address (README "Local run").
 - **Proposed text** (informative, after step 2): "The verifier key is inserted at the key version of the circuit's proving system (on ledger v9: `v3` for ZKIR v2 circuits, `v4` for ZKIR v3 circuits). Check that the tool building the maintenance update supports that version."
 - **Meanwhile**: the upgrade template (S6) and the create-and-destroy example build the maintenance update with the ledger API and an explicit version (`test-contracts/toolchain-spike/src/lib/maintenance.ts`).
 - **Status**: PROPOSED (informative)
@@ -171,6 +172,42 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 - **Meanwhile**: documented in `examples/openzeppelin/native-unshielded/README.md`. Nothing is proposed to OpenZeppelin from this repository (owner decision Q6).
 - **Status**: PROPOSED (editorial)
 
+## N15 — Existing contracts, step 1: say what "against the contract's existing ledger layout" requires, and that nothing on chain checks it
+
+- **MIP section**: Backwards Compatibility Assessment — Existing contracts, step 1 ("Compile a `publishMetadata()` circuit … against the contract's existing ledger layout. It reads the existing `domain` from state and emits it as `domainSep`.").
+- **Problem**: Compact assigns ledger state paths by declaration order (the contract's fields and those of imported modules). The new circuit reads the deployed state through the paths of the source it was compiled from; the ledger has no notion of field names or types, so a source with a different layout is accepted on chain and reads other fields. The MIP does not say this, and the failure is silent.
+- **Evidence**: `test/upgrade.test.ts` (compact-runtime 0.20.0, one shared state as on chain after the insert): an upgrade source with `domain` and `owner` swapped (both `Bytes<32>`) compiles; its `ledger()` reads other values under the same names; its owner check reads the domain (owner refused); an unguarded variant emits an **accepted** event whose `domainSep` is the owner's id — metadata for an identity nobody holds. `test/layout.test.ts`: the compiler's recorded layout (`compiler/contract-info.json` → `ledger`) detects reorder, rename, retype, other storage, missing/extra fields and imported modules with ledger fields.
+- **Proposed text** (step 1, after the first sentence): "The source MUST declare the deployed contract's ledger fields — including those of the modules it imports — exactly as deployed: the same fields, in the same order, with the same types. The ledger does not check this; a different layout makes the circuit read other state, for example a `domainSep` that is not the token's. Compilers record the layout they chose, so tools can compare the two builds before the update is signed."
+- **Meanwhile**: `scripts/check-layout.ts` and `mip0018 upgrade` compare the compiled layouts and decode the deployed state through both builds before signing.
+- **Status**: PROPOSED
+
+## N16 — Existing contracts: "does not need redeployment" holds only with a usable maintenance authority
+
+- **MIP section**: Backwards Compatibility Assessment — Existing contracts ("A contract deployed before then has no emitting circuit, but it does not need redeployment: its maintenance authority can add one.").
+- **Problem**: a contract's maintenance authority may be frozen: an empty committee (the ledger default), a threshold above the committee size, or keys nobody holds any more. Such a contract can never take a maintenance update, so it cannot add a circuit.
+- **Evidence**: ledger 9.1.0.0-rc.3 — `ContractMaintenanceAuthority` default is an empty committee with threshold 1; verification requires `signatures ≥ threshold` from committee keys (`ledger/src/verify.rs`). Local run: an insert signed by a key outside the one-key committee is refused by `mip0018 upgrade` before submission and, forced, rejected by the node with `1010: Invalid Transaction: Custom error: 135` (`MalformedError::InvalidCommitteeSignature`, midnight-node `ledger/src/versions/common/types.rs`), nothing changed (README "Local run"); unit tests of `checkAuthority`.
+- **Proposed text**: "… but it does not need redeployment if its maintenance authority can still sign: its maintenance authority can add one. A contract whose authority is frozen (an empty committee, an unreachable threshold, or lost keys) cannot add a circuit and needs a new deployment to adopt this MIP."
+- **Meanwhile**: `checkAuthority` refuses frozen authorities, foreign keys and thresholds above 1 before anything is submitted; the upgrade guide lists the check.
+- **Status**: PROPOSED
+
+## N17 — Existing contracts, step 2: inserting never replaces; what an upgrade cannot add
+
+- **MIP section**: Backwards Compatibility Assessment — Existing contracts, steps 1–2; Publishing ("SHOULD be access-controlled or publish-once").
+- **Problem**: two practical limits are not stated. (1) `VerifierKeyInsert` never replaces a key already present for that entry point and version (`VerifierKeyAlreadyPresent`), and maintenance updates apply only in a fallible segment, so an insert over an existing `publishMetadata` is included, charged and refused. Changing the circuit takes a `VerifierKeyRemove` first. (2) The deployed state has no room for new ledger fields, so the Publishing section's "publish-once" pattern is impossible for an added circuit; it can reuse the contract's existing access control, or use a constant payload and be removed after the call.
+- **Evidence**: local run (README "Local run"): re-inserting the same key and inserting another build's `publishMetadata` key are both refused by `mip0018 upgrade` before submission and, forced, included as `PARTIAL_SUCCESS` (the fallible segment with the update failed; fees ≈ 0.60 DUST each, the same as a successful insert); the key, the authority counter and the ledger data stay unchanged. `test/layout.test.ts`: adding a `published: Boolean` field (a publish-once flag) breaks the layout.
+- **Proposed text** (informative, after step 2): "A `VerifierKeyInsert` never replaces an existing key; to change an added circuit, remove its key first. An added circuit cannot add ledger fields, so it cannot be made publish-once; guard it with the contract's existing access control, or give it a constant payload and remove its key after the call."
+- **Meanwhile**: the template reuses the token's owner check; `mip0018 upgrade` refuses an insert over another key before submission.
+- **Status**: PROPOSED
+
+## N18 — Security Considerations: the maintenance authority controls the metadata too
+
+- **MIP section**: Security Considerations (Unauthorized updates) and Backwards Compatibility ("the update needs no permission beyond what the issuer already reserved").
+- **Problem**: the same authority that adds `publishMetadata()` can remove and insert any circuit at any time, including the emitting circuits and their access checks. For a contract with a live maintenance authority, whoever holds it can rename or withdraw the token regardless of the emitting circuit's guard. Consumers and issuers should know this when they judge who controls a token's metadata.
+- **Evidence**: ledger semantics of `VerifierKeyRemove` / `VerifierKeyInsert` (any entry point); the local run inserts a circuit into a deployed token with the deploy-time key alone.
+- **Proposed text** (Unauthorized updates, new sentence): "A contract's maintenance authority can replace its emitting circuits, so it can change the metadata as well; metadata is fixed only when no one can call an emitting circuit and no one holds the maintenance authority." (Whether and how an authority can be given up — e.g. a `ReplaceAuthority` to an empty committee — was not exercised here.)
+- **Meanwhile**: documented in `docs/upgrade-guide.md` (Limits: Trust).
+- **Status**: NEEDS-DECISION (the authors may consider it outside the MIP's scope; owner question Q29 in the project questions file)
+
 ---
 
 ## Considered — no change proposed
@@ -187,3 +224,4 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 | OpenZeppelin's `NativeShieldedTokenFamily` keeps one family-wide name/symbol ("one brand"); published getter-consistently, all types of a family fall into one symbol group | The MIP already says grouping is presentation only and does not make members interchangeable; an issuer who wants separate groups gives each type its own symbol (`setMetadata(domain, …)` in `examples/openzeppelin/token-family`). No change. |
 | One asset in three kinds needs three events (one per identity): one circuit emitting all three costs k = 16 (≈ 57,000 rows) vs k = 15 per single-event call | By design (each kind has its own lifecycle, MIP Rationale "A `kind` byte"). Documented in `examples/openzeppelin/multi-kind`. No change. |
 | OpenZeppelin claims no MIP standard, so the examples publish no `standards` (questions Q25) | `standards` is self-declared by design. No change. |
+| Pre-v9 (ledger 8) contracts and the upgrade path | The MIP's "a contract deployed before then" includes contracts deployed under ledger 8. Whether such a contract (midnight-js calls them "retained era") accepts a ZKIR-v3 (`v4`) key and the call is not verified here: the local chain and Stagenet run ledger v9 from genesis. No text change proposed without evidence. |

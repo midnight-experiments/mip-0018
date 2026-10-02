@@ -242,6 +242,10 @@ export interface PublicIdentity {
   dust: string;
   nightUtxos: number;
   nightUtxosRegisteredForDust: number;
+  /** Shielded balances by token type (color, hex) — e.g. the coins of a native shielded token minted to this wallet. */
+  shieldedBalances: Record<string, string>;
+  /** Unshielded balances by token type other than NIGHT. */
+  unshieldedTokenBalances: Record<string, string>;
 }
 
 /**
@@ -265,6 +269,17 @@ export const describeWallet = (session: WalletSession, state: FacadeState): Publ
     dust: state.dust.balance(new Date()).toString(),
     nightUtxos: nightCoins.length,
     nightUtxosRegisteredForDust: nightCoins.filter((c) => c.meta.registeredForDustGeneration).length,
+    shieldedBalances: Object.fromEntries(
+      Object.entries(state.shielded.balances as Record<string, bigint>)
+        .map(([color, n]) => [color, n.toString()] as const)
+        .sort(),
+    ),
+    unshieldedTokenBalances: Object.fromEntries(
+      Object.entries(state.unshielded.balances as Record<string, bigint>)
+        .filter(([color]) => color !== night)
+        .map(([color, n]) => [color, n.toString()] as const)
+        .sort(),
+    ),
   };
 };
 
