@@ -3,7 +3,7 @@
 // mip0018 — the MIP-0018 reference CLI.
 //
 //   wallet-free:  verify · list · index · lookup · vectors run · recheck
-//   signer:       wallet status|register-dust · deploy · publish · remove-circuit · deploy-and-publish
+//   signer:       wallet status|register-dust · deploy · publish · remove-circuit · deploy-and-publish · upgrade
 //
 // Run it through npm in the pinned image: `docker/run.sh mip0018 -- <command> …` (wallet-free) or
 // `docker/signer.sh mip0018 -- <command> …` (signing). `<command> --help` prints the details.
@@ -30,6 +30,7 @@ signer (docker/signer.sh; wallet secret from a file):
   call                 the same for any circuit (e.g. a mint; no event expected unless it logs one)
   remove-circuit       VerifierKeyRemove of a circuit (create-and-destroy)
   deploy-and-publish   compile → deploy → publish → verify an example in one command
+  upgrade              add a circuit (publishMetadata) to a deployed contract: VerifierKeyInsert, then call it
 
 Exit codes: 0 ok · 1 mismatch / failed · 2 usage · 3 not found · 4 not yet indexed / outcome unknown
 `;
@@ -55,7 +56,8 @@ export async function main(argv: string[]): Promise<number> {
       case 'publish':
       case 'call':
       case 'remove-circuit':
-      case 'deploy-and-publish': {
+      case 'deploy-and-publish':
+      case 'upgrade': {
         // The signing side loads the wallet SDK and midnight-js only when a signing command runs.
         const s = await import('./signer.ts');
         const f = {
@@ -65,6 +67,7 @@ export async function main(argv: string[]): Promise<number> {
           call: s.cmdPublish,
           'remove-circuit': s.cmdRemoveCircuit,
           'deploy-and-publish': s.cmdDeployAndPublish,
+          upgrade: s.cmdUpgrade,
         }[cmd];
         return await f(rest);
       }

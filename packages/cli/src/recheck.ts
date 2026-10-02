@@ -221,9 +221,9 @@ export async function recheckCase(
       if (k.wallet) {
         const w = readJson(join(outDir, k.wallet), 'wallet observation') as {
           shieldedBalances?: Record<string, string>;
-          unshieldedBalances?: Record<string, string>;
+          unshieldedTokenBalances?: Record<string, string>;
         };
-        const b = (k.kind === 1 ? w.shieldedBalances : w.unshieldedBalances)?.[color];
+        const b = (k.kind === 1 ? w.shieldedBalances : w.unshieldedTokenBalances)?.[color];
         if (!b || BigInt(b) <= 0n) {
           ok = false;
           notes.push(`the wallet observation holds no ${k.kind === 1 ? 'shielded coin' : 'unshielded UTXO'} of this color`);

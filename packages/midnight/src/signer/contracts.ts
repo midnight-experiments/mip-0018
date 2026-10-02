@@ -30,7 +30,7 @@ import { decodeTransaction, miscLogsOf } from '../raw.ts';
 import { circuitArgs, fromJsonLoose, resolvePlaceholders } from './args.ts';
 import type { AdapterContext, ContractAdapter } from './adapter.ts';
 import { contractView, eventsInTx, pollFor, transactionState, wouldChange } from './check.ts';
-import { removeVerifierKey } from './maintenance.ts';
+import { checkAuthority, currentContractState, insertVerifierKey, onChainVerifierKey, removeVerifierKey } from './maintenance.ts';
 import { filePrivateStateProvider, type FilePrivateStateProvider } from './private-state.ts';
 import { buildProviders, loadCompiledContract, type CompiledArtifacts } from './providers.ts';
 import { findStep, loadRecord, note, saveRecord, upsertStep, RecordError, type RunRecord, type StepRecord } from './records.ts';
@@ -192,8 +192,12 @@ function journal(
   };
 }
 
-function providersFor(run: Run, hooks: ReturnType<typeof journal> | Record<string, never>): MidnightProviders {
-  return buildProviders(run.o.ep, run.o.session, run.o.artifacts, run.psp, hooks);
+function providersFor(
+  run: Run,
+  hooks: ReturnType<typeof journal> | Record<string, never>,
+  artifacts: CompiledArtifacts = run.o.artifacts,
+): MidnightProviders {
+  return buildProviders(run.o.ep, run.o.session, artifacts, run.psp, hooks);
 }
 
 /**
@@ -400,6 +404,12 @@ export interface CallInput {
   /** JSON arguments (converted with contract-info types, or by the adapter). */
   args: unknown[];
   stepId?: string;
+  /**
+   * Call through another compiled contract than the record's (S6 upgrade: the upgrade-only source whose circuit was
+   * added with a VerifierKeyInsert); `adapter` gives its witnesses (none when omitted).
+   */
+  artifacts?: CompiledArtifacts;
+  adapter?: ContractAdapter;
 }
 
 export async function callStep(run: Run, input: CallInput): Promise<StepRecord> {
@@ -418,7 +428,8 @@ export async function callStep(run: Run, input: CallInput): Promise<StepRecord> 
   if (!v.exists) refuse(run, step, `contract ${address} is not on chain`);
   if (!v.operations.includes(input.circuit))
     refuse(run, step, `${input.circuit} has no verifier key on ${address} (removed?); nothing submitted`);
-  const a = run.o.adapter;
+  const arts = input.artifacts ?? run.o.artifacts;
+  const a = input.artifacts ? input.adapter : run.o.adapter;
   const privateStateId = run.record.contract.privateStateId;
   if (privateStateId !== undefined) run.psp.setContractAddress(address);
   let privateState = privateStateId !== undefined ? await run.psp.get(privateStateId) : undefined;
@@ -436,7 +447,7 @@ export async function callStep(run: Run, input: CallInput): Promise<StepRecord> 
     contractAddress: address,
   };
   const json = resolvePlaceholders(input.args, { ...signerContext(run), adapter: a?.values?.(ctx) }) as unknown[];
-  const args = a?.circuitArgs?.(input.circuit, json, ctx) ?? circuitArgs(run.o.artifacts.managedDir, input.circuit, json);
+  const args = a?.circuitArgs?.(input.circuit, json, ctx) ?? circuitArgs(arts.managedDir, input.circuit, json);
   const current = await new Indexer(run.o.ep.profile.indexer, run.o.ep.profile.indexerWs).allContractEvents(address, {});
   const hooks = journal(run, step, async (_tx, d) => {
     const logs = miscLogsOf(d, address).filter((l) => l.name !== undefined && l.payload !== undefined);
@@ -447,10 +458,10 @@ export async function callStep(run: Run, input: CallInput): Promise<StepRecord> 
   });
   try {
     run.log(`calling ${input.circuit}`, { contract: address });
-    const compiled = await loadCompiledContract(run.o.artifacts, a?.witnesses);
+    const compiled = await loadCompiledContract(arts, a?.witnesses);
     const options: Record<string, unknown> = { compiledContract: compiled, contractAddress: address };
     if (privateStateId !== undefined) options.privateStateId = privateStateId;
-    const found = (await findDeployedContract(providersFor(run, hooks) as never, options as never)) as unknown as {
+    const found = (await findDeployedContract(providersFor(run, hooks, arts) as never, options as never)) as unknown as {
       callTx: Record<string, (...x: unknown[]) => Promise<{ public: { txHash: string; blockHeight: number; status: string } }>>;
     };
     const fn = found.callTx[input.circuit];
@@ -525,6 +536,176 @@ export async function removeVerifierKeyStep(run: Run, circuit: string, slot: 'v3
     )) as unknown as { status: string; blockHeight: number };
     note(step, `midnight-js submitTx: ${r.status} at block ${r.blockHeight}`);
   } catch (e) {
+    onPerformError(run, step, e);
+  }
+  return after();
+}
+
+// ----------------------------------------------------------------------------------------- verifier key insertion
+
+export interface InsertInput {
+  circuit: string;
+  /** The new circuit's verifier key (keys/<circuit>.verifier of the upgrade-only build). */
+  verifierKey: Uint8Array;
+  slot?: 'v3' | 'v4';
+  /** The maintenance key; default: the one stored for the contract in the private-state file at deploy. */
+  signingKey?: SigningKey;
+  /** Submit even when the before-check refuses (key already present, key not in the committee): the chain decides. */
+  force?: boolean;
+  stepId?: string;
+}
+
+const sha256 = (b: Uint8Array) => createHash('sha256').update(b).digest('hex');
+
+/** The node refused the transaction outright (never included). */
+const NODE_REJECTION = /Invalid Transaction|InvalidTransaction|\b1010\b|Custom error/u;
+
+/**
+ * An error's message with its causes: the wallet SDK reports a node rejection as an Effect `FiberFailure` wrapping
+ * `SubmissionError("Transaction submission error")`, whose `cause` (the node client's error) holds the node's reason.
+ */
+export function describeError(e: unknown, depth = 0, seen = new Set<unknown>()): string {
+  if (e === null || e === undefined || depth > 8 || seen.has(e)) return '';
+  if (typeof e !== 'object') return String(e);
+  seen.add(e);
+  const o = e as Record<string | symbol, unknown>;
+  const parts: string[] = [];
+  const head = [o._tag, o.name, o.message].filter((x) => typeof x === 'string' && x !== '').join(': ');
+  if (head) parts.push(head);
+  for (const k of ['cause', 'error', 'defect', 'left', 'right', 'failure', 'data', 'details', 'reason']) {
+    const v = o[k];
+    if (v === undefined || v === null) continue;
+    parts.push(typeof v === 'object' ? describeError(v, depth + 1, seen) : String(v));
+  }
+  for (const sym of Object.getOwnPropertySymbols(o)) {
+    const v = o[sym];
+    if (v && typeof v === 'object') parts.push(describeError(v, depth + 1, seen));
+  }
+  return [...new Set(parts.filter((x) => x !== ''))].join(' <- ');
+}
+
+/**
+ * VerifierKeyInsert (MIP-0018 "Existing contracts", step 2): adds a circuit's verifier key to the deployed contract,
+ * signed by its maintenance authority. ZKIR-v3 keys go in the v4 slot (Q23).
+ *
+ * before  skipped when the circuit already has exactly this key (a re-run); REFUSED when it has another key (the
+ *         ledger never overwrites: VerifierKeyAlreadyPresent) or when the key cannot sign for the authority (frozen
+ *         or other committee, threshold > 1) — unless `force`, which submits anyway so the chain's answer is recorded
+ * after   completed only when the indexer shows the circuit with this key; included-but-failed and node rejections are
+ *         `failed` with the reason (key unchanged)
+ */
+export async function insertVerifierKeyStep(run: Run, input: InsertInput): Promise<StepRecord> {
+  const address = run.record.contract.address;
+  if (!address) throw new StepError('the record has no contract address', 'refused');
+  const { circuit } = input;
+  const slot = input.slot ?? 'v4';
+  const want = sha256(input.verifierKey);
+  const step = upsertStep(run.record, {
+    id: input.stepId ?? `verifier-key-insert:${circuit}`,
+    kind: 'verifier-key-insert',
+    circuit,
+    args: { slot, verifierKeySha256: want, key: input.signingKey ? 'from --maintenance-key-file' : 'deploy-time key (private-state file)' },
+  });
+  if (step.state === 'completed') return step;
+  // Refusals are recorded (state stays `pending`, nothing was submitted) before the error is raised.
+  const refuse = (msg: string): never => {
+    step.error = msg;
+    note(step, `refused before submission: ${msg.slice(0, 300)}`);
+    run.save();
+    throw new StepError(msg, 'refused');
+  };
+  const keyView = async () => {
+    const st = await currentContractState(run.o.ep.profile, address);
+    const k = onChainVerifierKey(st, circuit);
+    return { state: st, keySha256: k ? sha256(k) : undefined, counter: st.maintenanceAuthority.counter.toString() };
+  };
+  const after = async (): Promise<StepRecord> => {
+    await inclusionOf(run, step);
+    if (step.inclusion && step.inclusion.status !== 'SUCCESS') {
+      const v = await keyView();
+      return finish(
+        run,
+        step,
+        { inclusion: step.inclusion, keySha256: v.keySha256 ?? null, authorityCounter: v.counter },
+        false,
+        `included as ${step.inclusion.status}: the ledger refused the update (${circuit} key ${v.keySha256 === want ? 'equals ours' : v.keySha256 ? 'unchanged, another key' : 'absent'}; counter ${v.counter})`,
+      );
+    }
+    const seen = await pollFor(async () => {
+      const v = await keyView();
+      return v.keySha256 === want ? v : undefined;
+    }, run.o.observeTimeoutMs ?? 120_000);
+    if (!seen) {
+      step.state = 'unknown';
+      note(step, `${circuit} not observed with the inserted key yet`);
+      run.save();
+      throw new StepError(`${step.id}: key not observed yet; re-run to reconcile`, 'unknown');
+    }
+    return finish(
+      run,
+      step,
+      {
+        inclusion: step.inclusion,
+        operations: (await contractView(run.o.ep.profile, address)).operations,
+        keySha256: want,
+        authorityCounter: seen.counter,
+      },
+      true,
+      `${circuit} now has the inserted ${slot} verifier key (sha256 ${want.slice(0, 16)}…)`,
+    );
+  };
+  if (step.tx && (await reconcile(run, step)) === 'included') return after();
+  // before
+  const v = await keyView().catch(() => undefined);
+  if (!v) return refuse(`contract ${address} is not on chain`);
+  if (v.keySha256 === want && !input.force) {
+    step.skipped = `${circuit} already has exactly this verifier key (before-check)`;
+    note(step, step.skipped);
+    return after();
+  }
+  if (v.keySha256 !== undefined && !input.force)
+    return refuse(
+      `${circuit} already has another verifier key on ${address}; VerifierKeyInsert never overwrites (the ledger refuses with VerifierKeyAlreadyPresent) — nothing submitted`,
+    );
+  const key = input.signingKey ?? ((await run.psp.getSigningKey(address)) as SigningKey | null) ?? undefined;
+  if (!key) return refuse(`no maintenance signing key for ${address} in ${run.o.privateStatePath} (give --maintenance-key-file)`);
+  const auth = checkAuthority(v.state.maintenanceAuthority, key);
+  step.observed = { before: { keySha256: v.keySha256 ?? null, authority: { ...auth, reason: undefined } } };
+  if (!auth.ok) {
+    if (!input.force) return refuse(`${auth.reason} — nothing submitted`);
+    note(step, `--force: submitting although ${auth.reason}`);
+  }
+  if (v.keySha256 !== undefined) note(step, `--force: submitting although ${circuit} already has a verifier key`);
+  const hooks = journal(run, step, async () => {});
+  try {
+    run.log(`inserting the ${circuit} verifier key (${slot})`, { contract: address });
+    const r = (await insertVerifierKey(
+      providersFor(run, hooks),
+      run.o.ep.profile,
+      address,
+      circuit,
+      input.verifierKey,
+      key,
+      slot,
+      BigInt(Math.max(0, auth.index)),
+    )) as unknown as { status: string; blockHeight: number };
+    note(step, `midnight-js submitTx: ${r.status} at block ${r.blockHeight}`);
+  } catch (e) {
+    const msg = describeError(e).slice(0, 1500);
+    if (step.tx && step.state === 'submitting' && NODE_REJECTION.test(msg)) {
+      // The node refused the transaction at submission: it was never accepted into the pool, so it cannot be
+      // included later (only this signer ever held it).
+      step.error = msg;
+      step.state = 'failed';
+      step.observed = {
+        ...(step.observed as object),
+        rejectedByNode: msg,
+        after: await keyView().then((x) => ({ keySha256: x.keySha256 ?? null, authorityCounter: x.counter })),
+      };
+      note(step, `REJECTED by the node at submission: ${msg.slice(0, 300)}`);
+      run.save();
+      throw new StepError(`${step.id}: rejected by the node: ${msg.slice(0, 300)}`, 'failed');
+    }
     onPerformError(run, step, e);
   }
   return after();

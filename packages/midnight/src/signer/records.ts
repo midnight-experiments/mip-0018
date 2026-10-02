@@ -20,7 +20,7 @@ import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { toJson } from '../hex.ts';
 
 export type StepState = 'pending' | 'submitting' | 'submitted' | 'unknown' | 'completed' | 'failed';
-export type StepKind = 'deploy' | 'call' | 'verifier-key-remove';
+export type StepKind = 'deploy' | 'call' | 'verifier-key-remove' | 'verifier-key-insert';
 
 export interface TxRef {
   hash: string;
@@ -67,9 +67,23 @@ export interface RunRecord {
     privateStateId?: string;
     /** Set when this record was attached to a contract it did not deploy (`--attach`): where the address came from. */
     attached?: { from: string; at: string };
+    /** Circuits added later with a VerifierKeyInsert (S6 upgrade template), and the source they were compiled from. */
+    upgrades?: UpgradeEntry[];
   };
   signer?: { unshieldedAddress: string };
   steps: StepRecord[];
+}
+
+export interface UpgradeEntry {
+  circuit: string;
+  slot: 'v3' | 'v4';
+  /** The upgrade-only compiled contract (name, managed dir, adapter) the circuit is called through. */
+  contract: string;
+  managedDir: string;
+  adapter?: string;
+  verifierKeySha256: string;
+  /** Pre-checks run before the insert (layout, on-chain decode, authority) — public values only. */
+  checks?: unknown;
 }
 
 export class RecordError extends Error {

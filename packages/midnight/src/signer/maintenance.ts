@@ -20,6 +20,8 @@ import {
   VerifierKeyInsert,
   VerifierKeyRemove,
   signData,
+  signatureVerifyingKey,
+  type ContractMaintenanceAuthority,
   type SigningKey,
 } from '@midnightntwrk/ledger-v9';
 import { Indexer } from '../indexer.ts';
@@ -48,16 +50,76 @@ export const operationsWithKey = (state: ContractState): string[] =>
     })
     .sort();
 
+/** The verifier key an entry point currently has (undefined: no operation or no key). */
+export const onChainVerifierKey = (state: ContractState, circuit: string): Uint8Array | undefined => {
+  try {
+    const vk = state.operation(circuit)?.verifierKey;
+    return vk !== undefined && vk.length > 0 ? vk : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+export interface AuthorityCheck {
+  ok: boolean;
+  /** Why the key cannot sign alone (when !ok). */
+  reason?: string;
+  /** The key's index in the committee (the signature index), -1 when absent. */
+  index: number;
+  committeeSize: number;
+  threshold: number;
+  counter: string;
+}
+
+/**
+ * Can `key` alone sign a maintenance update for a contract with this authority? (VerifierKeyInsert/Remove need the
+ * authority's signatures and counter; MIP-0018 "Existing contracts".) Frozen authorities — an empty committee, the
+ * ledger default, or a threshold above the committee size — can never sign anything.
+ */
+export function checkAuthority(authority: ContractMaintenanceAuthority, key: SigningKey): AuthorityCheck {
+  const vk = signatureVerifyingKey(key);
+  const committee = authority.committee;
+  const index = committee.findIndex((c) => c.tag === vk.tag && c.value.toLowerCase() === vk.value.toLowerCase());
+  const base = { index, committeeSize: committee.length, threshold: authority.threshold, counter: authority.counter.toString() };
+  if (committee.length === 0)
+    return {
+      ...base,
+      ok: false,
+      reason:
+        'the contract has a frozen maintenance authority (empty committee): no maintenance update can ever be signed; it cannot add a circuit (redeploy to adopt MIP-0018)',
+    };
+  if (authority.threshold > committee.length)
+    return {
+      ...base,
+      ok: false,
+      reason: `the authority's threshold ${authority.threshold} exceeds its committee (${committee.length} keys): it can never sign`,
+    };
+  if (index < 0)
+    return {
+      ...base,
+      ok: false,
+      reason: `this maintenance key is not in the contract's committee (${committee.length} key(s)); the node would reject the update`,
+    };
+  if (authority.threshold > 1)
+    return {
+      ...base,
+      ok: false,
+      reason: `the authority needs ${authority.threshold} signatures; this tool signs with one key (collect the others first)`,
+    };
+  return { ...base, ok: true };
+}
+
 const submitUpdate = async (
   providers: MidnightProviders,
   profile: NetworkProfile,
   address: string,
   signingKey: SigningKey,
   build: (counter: bigint) => MaintenanceUpdate,
+  signatureIndex = 0n,
 ) => {
   const state = await currentContractState(profile, address);
   const update = build(state.maintenanceAuthority.counter);
-  const signed = update.addSignature(0n, signData(signingKey, update.dataToSign));
+  const signed = update.addSignature(signatureIndex, signData(signingKey, update.dataToSign));
   const intent = Intent.new(new Date(Date.now() + 30 * 60_000)).addMaintenanceUpdate(signed);
   const unprovenTx = Transaction.fromParts(profile.networkId, undefined, undefined, intent);
   return submitTx(providers as never, { unprovenTx } as never);
@@ -87,6 +149,7 @@ export const insertVerifierKey = (
   verifierKey: Uint8Array,
   signingKey: SigningKey,
   slot: KeySlot = 'v4',
+  signatureIndex = 0n,
 ) =>
   submitUpdate(
     providers,
@@ -99,4 +162,5 @@ export const insertVerifierKey = (
         [new VerifierKeyInsert(circuit, new ContractOperationVersionedVerifierKey(slot, verifierKey))],
         counter,
       ),
+    signatureIndex,
   );
