@@ -1192,7 +1192,7 @@ stdVector('INF-STD-2', ' mip-0004', false, '" mip-0004" (leading space: an empty
 stdVector('INF-STD-3', 'mip-0004\tmip-0011', false, '"mip-0004<TAB>mip-0011" (0x09 is a control byte)');
 stdVector('INF-STD-4', '', true, '"" (empty: no standards claimed, not malformed)');
 stdVector('INF-STD-5', 'mip-0004 mip-0004 erc-20', true, '"mip-0004 mip-0004 erc-20" (duplicates carry no meaning)');
-const N5_BASIS = `${STD_BASIS} The byte rule allows other Unicode spaces and controls (U+00A0, U+0085); proposal note N5 asks the MIP to say so explicitly.`;
+const N5_BASIS = `${STD_BASIS} The byte rule allows other Unicode spaces and controls (U+00A0, U+0085); the project withdrew the note asking the MIP to say so (N6, out of scope).`;
 stdVector('INF-STD-6', 'mip-0004 x y', true, '"mip-0004 x<U+00A0>y" (no-break space, bytes c2 a0: no byte in 0x00-0x20/0x7f)', N5_BASIS);
 stdVector(
   'INF-STD-7',

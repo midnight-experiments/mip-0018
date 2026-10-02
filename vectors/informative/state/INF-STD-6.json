@@ -6,7 +6,7 @@
   },
   "normative": false,
   "description": "standards = \"mip-0004 x<U+00A0>y\" (no-break space, bytes c2 a0: no byte in 0x00-0x20/0x7f): usable.",
-  "basis": "MIP \"Common fields\": standards = identifiers separated by single spaces; identifier non-empty, no byte in 0x00-0x20 or 0x7f; empty = no standards claimed; malformed = unusable. The byte rule allows other Unicode spaces and controls (U+00A0, U+0085); proposal note N5 asks the MIP to say so explicitly.",
+  "basis": "MIP \"Common fields\": standards = identifiers separated by single spaces; identifier non-empty, no byte in 0x00-0x20 or 0x7f; empty = no standards claimed; malformed = unusable. The byte rule allows other Unicode spaces and controls (U+00A0, U+0085); the project withdrew the note asking the MIP to say so (N6, out of scope).",
   "steps": [
     {
       "op": "apply",
