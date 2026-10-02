@@ -43,14 +43,17 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/C05
 ```
 
-## Transactions (filled in by S5)
+## Transactions (Stagenet, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
-| `deploy` | _S5_ | _S5_ | _S5_ |
-| `mint-gold` | _S5_ | _S5_ | _S5_ |
-| `mint-silver` | _S5_ | _S5_ | _S5_ |
-| `publish-gold` | _S5_ | _S5_ | _S5_ |
-| `publish-silver` | _S5_ | _S5_ | _S5_ |
-| `publish-bronze` | _S5_ | _S5_ | _S5_ |
+Contract `MyTokenFamily` at `f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6`; signer mn_addr_stagenet1vw57646su9y5z6myarm93m6kcn62j97z0yma94lfkhmta6pz5h5q6utr3k.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `deploy` | deploy | `96e30165faf8564f9cd5c146d592446b7f8daa8af05e5b0ada8206d71ef9fc9b` | 714677 (`bbfac607bbbf9828…`) | SUCCESS | 6,380,287,536,036,953 | 6.380 |
+| `mint-gold` | call `mint` | `bea96f3da8bc4b205f16f03742ebdcfe735fc1c63ca714d4dd2f666480568734` | 714683 (`3b92c2f06b6e1901…`) | SUCCESS | 210,866,712,090,850 | 0.211 |
+| `mint-silver` | call `mint` | `b126b3e2f3e00145ae7dbb3a678147f52f72a71ebd940b692db1055d9a8291e1` | 714689 (`69570de0dcca47b7…`) | SUCCESS | 210,787,300,549,442 | 0.211 |
+| `publish-gold` | call `publishMetadata` | `ce45f95fde9706739139fbf0f53dd0e7b38dcd16f492f014fceff5c70e28a26f` | 714696 (`d7a27e35b0f17bc7…`) | SUCCESS | 176,205,117,075,003 | 0.176 |
+| `publish-silver` | call `publishMetadata` | `a865ad4799b76eb9233affd9dd7da44c460105a7d5566b27bc063c6e11612e44` | 714703 (`ed1721da135f5cd8…`) | SUCCESS | 176,205,117,075,003 | 0.176 |
+| `publish-bronze` | call `publishMetadata` | `ed5b20cd4e071de0713079bdfe8c46095baa863b0a1318598be9f8da9a4f7e7a` | 714712 (`c74ef59c8dfa73e4…`) | SUCCESS | 176,205,117,075,003 | 0.176 |
+| **total** | | | | | **7,330,556,899,902,254** | **7.331** |
 
