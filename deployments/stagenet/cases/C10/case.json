@@ -1,0 +1,157 @@
+{
+  "kind": "mip0018-case",
+  "schema": 1,
+  "id": "C10",
+  "title": "Minimal create-and-destroy (kind 3, Q4): deploy, publish, VerifierKeyRemove of publishMetadata, publish again",
+  "demonstrates": "The unguarded constant publishMetadata() exists only until its verifier key is removed by the deployer (maintenance authority); afterwards it cannot be called at all.",
+  "conclusion": "one event (= MIP Appendix A, A1, byte-for-byte); the key is gone; the second publish is refused before submission; list shows the A1 metadata.",
+  "mip": {
+    "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
+    "eventName": "mip-0018:token-metadata[v1]"
+  },
+  "source": {
+    "example": "examples/minimal",
+    "contract": "examples/minimal/contracts/CreateAndDestroy.compact",
+    "metadata": "examples/minimal/metadata.json"
+  },
+  "placeholders": {
+    "{net}": "network options (Stagenet: --network stagenet)",
+    "{signer}": "wallet 1's signer options (mnemonic file, wallet cache)",
+    "{signer2}": "wallet 2's signer options, with its OWN private-state file",
+    "{case}": "this case folder",
+    "{out}": "where records and observations are written (Stagenet: this case folder)",
+    "{out:<ID>}": "another case's output folder"
+  },
+  "steps": [
+    {
+      "id": "deploy",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "deploy",
+        "{net}",
+        "{signer}",
+        "--example",
+        "minimal",
+        "--record",
+        "{out}/record.json"
+      ],
+      "expectExit": 0,
+      "submits": "deploy"
+    },
+    {
+      "id": "publish",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "publishMetadata",
+        "--step",
+        "publish"
+      ],
+      "expectExit": 0,
+      "submits": "call"
+    },
+    {
+      "id": "verify-publish",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "publish",
+        "--expect",
+        "@{case}/expect/publish.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "remove-key",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "remove-circuit",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "publishMetadata"
+      ],
+      "expectExit": 0,
+      "submits": "verifier-key-remove",
+      "note": "maintenance VerifierKeyRemove in the v4 slot (ZKIR v3 keys, Q23), signed with the maintenance key kept in the 0600 private-state file"
+    },
+    {
+      "id": "publish-again",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "publishMetadata",
+        "--step",
+        "publish-again",
+        "--force"
+      ],
+      "expectExit": 1,
+      "note": "refused before submission: publishMetadata has no verifier key any more (exit 1, no transaction)"
+    },
+    {
+      "id": "list",
+      "runner": "wallet-free",
+      "argv": [
+        "list",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--expect",
+        "@{case}/expected.json",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "observed-list.json"
+    }
+  ],
+  "expected": "expected.json",
+  "recheck": {
+    "verify": [
+      {
+        "record": "record.json",
+        "step": "publish",
+        "expect": "expect/publish.json"
+      }
+    ],
+    "list": [
+      {
+        "record": "record.json",
+        "expect": "expected.json"
+      }
+    ],
+    "operationsAbsent": [
+      {
+        "record": "record.json",
+        "circuit": "publishMetadata"
+      }
+    ],
+    "noTransaction": [
+      {
+        "record": "record.json",
+        "step": "publish-again"
+      }
+    ]
+  }
+}

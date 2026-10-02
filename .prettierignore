@@ -15,3 +15,5 @@ packages/midnight/test/fixtures/**/*.json
 **/*.md
 # Investigation evidence copied byte-for-byte from the F1 URI research.
 vectors/informative/uri/investigation/
+# Generated case folders (deployments/stagenet/tools/prepare-cases.ts) and the records/observations S5 adds
+deployments/stagenet/cases/**

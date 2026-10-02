@@ -163,7 +163,15 @@ export interface RecordInfo {
   path: string;
   network: { id: string; genesisHash: string };
   contract: { name: string; address?: string };
-  steps: { id: string; kind: string; circuit?: string; state: string; tx?: { hash: string }; expectedEvents?: unknown[] }[];
+  steps: {
+    id: string;
+    kind: string;
+    circuit?: string;
+    state: string;
+    tx?: { hash: string };
+    inclusion?: { height: number; hash: string; status: string; fee?: string };
+    expectedEvents?: unknown[];
+  }[];
 }
 
 export function readRecord(path: string): RecordInfo {

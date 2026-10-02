@@ -62,10 +62,20 @@ Exit: 0 every check passes · 1 a check fails · 2 usage · 4 a transaction is n
 
 interface RecheckSpec {
   verify?: { record: string; step: string; expect?: string }[];
-  list?: { record: string; expect: string }[];
+  /** `atStep`: the state as of that step's inclusion block (`list --to-block`). */
+  list?: { record: string; expect: string; atStep?: string }[];
   noTransaction?: { record: string; step: string }[];
   operationsAbsent?: { record: string; circuit: string }[];
-  colors?: { record: string; domainSep: string; kind: 1 | 2; index?: string; wallet?: string; expectIdentity?: ExpectedIdentity }[];
+  /** `minted: false`: the color must NOT be in the scanner table (published, never minted). */
+  colors?: {
+    record: string;
+    domainSep: string;
+    kind: 1 | 2;
+    index?: string;
+    wallet?: string;
+    minted?: boolean;
+    expectIdentity?: ExpectedIdentity;
+  }[];
 }
 
 export interface RecheckResult {
@@ -125,20 +135,28 @@ export async function recheckCase(
       );
     });
 
-  for (const l of spec.list ?? [])
-    await guard(`list ${l.record}`, async () => {
+  for (const l of spec.list ?? []) {
+    const id = `list ${l.record}${l.atStep ? ` @${l.atStep}` : ''}`;
+    await guard(id, async () => {
       const r = rec(l.record);
       const expected = expectedStateFrom(readJson(join(caseDir, l.expect), 'expectation'));
-      const rep = await listMetadata({ profile, contract: recordContract(r, profile) });
+      let toBlock: number | undefined;
+      if (l.atStep) {
+        const s = r.steps.find((x) => x.id === l.atStep);
+        if (!s?.inclusion) throw new Error(`step ${l.atStep} of ${l.record} has no inclusion block`);
+        toBlock = s.inclusion.height;
+      }
+      const rep = await listMetadata({ profile, contract: recordContract(r, profile), ...(toBlock !== undefined ? { toBlock } : {}) });
       const cmp = compareState(projectState(rep.identities, rep.groups, rep.counts), expected);
       add(
-        `list ${l.record}`,
+        id,
         cmp.ok && rep.snapshot.tipMatchesNode,
         cmp.ok
           ? `${rep.identities.length} identit${rep.identities.length === 1 ? 'y' : 'ies'}, ${rep.counts.events} event(s) (${rep.counts.accepted} accepted, ${rep.counts.rejected} rejected, ${rep.counts.ignored} ignored) = ${l.expect} at block ${rep.snapshot.toBlock}${rep.snapshot.tipMatchesNode ? '' : ' (indexer tip ≠ node)'}`
           : cmp.differences.join('; '),
       );
     });
+  }
 
   for (const n of spec.noTransaction ?? [])
     await guard(`no transaction ${n.step}`, async () => {
@@ -167,7 +185,15 @@ export async function recheckCase(
       const color = tokenTypeHex(k.domainSep, address);
       const notes: string[] = [`tokenType = ${color}`];
       let ok = true;
-      if (k.index) {
+      if (k.index && k.minted === false) {
+        const s = loadState(join(outDir, k.index));
+        if (!s) throw new Error(`no index state in ${k.index}`);
+        const l = lookupColor(s, color, k.kind);
+        if (l.found) {
+          ok = false;
+          notes.push(`expected NOT minted, but the scanner table has it (${l.entry?.contractAddress}/${l.entry?.domainSep})`);
+        } else notes.push(`not minted in the scanned range [${l.scanned.from}, ${l.scanned.to}], as expected`);
+      } else if (k.index) {
         const s = loadState(join(outDir, k.index));
         if (!s) throw new Error(`no index state in ${k.index}`);
         const l = lookupColor(s, color, k.kind);

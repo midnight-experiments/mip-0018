@@ -1,0 +1,320 @@
+{
+  "kind": "mip0018-case",
+  "schema": 1,
+  "id": "IDX",
+  "title": "Mint scanner over the matrix, then every color looked up (wallet-free)",
+  "demonstrates": "MIP \"Lookup\" / owner decision F8: from a start height, every native mint of C02–C05 is found once with its (contract, domainSep, kind), and each color resolves to its identity and current metadata.",
+  "conclusion": "6 minted colors (C02 shielded, C03 unshielded, C04 shielded + unshielded = one color, C05 gold, silver) resolve to their contract, domainSep and kind with the metadata of each case; C05 bronze (never minted) is \"not minted in the scanned range\".",
+  "mip": {
+    "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
+    "eventName": "mip-0018:token-metadata[v1]"
+  },
+  "source": {
+    "tool": "mip0018 index / lookup"
+  },
+  "dependsOn": [
+    "C02",
+    "C03",
+    "C04",
+    "C05"
+  ],
+  "notes": [
+    "U1 (S6b, upgrade) adds its own lookup here when it runs.",
+    "The index state lands in {out}/index/index-state.json (deployments/stagenet/cases/IDX/index/ on Stagenet)."
+  ],
+  "placeholders": {
+    "{net}": "network options (Stagenet: --network stagenet)",
+    "{signer}": "wallet 1's signer options (mnemonic file, wallet cache)",
+    "{signer2}": "wallet 2's signer options, with its OWN private-state file",
+    "{case}": "this case folder",
+    "{out}": "where records and observations are written (Stagenet: this case folder)",
+    "{out:<ID>}": "another case's output folder",
+    "{firstHeight}": "lowest inclusion height of the matrix records − 10",
+    "{lastHeight}": "highest inclusion height"
+  },
+  "steps": [
+    {
+      "id": "index",
+      "runner": "wallet-free",
+      "argv": [
+        "index",
+        "{net}",
+        "--from-height",
+        "{firstHeight}",
+        "--to-height",
+        "{lastHeight}",
+        "--state",
+        "{out}/index",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "index-summary.json",
+      "note": "{firstHeight} = the lowest inclusion height of the matrix records − 10; {lastHeight} = the highest (S5 fills both)"
+    },
+    {
+      "id": "lookup-C02-shielded",
+      "runner": "wallet-free",
+      "argv": [
+        "lookup",
+        "{net}",
+        "--record",
+        "{out:C02}/record.json",
+        "--domain-sep",
+        "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+        "--kind",
+        "1",
+        "--state",
+        "{out}/index",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "lookup-C02-shielded.json"
+    },
+    {
+      "id": "lookup-C03-unshielded",
+      "runner": "wallet-free",
+      "argv": [
+        "lookup",
+        "{net}",
+        "--record",
+        "{out:C03}/record.json",
+        "--domain-sep",
+        "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+        "--kind",
+        "2",
+        "--state",
+        "{out}/index",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "lookup-C03-unshielded.json"
+    },
+    {
+      "id": "lookup-C04-shielded",
+      "runner": "wallet-free",
+      "argv": [
+        "lookup",
+        "{net}",
+        "--record",
+        "{out:C04}/record.json",
+        "--domain-sep",
+        "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+        "--kind",
+        "1",
+        "--state",
+        "{out}/index",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "lookup-C04-shielded.json"
+    },
+    {
+      "id": "lookup-C04-unshielded",
+      "runner": "wallet-free",
+      "argv": [
+        "lookup",
+        "{net}",
+        "--record",
+        "{out:C04}/record.json",
+        "--domain-sep",
+        "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+        "--kind",
+        "2",
+        "--state",
+        "{out}/index",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "lookup-C04-unshielded.json"
+    },
+    {
+      "id": "lookup-C05-gold",
+      "runner": "wallet-free",
+      "argv": [
+        "lookup",
+        "{net}",
+        "--record",
+        "{out:C05}/record.json",
+        "--domain-sep",
+        "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+        "--kind",
+        "1",
+        "--state",
+        "{out}/index",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "lookup-C05-gold.json"
+    },
+    {
+      "id": "lookup-C05-silver",
+      "runner": "wallet-free",
+      "argv": [
+        "lookup",
+        "{net}",
+        "--record",
+        "{out:C05}/record.json",
+        "--domain-sep",
+        "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+        "--kind",
+        "1",
+        "--state",
+        "{out}/index",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "lookup-C05-silver.json"
+    },
+    {
+      "id": "lookup-C05-bronze",
+      "runner": "wallet-free",
+      "argv": [
+        "lookup",
+        "{net}",
+        "--record",
+        "{out:C05}/record.json",
+        "--domain-sep",
+        "0x6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+        "--kind",
+        "1",
+        "--state",
+        "{out}/index",
+        "--json"
+      ],
+      "expectExit": 3,
+      "stdout": "lookup-C05-bronze.json",
+      "note": "published but never minted: \"not minted in the scanned range\" (exit 3)"
+    }
+  ],
+  "expected": "expected.json",
+  "recheck": {
+    "colors": [
+      {
+        "record": "../C02/record.json",
+        "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+        "kind": 1,
+        "index": "index",
+        "minted": true,
+        "expectIdentity": {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+          "kind": 1,
+          "visible": true,
+          "colored": true,
+          "common": {
+            "name": "Acme Shield",
+            "symbol": "ASHD",
+            "decimals": 6
+          }
+        }
+      },
+      {
+        "record": "../C03/record.json",
+        "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+        "kind": 2,
+        "index": "index",
+        "minted": true,
+        "expectIdentity": {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+          "kind": 2,
+          "visible": true,
+          "colored": true,
+          "common": {
+            "name": "Acme Public",
+            "symbol": "APUB",
+            "decimals": 6
+          }
+        }
+      },
+      {
+        "record": "../C04/record.json",
+        "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+        "kind": 1,
+        "index": "index",
+        "minted": true,
+        "expectIdentity": {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+          "kind": 1,
+          "visible": true,
+          "colored": true,
+          "common": {
+            "name": "Acme Dollar",
+            "symbol": "ACD",
+            "decimals": 2
+          }
+        }
+      },
+      {
+        "record": "../C04/record.json",
+        "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+        "kind": 2,
+        "index": "index",
+        "minted": true,
+        "expectIdentity": {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+          "kind": 2,
+          "visible": true,
+          "colored": true,
+          "common": {
+            "name": "Acme Dollar",
+            "symbol": "ACD",
+            "decimals": 2
+          }
+        }
+      },
+      {
+        "record": "../C05/record.json",
+        "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+        "kind": 1,
+        "index": "index",
+        "minted": true,
+        "expectIdentity": {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+          "kind": 1,
+          "visible": true,
+          "colored": true,
+          "common": {
+            "name": "Acme Medals",
+            "symbol": "MEDAL",
+            "decimals": 0
+          }
+        }
+      },
+      {
+        "record": "../C05/record.json",
+        "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+        "kind": 1,
+        "index": "index",
+        "minted": true,
+        "expectIdentity": {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+          "kind": 1,
+          "visible": true,
+          "colored": true,
+          "common": {
+            "name": "Acme Medals",
+            "symbol": "MEDAL",
+            "decimals": 0
+          }
+        }
+      },
+      {
+        "record": "../C05/record.json",
+        "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+        "kind": 1,
+        "index": "index",
+        "minted": false,
+        "expectIdentity": {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+          "kind": 1,
+          "visible": true,
+          "colored": true,
+          "common": {
+            "name": "Acme Medals",
+            "symbol": "MEDAL",
+            "decimals": 0
+          }
+        }
+      }
+    ]
+  }
+}

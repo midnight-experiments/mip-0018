@@ -1,0 +1,1040 @@
+{
+  "kind": "mip0018-case",
+  "schema": 1,
+  "id": "C07",
+  "title": "Raw emitter (test-only): capacity, exact-bytes and non-tombstone edge cases accepted; malformed payloads rejected; other names ignored",
+  "demonstrates": "A2a/A2b capacity, A3a–c exact bytes, A4b Uint<128> decimals, A5a–c non-tombstones accepted; R1, R2a, R3a, R3b, R4a, R5a, R5e, R5h, R6b rejected whole; I1a/I1b ([v2]) and I2a/I2b (other names) ignored — each verified with its reason, and the contract's state is exactly what the accepted ones set.",
+  "conclusion": "9 accepted, 9 rejected, 4 ignored events; one identity (0x11…/3) with exactly the accepted records' fields (expected.json lists every field).",
+  "mip": {
+    "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
+    "eventName": "mip-0018:token-metadata[v1]"
+  },
+  "source": {
+    "contract": "test-contracts/raw-emitter",
+    "vectors": "vectors/payload"
+  },
+  "notes": [
+    "--force: accepted vectors are emitted even when they would not change the state; rejected and ignored ones are never skipped (Q27)."
+  ],
+  "placeholders": {
+    "{net}": "network options (Stagenet: --network stagenet)",
+    "{signer}": "wallet 1's signer options (mnemonic file, wallet cache)",
+    "{signer2}": "wallet 2's signer options, with its OWN private-state file",
+    "{case}": "this case folder",
+    "{out}": "where records and observations are written (Stagenet: this case folder)",
+    "{out:<ID>}": "another case's output folder"
+  },
+  "steps": [
+    {
+      "id": "deploy",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "deploy",
+        "{net}",
+        "{signer}",
+        "--example",
+        "raw-emitter",
+        "--record",
+        "{out}/record.json"
+      ],
+      "expectExit": 0,
+      "submits": "deploy",
+      "note": "TEST-ONLY contract (NOT FOR PRODUCTION): owner-gated emitRaw / emitTwo"
+    },
+    {
+      "id": "A2a",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/A2a.json",
+        "--step",
+        "A2a",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector A2a: accept"
+    },
+    {
+      "id": "R1",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/R1.json",
+        "--step",
+        "R1",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector R1: reject (no-records)"
+    },
+    {
+      "id": "A2b",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/A2b.json",
+        "--step",
+        "A2b",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector A2b: accept"
+    },
+    {
+      "id": "R2a",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/R2a.json",
+        "--step",
+        "R2a",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector R2a: reject (vallen-out-of-bounds)"
+    },
+    {
+      "id": "A3a",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/A3a.json",
+        "--step",
+        "A3a",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector A3a: accept"
+    },
+    {
+      "id": "R3a",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/R3a.json",
+        "--step",
+        "R3a",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector R3a: reject (nonzero-padding)"
+    },
+    {
+      "id": "A3b",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/A3b.json",
+        "--step",
+        "A3b",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector A3b: accept"
+    },
+    {
+      "id": "R3b",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/R3b.json",
+        "--step",
+        "R3b",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector R3b: reject (nonzero-padding)"
+    },
+    {
+      "id": "A3c",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/A3c.json",
+        "--step",
+        "A3c",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector A3c: accept"
+    },
+    {
+      "id": "R4a",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/R4a.json",
+        "--step",
+        "R4a",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector R4a: reject (bad-kind)"
+    },
+    {
+      "id": "A4b",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/A4b.json",
+        "--step",
+        "A4b",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector A4b: accept"
+    },
+    {
+      "id": "R5a",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/R5a.json",
+        "--step",
+        "R5a",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector R5a: reject (invalid-utf8)"
+    },
+    {
+      "id": "A5a",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/A5a.json",
+        "--step",
+        "A5a",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector A5a: accept"
+    },
+    {
+      "id": "R5e",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/R5e.json",
+        "--step",
+        "R5e",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector R5e: reject (invalid-uri)"
+    },
+    {
+      "id": "A5b",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/A5b.json",
+        "--step",
+        "A5b",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector A5b: accept"
+    },
+    {
+      "id": "R5h",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/R5h.json",
+        "--step",
+        "R5h",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector R5h: reject (bad-null-length)"
+    },
+    {
+      "id": "A5c",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/A5c.json",
+        "--step",
+        "A5c",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector A5c: accept"
+    },
+    {
+      "id": "R6b",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/R6b.json",
+        "--step",
+        "R6b",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector R6b: reject (reserved-valtype)"
+    },
+    {
+      "id": "I1a",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/I1a.json",
+        "--step",
+        "I1a",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector I1a: ignore (other-name)"
+    },
+    {
+      "id": "I1b",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/I1b.json",
+        "--step",
+        "I1b",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector I1b: ignore (other-name)"
+    },
+    {
+      "id": "I2a",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/I2a.json",
+        "--step",
+        "I2a",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector I2a: ignore (other-name)"
+    },
+    {
+      "id": "I2b",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitRaw",
+        "--args",
+        "@{case}/args/I2b.json",
+        "--step",
+        "I2b",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "vector I2b: ignore (other-name)"
+    },
+    {
+      "id": "verify-A2a",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "A2a",
+        "--expect",
+        "@{case}/expect/A2a.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-R1",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "R1",
+        "--expect",
+        "@{case}/expect/R1.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-A2b",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "A2b",
+        "--expect",
+        "@{case}/expect/A2b.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-R2a",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "R2a",
+        "--expect",
+        "@{case}/expect/R2a.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-A3a",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "A3a",
+        "--expect",
+        "@{case}/expect/A3a.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-R3a",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "R3a",
+        "--expect",
+        "@{case}/expect/R3a.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-A3b",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "A3b",
+        "--expect",
+        "@{case}/expect/A3b.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-R3b",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "R3b",
+        "--expect",
+        "@{case}/expect/R3b.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-A3c",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "A3c",
+        "--expect",
+        "@{case}/expect/A3c.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-R4a",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "R4a",
+        "--expect",
+        "@{case}/expect/R4a.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-A4b",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "A4b",
+        "--expect",
+        "@{case}/expect/A4b.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-R5a",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "R5a",
+        "--expect",
+        "@{case}/expect/R5a.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-A5a",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "A5a",
+        "--expect",
+        "@{case}/expect/A5a.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-R5e",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "R5e",
+        "--expect",
+        "@{case}/expect/R5e.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-A5b",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "A5b",
+        "--expect",
+        "@{case}/expect/A5b.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-R5h",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "R5h",
+        "--expect",
+        "@{case}/expect/R5h.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-A5c",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "A5c",
+        "--expect",
+        "@{case}/expect/A5c.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-R6b",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "R6b",
+        "--expect",
+        "@{case}/expect/R6b.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-I1a",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "I1a",
+        "--expect",
+        "@{case}/expect/I1a.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-I1b",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "I1b",
+        "--expect",
+        "@{case}/expect/I1b.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-I2a",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "I2a",
+        "--expect",
+        "@{case}/expect/I2a.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "verify-I2b",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "I2b",
+        "--expect",
+        "@{case}/expect/I2b.json",
+        "--wait",
+        "120"
+      ],
+      "expectExit": 0
+    },
+    {
+      "id": "list",
+      "runner": "wallet-free",
+      "argv": [
+        "list",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--expect",
+        "@{case}/expected.json",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "observed-list.json"
+    }
+  ],
+  "expected": "expected.json",
+  "recheck": {
+    "verify": [
+      {
+        "record": "record.json",
+        "step": "A2a",
+        "expect": "expect/A2a.json"
+      },
+      {
+        "record": "record.json",
+        "step": "R1",
+        "expect": "expect/R1.json"
+      },
+      {
+        "record": "record.json",
+        "step": "A2b",
+        "expect": "expect/A2b.json"
+      },
+      {
+        "record": "record.json",
+        "step": "R2a",
+        "expect": "expect/R2a.json"
+      },
+      {
+        "record": "record.json",
+        "step": "A3a",
+        "expect": "expect/A3a.json"
+      },
+      {
+        "record": "record.json",
+        "step": "R3a",
+        "expect": "expect/R3a.json"
+      },
+      {
+        "record": "record.json",
+        "step": "A3b",
+        "expect": "expect/A3b.json"
+      },
+      {
+        "record": "record.json",
+        "step": "R3b",
+        "expect": "expect/R3b.json"
+      },
+      {
+        "record": "record.json",
+        "step": "A3c",
+        "expect": "expect/A3c.json"
+      },
+      {
+        "record": "record.json",
+        "step": "R4a",
+        "expect": "expect/R4a.json"
+      },
+      {
+        "record": "record.json",
+        "step": "A4b",
+        "expect": "expect/A4b.json"
+      },
+      {
+        "record": "record.json",
+        "step": "R5a",
+        "expect": "expect/R5a.json"
+      },
+      {
+        "record": "record.json",
+        "step": "A5a",
+        "expect": "expect/A5a.json"
+      },
+      {
+        "record": "record.json",
+        "step": "R5e",
+        "expect": "expect/R5e.json"
+      },
+      {
+        "record": "record.json",
+        "step": "A5b",
+        "expect": "expect/A5b.json"
+      },
+      {
+        "record": "record.json",
+        "step": "R5h",
+        "expect": "expect/R5h.json"
+      },
+      {
+        "record": "record.json",
+        "step": "A5c",
+        "expect": "expect/A5c.json"
+      },
+      {
+        "record": "record.json",
+        "step": "R6b",
+        "expect": "expect/R6b.json"
+      },
+      {
+        "record": "record.json",
+        "step": "I1a",
+        "expect": "expect/I1a.json"
+      },
+      {
+        "record": "record.json",
+        "step": "I1b",
+        "expect": "expect/I1b.json"
+      },
+      {
+        "record": "record.json",
+        "step": "I2a",
+        "expect": "expect/I2a.json"
+      },
+      {
+        "record": "record.json",
+        "step": "I2b",
+        "expect": "expect/I2b.json"
+      }
+    ],
+    "list": [
+      {
+        "record": "record.json",
+        "expect": "expected.json"
+      }
+    ]
+  }
+}
