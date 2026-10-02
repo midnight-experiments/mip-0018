@@ -1,8 +1,21 @@
 # MIP-0018 reference implementation
 
-Reference implementation of **MIP-0018: On-chain token metadata** for Midnight: test vectors, a Compact module that emits the metadata event, OpenZeppelin-based examples, deploy / publish / verify / list / index scripts, and real cases on Stagenet.
+Reference implementation of **MIP-0018: On-chain token metadata** for Midnight: test vectors, a Compact module that
+emits the metadata event, OpenZeppelin-based examples, a reference consumer, wallet-free tools to verify, list and look
+up metadata, and real cases on Stagenet.
 
-> **Status: work in progress** (one draft PR, phases S0–S6). Paths marked *planned* below land in later phases.
+> **Status: complete — draft PR, awaiting review** ([PR #1](https://github.com/midnight-experiments/mip-0018/pull/1)).
+> Every MIP section below has code, tests and, where a chain is involved, a recorded Stagenet case; every MUST/SHOULD
+> is in the [conformance matrix](docs/conformance-matrix.md) (26 covered, 6 not testable here, each with the reason).
+
+## Where to start
+
+| You are | Read |
+|---|---|
+| A token issuer adding metadata to a contract | [Issuer guide](docs/issuer-guide.md), then [`examples/publish-and-emit`](examples/publish-and-emit/README.md) |
+| A wallet, explorer or indexer developer | [Consumer guide](docs/consumer-guide.md), then [`examples/verify`](examples/verify/README.md) and the [vectors](vectors/README.md) |
+| The maintainer of an already-deployed token | [Upgrade guide](docs/upgrade-guide.md) |
+| A MIP reviewer | [Stagenet cases](deployments/stagenet/README.md), [conformance matrix](docs/conformance-matrix.md), [`MIP-PROPOSAL-NOTES.md`](MIP-PROPOSAL-NOTES.md), [costs](docs/costs.md) |
 
 ## The MIP this repository implements
 
@@ -11,73 +24,120 @@ Reference implementation of **MIP-0018: On-chain token metadata** for Midnight: 
 | Proposal | [midnightntwrk/midnight-improvement-proposals PR #340](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340) — "Update MIP-0018 with community feedback" (open; the link moves to the merged file when #340 merges) |
 | Pinned text | [`b147c627e1bb15b5d15cc73cf30c2a36afd34dbb` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/b147c627e1bb15b5d15cc73cf30c2a36afd34dbb/mips/mip-0018-on-chain-token-metadata.md) |
 | SHA-256 of the pinned text | `9ffba7e6a3123cd6683e5a779ac3b73c8a31a9724367cd98ee120be78720d842` (`docker/run.sh check:mip-pin`) |
-| Authority | The pinned text decides every byte and rule. What this repository found that should be defined or changed upstream is in [`MIP-PROPOSAL-NOTES.md`](MIP-PROPOSAL-NOTES.md). |
+| Authority | The pinned text decides every byte and rule. What this repository found that should be defined or changed upstream is in [`MIP-PROPOSAL-NOTES.md`](MIP-PROPOSAL-NOTES.md) (notes N1–N19); nothing is proposed upstream from here. |
+
+## MIP section → repository
+
+| MIP section | Implementation | Tests | Stagenet | Status |
+|---|---|---|---|---|
+| Event (name, "must ignore") | [`packages/codec`](packages/codec/README.md) `classifyEvent` | vectors `I1a`–`I3` ([codec](packages/codec/test/vectors.test.ts), [consumer](packages/consumer/test/vectors.test.ts)) | [C07](deployments/stagenet/cases/C07/README.md) (`[v2]` and foreign names) | done |
+| Payload (layout, the three checks, whole-event rejection) | [`packages/codec`](packages/codec/README.md) `decodePayload`, `encodePayload` | vectors `A1`–`A5`, `R1`–`R6`; [fuzz](packages/codec/test/fuzz.test.ts); [rule mutations](packages/consumer/test/mutations.test.ts) | [C07](deployments/stagenet/cases/C07/README.md), [C08](deployments/stagenet/cases/C08/README.md) | done |
+| Payload — Compact emitter ("exactly these bytes") | [`packages/compact`](packages/compact/README.md): typed constructor (default) + pure-circuit alternative | [byte equality with the vectors](packages/compact/test/vectors.test.ts), [729 generated payloads](packages/compact/test/equivalence.test.ts), [16 compile errors](packages/compact/test/compile-fail.test.ts) | [C06](deployments/stagenet/cases/C06/README.md), [C10](deployments/stagenet/cases/C10/README.md) (Appendix A bytes on chain) | done |
+| Value types (incl. RFC 3986 `URI` as ERC-721, Q20; JSON via the platform parser) | [`packages/codec`](packages/codec/README.md) `checkValue`, `isRfc3986Uri` | [values](packages/codec/test/values.test.ts), [URI](packages/codec/test/uri.test.ts); vectors `R5a`–`R5h`, [26 informative URI cases](vectors/informative/uri/README.md) | [C07](deployments/stagenet/cases/C07/README.md) | done |
+| Token identity and authority; Lookup | [`packages/consumer`](packages/consumer/README.md) (identity), [`packages/midnight`](packages/midnight/README.md) (`tokenType`, mint scanner), CLI `index` / `lookup` | [colors and raw mints](packages/midnight/test/raw-color.test.ts), [scanner](packages/midnight/test/verify-list-scan.test.ts); vectors `S6a`, `S6b`; native examples' color tests | [C02](deployments/stagenet/cases/C02/README.md)–[C05](deployments/stagenet/cases/C05/README.md), [IDX](deployments/stagenet/cases/IDX/README.md), [U1](deployments/stagenet/cases/U1/README.md) | done |
+| Keys, Applying records, Common fields, Symbol grouping | [`packages/consumer`](packages/consumer/README.md) `MetadataState`, `formatAmount`, `parseStandards` | state vectors `S1`–`S9` ([consumer](packages/consumer/test/vectors.test.ts)), [state](packages/consumer/test/state.test.ts), [common fields](packages/consumer/test/common.test.ts), [rule mutations](packages/consumer/test/mutations.test.ts) | [C04](deployments/stagenet/cases/C04/README.md) (group), [C05](deployments/stagenet/cases/C05/README.md), [C06](deployments/stagenet/cases/C06/README.md) (lifecycle) | done |
+| Publishing (no events in normal operation; access control; few events) | [`packages/compact`](packages/compact/README.md), [`examples/minimal`](examples/minimal/README.md), [`examples/openzeppelin`](examples/openzeppelin/README.md), CLI `deploy` / `publish` / `remove-circuit` / `deploy-and-publish` | [minimal](examples/minimal/test/minimal.test.ts), OpenZeppelin examples' tests, [signer units](packages/midnight/test/signer-units.test.ts); local chain: [`examples-e2e.sh`](packages/cli/test/e2e/examples-e2e.sh), [`local-e2e.sh`](packages/cli/test/e2e/local-e2e.sh) | [C01](deployments/stagenet/cases/C01/README.md)–[C06](deployments/stagenet/cases/C06/README.md), [C09](deployments/stagenet/cases/C09/README.md) (non-owner refused), [C10](deployments/stagenet/cases/C10/README.md) (create and destroy) | done |
+| Consuming (reading events, completeness, untrusted input) | [`packages/midnight`](packages/midnight/README.md) `verify`, `list`; CLI `verify` / `list` / `recheck` | [verify and list](packages/midnight/test/verify-list-scan.test.ts), [CLI](packages/cli/test/cli.test.ts), [fuzz](packages/codec/test/fuzz.test.ts) | every case: `recheck` | done |
+| Limitations (219-byte value, one identity per event) | [`packages/compact`](packages/compact/README.md) (size errors at compile time) | vectors `A2a`, `A2b`, `R2a`–`R2f` | [C07](deployments/stagenet/cases/C07/README.md) (`A2a`, `A2b`) | done |
+| Off-chain content | — (a requirement on future MIPs) | not testable here ([C-029](docs/conformance-matrix.md)) | — | n/a |
+| Backwards compatibility — Existing contracts | [`examples/upgrade-existing-contract`](examples/upgrade-existing-contract/README.md), CLI `upgrade`, [upgrade guide](docs/upgrade-guide.md) | [upgrade](examples/upgrade-existing-contract/test/upgrade.test.ts), [layout](examples/upgrade-existing-contract/test/layout.test.ts); local chain: [`local-upgrade.sh`](examples/upgrade-existing-contract/scripts/local-upgrade.sh) | [U1](deployments/stagenet/cases/U1/README.md) | done |
+| Security Considerations | [consumer guide §6–7](docs/consumer-guide.md#6-untrusted-input), [`SECURITY.md`](SECURITY.md) | matrix rows C-030–C-032 | [C09](deployments/stagenet/cases/C09/README.md) | done (curation: not testable here) |
+| Testing (normative vectors) | [`vectors/`](vectors/README.md): 67 normative + 34 informative, JSON Schemas, independent generator, [runner contract](vectors/README.md#runner-contract) | reference consumer 67/67 ([`vectors.test.ts`](packages/consumer/test/vectors.test.ts)); [generator `--check`](vectors/test/generate.test.ts) | [C07](deployments/stagenet/cases/C07/README.md) (22 vectors on chain) | done |
+| Implementation Plan 1 — Compact module and example issuers | [`packages/compact`](packages/compact/README.md), [`examples/`](examples/minimal/README.md) | as above | [C01](deployments/stagenet/cases/C01/README.md)–[C06](deployments/stagenet/cases/C06/README.md), [C10](deployments/stagenet/cases/C10/README.md) | done |
+| Implementation Plan 2 — vectors and a reference decoder; a second reader | [`vectors/`](vectors/README.md), [`packages/codec`](packages/codec/README.md), [`packages/consumer`](packages/consumer/README.md) | as above | — | done; a second, independent consumer is left open (question Q7) |
+| Implementation Plan 3 — a publisher on a public test network | [`deployments/stagenet/`](deployments/stagenet/README.md) | `recheck` per case | 12 cases | done |
+| Implementation Plan 4 — propose the module to OpenZeppelin | [`examples/openzeppelin`](examples/openzeppelin/README.md) shows the extension | — | — | not pursued: no upstream contribution from this repository (owner decision Q6) |
+| Implementation Plan 5 — upgrade template on a public test network | [`examples/upgrade-existing-contract`](examples/upgrade-existing-contract/README.md) | as above | [U1](deployments/stagenet/cases/U1/README.md) | done |
+| Every MUST / SHOULD | [`docs/conformance-matrix.md`](docs/conformance-matrix.md) | `docker/run.sh check:conformance-matrix` | — | 32 rows: 26 covered, 6 not testable here |
+
+## Stagenet cases
+
+Twelve cases deployed and emitted on Stagenet on 2026-10-02 (57 transactions, 54.69 DUST), each recorded in its folder
+with the expected consumer conclusion written before the transactions, and each re-checkable by anyone with one
+wallet-free command:
+
+```sh
+docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/C06
+```
+
+| Case | Shows |
+|---|---|
+| [C01](deployments/stagenet/cases/C01/README.md)–[C03](deployments/stagenet/cases/C03/README.md) | OpenZeppelin fungible (kind 3), native shielded (kind 1), native unshielded (kind 2); colors equal the minted coins' |
+| [C04](deployments/stagenet/cases/C04/README.md), [C05](deployments/stagenet/cases/C05/README.md) | one asset as kinds 1, 2, 3 (one symbol group); a token family (three `domainSep`) |
+| [C06](deployments/stagenet/cases/C06/README.md) | lifecycle: publish (Appendix A bytes), rename, tombstone, tombstone again, revive |
+| [C07](deployments/stagenet/cases/C07/README.md), [C08](deployments/stagenet/cases/C08/README.md) | test-only raw emitter: 22 vectors accepted / rejected / ignored on chain; two events in one transaction |
+| [C09](deployments/stagenet/cases/C09/README.md), [C10](deployments/stagenet/cases/C10/README.md) | a non-owner refused; create and destroy |
+| [IDX](deployments/stagenet/cases/IDX/README.md), [U1](deployments/stagenet/cases/U1/README.md) | mint scanner + color lookup; adding `publishMetadata()` to a deployed token |
+
+Network identity, contracts, transactions, fees and limitations: [`deployments/stagenet/README.md`](deployments/stagenet/README.md).
+Fees and circuit sizes: [`docs/costs.md`](docs/costs.md) (a metadata transaction ≈ 0.17–0.19 DUST on Stagenet).
+
+## Quickstart (Docker only)
+
+Everything builds and runs in Docker; nothing is installed on the host. From a fresh clone:
+
+```sh
+git clone https://github.com/midnight-experiments/mip-0018.git && cd mip-0018
+docker/run.sh ci                                   # builds the pinned image (first run), then npm ci
+docker/run.sh lint typecheck test                  # static checks and every unit/runtime test (no chain)
+docker/run.sh check:pins check:mip-pin check:conformance-matrix check:md-links
+docker/run.sh mip0018 -- vectors run               # the normative vectors against the reference consumer
+docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/C06   # a real case, wallet-free
+```
+
+A local chain of official `midnightntwrk/*` images (node 2.0.0-rc.4, indexer-standalone 4.4.0-rc.1, the two proof
+servers) runs the issuer side without funds; the full walkthrough is
+[`examples/publish-and-emit`](examples/publish-and-emit/README.md):
+
+```sh
+docker/local-stack/up.sh                  # random loopback ports ≥ 10000
+. docker/local-stack/ports.env
+MIP0018_DOCKER_NETWORK=$MIP0018_STACK_NETWORK docker/run.sh spike:local
+docker/local-stack/down.sh
+```
+
+`docker/run.sh` names every container and volume after `MIP0018_DOCKER_PREFIX` (default: a hash of the checkout path),
+so teardown removes exactly what it created ([`CONTRIBUTING.md`](CONTRIBUTING.md)).
 
 ## Toolchain
 
-MIP-0018 needs MIP-0002 `Misc` events, so it **requires Compact 0.34.0 or later** (language 0.26.0, runtime 0.19.0). This repository is **built and tested with Compact 0.35.0** (language 0.27.0, runtime 0.20.0) **and ZKIR v3** (`--feature-zkir-v3`), pinned with every other version in [`toolchain.json`](toolchain.json). Only official binaries are used: the Compact release from `midnightntwrk/compact`, `midnightntwrk/*` Docker images pinned by digest, and packages from the `@midnight-ntwrk`, `@midnightntwrk` and `@openzeppelin` npm scopes.
+MIP-0018 needs MIP-0002 `Misc` events, so it **requires Compact 0.34.0 or later** (language 0.26.0, runtime 0.19.0).
+This repository is **built and tested with Compact 0.35.0** (language 0.27.0, runtime 0.20.0) **and ZKIR v3**
+(`--feature-zkir-v3`), pinned with every other version in [`toolchain.json`](toolchain.json). Only official binaries
+are used: the Compact release from `midnightntwrk/compact`, `midnightntwrk/*` Docker images pinned by digest, and
+packages from the `@midnight-ntwrk`, `@midnightntwrk` and `@openzeppelin` npm scopes.
 
 | Piece | Version |
 |---|---|
 | Compact | 0.35.0 (`debb05f9`), ZKIR v3 = `zkir-3.1.0-rc.1` |
 | compact-runtime / compact-js / ledger-v9 | 0.20.0 / 3.0.0-rc.3 / 1.0.0-rc.5 |
 | midnight-js | 5.0.0-rc.2 |
-| Wallet SDK | 2.0.0-beta.2 (the 2.0.0-rc line cannot sync against indexer 4.4.0-rc.1, which Stagenet runs) |
+| Wallet SDK | 2.0.0-beta.2 (the 2.0.0-rc line cannot sync against indexer 4.4.0-rc.1, which Stagenet runs; Q22) |
 | Local chain | `midnight-node` 2.0.0-rc.4, `indexer-standalone` 4.4.0-rc.1 |
-| Proof servers | `proof-server` 9.0.0-rc.8 for contract circuits (reads ZKIR 3.1) and 9.0.0-rc.6 for wallet DUST spends (the only one whose DUST proofs node 2.0.0-rc.4 accepts) |
+| Proof servers | `proof-server` 9.0.0-rc.8 for contract circuits (reads ZKIR 3.1) and 9.0.0-rc.6 for wallet DUST spends (the only one whose DUST proofs node 2.0.0-rc.4 accepts; Q21) |
 | OpenZeppelin Compact Contracts | 0.4.0-alpha.5 |
 | Node.js | 24 (`node:24-bookworm`, pinned by digest) |
 
-## MIP section → repository path
-
-| MIP section | Implemented / tested in | Status |
-|---|---|---|
-| Event (name, ignore rule) | `packages/codec`, `packages/consumer`, `vectors/` (ignore vectors) | planned (S1) |
-| Payload (layout, the three checks) | `packages/codec`; `vectors/payload/` (A1–A5, R1–R6) | planned (S1) |
-| Payload (Compact emitter) | `packages/compact` (typed builders + pure-circuit alternative); toolchain gate: `test-contracts/toolchain-spike` | spike done (S0); module planned (S2) |
-| Value types | `packages/codec` (strict UTF-8, JSON, RFC 3986 `URI`, integers 1–31 bytes, Null); `vectors/informative/uri/` | planned (S1) |
-| Token identity and authority, Lookup | `packages/consumer` (identity), `packages/midnight` (`tokenType`, mint scanner), `packages/cli` (`index`, `lookup`) | planned (S1, S4) |
-| Keys, Applying records, Common fields, Symbol grouping | `packages/consumer`; `vectors/state/` (S1–S9) | planned (S1) |
-| Publishing | `packages/compact`, `examples/minimal`, `examples/openzeppelin/*`, `packages/cli` (`deploy`, `publish`) | planned (S2–S4) |
-| Consuming | `packages/consumer`, `packages/midnight`, `packages/cli` (`verify`, `list`) | planned (S1, S4) |
-| Limitations | `vectors/payload/` (A2 capacity); `docs/costs.md` | planned (S1, S2) |
-| Backwards Compatibility — Existing contracts | `examples/upgrade-existing-contract`, `docs/upgrade-guide.md` | planned (S6) |
-| Security Considerations | `docs/consumer-guide.md`, [`SECURITY.md`](SECURITY.md) | planned (S4) |
-| Testing (normative vectors) | `vectors/` + runner contract | planned (S1) |
-| Implementation Plan step 3 (public test network) | [`deployments/stagenet/`](deployments/stagenet/README.md) | S0-SPIKE + matrix C01–C10 and IDX run on Stagenet 2026-10-02, each re-checkable wallet-free (S5); upgrade case U1 (S6b) |
-| Every MUST / SHOULD | [`docs/conformance-matrix.md`](docs/conformance-matrix.md) | skeleton (S0) |
-
-## Quickstart (Docker only)
-
-Everything builds and runs in Docker; nothing is installed on the host.
-
-```sh
-docker/run.sh ci                          # npm ci in the pinned image
-docker/run.sh lint typecheck test         # static checks and unit tests
-docker/run.sh check:pins check:mip-pin check:conformance-matrix
-docker/run.sh compile:spike               # Compact 0.35.0 + ZKIR v3, full keys
-
-docker/local-stack/up.sh                  # local undeployed chain (official images)
-. docker/local-stack/ports.env
-MIP0018_DOCKER_NETWORK=$MIP0018_STACK_NETWORK docker/run.sh spike:local
-docker/local-stack/down.sh
-```
-
-Walkthroughs for issuers and consumers come with S4.
+Compiled output (`managed/`: keys, ZKIR, generated JavaScript) is not committed: builds are deterministic, and the
+verifier-key SHA-256 of every measured circuit is in [`docs/costs.json`](docs/costs.json) (Q24).
 
 ## Repository layout
 
 ```
-docker/            pinned toolchain image, run.sh / signer.sh, local-stack/ (official images by digest)
-docs/              conformance matrix; guides and costs (planned)
-packages/          compact, codec, consumer, midnight, cli (planned)
-examples/          minimal, openzeppelin/*, upgrade-existing-contract, publish-and-emit, verify (planned)
-vectors/           normative and informative test vectors (planned, S1)
-test-contracts/    toolchain-spike (S0 gate), raw-emitter (planned, negative cases)
-deployments/       stagenet/ real cases
-tools/             repository checks (pins, MIP hash, conformance matrix)
+docker/            pinned toolchain image, run.sh (wallet-free) / signer.sh (signing), local-stack/ (official images by digest)
+docs/              issuer, consumer and upgrade guides; conformance matrix; costs
+vectors/           67 normative + 34 informative test vectors, JSON Schemas, generator, runner
+packages/          compact (the Compact module), codec, consumer, midnight (chain access, scanner, signer), cli (mip0018)
+examples/          minimal, openzeppelin/*, upgrade-existing-contract, publish-and-emit, verify
+test-contracts/    toolchain-spike (S0 gate), raw-emitter (TEST ONLY: malformed and foreign events), scanner-mints
+deployments/       stagenet/ — 12 recorded cases, each re-checkable wallet-free
+tools/             repository checks (pins, MIP hash, conformance matrix, Markdown links, secrets)
 ```
+
+Question numbers (Qn) refer to the owner decisions recorded while building this repository; each is summarised where
+it is cited.
 
 ## Contributing, security, licence
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) (Docker-only workflow, how to add a note to `MIP-PROPOSAL-NOTES.md`) and [`SECURITY.md`](SECURITY.md) (secrets, untrusted payloads, reporting). Licensed under the [Apache License 2.0](LICENSE).
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) (Docker-only workflow, how to add a note to `MIP-PROPOSAL-NOTES.md`) and
+[`SECURITY.md`](SECURITY.md) (secrets, untrusted payloads, reporting). Licensed under the [Apache License 2.0](LICENSE).
