@@ -30,7 +30,10 @@
     "spike:stagenet": "npm run stagenet -w test-contracts/toolchain-spike --",
     "local:fund": "npm run fund -w test-contracts/toolchain-spike --",
     "spike:check": "npm run check -w test-contracts/toolchain-spike --",
-    "check:secrets": "node tools/secret-scan.mjs --self-test && node tools/secret-scan.mjs --history"
+    "check:secrets": "node tools/secret-scan.mjs --self-test && node tools/secret-scan.mjs --history",
+    "vectors:generate": "npm run generate -w vectors --",
+    "vectors:validate": "npm run validate -w vectors",
+    "vectors:run": "npm run run -w vectors --"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

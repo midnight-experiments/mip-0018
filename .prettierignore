@@ -11,3 +11,5 @@ test-contracts/*/records/
 # Prose is formatted by hand (tables, line breaks).
 *.md
 **/*.md
+# Investigation evidence copied byte-for-byte from the F1 URI research.
+vectors/informative/uri/investigation/
