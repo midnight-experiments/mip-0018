@@ -1,0 +1,231 @@
+{
+  "kind": "mip0018-run-record",
+  "schema": 1,
+  "createdAt": "2026-10-02T09:34:34.447Z",
+  "updatedAt": "2026-10-02T09:36:34.453Z",
+  "network": {
+    "id": "stagenet",
+    "networkId": "stagenet",
+    "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+    "indexer": "https://indexer.stagenet.shielded.tools/api/v4/graphql",
+    "rpc": "https://rpc.stagenet.shielded.tools"
+  },
+  "contract": {
+    "name": "LegacyToken",
+    "managedDir": "examples/upgrade-existing-contract/managed/LegacyToken",
+    "verifierKeySha256": {
+      "mint": "b1dbe2b73135b3e586df2d1377e41c49520c45f4f2ac6581ae1c9b0ce5b3e53d"
+    },
+    "adapter": "examples/upgrade-existing-contract/legacy/mip0018.adapter.ts",
+    "privateStateId": "LegacyToken",
+    "address": "11010832a39954d9ccce48f6b5fce25fc789abb1d700ee45b26b69af3e5dd63b",
+    "constructorArgs": [
+      "0x6d69702d303031383a6578616d706c653a757067726164650000000000000000"
+    ]
+  },
+  "steps": [
+    {
+      "id": "deploy",
+      "kind": "deploy",
+      "args": [
+        "0x6d69702d303031383a6578616d706c653a757067726164650000000000000000"
+      ],
+      "state": "completed",
+      "attempts": [
+        {
+          "at": "2026-10-02T09:34:39.128Z",
+          "event": "submitting bee9d826bfe8256bbd065c69b55ed84f56364b7d29394faf5810b6f5f4a08cbb"
+        },
+        {
+          "at": "2026-10-02T09:34:55.439Z",
+          "event": "node accepted 00da65254288adf02aeb36a363944420466eed78109f359e9feda013eb24275489"
+        },
+        {
+          "at": "2026-10-02T09:34:56.310Z",
+          "event": "midnight-js: SucceedEntirely at block 715403"
+        },
+        {
+          "at": "2026-10-02T09:34:56.818Z",
+          "event": "completed: contract 11010832a39954d9ccce48f6b5fce25fc789abb1d700ee45b26b69af3e5dd63b on chain with mint"
+        }
+      ],
+      "startedAt": "2026-10-02T09:34:37.536Z",
+      "tx": {
+        "hash": "bee9d826bfe8256bbd065c69b55ed84f56364b7d29394faf5810b6f5f4a08cbb",
+        "identifiers": [
+          "009266486c7006da07292e802e55e1f86394004a3aa0e5f38a54a71d4dbf6c4508",
+          "00da65254288adf02aeb36a363944420466eed78109f359e9feda013eb24275489"
+        ],
+        "ttl": "2026-10-02T10:34:37.000Z",
+        "txId": "00da65254288adf02aeb36a363944420466eed78109f359e9feda013eb24275489"
+      },
+      "inclusion": {
+        "height": 715403,
+        "hash": "e32951f0a62d62eedeebba68586d3bda0c90c1d9e232767149ab4f18e8ab9ad6",
+        "status": "SUCCESS",
+        "fee": "1455940559672381"
+      },
+      "observed": {
+        "exists": true,
+        "operations": [
+          "mint"
+        ],
+        "block": {
+          "height": 715403,
+          "hash": "e32951f0a62d62eedeebba68586d3bda0c90c1d9e232767149ab4f18e8ab9ad6"
+        },
+        "txHash": "bee9d826bfe8256bbd065c69b55ed84f56364b7d29394faf5810b6f5f4a08cbb"
+      },
+      "completedAt": "2026-10-02T09:34:56.818Z"
+    },
+    {
+      "id": "mint",
+      "kind": "call",
+      "circuit": "mint",
+      "args": [
+        {
+          "bytes": {
+            "$signer": "coinPublicKey"
+          }
+        },
+        "1000",
+        {
+          "$random": 32
+        }
+      ],
+      "state": "completed",
+      "attempts": [
+        {
+          "at": "2026-10-02T09:35:15.830Z",
+          "event": "submitting 173ad3b6344edc42b9468a42e001cff52dc9fb1136a51a9e3c1275ed6a2b3ad7"
+        },
+        {
+          "at": "2026-10-02T09:35:31.472Z",
+          "event": "node accepted 004873caafa10babd427411616bf1009dd78d9bb1a0afbf0c001d9441402e36fe6"
+        },
+        {
+          "at": "2026-10-02T09:35:32.524Z",
+          "event": "midnight-js: SucceedEntirely at block 715409"
+        },
+        {
+          "at": "2026-10-02T09:35:33.252Z",
+          "event": "completed: 0 expected Misc event(s) observed in 173ad3b6344edc42b9468a42e001cff52dc9fb1136a51a9e3c1275ed6a2b3ad7"
+        }
+      ],
+      "startedAt": "2026-10-02T09:35:07.613Z",
+      "expectedEvents": [],
+      "tx": {
+        "hash": "173ad3b6344edc42b9468a42e001cff52dc9fb1136a51a9e3c1275ed6a2b3ad7",
+        "identifiers": [
+          "00259b67fa4923655e43db81726de63d53fe238f029b940e4bb2e9d7f5c6cf8a27",
+          "0054a100c0c32edde35dfbb965fd46803c99ffefb28ab01dcd9b2923e99c5552d4",
+          "004873caafa10babd427411616bf1009dd78d9bb1a0afbf0c001d9441402e36fe6"
+        ],
+        "ttl": "2026-10-02T10:35:10.000Z",
+        "txId": "004873caafa10babd427411616bf1009dd78d9bb1a0afbf0c001d9441402e36fe6"
+      },
+      "inclusion": {
+        "height": 715409,
+        "hash": "14f1539416be38eb19069e4f79764f63a45792ba252597a19fa7ebd3c7c21314",
+        "status": "SUCCESS",
+        "fee": "218844261128440"
+      },
+      "observed": {
+        "inclusion": {
+          "height": 715409,
+          "hash": "14f1539416be38eb19069e4f79764f63a45792ba252597a19fa7ebd3c7c21314",
+          "status": "SUCCESS",
+          "fee": "218844261128440"
+        },
+        "events": []
+      },
+      "completedAt": "2026-10-02T09:35:33.252Z"
+    },
+    {
+      "id": "wrong-signer:insert",
+      "kind": "verifier-key-insert",
+      "circuit": "publishMetadata",
+      "args": {
+        "slot": "v4",
+        "verifierKeySha256": "2022dbdf1225ef657e010533dfa0fa0ac1496bcd7b31ff4864299fc9633964e9",
+        "key": "from --maintenance-key-file"
+      },
+      "state": "pending",
+      "attempts": [
+        {
+          "at": "2026-10-02T09:36:20.356Z",
+          "event": "refused before submission: this maintenance key is not in the contract's committee (1 key(s)); the node would reject the update — nothing submitted"
+        }
+      ],
+      "startedAt": "2026-10-02T09:36:20.086Z",
+      "observed": {
+        "before": {
+          "keySha256": null,
+          "authority": {
+            "index": -1,
+            "committeeSize": 1,
+            "threshold": 1,
+            "counter": "0",
+            "ok": false
+          }
+        }
+      },
+      "error": "this maintenance key is not in the contract's committee (1 key(s)); the node would reject the update — nothing submitted"
+    },
+    {
+      "id": "wrong-signer-forced:insert",
+      "kind": "verifier-key-insert",
+      "circuit": "publishMetadata",
+      "args": {
+        "slot": "v4",
+        "verifierKeySha256": "2022dbdf1225ef657e010533dfa0fa0ac1496bcd7b31ff4864299fc9633964e9",
+        "key": "from --maintenance-key-file"
+      },
+      "state": "failed",
+      "attempts": [
+        {
+          "at": "2026-10-02T09:36:31.505Z",
+          "event": "--force: submitting although this maintenance key is not in the contract's committee (1 key(s)); the node would reject the update"
+        },
+        {
+          "at": "2026-10-02T09:36:32.694Z",
+          "event": "submitting 1c2be0e245f694865424cf28b7787bde5582ff83dbccbc126b31efa5f4c6bbcb"
+        },
+        {
+          "at": "2026-10-02T09:36:34.453Z",
+          "event": "REJECTED by the node at submission: (FiberFailure) SubmissionError: Transaction submission error <- Fail <- SubmissionError: SubmissionError: Transaction submission error <- SubmissionError: SubmissionError: Transaction submission failed <- RpcError: 1010: Invalid Transaction: Custom error: 135 <- Custom error: 135 <- Transaction subm"
+        }
+      ],
+      "startedAt": "2026-10-02T09:36:31.256Z",
+      "observed": {
+        "before": {
+          "keySha256": null,
+          "authority": {
+            "index": -1,
+            "committeeSize": 1,
+            "threshold": 1,
+            "counter": "0",
+            "ok": false
+          }
+        },
+        "rejectedByNode": "(FiberFailure) SubmissionError: Transaction submission error <- Fail <- SubmissionError: SubmissionError: Transaction submission error <- SubmissionError: SubmissionError: Transaction submission failed <- RpcError: 1010: Invalid Transaction: Custom error: 135 <- Custom error: 135 <- Transaction submission failed <- Transaction submission error",
+        "after": {
+          "keySha256": null,
+          "authorityCounter": "0"
+        }
+      },
+      "tx": {
+        "hash": "1c2be0e245f694865424cf28b7787bde5582ff83dbccbc126b31efa5f4c6bbcb",
+        "identifiers": [
+          "00f6eae7a01e0f98b01749fc6e709b5c4b18ea148b7608d3a6702206387570ec22",
+          "000f45ea412fe552b6572b8bec42bfa7e226427f45f12a553d50b88a41812dee23"
+        ],
+        "ttl": "2026-10-02T10:06:31.000Z"
+      },
+      "error": "(FiberFailure) SubmissionError: Transaction submission error <- Fail <- SubmissionError: SubmissionError: Transaction submission error <- SubmissionError: SubmissionError: Transaction submission failed <- RpcError: 1010: Invalid Transaction: Custom error: 135 <- Custom error: 135 <- Transaction submission failed <- Transaction submission error"
+    }
+  ],
+  "signer": {
+    "unshieldedAddress": "mn_addr_stagenet1vw57646su9y5z6myarm93m6kcn62j97z0yma94lfkhmta6pz5h5q6utr3k"
+  }
+}
