@@ -27,7 +27,8 @@
     "check:conformance-matrix": "node tools/check-conformance-matrix.mjs",
     "compile:spike": "npm run compile -w test-contracts/toolchain-spike --",
     "spike:local": "npm run local -w test-contracts/toolchain-spike --",
-    "spike:stagenet": "npm run stagenet -w test-contracts/toolchain-spike --"
+    "spike:stagenet": "npm run stagenet -w test-contracts/toolchain-spike --",
+    "local:fund": "npm run fund -w test-contracts/toolchain-spike --"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
