@@ -5,7 +5,7 @@ it cannot be tested here.
 
 | | |
 |---|---|
-| MIP text | [`midnightntwrk/midnight-improvement-proposals@78ecbb4b1ba57371e84fe45f705991ab7b996a61` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/78ecbb4b1ba57371e84fe45f705991ab7b996a61/mips/mip-0018-on-chain-token-metadata.md), SHA-256 `b9092746ecf5660496535688a2dea152eb23d932b6eeb6b5a182c23426eec1a1` (linked through [PR #340](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340)) |
+| MIP text | [`midnightntwrk/midnight-improvement-proposals@274a84f221bcfc17e4b73e2c8b32fd8c028ea092` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/274a84f221bcfc17e4b73e2c8b32fd8c028ea092/mips/mip-0018-on-chain-token-metadata.md), SHA-256 `e64fe1429b9f7589077f1323572cf5c3ffa90c7c96690242a9e76d2658058d8b` (linked through [PR #340](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340)) |
 | Rows | 35 (extracted mechanically: every sentence or table row containing MUST or SHOULD, outside code blocks, except the RFC 2119 boilerplate) |
 | Result | **29 covered, 6 not testable here** (C-019, C-022, C-023, C-030, C-031, C-033 — each with its reason) |
 | Changes with the re-pin to `78ecbb4` (S9) | New rows C-006 (URI: non-ASCII MUST be percent-encoded), C-028 (Consuming: zero-extend a short `name`/`payload`) and C-035 (Testing S9: grouping is a SHOULD); reworded C-019 (getter equality at first publication) and C-026 ("or removed after use"); every later row renumbered |

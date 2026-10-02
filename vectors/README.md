@@ -5,7 +5,7 @@ extras, a JSON Schema for each format, an independent generator and a runner any
 
 | | |
 |---|---|
-| MIP text | [`midnightntwrk/midnight-improvement-proposals@78ecbb4b1ba57371e84fe45f705991ab7b996a61` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/78ecbb4b1ba57371e84fe45f705991ab7b996a61/mips/mip-0018-on-chain-token-metadata.md), SHA-256 `b9092746ecf5660496535688a2dea152eb23d932b6eeb6b5a182c23426eec1a1`, under review in [PR #340](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340) |
+| MIP text | [`midnightntwrk/midnight-improvement-proposals@274a84f221bcfc17e4b73e2c8b32fd8c028ea092` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/274a84f221bcfc17e4b73e2c8b32fd8c028ea092/mips/mip-0018-on-chain-token-metadata.md), SHA-256 `e64fe1429b9f7589077f1323572cf5c3ffa90c7c96690242a9e76d2658058d8b`, under review in [PR #340](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340) |
 | Event name | `pad(32, "mip-0018:token-metadata[v1]")` = `6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000` |
 | Vectors | **67 normative** (40 payload, 27 state) and **43 informative** (34 payload, 9 state) — `manifest.json` lists every one |
 | Integrity | `SHA256SUMS` covers every fixture, schema and the manifest (`cd vectors && sha256sum -c SHA256SUMS`) |

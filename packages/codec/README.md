@@ -1,7 +1,7 @@
 # `@mip0018/codec`
 
 Dependency-free TypeScript codec for MIP-0018 `TokenMetadata` events
-([MIP-0018 @ `78ecbb4b`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/78ecbb4b1ba57371e84fe45f705991ab7b996a61/mips/mip-0018-on-chain-token-metadata.md), [PR #340](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340)).
+([MIP-0018 @ `274a84f2`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/274a84f221bcfc17e4b73e2c8b32fd8c028ea092/mips/mip-0018-on-chain-token-metadata.md), [PR #340](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340)).
 It passes every payload vector in `vectors/` (normative and informative). Node ≥ 24 runs the TypeScript sources directly.
 
 ```ts
