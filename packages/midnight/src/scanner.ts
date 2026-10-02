@@ -86,7 +86,9 @@ export interface ScanState {
   colors: Record<string, ColorEntry>;
   /** MIP-0018 events (exact v1 name) per contract address, in chain order. */
   events: Record<string, IndexedEvent[]>;
-  stats: { blocks: number; transactions: number; contractCalls: number; decodeErrors: number; mints: number; events: number };
+  /** Contract deployments seen in the range (address → where). */
+  deploys: Record<string, MintRef>;
+  stats: { blocks: number; transactions: number; contractCalls: number; deploys: number; decodeErrors: number; mints: number; events: number };
   errors: { height: number; txHash: string; message: string }[];
   updatedAt: string;
 }
@@ -133,7 +135,8 @@ export function newState(profile: NetworkProfile, genesisHash: string, fromHeigh
     lastBlock: null,
     colors: {},
     events: {},
-    stats: { blocks: 0, transactions: 0, contractCalls: 0, decodeErrors: 0, mints: 0, events: 0 },
+    deploys: {},
+    stats: { blocks: 0, transactions: 0, contractCalls: 0, deploys: 0, decodeErrors: 0, mints: 0, events: 0 },
     errors: [],
     updatedAt: new Date().toISOString(),
   };
@@ -154,6 +157,11 @@ export function applyBlock(s: ScanState, b: ScannedBlock): { mints: number; even
   let events = 0;
   b.transactions.forEach((tx, txIndex) => {
     s.stats.transactions++;
+    for (const a of tx.contractActions) {
+      if (a.__typename !== 'ContractDeploy') continue;
+      s.deploys[normHex(a.address)] = { height: b.height, blockHash: normHex(b.hash), txHash: normHex(tx.hash) };
+      s.stats.deploys++;
+    }
     if (!tx.contractActions.some((a) => a.__typename === 'ContractCall')) return;
     s.stats.contractCalls++;
     let d;

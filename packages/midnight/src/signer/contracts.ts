@@ -403,7 +403,15 @@ export async function callStep(run: Run, input: CallInput): Promise<StepRecord> 
   const a = run.o.adapter;
   const privateStateId = run.record.contract.privateStateId;
   if (privateStateId !== undefined) run.psp.setContractAddress(address);
-  const privateState = privateStateId !== undefined ? await run.psp.get(privateStateId) : undefined;
+  let privateState = privateStateId !== undefined ? await run.psp.get(privateStateId) : undefined;
+  if (privateStateId !== undefined && (privateState === null || privateState === undefined) && a?.initialPrivateState) {
+    // This signer has no private state for the contract (it did not deploy it): give it its own, as midnight-js
+    // `findDeployedContract({ initialPrivateState })` would. For an Ownable contract that is a different secret,
+    // so the circuit's owner check fails locally and nothing is submitted.
+    privateState = a.initialPrivateState();
+    await run.psp.setFor(address, privateStateId, privateState);
+    run.log('no private state for this contract in this signer\'s file: created a fresh one');
+  }
   const ctx: AdapterContext<unknown> = {
     privateState: privateState ?? undefined,
     coinPublicKey: String(run.o.session.shieldedSecretKeys.coinPublicKey),

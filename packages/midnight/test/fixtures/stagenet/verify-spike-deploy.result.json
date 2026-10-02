@@ -54,8 +54,8 @@
  ],
  "notes": [],
  "indexerTip": {
-  "height": 711186,
-  "hash": "cfd5ace3e799fbef6cda5a8d314e6d9951940c24b6fca60cd148871a1f17d833"
+  "height": 711397,
+  "hash": "e13c7ce18fa81d9be3fe08856b7915e07cf11b7bf2d77246e49cdf55a7a52e78"
  },
  "inclusion": {
   "height": 710806,
@@ -63,7 +63,7 @@
   "status": "SUCCESS",
   "segments": null,
   "nodeBlockHash": "0x0106027fd3da4ea72869185ff3ee98bced160295b440b5d18e56a4fa17018354",
-  "finalizedHeight": 711186,
+  "finalizedHeight": 711397,
   "finalized": true,
   "extrinsicIndex": 3
  },

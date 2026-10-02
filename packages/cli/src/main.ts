@@ -26,6 +26,7 @@ signer (docker/signer.sh; wallet secret from a file):
   wallet register-dust register NIGHT UTxOs for DUST generation
   deploy               deploy a compiled contract (record + before/after checks)
   publish              call an emitting circuit (record + before/after checks)
+  call                 the same for any circuit (e.g. a mint; no event expected unless it logs one)
   remove-circuit       VerifierKeyRemove of a circuit (create-and-destroy)
   deploy-and-publish   compile → deploy → publish → verify an example in one command
 
@@ -49,6 +50,7 @@ export async function main(argv: string[]): Promise<number> {
       case 'wallet':
       case 'deploy':
       case 'publish':
+      case 'call':
       case 'remove-circuit':
       case 'deploy-and-publish': {
         // The signing side loads the wallet SDK and midnight-js only when a signing command runs.
@@ -57,6 +59,7 @@ export async function main(argv: string[]): Promise<number> {
           wallet: s.cmdWallet,
           deploy: s.cmdDeploy,
           publish: s.cmdPublish,
+          call: s.cmdPublish,
           'remove-circuit': s.cmdRemoveCircuit,
           'deploy-and-publish': s.cmdDeployAndPublish,
         }[cmd];

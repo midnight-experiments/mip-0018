@@ -1,0 +1,43 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// TEST-ONLY contract for the mint scanner (S4): mints native tokens so the local end-to-end test can check that
+// `mip0018 index` records every mint with the right (contract, domainSep, kind) and that `mip0018 lookup` resolves
+// the color to the identity's metadata. Unguarded on purpose — never deploy it anywhere but a local test chain.
+// Compile with Compact 0.35.0 and --feature-zkir-v3.
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+export { ContractAddress, Either, UserAddress, ZswapCoinPublicKey, ShieldedCoinInfo };
+
+// keyLen | key | valType | valLen | value
+struct MetadataRecord<#K, #V> {
+  keyLen: Uint<8>;
+  key: Bytes<K>;
+  valType: Uint<8>;
+  valLen: Uint<8>;
+  value: Bytes<V>;
+}
+
+// Mints `amount` of the unshielded token `domainSep` (kind 2) to this contract itself; returns the color.
+export circuit mintUnshielded(domainSep: Bytes<32>, amount: Uint<64>): Bytes<32> {
+  return mintUnshieldedToken(disclose(domainSep), disclose(amount), left<ContractAddress, UserAddress>(kernel.self()));
+}
+
+// Mints `amount` of the shielded token `domainSep` (kind 1) to a user's coin public key.
+export circuit mintShielded(domainSep: Bytes<32>, amount: Uint<64>, nonce: Bytes<32>, recipient: ZswapCoinPublicKey): ShieldedCoinInfo {
+  return mintShieldedToken(disclose(domainSep), disclose(amount), disclose(nonce), left<ZswapCoinPublicKey, ContractAddress>(disclose(recipient)));
+}
+
+// Publishes `symbol` and `decimals` 2 for the identity (domainSep, kind); kind must be 1 or 2 (native).
+export circuit publishMetadata(domainSep: Bytes<32>, kind: Uint<8>, symbol4: Bytes<4>): [] {
+  assert(kind == 1 || kind == 2, "native kinds only");
+  const payload = serialize<[Bytes<32>, Uint<8>, MetadataRecord<6, 4>, MetadataRecord<8, 1>], 256>([
+    disclose(domainSep),
+    disclose(kind),
+    MetadataRecord<6, 4> { keyLen: 6, key: "symbol", valType: 1, valLen: 4, value: disclose(symbol4) },
+    MetadataRecord<8, 1> { keyLen: 8, key: "decimals", valType: 2, valLen: 1, value: (2 as Uint<8>) as Bytes<1> }
+  ]);
+  emit(Misc { name: pad(32, "mip-0018:token-metadata[v1]"), payload: payload });
+}

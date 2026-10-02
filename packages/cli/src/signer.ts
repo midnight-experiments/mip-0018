@@ -8,7 +8,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
-import { verifyEmission, type EventExpectation } from '@mip0018/midnight';
+import { checkIdentity, verifyEmission, type EventExpectation } from '@mip0018/midnight';
 import {
   StepError,
   callStep,
@@ -146,6 +146,7 @@ export async function cmdWallet(argv: string[]): Promise<number> {
   const v = parse(argv.slice(1), { ...SIGNER_OPTIONS, estimate: { type: 'boolean', default: false } }, WALLET_USAGE);
   const log = logger(v);
   const ep = endpoints(v);
+  await checkIdentity(ep.profile);
   const session = await wallet(v, ep, log);
   try {
     if (sub === 'status') {
@@ -216,6 +217,8 @@ async function withRun<T>(v: Values, recordPath: string, src: ContractSource, f:
   const log = logger(v);
   const ep = endpoints(v);
   const ps = privateStatePath(v);
+  // Chain identity first: a wrong network aborts before any wallet is opened or anything is built.
+  await checkIdentity(ep.profile);
   const session = await wallet(v, ep, log);
   try {
     const run = await openRun({

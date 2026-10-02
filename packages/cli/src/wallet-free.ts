@@ -315,6 +315,8 @@ export async function cmdIndex(argv: string[]): Promise<number> {
         .join(', ');
       out(`  ${c.color}  contract ${short(c.contractAddress)}  domainSep ${short(c.domainSep, 6)}  ${kinds}`);
     }
+    out(`deploys (${s.stats.deploys})`);
+    for (const [addr, d] of Object.entries(s.deploys)) out(`  ${addr}  block ${d.height}  tx ${short(d.txHash)}`);
     out(`MIP-0018 events (${s.stats.events})`);
     for (const [addr, evs] of Object.entries(s.events))
       out(`  ${addr}: ${evs.length} (${evs.filter((e) => e.result === 'accept').length} accepted)`);

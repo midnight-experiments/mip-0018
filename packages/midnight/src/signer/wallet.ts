@@ -160,6 +160,8 @@ export const waitForDust = async (session: WalletSession, timeoutMs = 10 * 60_00
 
 export interface PublicIdentity {
   unshieldedAddress: string;
+  /** Shielded coin public key (hex) — public; the recipient of shielded mints. */
+  coinPublicKey: string;
   shieldedAddress: string;
   dustAddress: string;
   /** STAR (1 NIGHT = 10^6 STAR). */
@@ -175,6 +177,7 @@ export const describeWallet = (session: WalletSession, state: FacadeState): Publ
   const nightCoins = state.unshielded.availableCoins.filter((c) => c.utxo.type === night);
   return {
     unshieldedAddress: session.keystore.getBech32Address().asString(),
+    coinPublicKey: String(session.shieldedSecretKeys.coinPublicKey),
     shieldedAddress: MidnightBech32m.encode(session.networkId, state.shielded.address).asString(),
     dustAddress: MidnightBech32m.encode(session.networkId, state.dust.address).asString(),
     night: (state.unshielded.balances[night] ?? 0n).toString(),

@@ -34,14 +34,22 @@
    }
   ]
  },
+ "deploys": {
+  "18097aeb608f35d83a65b2cad987084c97c6e9d1dc02973f2a6f6cc2fcdd76e1": {
+   "height": 710806,
+   "blockHash": "0106027fd3da4ea72869185ff3ee98bced160295b440b5d18e56a4fa17018354",
+   "txHash": "62bd33fd5fe18ca2ddd78922f4685eabac97f4de2418492daf753568cee8b059"
+  }
+ },
  "stats": {
   "blocks": 21,
   "transactions": 3,
   "contractCalls": 1,
+  "deploys": 1,
   "decodeErrors": 0,
   "mints": 0,
   "events": 1
  },
  "errors": [],
- "updatedAt": "2026-10-02T02:33:25.397Z"
+ "updatedAt": "2026-10-02T02:54:31.556Z"
 }
