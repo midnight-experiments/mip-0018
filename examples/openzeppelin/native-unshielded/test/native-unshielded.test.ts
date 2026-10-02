@@ -89,7 +89,7 @@ describe('MyUnshieldedToken (std-lib mintUnshieldedToken + OpenZeppelin Ownable 
       CTOR.symbol_,
       CTOR.decimals_,
     ]);
-    // The contract's own state holds the same values the event carries (read here, off chain).
+    // domainSep and decimals come from the contract state the mints use (_domain, _decimals).
     const ledger = sim.ledger<{ _domain: Uint8Array; _decimals: bigint }>();
     expect(toHex(ledger._domain)).toBe(toHex(DOMAIN));
     expect(ledger._decimals).toBe(BigInt(CTOR.decimals_));
