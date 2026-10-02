@@ -1,0 +1,76 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// A family of native shielded tokens from one contract, built from OpenZeppelin Compact Contracts
+// 0.4.0-alpha.5: `NativeShieldedTokenFamily` (many token types; each call names its 32-byte
+// `domain`) owned with `Ownable`. Every token type shares the family's name, symbol and decimals
+// (OpenZeppelin's "one brand" rule); each domain has its own color `tokenType(domain, <this contract>)`.
+//
+// Compile with Compact 0.35.0, --feature-zkir-v3 and --compact-path <repo>/node_modules
+// (examples/openzeppelin/README.md).
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+import "@openzeppelin/compact-contracts/access/Ownable" prefix Ownable_;
+import "@openzeppelin/compact-contracts/token/NativeShieldedTokenFamily" prefix NativeShieldedTokenFamily_;
+import "@mip0018/compact/src/Mip0018" prefix Mip0018_;
+
+export { Either, ContractAddress, ZswapCoinPublicKey, ShieldedCoinInfo };
+
+constructor(
+  name_: Opaque<"string">,
+  symbol_: Opaque<"string">,
+  decimals_: Uint<8>,
+  initialOwner: Either<Bytes<32>, ContractAddress>
+) {
+  Ownable_initialize(initialOwner);
+  NativeShieldedTokenFamily_initialize(name_, symbol_, decimals_);
+}
+
+export circuit name(): Opaque<"string"> {
+  return NativeShieldedTokenFamily_name();
+}
+
+export circuit symbol(): Opaque<"string"> {
+  return NativeShieldedTokenFamily_symbol();
+}
+
+export circuit decimals(): Uint<8> {
+  return NativeShieldedTokenFamily_decimals();
+}
+
+export circuit tokenColor(domain: Bytes<32>): Bytes<32> {
+  return NativeShieldedTokenFamily_tokenColor(domain);
+}
+
+export circuit mint(domain: Bytes<32>, recipient: ZswapCoinPublicKey, amount: Uint<64>, nonce: Bytes<32>): ShieldedCoinInfo {
+  Ownable_assertOnlyOwner();
+  return NativeShieldedTokenFamily__mint(domain, recipient, amount, nonce);
+}
+
+// MIP-0018 metadata (kind 1). Each domain is its own token identity with its own events: publish
+// once per domain (the same `domain` the mints use, so consumers derive each type's color).
+
+// Call for each domain, e.g. right after deployment. The family's literals, as passed to the
+// constructor; `decimals` is read from the family's state.
+export circuit publishMetadata(domain: Bytes<32>): [] {
+  Ownable_assertOnlyOwner();
+  Mip0018_emitPayload(Mip0018_commonFields<11, 5>(
+    domain, Mip0018_KIND_SHIELDED(), "Acme Medals", "MEDAL", NativeShieldedTokenFamily__decimals));
+}
+
+// Rename one token type: a new 11-byte name and 5-byte symbol for `domain` only; the other types
+// keep their metadata (the family getters keep returning the constructor values).
+export circuit setMetadata(domain: Bytes<32>, newName: Bytes<11>, newSymbol: Bytes<5>): [] {
+  Ownable_assertOnlyOwner();
+  Mip0018_emitPayload(Mip0018_payload2<4, 11, 6, 5>(
+    Mip0018_header(domain, Mip0018_KIND_SHIELDED()),
+    Mip0018_nameRecord<11>(newName),
+    Mip0018_symbolRecord<5>(newSymbol)));
+}
+
+// Withdraw one token type's metadata (tombstone for `domain`); the other types are unchanged.
+export circuit withdrawMetadata(domain: Bytes<32>): [] {
+  Ownable_assertOnlyOwner();
+  Mip0018_emitPayload(Mip0018_tombstone(domain, Mip0018_KIND_SHIELDED()));
+}
