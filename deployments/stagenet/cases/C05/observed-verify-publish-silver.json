@@ -1,0 +1,142 @@
+{
+  "network": {
+    "id": "stagenet",
+    "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+    "indexer": "https://indexer.stagenet.shielded.tools/api/v4/graphql",
+    "rpc": "https://rpc.stagenet.shielded.tools"
+  },
+  "contract": "f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6",
+  "transaction": "a865ad4799b76eb9233affd9dd7da44c460105a7d5566b27bc063c6e11612e44",
+  "outcome": "ok",
+  "exitCode": 0,
+  "events": [
+    {
+      "index": 0,
+      "id": 53464,
+      "contractAddress": "f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6",
+      "name": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+      "payload": "6d69702d303031383a6578616d706c653a66616d696c793a73696c766572000001046e616d65010b41636d65204d6564616c730673796d626f6c01054d4544414c08646563696d616c730201000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "inRawTransaction": true,
+      "segmentApplied": true,
+      "classification": {
+        "result": "accept",
+        "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+        "kind": 1,
+        "records": [
+          {
+            "key": "6e616d65",
+            "keyText": "name",
+            "valType": 1,
+            "value": "41636d65204d6564616c73"
+          },
+          {
+            "key": "73796d626f6c",
+            "keyText": "symbol",
+            "valType": 1,
+            "value": "4d4544414c"
+          },
+          {
+            "key": "646563696d616c73",
+            "keyText": "decimals",
+            "valType": 2,
+            "value": "00",
+            "integer": "0"
+          }
+        ]
+      },
+      "source": {
+        "transactionHash": "a865ad4799b76eb9233affd9dd7da44c460105a7d5566b27bc063c6e11612e44",
+        "logicalSegment": 0,
+        "physicalSegment": 60715,
+        "entryPoint": "publishMetadata"
+      },
+      "expectation": {
+        "ok": true,
+        "differences": []
+      }
+    }
+  ],
+  "checks": [
+    {
+      "id": "identity",
+      "ok": true,
+      "message": "node genesis 0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491 (stagenet)"
+    },
+    {
+      "id": "indexed",
+      "ok": true,
+      "message": "transaction a865ad4799b76eb9233affd9dd7da44c460105a7d5566b27bc063c6e11612e44 in block 714703 (ed1721da135f5cd8bde79ba05b4b4a32bb7fe13dd8cc13b1d0648e8e5c7045ad), SUCCESS"
+    },
+    {
+      "id": "raw-hash",
+      "ok": true,
+      "message": "recomputed hash a865ad4799b76eb9233affd9dd7da44c460105a7d5566b27bc063c6e11612e44"
+    },
+    {
+      "id": "raw-identifiers",
+      "ok": true,
+      "message": "2 identifiers recomputed"
+    },
+    {
+      "id": "event-0-record",
+      "ok": true,
+      "message": "event 53464: bound to f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6 (entry point publishMetadata), misc"
+    },
+    {
+      "id": "event-0-in-raw-tx",
+      "ok": true,
+      "message": "event 53464: equals a log op of the contract in the raw transaction"
+    },
+    {
+      "id": "event-0-segment",
+      "ok": true,
+      "message": "event 53464: its segment applied"
+    },
+    {
+      "id": "completeness",
+      "ok": true,
+      "message": "1 applied Misc log(s) of the contract in the raw transaction, 1 indexed"
+    },
+    {
+      "id": "node-block-hash",
+      "ok": true,
+      "message": "node block 714703 = 0xed1721da135f5cd8bde79ba05b4b4a32bb7fe13dd8cc13b1d0648e8e5c7045ad"
+    },
+    {
+      "id": "node-extrinsic",
+      "ok": true,
+      "message": "raw transaction bytes are extrinsic 3 of block 714703"
+    },
+    {
+      "id": "expect-0",
+      "ok": true,
+      "message": "event 53464 matches the expectation"
+    },
+    {
+      "id": "finalized",
+      "ok": true,
+      "message": "block 714703 ≤ finalized 714713"
+    }
+  ],
+  "notes": [],
+  "indexerTip": {
+    "height": 714713,
+    "hash": "cecc3278b772a2c307efb594eb400f0baecde2a84e73c98607bb58bc3c2f4051"
+  },
+  "inclusion": {
+    "height": 714703,
+    "hash": "ed1721da135f5cd8bde79ba05b4b4a32bb7fe13dd8cc13b1d0648e8e5c7045ad",
+    "status": "SUCCESS",
+    "segments": null,
+    "nodeBlockHash": "0xed1721da135f5cd8bde79ba05b4b4a32bb7fe13dd8cc13b1d0648e8e5c7045ad",
+    "finalizedHeight": 714713,
+    "finalized": true,
+    "extrinsicIndex": 3
+  },
+  "rawTransaction": {
+    "hashRecomputed": "a865ad4799b76eb9233affd9dd7da44c460105a7d5566b27bc063c6e11612e44",
+    "identifiersMatch": true,
+    "miscLogsOfContract": 1,
+    "appliedMiscLogsOfContract": 1
+  }
+}

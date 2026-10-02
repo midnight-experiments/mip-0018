@@ -1,0 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Compile-fail fixture: keyLen is one byte: a 256-byte key is a compile error
+pragma language_version >= 0.26.0;
+import CompactStandardLibrary;
+import "../../src/Mip0018" prefix M_;
+export circuit f(k: Bytes<256>): [] { const r = M_bytesRecord<256, 0>(k, ""); }

@@ -1,0 +1,39 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// MIP-0018 minimal example 3 — PUBLISH ONCE.
+//
+// `publishMetadata()` is not access-controlled but can succeed only once: a ledger flag records
+// that it ran. Its payload is constant, so it does not matter who calls it first. The flag is this
+// contract's own ledger field (do not reuse OpenZeppelin `Initializable` for it: two modules that
+// import the same stateful module share its state, LFDT-Minokawa/compact#270).
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+import "../../../packages/compact/src/Mip0018" prefix Mip0018_;
+import "MinimalToken" prefix Token_;
+
+export { Token_balances };
+
+export sealed ledger domain: Bytes<32>;
+export ledger metadataPublished: Boolean;
+
+constructor(domainSep: Bytes<32>, supply: Uint<64>, holder: Bytes<32>) {
+  domain = disclose(domainSep);
+  Token__mint(holder, supply);
+}
+
+export circuit publishMetadata(): [] {
+  assert(!metadataPublished, "PublishOnce: metadata already published");
+  metadataPublished = true;
+  Mip0018_emitPayload(Mip0018_commonFieldsWithStandards<10, 4, 8>(
+    domain, Mip0018_KIND_LEDGER(), "Acme Token", "ACME", 6, "mip-0004"));
+}
+
+export circuit transfer(to: Bytes<32>, amount: Uint<64>): [] {
+  Token_transfer(to, amount);
+}
+
+export pure circuit accountId(sk: Bytes<32>): Bytes<32> {
+  return Token_accountId(sk);
+}

@@ -1,0 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Compile-fail fixture: keys are 1-255 bytes: an empty key is a compile error
+pragma language_version >= 0.26.0;
+import CompactStandardLibrary;
+import "../../src/Mip0018Pure" prefix P_;
+export circuit f(): [] { P_emitPayload(P_payload1<5, 218>(P_header(pad(32, "a"), 3), P_utf8Record<0, 2, 5>("", "ok"))); }

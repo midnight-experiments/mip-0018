@@ -1,0 +1,103 @@
+{
+  "found": true,
+  "color": "81db4eef83089c5403c6af29d926d57ee6b6359ff7dc291dd19cb4c3e9cf7aa1",
+  "scanned": {
+    "network": "stagenet",
+    "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+    "from": 714485,
+    "to": 715183
+  },
+  "entry": {
+    "color": "81db4eef83089c5403c6af29d926d57ee6b6359ff7dc291dd19cb4c3e9cf7aa1",
+    "contractAddress": "f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6",
+    "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+    "shielded": {
+      "firstMint": {
+        "height": 714683,
+        "blockHash": "3b92c2f06b6e1901d418fd5fd7b7315d3a053b3cc675d73791fd6f486b8c3318",
+        "txHash": "bea96f3da8bc4b205f16f03742ebdcfe735fc1c63ca714d4dd2f666480568734"
+      },
+      "lastMint": {
+        "height": 714683,
+        "blockHash": "3b92c2f06b6e1901d418fd5fd7b7315d3a053b3cc675d73791fd6f486b8c3318",
+        "txHash": "bea96f3da8bc4b205f16f03742ebdcfe735fc1c63ca714d4dd2f666480568734"
+      },
+      "mints": 1,
+      "amount": "3"
+    }
+  },
+  "identities": [
+    {
+      "contractAddress": "f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6",
+      "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+      "kind": 1,
+      "mintedInRange": true
+    }
+  ],
+  "metadataSource": "live indexer at block 715201",
+  "resolved": [
+    {
+      "contractAddress": "f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6",
+      "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+      "kind": 1,
+      "mintedInRange": true,
+      "metadata": {
+        "key": "stagenet|f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6|6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000|1",
+        "network": "stagenet",
+        "contractAddress": "f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6",
+        "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+        "kind": 1,
+        "visible": true,
+        "colored": true,
+        "color": "81db4eef83089c5403c6af29d926d57ee6b6359ff7dc291dd19cb4c3e9cf7aa1",
+        "fields": [
+          {
+            "key": "6e616d65",
+            "valType": 1,
+            "value": "41636d65204d6564616c73",
+            "setAt": {
+              "block": "714696",
+              "tx": 24260,
+              "event": 53462,
+              "record": 0
+            },
+            "keyHex": "6e616d65",
+            "usable": true
+          },
+          {
+            "key": "73796d626f6c",
+            "valType": 1,
+            "value": "4d4544414c",
+            "setAt": {
+              "block": "714696",
+              "tx": 24260,
+              "event": 53462,
+              "record": 1
+            },
+            "keyHex": "73796d626f6c",
+            "usable": true
+          },
+          {
+            "key": "646563696d616c73",
+            "valType": 2,
+            "value": "00",
+            "setAt": {
+              "block": "714696",
+              "tx": 24260,
+              "event": 53462,
+              "record": 2
+            },
+            "integer": "0",
+            "keyHex": "646563696d616c73",
+            "usable": true
+          }
+        ],
+        "common": {
+          "name": "Acme Medals",
+          "symbol": "MEDAL",
+          "decimals": "0"
+        }
+      }
+    }
+  ]
+}

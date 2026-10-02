@@ -1,0 +1,24 @@
+{
+  "name": "@mip0018/raw-emitter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TEST-ONLY, NOT FOR PRODUCTION: owner-gated emitter of arbitrary Misc names and payloads (MIP-0018 negative, ignore and capacity cases on a test network).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "compile": "node scripts/compile.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "0.20.0",
+    "@openzeppelin/compact-contracts": "0.4.0-alpha.5"
+  },
+  "devDependencies": {
+    "@mip0018/codec": "0.1.0",
+    "@mip0018/compact": "0.1.0",
+    "@mip0018/midnight": "0.1.0",
+    "@types/node": "24.19.1",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  }
+}

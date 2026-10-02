@@ -1,0 +1,63 @@
+{
+  "kind": "mip0018-run-record",
+  "schema": 1,
+  "createdAt": "2026-10-02T09:06:38.249Z",
+  "updatedAt": "2026-10-02T09:07:13.766Z",
+  "network": {
+    "id": "stagenet",
+    "networkId": "stagenet",
+    "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+    "indexer": "https://indexer.stagenet.shielded.tools/api/v4/graphql",
+    "rpc": "https://rpc.stagenet.shielded.tools"
+  },
+  "contract": {
+    "name": "MyFungibleToken",
+    "managedDir": "examples/openzeppelin/fungible-token/managed/MyFungibleToken",
+    "verifierKeySha256": {
+      "balanceOf": "1314444ccfea9eae6918d9b35a3fb9ba23f50b2a30b7171fb3e24a9959b26391",
+      "burn": "fd37e5b4c1a4b04cfbae6a4098dc30a9831b3e713db4d5da412e8d0decc28a04",
+      "decimals": "3cfdfb97570b6be4895e2c940e2764659649a713cd33c09f599e9284d8ebc289",
+      "mint": "a0846beaa9e5ff39340ec47d21c1421e7d8041a989d0f082c87b4e4631b7f522",
+      "name": "57d6b70ed940d572c220d32083e0fd08ca8eea823db81c7632e578176f8b18fa",
+      "publishMetadata": "3c6788f63c279f2834b19254ae08587edb4dc1d2b7c16c66b7f7ba71c187afe8",
+      "setMetadata": "8bbb2b530b02210c89a5aa864c69067898d94ff2e71422482bb1d9ea739da5a1",
+      "symbol": "da26d654e5ff20109bb45901865f21c81fc0544a51d48cb00eedad3debe80028",
+      "transfer": "1f323d72002f82ba313e8a3c5c5cef7f918e85de4846d74f81cd3bf18eda7ea8",
+      "withdrawMetadata": "2afc8405891608f0ca518ac8509d376d8673d878cbcd1ed5e1472a56d5561b1c"
+    },
+    "adapter": "examples/openzeppelin/fungible-token/mip0018.adapter.ts",
+    "address": "98a90519419e2ebb514b7c6ce87ee7f6f4f9753d9ee6f533c5d1c25b9d437dcf",
+    "attached": {
+      "from": "deployments/stagenet/cases/C01/record.json",
+      "at": "2026-10-02T09:06:41.277Z"
+    },
+    "privateStateId": "MyFungibleToken"
+  },
+  "steps": [
+    {
+      "id": "non-owner-set-metadata",
+      "kind": "call",
+      "circuit": "setMetadata",
+      "args": [
+        {
+          "$utf8": "Evil Gold"
+        },
+        {
+          "$utf8": "EVIL"
+        }
+      ],
+      "state": "pending",
+      "attempts": [
+        {
+          "at": "2026-10-02T09:07:13.766Z",
+          "event": "refused before submission: Error: Unexpected error executing scoped transaction '<unnamed>': Error: failed assert: Ownable: caller is not the owner"
+        }
+      ],
+      "startedAt": "2026-10-02T09:06:41.278Z",
+      "error": "Error: Unexpected error executing scoped transaction '<unnamed>': Error: failed assert: Ownable: caller is not the owner"
+    }
+  ],
+  "signer": {
+    "unshieldedAddress": "mn_addr_stagenet1vmwmprvxd0m7uet2dtasq24rl2u2xecmkss3x5zndvm9vglea40qqgdz2d"
+  }
+}

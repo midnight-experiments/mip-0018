@@ -1,0 +1,59 @@
+{
+  "name": "mip-0018",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Reference implementation of MIP-0018 (on-chain token metadata): vectors, Compact module, examples, scripts and Stagenet cases",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24.21.0 <25"
+  },
+  "workspaces": [
+    "packages/*",
+    "examples/*",
+    "examples/openzeppelin/*",
+    "test-contracts/*",
+    "vectors"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "compile": "npm run compile --workspaces --if-present",
+    "test": "vitest run",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "check:pins": "node tools/check-pins.mjs",
+    "check:mip-pin": "node tools/check-mip-pin.mjs",
+    "check:conformance-matrix": "node tools/check-conformance-matrix.mjs",
+    "check:md-links": "node tools/check-md-links.mjs",
+    "check:example-readmes": "npm run -s check:readmes -w examples/openzeppelin",
+    "compile:spike": "npm run compile -w test-contracts/toolchain-spike --",
+    "spike:local": "npm run local -w test-contracts/toolchain-spike --",
+    "spike:stagenet": "npm run stagenet -w test-contracts/toolchain-spike --",
+    "local:fund": "npm run fund -w test-contracts/toolchain-spike --",
+    "spike:check": "npm run check -w test-contracts/toolchain-spike --",
+    "check:secrets": "node tools/secret-scan.mjs --self-test && node tools/secret-scan.mjs --history",
+    "vectors:generate": "npm run generate -w vectors --",
+    "vectors:validate": "npm run validate -w vectors",
+    "vectors:run": "npm run run -w vectors --",
+    "mip0018": "node packages/cli/bin/mip0018.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@scure/bip39": "2.4.0",
+    "@types/node": "24.19.1",
+    "eslint": "10.11.0",
+    "globals": "17.13.0",
+    "prettier": "3.9.9",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.0",
+    "vitest": "5.0.3"
+  },
+  "overrides": {
+    "@midnight-ntwrk/compact-runtime": "0.20.0",
+    "@midnightntwrk/onchain-runtime-v4": "4.0.0-rc.3",
+    "@midnightntwrk/ledger-v9": "1.0.0-rc.5",
+    "@midnightntwrk/wallet-sdk-address-format": "4.0.0-beta.2"
+  }
+}

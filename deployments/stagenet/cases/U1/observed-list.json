@@ -1,0 +1,118 @@
+{
+  "network": {
+    "id": "stagenet",
+    "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+    "indexer": "https://indexer.stagenet.shielded.tools/api/v4/graphql"
+  },
+  "contract": "11010832a39954d9ccce48f6b5fce25fc789abb1d700ee45b26b69af3e5dd63b",
+  "snapshot": {
+    "indexerTip": {
+      "height": 715437,
+      "hash": "df01f799f625a97875dd2a1bcfb5ec1bb07f71fc44615f284a495eaa1285a09f"
+    },
+    "toBlock": 715437,
+    "nodeHashAtTip": "0xdf01f799f625a97875dd2a1bcfb5ec1bb07f71fc44615f284a495eaa1285a09f",
+    "tipMatchesNode": true,
+    "finalizedHeight": 715437
+  },
+  "pages": 2,
+  "counts": {
+    "events": 1,
+    "accepted": 1,
+    "rejected": 0,
+    "ignored": 0
+  },
+  "events": [
+    {
+      "id": 53568,
+      "block": {
+        "height": 715433,
+        "hash": "6f367590a54a633d59cd1280e39dbc5b5db26933e5b015097227ba722f722fce"
+      },
+      "txHash": "884cc30b3079e56fc6dafc4a540f535c90982ff8a46add508b28be3db4c85124",
+      "txId": 24315,
+      "result": "accept",
+      "identity": "stagenet|11010832a39954d9ccce48f6b5fce25fc789abb1d700ee45b26b69af3e5dd63b|6d69702d303031383a6578616d706c653a757067726164650000000000000000|1",
+      "domainSep": "6d69702d303031383a6578616d706c653a757067726164650000000000000000",
+      "kind": 1,
+      "records": 3
+    }
+  ],
+  "identities": [
+    {
+      "key": "stagenet|11010832a39954d9ccce48f6b5fce25fc789abb1d700ee45b26b69af3e5dd63b|6d69702d303031383a6578616d706c653a757067726164650000000000000000|1",
+      "network": "stagenet",
+      "contractAddress": "11010832a39954d9ccce48f6b5fce25fc789abb1d700ee45b26b69af3e5dd63b",
+      "domainSep": "6d69702d303031383a6578616d706c653a757067726164650000000000000000",
+      "kind": 1,
+      "visible": true,
+      "colored": true,
+      "color": "89a5559202e2d7c111150d84bbcae4c4beb56733373e1935ac74ce565f17ffb0",
+      "fields": [
+        {
+          "key": "6e616d65",
+          "valType": 1,
+          "value": "4c656761637920546f6b656e",
+          "setAt": {
+            "block": "715433",
+            "tx": 24315,
+            "event": 53568,
+            "record": 0
+          },
+          "keyHex": "6e616d65",
+          "usable": true
+        },
+        {
+          "key": "73796d626f6c",
+          "valType": 1,
+          "value": "4c474359",
+          "setAt": {
+            "block": "715433",
+            "tx": 24315,
+            "event": 53568,
+            "record": 1
+          },
+          "keyHex": "73796d626f6c",
+          "usable": true
+        },
+        {
+          "key": "646563696d616c73",
+          "valType": 2,
+          "value": "06",
+          "setAt": {
+            "block": "715433",
+            "tx": 24315,
+            "event": 53568,
+            "record": 2
+          },
+          "integer": "6",
+          "keyHex": "646563696d616c73",
+          "usable": true
+        }
+      ],
+      "common": {
+        "name": "Legacy Token",
+        "symbol": "LGCY",
+        "decimals": "6"
+      }
+    }
+  ],
+  "groups": [
+    {
+      "network": "stagenet",
+      "contractAddress": "11010832a39954d9ccce48f6b5fce25fc789abb1d700ee45b26b69af3e5dd63b",
+      "symbol": "4c474359",
+      "members": [
+        {
+          "domainSep": "6d69702d303031383a6578616d706c653a757067726164650000000000000000",
+          "kind": 1,
+          "key": "stagenet|11010832a39954d9ccce48f6b5fce25fc789abb1d700ee45b26b69af3e5dd63b|6d69702d303031383a6578616d706c653a757067726164650000000000000000|1"
+        }
+      ]
+    }
+  ],
+  "expectation": {
+    "ok": true,
+    "differences": []
+  }
+}

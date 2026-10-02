@@ -1,0 +1,77 @@
+# CI: everything runs in the pinned toolchain image (docker/Dockerfile); no chain, no secrets.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MIP0018_IMAGE: mip0018-toolchain:ci
+  MIP0018_DOCKER_PREFIX: mip0018-ci
+
+jobs:
+  build-test:
+    name: build, lint, typecheck, test, compile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # the secret scan reads the whole history
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build the toolchain image (cached)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: docker
+          file: docker/Dockerfile
+          tags: ${{ env.MIP0018_IMAGE }}
+          load: true
+          cache-from: type=gha,scope=toolchain
+          cache-to: type=gha,scope=toolchain,mode=max
+      - name: Compact version
+        run: docker/run.sh exec 'compact compile --version && compact compile --language-version && compact compile --feature-zkir-v3 --ledger-version'
+      - name: npm ci
+        run: docker/run.sh ci
+      - name: Lint
+        run: docker/run.sh lint
+      - name: Typecheck
+        run: docker/run.sh typecheck
+      - name: Unit tests
+        run: docker/run.sh test
+      - name: Official binaries only
+        run: docker/run.sh check:pins
+      - name: Secret scan (tracked files and history, with positive controls)
+        run: docker/run.sh check:secrets
+      - name: Conformance matrix covers every MUST/SHOULD of the pinned MIP
+        run: docker/run.sh check:conformance-matrix
+      - name: Relative links and anchors in the Markdown files resolve
+        run: docker/run.sh check:md-links
+      - name: Compile the toolchain spike (Compact 0.35.0, ZKIR v3)
+        run: docker/run.sh compile:spike -- --skip-zk
+
+  mip-pin:
+    name: pinned MIP text hash
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build the toolchain image (cached)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: docker
+          file: docker/Dockerfile
+          tags: ${{ env.MIP0018_IMAGE }}
+          load: true
+          cache-from: type=gha,scope=toolchain
+      - name: Check the MIP-0018 text at the pinned commit (toolchain.json) and that README, notes, vectors and schemas cite the same pin
+        run: docker/run.sh check:mip-pin

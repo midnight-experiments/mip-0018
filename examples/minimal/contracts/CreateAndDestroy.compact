@@ -1,0 +1,42 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// MIP-0018 minimal example 1 — CREATE AND DESTROY (owner decision Q4).
+//
+// `publishMetadata()` is NOT access-controlled. The deployer calls it once right after deployment
+// and then removes its verifier key with a maintenance `VerifierKeyRemove`, so it can never be
+// called again. Its payload is a constant (literals + the sealed `domain`), so until the key is
+// removed the worst anyone else can do is re-emit exactly the same metadata at their own cost.
+// Never give an unguarded circuit runtime parameters: whoever calls it could publish anything.
+//
+// Token: a tiny ledger token (kind 3) whose whole supply is credited to `holder` at deployment.
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+import "../../../packages/compact/src/Mip0018" prefix Mip0018_;  // (1) the module
+import "MinimalToken" prefix Token_;
+
+export { Token_balances };
+
+/** The token's domainSep, fixed at deployment. */
+export sealed ledger domain: Bytes<32>;
+
+constructor(domainSep: Bytes<32>, supply: Uint<64>, holder: Bytes<32>) {
+  domain = disclose(domainSep);
+  Token__mint(holder, supply);
+}
+
+// (2) The metadata, emitted once. MIP Appendix A values: name, symbol, decimals, standards.
+export circuit publishMetadata(): [] {
+  Mip0018_emitPayload(Mip0018_commonFieldsWithStandards<10, 4, 8>(
+    domain, Mip0018_KIND_LEDGER(), "Acme Token", "ACME", 6, "mip-0004"));
+}
+
+// Normal token operation: never emits metadata.
+export circuit transfer(to: Bytes<32>, amount: Uint<64>): [] {
+  Token_transfer(to, amount);
+}
+
+export pure circuit accountId(sk: Bytes<32>): Bytes<32> {
+  return Token_accountId(sk);
+}

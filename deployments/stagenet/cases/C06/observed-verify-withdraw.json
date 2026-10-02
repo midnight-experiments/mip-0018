@@ -1,0 +1,129 @@
+{
+  "network": {
+    "id": "stagenet",
+    "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+    "indexer": "https://indexer.stagenet.shielded.tools/api/v4/graphql",
+    "rpc": "https://rpc.stagenet.shielded.tools"
+  },
+  "contract": "9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3",
+  "transaction": "35858a38a3f507ce06b0e878b79d5b3e183a2bc73cac04e1b193ca5b4712a8d6",
+  "outcome": "ok",
+  "exitCode": 0,
+  "events": [
+    {
+      "index": 0,
+      "id": 53485,
+      "contractAddress": "9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3",
+      "name": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+      "payload": "111111111111111111111111111111111111111111111111111111111111111103046e616d650500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "inRawTransaction": true,
+      "segmentApplied": true,
+      "classification": {
+        "result": "accept",
+        "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+        "kind": 3,
+        "records": [
+          {
+            "key": "6e616d65",
+            "keyText": "name",
+            "valType": 5,
+            "value": ""
+          }
+        ]
+      },
+      "source": {
+        "transactionHash": "35858a38a3f507ce06b0e878b79d5b3e183a2bc73cac04e1b193ca5b4712a8d6",
+        "logicalSegment": 0,
+        "physicalSegment": 19336,
+        "entryPoint": "withdrawMetadata"
+      },
+      "expectation": {
+        "ok": true,
+        "differences": []
+      }
+    }
+  ],
+  "checks": [
+    {
+      "id": "identity",
+      "ok": true,
+      "message": "node genesis 0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491 (stagenet)"
+    },
+    {
+      "id": "indexed",
+      "ok": true,
+      "message": "transaction 35858a38a3f507ce06b0e878b79d5b3e183a2bc73cac04e1b193ca5b4712a8d6 in block 714813 (ab2e8a0400a3610a2f36dbbe221507bd661e09724d13a96af569f41dc4f3637b), SUCCESS"
+    },
+    {
+      "id": "raw-hash",
+      "ok": true,
+      "message": "recomputed hash 35858a38a3f507ce06b0e878b79d5b3e183a2bc73cac04e1b193ca5b4712a8d6"
+    },
+    {
+      "id": "raw-identifiers",
+      "ok": true,
+      "message": "2 identifiers recomputed"
+    },
+    {
+      "id": "event-0-record",
+      "ok": true,
+      "message": "event 53485: bound to 9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3 (entry point withdrawMetadata), misc"
+    },
+    {
+      "id": "event-0-in-raw-tx",
+      "ok": true,
+      "message": "event 53485: equals a log op of the contract in the raw transaction"
+    },
+    {
+      "id": "event-0-segment",
+      "ok": true,
+      "message": "event 53485: its segment applied"
+    },
+    {
+      "id": "completeness",
+      "ok": true,
+      "message": "1 applied Misc log(s) of the contract in the raw transaction, 1 indexed"
+    },
+    {
+      "id": "node-block-hash",
+      "ok": true,
+      "message": "node block 714813 = 0xab2e8a0400a3610a2f36dbbe221507bd661e09724d13a96af569f41dc4f3637b"
+    },
+    {
+      "id": "node-extrinsic",
+      "ok": true,
+      "message": "raw transaction bytes are extrinsic 3 of block 714813"
+    },
+    {
+      "id": "expect-0",
+      "ok": true,
+      "message": "event 53485 matches the expectation"
+    },
+    {
+      "id": "finalized",
+      "ok": true,
+      "message": "block 714813 ≤ finalized 714819"
+    }
+  ],
+  "notes": [],
+  "indexerTip": {
+    "height": 714819,
+    "hash": "e59fba4e9639a277da79fc29d9c2f32de0bcaae3168987be8485b1251dcff660"
+  },
+  "inclusion": {
+    "height": 714813,
+    "hash": "ab2e8a0400a3610a2f36dbbe221507bd661e09724d13a96af569f41dc4f3637b",
+    "status": "SUCCESS",
+    "segments": null,
+    "nodeBlockHash": "0xab2e8a0400a3610a2f36dbbe221507bd661e09724d13a96af569f41dc4f3637b",
+    "finalizedHeight": 714819,
+    "finalized": true,
+    "extrinsicIndex": 3
+  },
+  "rawTransaction": {
+    "hashRecomputed": "35858a38a3f507ce06b0e878b79d5b3e183a2bc73cac04e1b193ca5b4712a8d6",
+    "identifiersMatch": true,
+    "miscLogsOfContract": 1,
+    "appliedMiscLogsOfContract": 1
+  }
+}

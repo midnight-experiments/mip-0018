@@ -1,0 +1,59 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// A native unshielded token (unshielded UTXOs, MIP-0014 shape) owned with OpenZeppelin `Ownable`
+// (OpenZeppelin Compact Contracts 0.4.0-alpha.5).
+//
+// OpenZeppelin 0.4.0-alpha.5 has NO native unshielded token module, so the token part calls the
+// Compact standard library's `mintUnshieldedToken` directly, in the style of OpenZeppelin's
+// `NativeShieldedToken`: one token type whose domain separator and metadata are fixed at
+// construction. Every UTXO it mints has the color `tokenType(_domain, <this contract>)`.
+//
+// Compile with Compact 0.35.0, --feature-zkir-v3 and --compact-path <repo>/node_modules
+// (examples/openzeppelin/README.md).
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+import "@openzeppelin/compact-contracts/access/Ownable" prefix Ownable_;
+
+export { Either, ContractAddress, UserAddress };
+
+export sealed ledger _domain: Bytes<32>;
+export sealed ledger _name: Opaque<"string">;
+export sealed ledger _symbol: Opaque<"string">;
+export sealed ledger _decimals: Uint<8>;
+
+constructor(
+  domainSep: Bytes<32>,
+  name_: Opaque<"string">,
+  symbol_: Opaque<"string">,
+  decimals_: Uint<8>,
+  initialOwner: Either<Bytes<32>, ContractAddress>
+) {
+  Ownable_initialize(initialOwner);
+  _domain = disclose(domainSep);
+  _name = disclose(name_);
+  _symbol = disclose(symbol_);
+  _decimals = disclose(decimals_);
+}
+
+export circuit name(): Opaque<"string"> {
+  return _name;
+}
+
+export circuit symbol(): Opaque<"string"> {
+  return _symbol;
+}
+
+export circuit decimals(): Uint<8> {
+  return _decimals;
+}
+
+export circuit tokenColor(): Bytes<32> {
+  return tokenType(_domain, kernel.self());
+}
+
+export circuit mint(recipient: UserAddress, amount: Uint<64>): Bytes<32> {
+  Ownable_assertOnlyOwner();
+  return mintUnshieldedToken(_domain, disclose(amount), right<ContractAddress, UserAddress>(disclose(recipient)));
+}

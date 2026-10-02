@@ -1,0 +1,88 @@
+{
+  "kind": "mip0018-case",
+  "schema": 1,
+  "id": "C09",
+  "title": "Access control: wallet 2 calls C01's owner-only setMetadata",
+  "demonstrates": "OpenZeppelin Ownable guards the metadata circuits: a non-owner cannot rename the token; the call fails while the transaction is being built, so nothing is submitted or paid.",
+  "conclusion": "the publish command exits 1 (refused before submission: 'Ownable: caller is not the owner'); the record step has no transaction; C01's contract still lists exactly C01's expected state.",
+  "mip": {
+    "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
+    "eventName": "mip-0018:token-metadata[v1]"
+  },
+  "source": {
+    "example": "examples/openzeppelin/fungible-token",
+    "contractOf": "C01"
+  },
+  "dependsOn": [
+    "C01"
+  ],
+  "notes": [
+    "wallet 2 signs with its OWN private-state file: OpenZeppelin Ownable checks the caller's secret (witness), not the wallet; with wallet 1's private-state file it would be the owner.",
+    "`--attach @{out:C01}/record.json` starts this case's own record for C01's contract (C01's record is not touched)."
+  ],
+  "placeholders": {
+    "{net}": "network options (Stagenet: --network stagenet)",
+    "{signer}": "wallet 1's signer options (mnemonic file, wallet cache)",
+    "{signer2}": "wallet 2's signer options, with its OWN private-state file",
+    "{case}": "this case folder",
+    "{out}": "where records and observations are written (Stagenet: this case folder)",
+    "{out:<ID>}": "another case's output folder"
+  },
+  "steps": [
+    {
+      "id": "non-owner-set-metadata",
+      "runner": "signer",
+      "wallet": "wallet2",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer2}",
+        "--example",
+        "fungible-token",
+        "--attach",
+        "@{out:C01}/record.json",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "setMetadata",
+        "--args",
+        "[{\"$utf8\":\"Evil Gold\"},{\"$utf8\":\"EVIL\"}]",
+        "--step",
+        "non-owner-set-metadata"
+      ],
+      "expectExit": 1,
+      "expectOutput": "caller is not the owner",
+      "note": "expected to fail before submission (exit 1); the record keeps the attempt (state pending, no transaction)"
+    },
+    {
+      "id": "list",
+      "runner": "wallet-free",
+      "argv": [
+        "list",
+        "{net}",
+        "--record",
+        "{out:C01}/record.json",
+        "--expect",
+        "@{case}/expected.json",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "observed-list.json"
+    }
+  ],
+  "expected": "expected.json",
+  "recheck": {
+    "noTransaction": [
+      {
+        "record": "record.json",
+        "step": "non-owner-set-metadata"
+      }
+    ],
+    "list": [
+      {
+        "record": "../C01/record.json",
+        "expect": "expected.json"
+      }
+    ]
+  }
+}

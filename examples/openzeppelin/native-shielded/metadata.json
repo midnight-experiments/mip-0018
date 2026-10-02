@@ -1,0 +1,231 @@
+{
+  "$comment": "MIP-0018 metadata of examples/openzeppelin/native-shielded: what to deploy and publish, the exact payload of every event, and what a conforming consumer concludes. Format: examples/openzeppelin/README.md#metadatajson. Checked against the contract by test/native-shielded.test.ts.",
+  "example": "native-shielded",
+  "mip": {
+    "commit": "78ecbb4b1ba57371e84fe45f705991ab7b996a61",
+    "eventName": "mip-0018:token-metadata[v1]"
+  },
+  "contract": {
+    "source": "contracts/MyShieldedToken.compact",
+    "withoutMetadata": "contracts/without-metadata/MyShieldedToken.compact",
+    "openzeppelin": "@openzeppelin/compact-contracts@0.4.0-alpha.5 (access/Ownable, token/NativeShieldedToken)",
+    "constructorArgs": {
+      "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+      "name_": "Acme Shield",
+      "symbol_": "ASHD",
+      "decimals_": 6,
+      "initialOwner": "left(<the deployer's Ownable account id = persistentHash([secretKey])>)"
+    }
+  },
+  "identities": [
+    {
+      "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+      "kind": 1,
+      "name": "Acme Shield",
+      "symbol": "ASHD",
+      "decimals": 6
+    }
+  ],
+  "steps": [
+    {
+      "id": "mint",
+      "circuit": "mint",
+      "args": {
+        "recipient": "<the holder's Zswap coin public key>",
+        "amount": "1000000",
+        "nonce": "<32 fresh random bytes>"
+      },
+      "caller": "owner",
+      "events": [],
+      "mints": [
+        {
+          "kind": 1,
+          "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+          "amount": "1000000"
+        }
+      ]
+    },
+    {
+      "id": "publish",
+      "circuit": "publishMetadata",
+      "args": {},
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+          "kind": 1,
+          "name": "Acme Shield",
+          "symbol": "ASHD",
+          "decimals": 6,
+          "payload": "6d69702d303031383a6578616d706c653a736869656c6465640000000000000001046e616d65010b41636d6520536869656c640673796d626f6c01044153484408646563696d616c73020106000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    }
+  ],
+  "expected": {
+    "identities": [
+      {
+        "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+        "kind": 1,
+        "visible": true,
+        "colored": true,
+        "common": {
+          "name": "Acme Shield",
+          "symbol": "ASHD",
+          "decimals": 6
+        }
+      }
+    ],
+    "groups": [
+      {
+        "symbol": "ASHD",
+        "members": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+            "kind": 1
+          }
+        ]
+      }
+    ]
+  },
+  "lifecycle": [
+    {
+      "id": "rename",
+      "circuit": "setMetadata",
+      "args": {
+        "newName": "Acme Secret",
+        "newSymbol": "ASEC"
+      },
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+          "kind": 1,
+          "name": "Acme Secret",
+          "symbol": "ASEC",
+          "payload": "6d69702d303031383a6578616d706c653a736869656c6465640000000000000001046e616d65010b41636d65205365637265740673796d626f6c010441534543000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expected": {
+        "identities": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+            "kind": 1,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Acme Secret",
+              "symbol": "ASEC",
+              "decimals": 6
+            }
+          }
+        ],
+        "groups": [
+          {
+            "symbol": "ASEC",
+            "members": [
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+                "kind": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "withdraw",
+      "circuit": "withdrawMetadata",
+      "args": {},
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+          "kind": 1,
+          "tombstone": true,
+          "payload": "6d69702d303031383a6578616d706c653a736869656c6465640000000000000001046e616d650500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expected": {
+        "identities": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+            "kind": 1,
+            "visible": false,
+            "colored": true,
+            "common": {}
+          }
+        ],
+        "groups": []
+      }
+    },
+    {
+      "id": "withdraw-again",
+      "circuit": "withdrawMetadata",
+      "args": {},
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+          "kind": 1,
+          "tombstone": true,
+          "payload": "6d69702d303031383a6578616d706c653a736869656c6465640000000000000001046e616d650500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expected": {
+        "identities": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+            "kind": 1,
+            "visible": false,
+            "colored": true,
+            "common": {}
+          }
+        ],
+        "groups": []
+      }
+    },
+    {
+      "id": "revive",
+      "circuit": "publishMetadata",
+      "args": {},
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+          "kind": 1,
+          "name": "Acme Shield",
+          "symbol": "ASHD",
+          "decimals": 6,
+          "payload": "6d69702d303031383a6578616d706c653a736869656c6465640000000000000001046e616d65010b41636d6520536869656c640673796d626f6c01044153484408646563696d616c73020106000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expected": {
+        "identities": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+            "kind": 1,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Acme Shield",
+              "symbol": "ASHD",
+              "decimals": 6
+            }
+          }
+        ],
+        "groups": [
+          {
+            "symbol": "ASHD",
+            "members": [
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+                "kind": 1
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

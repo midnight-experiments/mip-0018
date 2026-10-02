@@ -1,0 +1,56 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// MIP-0018 upgrade template — the EXISTING contract ("legacy").
+//
+// A native shielded token (MIP-0018 kind 1) as it might have been deployed before MIP-0018: an owner
+// (account id = hash of a secret held in the owner's private state) mints coins of the color
+// `tokenType(domain, <this contract>)`. It has NO MIP-0018 circuit. It was deployed with a
+// maintenance authority (midnight-js `deployContract({ signingKey })`), and that is all
+// `../upgrade/` needs to add `publishMetadata()` later with a `VerifierKeyInsert` — same address,
+// same `domainSep`, same color, same coins.
+//
+// Do not change the ledger declarations below once deployed: the upgrade source repeats them
+// verbatim (Compact assigns ledger state paths by declaration order), and
+// `scripts/check-layout.ts` compares the two field by field.
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+export { ZswapCoinPublicKey, ContractAddress, Either, ShieldedCoinInfo };
+
+// ---- ledger layout (an upgrade source must declare exactly these fields, in this order) ----
+/** The token's domain separator: color = tokenType(domain, this contract's address). */
+export sealed ledger domain: Bytes<32>;
+/** The owner's account id (see ownerId). */
+export ledger owner: Bytes<32>;
+/** Everything ever minted (base units). */
+export ledger totalMinted: Uint<128>;
+/** Number of mint calls. */
+export ledger mintCount: Counter;
+// ---- end of ledger layout ----
+
+/** The caller's secret (the owner's private state); never leaves the caller's machine. */
+witness ownerSecret(): Bytes<32>;
+
+/** Account id of a secret: persistentHash(["legacy-token:owner", secret]). */
+export pure circuit ownerId(secret: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<2, Bytes<32>>>([pad(32, "legacy-token:owner"), secret]);
+}
+
+constructor(domainSep: Bytes<32>, initialOwner: Bytes<32>) {
+  domain = disclose(domainSep);
+  owner = disclose(initialOwner);
+}
+
+circuit assertOwner(): [] {
+  assert(ownerId(ownerSecret()) == owner, "LegacyToken: caller is not the owner");
+}
+
+/** Owner-only: mints `amount` shielded coins of this token to `recipient`. Emits nothing. */
+export circuit mint(recipient: ZswapCoinPublicKey, amount: Uint<64>, nonce: Bytes<32>): ShieldedCoinInfo {
+  assertOwner();
+  totalMinted = disclose((totalMinted + amount) as Uint<128>);
+  mintCount.increment(1);
+  return mintShieldedToken(domain, disclose(amount), disclose(nonce), left<ZswapCoinPublicKey, ContractAddress>(disclose(recipient)));
+}

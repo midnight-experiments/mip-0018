@@ -1,0 +1,116 @@
+{
+  "kind": "mip0018-case",
+  "schema": 1,
+  "id": "C08",
+  "title": "Raw emitter (test-only): emitTwo(valid, malformed) in one transaction",
+  "demonstrates": "Independent events (vector S7b): event 0 sets name = \"Good\" and applies; event 1 is malformed (valType 6) and is rejected whole without undoing event 0.",
+  "conclusion": "One visible identity (0x11…/3) with only name = \"Good\"; 2 events: 1 accepted, 1 rejected (reserved-valtype).",
+  "mip": {
+    "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
+    "eventName": "mip-0018:token-metadata[v1]"
+  },
+  "source": {
+    "contract": "test-contracts/raw-emitter",
+    "vector": "vectors/state/S7b.json"
+  },
+  "notes": [
+    "A fresh raw-emitter deployment, so the state is S7b alone (independent of C07)."
+  ],
+  "placeholders": {
+    "{net}": "network options (Stagenet: --network stagenet)",
+    "{signer}": "wallet 1's signer options (mnemonic file, wallet cache)",
+    "{signer2}": "wallet 2's signer options, with its OWN private-state file",
+    "{case}": "this case folder",
+    "{out}": "where records and observations are written (Stagenet: this case folder)",
+    "{out:<ID>}": "another case's output folder"
+  },
+  "steps": [
+    {
+      "id": "deploy",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "deploy",
+        "{net}",
+        "{signer}",
+        "--example",
+        "raw-emitter",
+        "--record",
+        "{out}/record.json"
+      ],
+      "expectExit": 0,
+      "submits": "deploy"
+    },
+    {
+      "id": "emit-two",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "emitTwo",
+        "--args",
+        "@{case}/args/S7b.json",
+        "--step",
+        "emit-two",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call"
+    },
+    {
+      "id": "verify-emit-two",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "emit-two",
+        "--expect",
+        "@{case}/expect/emit-two.json",
+        "--wait",
+        "120",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "observed-verify-emit-two.json"
+    },
+    {
+      "id": "list",
+      "runner": "wallet-free",
+      "argv": [
+        "list",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--expect",
+        "@{case}/expected.json",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "observed-list.json"
+    }
+  ],
+  "expected": "expected.json",
+  "recheck": {
+    "verify": [
+      {
+        "record": "record.json",
+        "step": "emit-two",
+        "expect": "expect/emit-two.json"
+      }
+    ],
+    "list": [
+      {
+        "record": "record.json",
+        "expect": "expected.json"
+      }
+    ]
+  }
+}

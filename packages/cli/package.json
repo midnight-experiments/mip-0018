@@ -1,0 +1,35 @@
+{
+  "name": "@mip0018/cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "mip0018 — deploy and publish MIP-0018 metadata, and verify, list, index (mint scanner) and look up colors without a wallet.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "mip0018": "./bin/mip0018.js"
+  },
+  "exports": {
+    ".": "./src/main.ts"
+  },
+  "files": [
+    "src",
+    "bin"
+  ],
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@mip0018/codec": "0.1.0",
+    "@mip0018/consumer": "0.1.0",
+    "@mip0018/midnight": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  }
+}

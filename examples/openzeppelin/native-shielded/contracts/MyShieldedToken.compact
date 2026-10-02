@@ -1,0 +1,81 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// A native shielded token (Zswap coins) built from OpenZeppelin Compact Contracts 0.4.0-alpha.5:
+// `NativeShieldedToken` (one token type; its domain separator is fixed at construction) owned with
+// `Ownable`. Every coin it mints has the color `tokenType(domainSep, <this contract>)`.
+//
+// Compile with Compact 0.35.0, --feature-zkir-v3 and --compact-path <repo>/node_modules
+// (examples/openzeppelin/README.md).
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+import "@openzeppelin/compact-contracts/access/Ownable" prefix Ownable_;
+import "@openzeppelin/compact-contracts/token/NativeShieldedToken" prefix NativeShieldedToken_;
+import "@mip0018/compact/src/Mip0018" prefix Mip0018_;
+
+export { Either, ContractAddress, ZswapCoinPublicKey, ShieldedCoinInfo, Maybe };
+
+constructor(
+  domainSep: Bytes<32>,
+  name_: Opaque<"string">,
+  symbol_: Opaque<"string">,
+  decimals_: Uint<8>,
+  initialOwner: Either<Bytes<32>, ContractAddress>
+) {
+  Ownable_initialize(initialOwner);
+  NativeShieldedToken_initialize(domainSep, name_, symbol_, decimals_);
+}
+
+export circuit name(): Opaque<"string"> {
+  return NativeShieldedToken_name();
+}
+
+export circuit symbol(): Opaque<"string"> {
+  return NativeShieldedToken_symbol();
+}
+
+export circuit decimals(): Uint<8> {
+  return NativeShieldedToken_decimals();
+}
+
+export circuit tokenColor(): Bytes<32> {
+  return NativeShieldedToken_tokenColor();
+}
+
+export circuit mint(recipient: ZswapCoinPublicKey, amount: Uint<64>, nonce: Bytes<32>): ShieldedCoinInfo {
+  Ownable_assertOnlyOwner();
+  return NativeShieldedToken__mint(recipient, amount, nonce);
+}
+
+export circuit burn(coin: ShieldedCoinInfo, amount: Uint<128>, refundTo: ZswapCoinPublicKey): Maybe<ShieldedCoinInfo> {
+  Ownable_assertOnlyOwner();
+  return NativeShieldedToken__burn(coin, amount, refundTo);
+}
+
+// MIP-0018 metadata (kind 1). The `domainSep` is the token's own domain separator, read from
+// `NativeShieldedToken__domain`: the one every mint uses, so a consumer derives the minted color.
+
+// Call right after deployment (a constructor cannot emit). The same literals as the
+// constructor's `name_` and `symbol_`; `decimals` is read from the token's own state.
+export circuit publishMetadata(): [] {
+  Ownable_assertOnlyOwner();
+  Mip0018_emitPayload(Mip0018_commonFields<11, 4>(
+    NativeShieldedToken__domain, Mip0018_KIND_SHIELDED(), "Acme Shield", "ASHD", NativeShieldedToken__decimals));
+}
+
+// Rename (an extraordinary update): a new 11-byte name and 4-byte symbol; other fields keep
+// their values. The sizes are part of the circuit; values must be valid UTF-8.
+export circuit setMetadata(newName: Bytes<11>, newSymbol: Bytes<4>): [] {
+  Ownable_assertOnlyOwner();
+  Mip0018_emitPayload(Mip0018_payload2<4, 11, 6, 4>(
+    Mip0018_header(NativeShieldedToken__domain, Mip0018_KIND_SHIELDED()),
+    Mip0018_nameRecord<11>(newName),
+    Mip0018_symbolRecord<4>(newSymbol)));
+}
+
+// Withdraw (tombstone): consumers hide the token and clear all its metadata.
+export circuit withdrawMetadata(): [] {
+  Ownable_assertOnlyOwner();
+  Mip0018_emitPayload(Mip0018_tombstone(NativeShieldedToken__domain, Mip0018_KIND_SHIELDED()));
+}

@@ -1,0 +1,36 @@
+{
+  "name": "@mip-0018/toolchain-spike",
+  "private": true,
+  "version": "0.0.0",
+  "description": "S0 toolchain gate: Compact 0.35.0 + ZKIR v3 compile, local-chain deploy/call/VerifierKeyRemove, one Stagenet call",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "compile": "bash scripts/compile.sh",
+    "local": "tsx src/local.ts",
+    "stagenet": "tsx src/stagenet.ts",
+    "fund": "tsx src/fund.ts",
+    "check": "tsx src/check.ts"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/compact-js": "3.0.0-rc.3",
+    "@midnight-ntwrk/compact-runtime": "0.20.0",
+    "@midnight-ntwrk/midnight-js-contracts": "5.0.0-rc.2",
+    "@midnight-ntwrk/midnight-js-http-client-proof-provider": "5.0.0-rc.2",
+    "@midnight-ntwrk/midnight-js-indexer-public-data-provider": "5.0.0-rc.2",
+    "@midnight-ntwrk/midnight-js-network-id": "5.0.0-rc.2",
+    "@midnight-ntwrk/midnight-js-node-zk-config-provider": "5.0.0-rc.2",
+    "@midnight-ntwrk/midnight-js-types": "5.0.0-rc.2",
+    "@midnight-ntwrk/midnight-js-utils": "5.0.0-rc.2",
+    "@midnightntwrk/ledger-v9": "1.0.0-rc.5",
+    "@midnightntwrk/wallet-sdk": "2.0.0-beta.2",
+    "@mip0018/midnight": "0.1.0",
+    "@openzeppelin/compact-contracts": "0.4.0-alpha.5",
+    "@scure/bip39": "2.4.0",
+    "rxjs": "7.8.2",
+    "ws": "8.22.0"
+  },
+  "devDependencies": {
+    "@types/ws": "8.18.2"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowJs": false,
+    "allowImportingTsExtensions": true
+  },
+  "include": [
+    "tools/**/*.ts",
+    "packages/*/src/**/*.ts",
+    "packages/*/test/**/*.ts",
+    "vectors/**/*.ts",
+    "examples/**/src/**/*.ts",
+    "examples/**/test/**/*.ts",
+    "test-contracts/*/src/**/*.ts",
+    "test-contracts/*/test/**/*.ts",
+    "vitest.config.ts",
+    "examples/**/scripts/**/*.ts",
+    "test-contracts/*/scripts/**/*.ts",
+    "packages/*/scripts/**/*.ts",
+    "examples/**/*.adapter.ts",
+    "test-contracts/*/*.adapter.ts",
+    "deployments/**/*.ts"
+  ],
+  "exclude": ["**/node_modules/**", "**/managed/**", "**/dist/**"]
+}

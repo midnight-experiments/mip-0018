@@ -1,0 +1,57 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// Cost shapes for docs/costs.md, DEFAULT module. lit<N>: everything constant (what a literal
+// publishMetadata() compiles to); arg<N>: domainSep and values are circuit arguments (what a
+// rename/setMetadata circuit costs); records are the common fields in order: name (10 bytes),
+// symbol (4), decimals (Uint<8>), standards (8) — MIP test A1.
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+import "../../src/Mip0018" prefix M_;
+
+export circuit lit1(): [] {
+  M_emitPayload(M_payload1<4, 10>(M_header(pad(32, "acme:token"), 3), M_nameRecord<10>("Acme Token")));
+}
+
+export circuit lit2(): [] {
+  M_emitPayload(M_payload2<4, 10, 6, 4>(M_header(pad(32, "acme:token"), 3), M_nameRecord<10>("Acme Token"),
+    M_symbolRecord<4>("ACME")));
+}
+
+export circuit lit3(): [] {
+  M_emitPayload(M_commonFields<10, 4>(pad(32, "acme:token"), 3, "Acme Token", "ACME", 6));
+}
+
+export circuit lit4(): [] {
+  M_emitPayload(M_commonFieldsWithStandards<10, 4, 8>(pad(32, "acme:token"), 3, "Acme Token", "ACME", 6, "mip-0004"));
+}
+
+export circuit arg1(ds: Bytes<32>, name: Bytes<10>): [] {
+  M_emitPayload(M_payload1<4, 10>(M_header(ds, 3), M_nameRecord<10>(name)));
+}
+
+export circuit arg2(ds: Bytes<32>, name: Bytes<10>, symbol: Bytes<4>): [] {
+  M_emitPayload(M_payload2<4, 10, 6, 4>(M_header(ds, 3), M_nameRecord<10>(name), M_symbolRecord<4>(symbol)));
+}
+
+export circuit arg3(ds: Bytes<32>, name: Bytes<10>, symbol: Bytes<4>, decimals: Uint<8>): [] {
+  M_emitPayload(M_commonFields<10, 4>(ds, 3, name, symbol, decimals));
+}
+
+export circuit arg4(ds: Bytes<32>, name: Bytes<10>, symbol: Bytes<4>, decimals: Uint<8>, standards: Bytes<8>): [] {
+  M_emitPayload(M_commonFieldsWithStandards<10, 4, 8>(ds, 3, name, symbol, decimals, standards));
+}
+
+// Constant records, runtime domainSep only (e.g. domainSep read from the ledger).
+export circuit dsArg4(ds: Bytes<32>): [] {
+  M_emitPayload(M_commonFieldsWithStandards<10, 4, 8>(ds, 3, "Acme Token", "ACME", 6, "mip-0004"));
+}
+
+export circuit tombLit(): [] {
+  M_emitPayload(M_tombstone(pad(32, "acme:token"), 3));
+}
+
+export circuit tombArg(ds: Bytes<32>, kind: Uint<8>): [] {
+  M_emitPayload(M_tombstone(ds, kind));
+}

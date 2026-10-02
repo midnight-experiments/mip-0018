@@ -1,0 +1,117 @@
+{
+  "found": true,
+  "color": "042399246139df031a4780c684df8eaecd48b7e03a195bfe986cf22766bcbc16",
+  "scanned": {
+    "network": "stagenet",
+    "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+    "from": 714485,
+    "to": 715183
+  },
+  "entry": {
+    "color": "042399246139df031a4780c684df8eaecd48b7e03a195bfe986cf22766bcbc16",
+    "contractAddress": "86acf80ff386abb610aadbea0406039e7fe39893f440794c3c2bad86dd48570f",
+    "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+    "shielded": {
+      "firstMint": {
+        "height": 714643,
+        "blockHash": "6d84ad98077bd491bb748b720b35dfc8dfc77982fe12d2dd8ff131753e9d8edd",
+        "txHash": "395076e79043745ffc02877f90f225a05eaa7437f798996aa1632bf454175ed1"
+      },
+      "lastMint": {
+        "height": 714643,
+        "blockHash": "6d84ad98077bd491bb748b720b35dfc8dfc77982fe12d2dd8ff131753e9d8edd",
+        "txHash": "395076e79043745ffc02877f90f225a05eaa7437f798996aa1632bf454175ed1"
+      },
+      "mints": 1,
+      "amount": "100000"
+    },
+    "unshielded": {
+      "firstMint": {
+        "height": 714649,
+        "blockHash": "bcb975e566ad371910b209780cadc2f4508fada572145cdfc71f8ff9fa49a0af",
+        "txHash": "7895124817e86946fae9da9865c3d35923e45e587852b8253c6310e37db2f0a7"
+      },
+      "lastMint": {
+        "height": 714649,
+        "blockHash": "bcb975e566ad371910b209780cadc2f4508fada572145cdfc71f8ff9fa49a0af",
+        "txHash": "7895124817e86946fae9da9865c3d35923e45e587852b8253c6310e37db2f0a7"
+      },
+      "mints": 1,
+      "amount": "100000"
+    }
+  },
+  "identities": [
+    {
+      "contractAddress": "86acf80ff386abb610aadbea0406039e7fe39893f440794c3c2bad86dd48570f",
+      "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+      "kind": 1,
+      "mintedInRange": true
+    }
+  ],
+  "metadataSource": "live indexer at block 715199",
+  "resolved": [
+    {
+      "contractAddress": "86acf80ff386abb610aadbea0406039e7fe39893f440794c3c2bad86dd48570f",
+      "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+      "kind": 1,
+      "mintedInRange": true,
+      "metadata": {
+        "key": "stagenet|86acf80ff386abb610aadbea0406039e7fe39893f440794c3c2bad86dd48570f|6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000|1",
+        "network": "stagenet",
+        "contractAddress": "86acf80ff386abb610aadbea0406039e7fe39893f440794c3c2bad86dd48570f",
+        "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+        "kind": 1,
+        "visible": true,
+        "colored": true,
+        "color": "042399246139df031a4780c684df8eaecd48b7e03a195bfe986cf22766bcbc16",
+        "fields": [
+          {
+            "key": "6e616d65",
+            "valType": 1,
+            "value": "41636d6520446f6c6c6172",
+            "setAt": {
+              "block": "714663",
+              "tx": 24256,
+              "event": 53453,
+              "record": 0
+            },
+            "keyHex": "6e616d65",
+            "usable": true
+          },
+          {
+            "key": "73796d626f6c",
+            "valType": 1,
+            "value": "414344",
+            "setAt": {
+              "block": "714663",
+              "tx": 24256,
+              "event": 53453,
+              "record": 1
+            },
+            "keyHex": "73796d626f6c",
+            "usable": true
+          },
+          {
+            "key": "646563696d616c73",
+            "valType": 2,
+            "value": "02",
+            "setAt": {
+              "block": "714663",
+              "tx": 24256,
+              "event": 53453,
+              "record": 2
+            },
+            "integer": "2",
+            "keyHex": "646563696d616c73",
+            "usable": true
+          }
+        ],
+        "common": {
+          "name": "Acme Dollar",
+          "symbol": "ACD",
+          "decimals": "2"
+        }
+      }
+    }
+  ]
+}

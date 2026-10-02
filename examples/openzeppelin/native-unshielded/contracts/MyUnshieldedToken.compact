@@ -1,0 +1,86 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// A native unshielded token (unshielded UTXOs, MIP-0014 shape) owned with OpenZeppelin `Ownable`
+// (OpenZeppelin Compact Contracts 0.4.0-alpha.5).
+//
+// OpenZeppelin 0.4.0-alpha.5 has NO native unshielded token module, so the token part calls the
+// Compact standard library's `mintUnshieldedToken` directly, in the style of OpenZeppelin's
+// `NativeShieldedToken`: one token type whose domain separator and metadata are fixed at
+// construction. Every UTXO it mints has the color `tokenType(_domain, <this contract>)`.
+//
+// Compile with Compact 0.35.0, --feature-zkir-v3 and --compact-path <repo>/node_modules
+// (examples/openzeppelin/README.md).
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+import "@openzeppelin/compact-contracts/access/Ownable" prefix Ownable_;
+import "@mip0018/compact/src/Mip0018" prefix Mip0018_;
+
+export { Either, ContractAddress, UserAddress };
+
+export sealed ledger _domain: Bytes<32>;
+export sealed ledger _name: Opaque<"string">;
+export sealed ledger _symbol: Opaque<"string">;
+export sealed ledger _decimals: Uint<8>;
+
+constructor(
+  domainSep: Bytes<32>,
+  name_: Opaque<"string">,
+  symbol_: Opaque<"string">,
+  decimals_: Uint<8>,
+  initialOwner: Either<Bytes<32>, ContractAddress>
+) {
+  Ownable_initialize(initialOwner);
+  _domain = disclose(domainSep);
+  _name = disclose(name_);
+  _symbol = disclose(symbol_);
+  _decimals = disclose(decimals_);
+}
+
+export circuit name(): Opaque<"string"> {
+  return _name;
+}
+
+export circuit symbol(): Opaque<"string"> {
+  return _symbol;
+}
+
+export circuit decimals(): Uint<8> {
+  return _decimals;
+}
+
+export circuit tokenColor(): Bytes<32> {
+  return tokenType(_domain, kernel.self());
+}
+
+export circuit mint(recipient: UserAddress, amount: Uint<64>): Bytes<32> {
+  Ownable_assertOnlyOwner();
+  return mintUnshieldedToken(_domain, disclose(amount), right<ContractAddress, UserAddress>(disclose(recipient)));
+}
+
+// MIP-0018 metadata (kind 2). The `domainSep` is `_domain`, the one every mint uses, so a consumer
+// derives the color of the minted UTXOs.
+
+// Call right after deployment (a constructor cannot emit). The same literals as the
+// constructor's `name_` and `symbol_`; `decimals` is read from the token's own state.
+export circuit publishMetadata(): [] {
+  Ownable_assertOnlyOwner();
+  Mip0018_emitPayload(Mip0018_commonFields<11, 4>(_domain, Mip0018_KIND_UNSHIELDED(), "Acme Public", "APUB", _decimals));
+}
+
+// Rename (an extraordinary update): a new 11-byte name and 4-byte symbol; other fields keep
+// their values. The sizes are part of the circuit; values must be valid UTF-8.
+export circuit setMetadata(newName: Bytes<11>, newSymbol: Bytes<4>): [] {
+  Ownable_assertOnlyOwner();
+  Mip0018_emitPayload(Mip0018_payload2<4, 11, 6, 4>(
+    Mip0018_header(_domain, Mip0018_KIND_UNSHIELDED()),
+    Mip0018_nameRecord<11>(newName),
+    Mip0018_symbolRecord<4>(newSymbol)));
+}
+
+// Withdraw (tombstone): consumers hide the token and clear all its metadata.
+export circuit withdrawMetadata(): [] {
+  Ownable_assertOnlyOwner();
+  Mip0018_emitPayload(Mip0018_tombstone(_domain, Mip0018_KIND_UNSHIELDED()));
+}

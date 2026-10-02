@@ -1,0 +1,270 @@
+{
+  "network": {
+    "id": "stagenet",
+    "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+    "indexer": "https://indexer.stagenet.shielded.tools/api/v4/graphql"
+  },
+  "contract": "f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6",
+  "snapshot": {
+    "indexerTip": {
+      "height": 714715,
+      "hash": "5c4f10109e2ca4fb2ba4f328632e391c02c180ca48fde9518beba76e0f015d58"
+    },
+    "toBlock": 714715,
+    "nodeHashAtTip": "0x5c4f10109e2ca4fb2ba4f328632e391c02c180ca48fde9518beba76e0f015d58",
+    "tipMatchesNode": true,
+    "finalizedHeight": 714715
+  },
+  "pages": 2,
+  "counts": {
+    "events": 3,
+    "accepted": 3,
+    "rejected": 0,
+    "ignored": 0
+  },
+  "events": [
+    {
+      "id": 53462,
+      "block": {
+        "height": 714696,
+        "hash": "d7a27e35b0f17bc715efc68ff32db414fba0e110b706e28a96888bbddf8d1a35"
+      },
+      "txHash": "ce45f95fde9706739139fbf0f53dd0e7b38dcd16f492f014fceff5c70e28a26f",
+      "txId": 24260,
+      "result": "accept",
+      "identity": "stagenet|f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6|6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000|1",
+      "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+      "kind": 1,
+      "records": 3
+    },
+    {
+      "id": 53464,
+      "block": {
+        "height": 714703,
+        "hash": "ed1721da135f5cd8bde79ba05b4b4a32bb7fe13dd8cc13b1d0648e8e5c7045ad"
+      },
+      "txHash": "a865ad4799b76eb9233affd9dd7da44c460105a7d5566b27bc063c6e11612e44",
+      "txId": 24261,
+      "result": "accept",
+      "identity": "stagenet|f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6|6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000|1",
+      "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+      "kind": 1,
+      "records": 3
+    },
+    {
+      "id": 53466,
+      "block": {
+        "height": 714712,
+        "hash": "c74ef59c8dfa73e4b1e9e3592585f8bc7a92c0302fb25a8f4ef99e7f8ecc3071"
+      },
+      "txHash": "ed5b20cd4e071de0713079bdfe8c46095baa863b0a1318598be9f8da9a4f7e7a",
+      "txId": 24262,
+      "result": "accept",
+      "identity": "stagenet|f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6|6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000|1",
+      "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+      "kind": 1,
+      "records": 3
+    }
+  ],
+  "identities": [
+    {
+      "key": "stagenet|f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6|6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000|1",
+      "network": "stagenet",
+      "contractAddress": "f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6",
+      "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+      "kind": 1,
+      "visible": true,
+      "colored": true,
+      "color": "81db4eef83089c5403c6af29d926d57ee6b6359ff7dc291dd19cb4c3e9cf7aa1",
+      "fields": [
+        {
+          "key": "6e616d65",
+          "valType": 1,
+          "value": "41636d65204d6564616c73",
+          "setAt": {
+            "block": "714696",
+            "tx": 24260,
+            "event": 53462,
+            "record": 0
+          },
+          "keyHex": "6e616d65",
+          "usable": true
+        },
+        {
+          "key": "73796d626f6c",
+          "valType": 1,
+          "value": "4d4544414c",
+          "setAt": {
+            "block": "714696",
+            "tx": 24260,
+            "event": 53462,
+            "record": 1
+          },
+          "keyHex": "73796d626f6c",
+          "usable": true
+        },
+        {
+          "key": "646563696d616c73",
+          "valType": 2,
+          "value": "00",
+          "setAt": {
+            "block": "714696",
+            "tx": 24260,
+            "event": 53462,
+            "record": 2
+          },
+          "integer": "0",
+          "keyHex": "646563696d616c73",
+          "usable": true
+        }
+      ],
+      "common": {
+        "name": "Acme Medals",
+        "symbol": "MEDAL",
+        "decimals": "0"
+      }
+    },
+    {
+      "key": "stagenet|f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6|6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000|1",
+      "network": "stagenet",
+      "contractAddress": "f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6",
+      "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+      "kind": 1,
+      "visible": true,
+      "colored": true,
+      "color": "8c74ec4a937d296f8234a2373812c2df3d962dba06dfe98cda390f9dea38491d",
+      "fields": [
+        {
+          "key": "6e616d65",
+          "valType": 1,
+          "value": "41636d65204d6564616c73",
+          "setAt": {
+            "block": "714703",
+            "tx": 24261,
+            "event": 53464,
+            "record": 0
+          },
+          "keyHex": "6e616d65",
+          "usable": true
+        },
+        {
+          "key": "73796d626f6c",
+          "valType": 1,
+          "value": "4d4544414c",
+          "setAt": {
+            "block": "714703",
+            "tx": 24261,
+            "event": 53464,
+            "record": 1
+          },
+          "keyHex": "73796d626f6c",
+          "usable": true
+        },
+        {
+          "key": "646563696d616c73",
+          "valType": 2,
+          "value": "00",
+          "setAt": {
+            "block": "714703",
+            "tx": 24261,
+            "event": 53464,
+            "record": 2
+          },
+          "integer": "0",
+          "keyHex": "646563696d616c73",
+          "usable": true
+        }
+      ],
+      "common": {
+        "name": "Acme Medals",
+        "symbol": "MEDAL",
+        "decimals": "0"
+      }
+    },
+    {
+      "key": "stagenet|f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6|6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000|1",
+      "network": "stagenet",
+      "contractAddress": "f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6",
+      "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+      "kind": 1,
+      "visible": true,
+      "colored": true,
+      "color": "4024a88428ad97c4315b4f2f8ed05adaafaad6876a7ec7223ca84765b5083e69",
+      "fields": [
+        {
+          "key": "6e616d65",
+          "valType": 1,
+          "value": "41636d65204d6564616c73",
+          "setAt": {
+            "block": "714712",
+            "tx": 24262,
+            "event": 53466,
+            "record": 0
+          },
+          "keyHex": "6e616d65",
+          "usable": true
+        },
+        {
+          "key": "73796d626f6c",
+          "valType": 1,
+          "value": "4d4544414c",
+          "setAt": {
+            "block": "714712",
+            "tx": 24262,
+            "event": 53466,
+            "record": 1
+          },
+          "keyHex": "73796d626f6c",
+          "usable": true
+        },
+        {
+          "key": "646563696d616c73",
+          "valType": 2,
+          "value": "00",
+          "setAt": {
+            "block": "714712",
+            "tx": 24262,
+            "event": 53466,
+            "record": 2
+          },
+          "integer": "0",
+          "keyHex": "646563696d616c73",
+          "usable": true
+        }
+      ],
+      "common": {
+        "name": "Acme Medals",
+        "symbol": "MEDAL",
+        "decimals": "0"
+      }
+    }
+  ],
+  "groups": [
+    {
+      "network": "stagenet",
+      "contractAddress": "f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6",
+      "symbol": "4d4544414c",
+      "members": [
+        {
+          "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+          "kind": 1,
+          "key": "stagenet|f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6|6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000|1"
+        },
+        {
+          "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+          "kind": 1,
+          "key": "stagenet|f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6|6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000|1"
+        },
+        {
+          "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+          "kind": 1,
+          "key": "stagenet|f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6|6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000|1"
+        }
+      ]
+    }
+  ],
+  "expectation": {
+    "ok": true,
+    "differences": []
+  }
+}

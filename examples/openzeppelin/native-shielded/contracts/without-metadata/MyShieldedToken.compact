@@ -1,0 +1,53 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// A native shielded token (Zswap coins) built from OpenZeppelin Compact Contracts 0.4.0-alpha.5:
+// `NativeShieldedToken` (one token type; its domain separator is fixed at construction) owned with
+// `Ownable`. Every coin it mints has the color `tokenType(domainSep, <this contract>)`.
+//
+// Compile with Compact 0.35.0, --feature-zkir-v3 and --compact-path <repo>/node_modules
+// (examples/openzeppelin/README.md).
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+import "@openzeppelin/compact-contracts/access/Ownable" prefix Ownable_;
+import "@openzeppelin/compact-contracts/token/NativeShieldedToken" prefix NativeShieldedToken_;
+
+export { Either, ContractAddress, ZswapCoinPublicKey, ShieldedCoinInfo, Maybe };
+
+constructor(
+  domainSep: Bytes<32>,
+  name_: Opaque<"string">,
+  symbol_: Opaque<"string">,
+  decimals_: Uint<8>,
+  initialOwner: Either<Bytes<32>, ContractAddress>
+) {
+  Ownable_initialize(initialOwner);
+  NativeShieldedToken_initialize(domainSep, name_, symbol_, decimals_);
+}
+
+export circuit name(): Opaque<"string"> {
+  return NativeShieldedToken_name();
+}
+
+export circuit symbol(): Opaque<"string"> {
+  return NativeShieldedToken_symbol();
+}
+
+export circuit decimals(): Uint<8> {
+  return NativeShieldedToken_decimals();
+}
+
+export circuit tokenColor(): Bytes<32> {
+  return NativeShieldedToken_tokenColor();
+}
+
+export circuit mint(recipient: ZswapCoinPublicKey, amount: Uint<64>, nonce: Bytes<32>): ShieldedCoinInfo {
+  Ownable_assertOnlyOwner();
+  return NativeShieldedToken__mint(recipient, amount, nonce);
+}
+
+export circuit burn(coin: ShieldedCoinInfo, amount: Uint<128>, refundTo: ZswapCoinPublicKey): Maybe<ShieldedCoinInfo> {
+  Ownable_assertOnlyOwner();
+  return NativeShieldedToken__burn(coin, amount, refundTo);
+}

@@ -1,0 +1,103 @@
+{
+  "found": true,
+  "color": "be34ef4b78717b031040bf625e04ee033106efae4c766915d3cac2b7fda8f11b",
+  "scanned": {
+    "network": "stagenet",
+    "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+    "from": 714485,
+    "to": 715183
+  },
+  "entry": {
+    "color": "be34ef4b78717b031040bf625e04ee033106efae4c766915d3cac2b7fda8f11b",
+    "contractAddress": "0ee5f31961f9df197055c49dda8f87275af50c3554ba701ffa1837537735e532",
+    "domainSep": "6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+    "shielded": {
+      "firstMint": {
+        "height": 714557,
+        "blockHash": "6b446e1f915e3817b27d27ac22bacf973bdc29fbdcef3f1ac56791758d83ccfe",
+        "txHash": "90dbd77e00c6c4dda189488ac7c45420089b43b81a6fff0b845db4a64853dfcd"
+      },
+      "lastMint": {
+        "height": 714557,
+        "blockHash": "6b446e1f915e3817b27d27ac22bacf973bdc29fbdcef3f1ac56791758d83ccfe",
+        "txHash": "90dbd77e00c6c4dda189488ac7c45420089b43b81a6fff0b845db4a64853dfcd"
+      },
+      "mints": 1,
+      "amount": "1000000"
+    }
+  },
+  "identities": [
+    {
+      "contractAddress": "0ee5f31961f9df197055c49dda8f87275af50c3554ba701ffa1837537735e532",
+      "domainSep": "6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+      "kind": 1,
+      "mintedInRange": true
+    }
+  ],
+  "metadataSource": "live indexer at block 715198",
+  "resolved": [
+    {
+      "contractAddress": "0ee5f31961f9df197055c49dda8f87275af50c3554ba701ffa1837537735e532",
+      "domainSep": "6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+      "kind": 1,
+      "mintedInRange": true,
+      "metadata": {
+        "key": "stagenet|0ee5f31961f9df197055c49dda8f87275af50c3554ba701ffa1837537735e532|6d69702d303031383a6578616d706c653a736869656c64656400000000000000|1",
+        "network": "stagenet",
+        "contractAddress": "0ee5f31961f9df197055c49dda8f87275af50c3554ba701ffa1837537735e532",
+        "domainSep": "6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+        "kind": 1,
+        "visible": true,
+        "colored": true,
+        "color": "be34ef4b78717b031040bf625e04ee033106efae4c766915d3cac2b7fda8f11b",
+        "fields": [
+          {
+            "key": "6e616d65",
+            "valType": 1,
+            "value": "41636d6520536869656c64",
+            "setAt": {
+              "block": "714564",
+              "tx": 24245,
+              "event": 53436,
+              "record": 0
+            },
+            "keyHex": "6e616d65",
+            "usable": true
+          },
+          {
+            "key": "73796d626f6c",
+            "valType": 1,
+            "value": "41534844",
+            "setAt": {
+              "block": "714564",
+              "tx": 24245,
+              "event": 53436,
+              "record": 1
+            },
+            "keyHex": "73796d626f6c",
+            "usable": true
+          },
+          {
+            "key": "646563696d616c73",
+            "valType": 2,
+            "value": "06",
+            "setAt": {
+              "block": "714564",
+              "tx": 24245,
+              "event": 53436,
+              "record": 2
+            },
+            "integer": "6",
+            "keyHex": "646563696d616c73",
+            "usable": true
+          }
+        ],
+        "common": {
+          "name": "Acme Shield",
+          "symbol": "ASHD",
+          "decimals": "6"
+        }
+      }
+    }
+  ]
+}

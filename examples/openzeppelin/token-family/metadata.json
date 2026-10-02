@@ -1,0 +1,473 @@
+{
+  "$comment": "MIP-0018 metadata of examples/openzeppelin/token-family: what to deploy and publish, the exact payload of every event, and what a conforming consumer concludes. Format: examples/openzeppelin/README.md#metadatajson. Checked against the contract by test/token-family.test.ts.",
+  "example": "token-family",
+  "mip": {
+    "commit": "78ecbb4b1ba57371e84fe45f705991ab7b996a61",
+    "eventName": "mip-0018:token-metadata[v1]"
+  },
+  "contract": {
+    "source": "contracts/MyTokenFamily.compact",
+    "withoutMetadata": "contracts/without-metadata/MyTokenFamily.compact",
+    "openzeppelin": "@openzeppelin/compact-contracts@0.4.0-alpha.5 (access/Ownable, token/NativeShieldedTokenFamily)",
+    "constructorArgs": {
+      "name_": "Acme Medals",
+      "symbol_": "MEDAL",
+      "decimals_": 0,
+      "initialOwner": "left(<the deployer's Ownable account id = persistentHash([secretKey])>)"
+    }
+  },
+  "identities": [
+    {
+      "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+      "kind": 1,
+      "name": "Acme Medals",
+      "symbol": "MEDAL",
+      "decimals": 0
+    },
+    {
+      "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+      "kind": 1,
+      "name": "Acme Medals",
+      "symbol": "MEDAL",
+      "decimals": 0
+    },
+    {
+      "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+      "kind": 1,
+      "name": "Acme Medals",
+      "symbol": "MEDAL",
+      "decimals": 0
+    }
+  ],
+  "steps": [
+    {
+      "id": "mint-gold",
+      "circuit": "mint",
+      "args": {
+        "domain": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+        "recipient": "<the holder's Zswap coin public key>",
+        "amount": "3",
+        "nonce": "<32 fresh random bytes>"
+      },
+      "caller": "owner",
+      "events": [],
+      "mints": [
+        {
+          "kind": 1,
+          "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+          "amount": "3"
+        }
+      ]
+    },
+    {
+      "id": "mint-silver",
+      "circuit": "mint",
+      "args": {
+        "domain": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+        "recipient": "<the holder's Zswap coin public key>",
+        "amount": "5",
+        "nonce": "<32 fresh random bytes>"
+      },
+      "caller": "owner",
+      "events": [],
+      "mints": [
+        {
+          "kind": 1,
+          "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+          "amount": "5"
+        }
+      ]
+    },
+    {
+      "id": "publish-gold",
+      "circuit": "publishMetadata",
+      "args": {
+        "domain": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000"
+      },
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+          "kind": 1,
+          "name": "Acme Medals",
+          "symbol": "MEDAL",
+          "decimals": 0,
+          "payload": "6d69702d303031383a6578616d706c653a66616d696c793a676f6c640000000001046e616d65010b41636d65204d6564616c730673796d626f6c01054d4544414c08646563696d616c730201000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    {
+      "id": "publish-silver",
+      "circuit": "publishMetadata",
+      "args": {
+        "domain": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000"
+      },
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+          "kind": 1,
+          "name": "Acme Medals",
+          "symbol": "MEDAL",
+          "decimals": 0,
+          "payload": "6d69702d303031383a6578616d706c653a66616d696c793a73696c766572000001046e616d65010b41636d65204d6564616c730673796d626f6c01054d4544414c08646563696d616c730201000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    {
+      "id": "publish-bronze",
+      "circuit": "publishMetadata",
+      "args": {
+        "domain": "0x6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000"
+      },
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+          "kind": 1,
+          "name": "Acme Medals",
+          "symbol": "MEDAL",
+          "decimals": 0,
+          "payload": "6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a65000001046e616d65010b41636d65204d6564616c730673796d626f6c01054d4544414c08646563696d616c730201000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    }
+  ],
+  "expected": {
+    "identities": [
+      {
+        "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+        "kind": 1,
+        "visible": true,
+        "colored": true,
+        "common": {
+          "name": "Acme Medals",
+          "symbol": "MEDAL",
+          "decimals": 0
+        }
+      },
+      {
+        "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+        "kind": 1,
+        "visible": true,
+        "colored": true,
+        "common": {
+          "name": "Acme Medals",
+          "symbol": "MEDAL",
+          "decimals": 0
+        }
+      },
+      {
+        "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+        "kind": 1,
+        "visible": true,
+        "colored": true,
+        "common": {
+          "name": "Acme Medals",
+          "symbol": "MEDAL",
+          "decimals": 0
+        }
+      }
+    ],
+    "groups": [
+      {
+        "symbol": "MEDAL",
+        "members": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+            "kind": 1
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+            "kind": 1
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+            "kind": 1
+          }
+        ]
+      }
+    ]
+  },
+  "lifecycle": [
+    {
+      "id": "withdraw-silver",
+      "circuit": "withdrawMetadata",
+      "args": {
+        "domain": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000"
+      },
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+          "kind": 1,
+          "tombstone": true,
+          "payload": "6d69702d303031383a6578616d706c653a66616d696c793a73696c766572000001046e616d650500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expected": {
+        "identities": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+            "kind": 1,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Acme Medals",
+              "symbol": "MEDAL",
+              "decimals": 0
+            }
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+            "kind": 1,
+            "visible": false,
+            "colored": true,
+            "common": {}
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+            "kind": 1,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Acme Medals",
+              "symbol": "MEDAL",
+              "decimals": 0
+            }
+          }
+        ],
+        "groups": [
+          {
+            "symbol": "MEDAL",
+            "members": [
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+                "kind": 1
+              },
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+                "kind": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "withdraw-silver-again",
+      "circuit": "withdrawMetadata",
+      "args": {
+        "domain": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000"
+      },
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+          "kind": 1,
+          "tombstone": true,
+          "payload": "6d69702d303031383a6578616d706c653a66616d696c793a73696c766572000001046e616d650500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expected": {
+        "identities": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+            "kind": 1,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Acme Medals",
+              "symbol": "MEDAL",
+              "decimals": 0
+            }
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+            "kind": 1,
+            "visible": false,
+            "colored": true,
+            "common": {}
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+            "kind": 1,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Acme Medals",
+              "symbol": "MEDAL",
+              "decimals": 0
+            }
+          }
+        ],
+        "groups": [
+          {
+            "symbol": "MEDAL",
+            "members": [
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+                "kind": 1
+              },
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+                "kind": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "rename-gold",
+      "circuit": "setMetadata",
+      "args": {
+        "domain": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+        "newName": "Gold Medals",
+        "newSymbol": "GOLDM"
+      },
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+          "kind": 1,
+          "name": "Gold Medals",
+          "symbol": "GOLDM",
+          "payload": "6d69702d303031383a6578616d706c653a66616d696c793a676f6c640000000001046e616d65010b476f6c64204d6564616c730673796d626f6c0105474f4c444d0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expected": {
+        "identities": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+            "kind": 1,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Gold Medals",
+              "symbol": "GOLDM",
+              "decimals": 0
+            }
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+            "kind": 1,
+            "visible": false,
+            "colored": true,
+            "common": {}
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+            "kind": 1,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Acme Medals",
+              "symbol": "MEDAL",
+              "decimals": 0
+            }
+          }
+        ],
+        "groups": [
+          {
+            "symbol": "GOLDM",
+            "members": [
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+                "kind": 1
+              }
+            ]
+          },
+          {
+            "symbol": "MEDAL",
+            "members": [
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+                "kind": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "republish-silver",
+      "circuit": "publishMetadata",
+      "args": {
+        "domain": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000"
+      },
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+          "kind": 1,
+          "name": "Acme Medals",
+          "symbol": "MEDAL",
+          "decimals": 0,
+          "payload": "6d69702d303031383a6578616d706c653a66616d696c793a73696c766572000001046e616d65010b41636d65204d6564616c730673796d626f6c01054d4544414c08646563696d616c730201000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expected": {
+        "identities": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+            "kind": 1,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Gold Medals",
+              "symbol": "GOLDM",
+              "decimals": 0
+            }
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+            "kind": 1,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Acme Medals",
+              "symbol": "MEDAL",
+              "decimals": 0
+            }
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+            "kind": 1,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Acme Medals",
+              "symbol": "MEDAL",
+              "decimals": 0
+            }
+          }
+        ],
+        "groups": [
+          {
+            "symbol": "GOLDM",
+            "members": [
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+                "kind": 1
+              }
+            ]
+          },
+          {
+            "symbol": "MEDAL",
+            "members": [
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+                "kind": 1
+              },
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+                "kind": 1
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

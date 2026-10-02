@@ -1,0 +1,118 @@
+{
+  "network": {
+    "id": "stagenet",
+    "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+    "indexer": "https://indexer.stagenet.shielded.tools/api/v4/graphql"
+  },
+  "contract": "0ee5f31961f9df197055c49dda8f87275af50c3554ba701ffa1837537735e532",
+  "snapshot": {
+    "indexerTip": {
+      "height": 714565,
+      "hash": "31371571ec0c1247da0a52621d42021a0a2d489cc807fd870602a9922fa30436"
+    },
+    "toBlock": 714565,
+    "nodeHashAtTip": "0x31371571ec0c1247da0a52621d42021a0a2d489cc807fd870602a9922fa30436",
+    "tipMatchesNode": true,
+    "finalizedHeight": 714565
+  },
+  "pages": 2,
+  "counts": {
+    "events": 1,
+    "accepted": 1,
+    "rejected": 0,
+    "ignored": 0
+  },
+  "events": [
+    {
+      "id": 53436,
+      "block": {
+        "height": 714564,
+        "hash": "49902cefcb355a4a058f25ba7d83c291304ce42c2fef1ba2fb0fad1686db42ba"
+      },
+      "txHash": "133501d0ee8b313926579b8c1b1b9a5e17450d8091dc3b10666939ca4c30f809",
+      "txId": 24245,
+      "result": "accept",
+      "identity": "stagenet|0ee5f31961f9df197055c49dda8f87275af50c3554ba701ffa1837537735e532|6d69702d303031383a6578616d706c653a736869656c64656400000000000000|1",
+      "domainSep": "6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+      "kind": 1,
+      "records": 3
+    }
+  ],
+  "identities": [
+    {
+      "key": "stagenet|0ee5f31961f9df197055c49dda8f87275af50c3554ba701ffa1837537735e532|6d69702d303031383a6578616d706c653a736869656c64656400000000000000|1",
+      "network": "stagenet",
+      "contractAddress": "0ee5f31961f9df197055c49dda8f87275af50c3554ba701ffa1837537735e532",
+      "domainSep": "6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+      "kind": 1,
+      "visible": true,
+      "colored": true,
+      "color": "be34ef4b78717b031040bf625e04ee033106efae4c766915d3cac2b7fda8f11b",
+      "fields": [
+        {
+          "key": "6e616d65",
+          "valType": 1,
+          "value": "41636d6520536869656c64",
+          "setAt": {
+            "block": "714564",
+            "tx": 24245,
+            "event": 53436,
+            "record": 0
+          },
+          "keyHex": "6e616d65",
+          "usable": true
+        },
+        {
+          "key": "73796d626f6c",
+          "valType": 1,
+          "value": "41534844",
+          "setAt": {
+            "block": "714564",
+            "tx": 24245,
+            "event": 53436,
+            "record": 1
+          },
+          "keyHex": "73796d626f6c",
+          "usable": true
+        },
+        {
+          "key": "646563696d616c73",
+          "valType": 2,
+          "value": "06",
+          "setAt": {
+            "block": "714564",
+            "tx": 24245,
+            "event": 53436,
+            "record": 2
+          },
+          "integer": "6",
+          "keyHex": "646563696d616c73",
+          "usable": true
+        }
+      ],
+      "common": {
+        "name": "Acme Shield",
+        "symbol": "ASHD",
+        "decimals": "6"
+      }
+    }
+  ],
+  "groups": [
+    {
+      "network": "stagenet",
+      "contractAddress": "0ee5f31961f9df197055c49dda8f87275af50c3554ba701ffa1837537735e532",
+      "symbol": "41534844",
+      "members": [
+        {
+          "domainSep": "6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
+          "kind": 1,
+          "key": "stagenet|0ee5f31961f9df197055c49dda8f87275af50c3554ba701ffa1837537735e532|6d69702d303031383a6578616d706c653a736869656c64656400000000000000|1"
+        }
+      ]
+    }
+  ],
+  "expectation": {
+    "ok": true,
+    "differences": []
+  }
+}

@@ -1,0 +1,164 @@
+{
+  "kind": "mip0018-case",
+  "schema": 1,
+  "id": "C03",
+  "title": "Native unshielded token (kind 2; std-lib mintUnshieldedToken + OpenZeppelin Ownable): deploy, mint to wallet 1, publish",
+  "demonstrates": "color = wallet 1's UTXO token type; IDX resolves that color back to the identity.",
+  "conclusion": "1 visible kind-2 identity (\"Acme Public\", \"APUB\", 6) whose color is the token type of the UTXO wallet 1 received.",
+  "mip": {
+    "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
+    "eventName": "mip-0018:token-metadata[v1]"
+  },
+  "source": {
+    "example": "examples/openzeppelin/native-unshielded",
+    "metadata": "examples/openzeppelin/native-unshielded/metadata.json"
+  },
+  "placeholders": {
+    "{net}": "network options (Stagenet: --network stagenet)",
+    "{signer}": "wallet 1's signer options (mnemonic file, wallet cache)",
+    "{signer2}": "wallet 2's signer options, with its OWN private-state file",
+    "{case}": "this case folder",
+    "{out}": "where records and observations are written (Stagenet: this case folder)",
+    "{out:<ID>}": "another case's output folder"
+  },
+  "steps": [
+    {
+      "id": "deploy",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "deploy",
+        "{net}",
+        "{signer}",
+        "--example",
+        "native-unshielded",
+        "--record",
+        "{out}/record.json"
+      ],
+      "expectExit": 0,
+      "submits": "deploy"
+    },
+    {
+      "id": "mint",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "call",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "mint",
+        "--args",
+        "[{\"bytes\":{\"$signer\":\"unshieldedAddress\"}},\"1000000\"]",
+        "--step",
+        "mint"
+      ],
+      "expectExit": 0,
+      "submits": "call"
+    },
+    {
+      "id": "publish",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "publishMetadata",
+        "--step",
+        "publish"
+      ],
+      "expectExit": 0,
+      "submits": "call"
+    },
+    {
+      "id": "verify-publish",
+      "runner": "wallet-free",
+      "argv": [
+        "verify",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "publish",
+        "--expect",
+        "@{case}/expect/publish.json",
+        "--wait",
+        "120",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "observed-verify-publish.json"
+    },
+    {
+      "id": "list",
+      "runner": "wallet-free",
+      "argv": [
+        "list",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--expect",
+        "@{case}/expected.json",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "observed-list.json"
+    },
+    {
+      "id": "wallet-status",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "wallet",
+        "status",
+        "{net}",
+        "{signer}",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "wallet-status.json",
+      "note": "wallet 1's balances per token type: the minted coin/UTXO color as the wallet SDK sees it (independent of our tokenType code)"
+    }
+  ],
+  "expected": "expected.json",
+  "recheck": {
+    "verify": [
+      {
+        "record": "record.json",
+        "step": "publish",
+        "expect": "expect/publish.json"
+      }
+    ],
+    "list": [
+      {
+        "record": "record.json",
+        "expect": "expected.json"
+      }
+    ],
+    "colors": [
+      {
+        "record": "record.json",
+        "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+        "kind": 2,
+        "wallet": "wallet-status.json",
+        "expectIdentity": {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+          "kind": 2,
+          "visible": true,
+          "colored": true,
+          "common": {
+            "name": "Acme Public",
+            "symbol": "APUB",
+            "decimals": 6
+          }
+        }
+      }
+    ]
+  }
+}

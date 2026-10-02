@@ -1,0 +1,15 @@
+{
+  "network": "stagenet",
+  "unshieldedAddress": "mn_addr_stagenet1vw57646su9y5z6myarm93m6kcn62j97z0yma94lfkhmta6pz5h5q6utr3k",
+  "coinPublicKey": "cec613623fdcc8b1d27f2b8560bfa8ec1594053c0c549df15072e875fc81c2e7",
+  "shieldedAddress": "mn_shield-addr_stagenet1emrpxc3lmnytr5nl9wzkp0agas2egpfup32fmu2swt58tlypctn4lgtpafg22anv2y4f0wf7lqu2s00fg8ndp0qaxnez29xzexmd2qcm9wudk",
+  "dustAddress": "mn_dust_stagenet1wwjujztruwqkkem9mgdl26kx4w4ksdjx7qyrgmcegxve44468ex52wvf9a6",
+  "night": "5000000000",
+  "dust": "1738731549784085953",
+  "nightUtxos": 1,
+  "nightUtxosRegisteredForDust": 1,
+  "shieldedBalances": {
+    "be34ef4b78717b031040bf625e04ee033106efae4c766915d3cac2b7fda8f11b": "1000000"
+  },
+  "unshieldedTokenBalances": {}
+}

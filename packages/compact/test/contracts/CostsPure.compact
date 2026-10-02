@@ -1,0 +1,55 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// Cost shapes for docs/costs.md, ALTERNATIVE (pure-circuit) module: the same circuits as
+// CostsTyped.compact.
+
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+import "../../src/Mip0018Pure" prefix P_;
+
+export circuit lit1(): [] {
+  P_emitPayload(P_payload1<17, 206>(P_header(pad(32, "acme:token"), 3), P_nameRecord<10, 17>("Acme Token")));
+}
+
+export circuit lit2(): [] {
+  P_emitPayload(P_payload2<17, 13, 193>(P_header(pad(32, "acme:token"), 3), P_nameRecord<10, 17>("Acme Token"),
+    P_symbolRecord<4, 13>("ACME")));
+}
+
+export circuit lit3(): [] {
+  P_emitPayload(P_commonFields<10, 4, 17, 13, 181>(pad(32, "acme:token"), 3, "Acme Token", "ACME", 6));
+}
+
+export circuit lit4(): [] {
+  P_emitPayload(P_commonFieldsWithStandards<10, 4, 8, 17, 13, 20, 161>(pad(32, "acme:token"), 3, "Acme Token", "ACME", 6,
+    "mip-0004"));
+}
+
+export circuit arg1(ds: Bytes<32>, name: Bytes<10>): [] {
+  P_emitPayload(P_payload1<17, 206>(P_header(ds, 3), P_nameRecord<10, 17>(name)));
+}
+
+export circuit arg2(ds: Bytes<32>, name: Bytes<10>, symbol: Bytes<4>): [] {
+  P_emitPayload(P_payload2<17, 13, 193>(P_header(ds, 3), P_nameRecord<10, 17>(name), P_symbolRecord<4, 13>(symbol)));
+}
+
+export circuit arg3(ds: Bytes<32>, name: Bytes<10>, symbol: Bytes<4>, decimals: Uint<8>): [] {
+  P_emitPayload(P_commonFields<10, 4, 17, 13, 181>(ds, 3, name, symbol, decimals));
+}
+
+export circuit arg4(ds: Bytes<32>, name: Bytes<10>, symbol: Bytes<4>, decimals: Uint<8>, standards: Bytes<8>): [] {
+  P_emitPayload(P_commonFieldsWithStandards<10, 4, 8, 17, 13, 20, 161>(ds, 3, name, symbol, decimals, standards));
+}
+
+export circuit dsArg4(ds: Bytes<32>): [] {
+  P_emitPayload(P_commonFieldsWithStandards<10, 4, 8, 17, 13, 20, 161>(ds, 3, "Acme Token", "ACME", 6, "mip-0004"));
+}
+
+export circuit tombLit(): [] {
+  P_emitPayload(P_tombstone(pad(32, "acme:token"), 3));
+}
+
+export circuit tombArg(ds: Bytes<32>, kind: Uint<8>): [] {
+  P_emitPayload(P_tombstone(ds, kind));
+}

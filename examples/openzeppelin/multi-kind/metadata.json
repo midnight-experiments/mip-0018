@@ -1,0 +1,566 @@
+{
+  "$comment": "MIP-0018 metadata of examples/openzeppelin/multi-kind: what to deploy and publish, the exact payload of every event, and what a conforming consumer concludes. Format: examples/openzeppelin/README.md#metadatajson. Checked against the contract by test/multi-kind.test.ts.",
+  "example": "multi-kind",
+  "mip": {
+    "commit": "78ecbb4b1ba57371e84fe45f705991ab7b996a61",
+    "eventName": "mip-0018:token-metadata[v1]"
+  },
+  "contract": {
+    "source": "contracts/MyMultiKindToken.compact",
+    "withoutMetadata": "contracts/without-metadata/MyMultiKindToken.compact",
+    "openzeppelin": "@openzeppelin/compact-contracts@0.4.0-alpha.5 (access/Ownable, token/NativeShieldedToken, token/FungibleToken); kind 2 uses the Compact standard library (mintUnshieldedToken): OpenZeppelin has no native unshielded module",
+    "constructorArgs": {
+      "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+      "name_": "Acme Dollar",
+      "symbol_": "ACD",
+      "decimals_": 2,
+      "initialOwner": "left(<the deployer's Ownable account id = persistentHash([secretKey])>)"
+    }
+  },
+  "identities": [
+    {
+      "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+      "kind": 1,
+      "name": "Acme Dollar",
+      "symbol": "ACD",
+      "decimals": 2
+    },
+    {
+      "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+      "kind": 2,
+      "name": "Acme Dollar",
+      "symbol": "ACD",
+      "decimals": 2
+    },
+    {
+      "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+      "kind": 3,
+      "name": "Acme Dollar",
+      "symbol": "ACD",
+      "decimals": 2
+    }
+  ],
+  "steps": [
+    {
+      "id": "mint-shielded",
+      "circuit": "mintShielded",
+      "args": {
+        "recipient": "<the holder's Zswap coin public key>",
+        "amount": "100000",
+        "nonce": "<32 fresh random bytes>"
+      },
+      "caller": "owner",
+      "events": [],
+      "mints": [
+        {
+          "kind": 1,
+          "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+          "amount": "100000"
+        }
+      ]
+    },
+    {
+      "id": "mint-unshielded",
+      "circuit": "mintUnshielded",
+      "args": {
+        "recipient": "<the holder's unshielded user address (32 bytes)>",
+        "amount": "100000"
+      },
+      "caller": "owner",
+      "events": [],
+      "mints": [
+        {
+          "kind": 2,
+          "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+          "amount": "100000"
+        }
+      ]
+    },
+    {
+      "id": "mint-ledger",
+      "circuit": "mintLedger",
+      "args": {
+        "account": "left(<the holder's FungibleToken account id>)",
+        "value": "100000"
+      },
+      "caller": "owner",
+      "events": []
+    },
+    {
+      "id": "publish",
+      "circuit": "publishMetadata",
+      "args": {},
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+          "kind": 1,
+          "name": "Acme Dollar",
+          "symbol": "ACD",
+          "decimals": 2,
+          "payload": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e64000000000001046e616d65010b41636d6520446f6c6c61720673796d626f6c010341434408646563696d616c7302010200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+          "kind": 2,
+          "name": "Acme Dollar",
+          "symbol": "ACD",
+          "decimals": 2,
+          "payload": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e64000000000002046e616d65010b41636d6520446f6c6c61720673796d626f6c010341434408646563696d616c7302010200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+          "kind": 3,
+          "name": "Acme Dollar",
+          "symbol": "ACD",
+          "decimals": 2,
+          "payload": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e64000000000003046e616d65010b41636d6520446f6c6c61720673796d626f6c010341434408646563696d616c7302010200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    }
+  ],
+  "expected": {
+    "identities": [
+      {
+        "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+        "kind": 1,
+        "visible": true,
+        "colored": true,
+        "common": {
+          "name": "Acme Dollar",
+          "symbol": "ACD",
+          "decimals": 2
+        }
+      },
+      {
+        "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+        "kind": 2,
+        "visible": true,
+        "colored": true,
+        "common": {
+          "name": "Acme Dollar",
+          "symbol": "ACD",
+          "decimals": 2
+        }
+      },
+      {
+        "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+        "kind": 3,
+        "visible": true,
+        "colored": false,
+        "common": {
+          "name": "Acme Dollar",
+          "symbol": "ACD",
+          "decimals": 2
+        }
+      }
+    ],
+    "groups": [
+      {
+        "symbol": "ACD",
+        "members": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+            "kind": 1
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+            "kind": 2
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+            "kind": 3
+          }
+        ]
+      }
+    ]
+  },
+  "lifecycle": [
+    {
+      "id": "rename-ledger",
+      "circuit": "setMetadata",
+      "args": {
+        "kind": 3,
+        "newName": "Acme Ledger",
+        "newSymbol": "ACL"
+      },
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+          "kind": 3,
+          "name": "Acme Ledger",
+          "symbol": "ACL",
+          "payload": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e64000000000003046e616d65010b41636d65204c65646765720673796d626f6c010341434c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expected": {
+        "identities": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+            "kind": 1,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Acme Dollar",
+              "symbol": "ACD",
+              "decimals": 2
+            }
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+            "kind": 2,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Acme Dollar",
+              "symbol": "ACD",
+              "decimals": 2
+            }
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+            "kind": 3,
+            "visible": true,
+            "colored": false,
+            "common": {
+              "name": "Acme Ledger",
+              "symbol": "ACL",
+              "decimals": 2
+            }
+          }
+        ],
+        "groups": [
+          {
+            "symbol": "ACD",
+            "members": [
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+                "kind": 1
+              },
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+                "kind": 2
+              }
+            ]
+          },
+          {
+            "symbol": "ACL",
+            "members": [
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+                "kind": 3
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "rename-shielded",
+      "circuit": "setMetadata",
+      "args": {
+        "kind": 1,
+        "newName": "Acme Shield",
+        "newSymbol": "ACD"
+      },
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+          "kind": 1,
+          "name": "Acme Shield",
+          "symbol": "ACD",
+          "payload": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e64000000000001046e616d65010b41636d6520536869656c640673796d626f6c010341434400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expected": {
+        "identities": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+            "kind": 1,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Acme Shield",
+              "symbol": "ACD",
+              "decimals": 2
+            }
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+            "kind": 2,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Acme Dollar",
+              "symbol": "ACD",
+              "decimals": 2
+            }
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+            "kind": 3,
+            "visible": true,
+            "colored": false,
+            "common": {
+              "name": "Acme Ledger",
+              "symbol": "ACL",
+              "decimals": 2
+            }
+          }
+        ],
+        "groups": [
+          {
+            "symbol": "ACD",
+            "members": [
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+                "kind": 1
+              },
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+                "kind": 2
+              }
+            ]
+          },
+          {
+            "symbol": "ACL",
+            "members": [
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+                "kind": 3
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "withdraw-unshielded",
+      "circuit": "withdrawMetadata",
+      "args": {
+        "kind": 2
+      },
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+          "kind": 2,
+          "tombstone": true,
+          "payload": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e64000000000002046e616d650500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expected": {
+        "identities": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+            "kind": 1,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Acme Shield",
+              "symbol": "ACD",
+              "decimals": 2
+            }
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+            "kind": 2,
+            "visible": false,
+            "colored": true,
+            "common": {}
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+            "kind": 3,
+            "visible": true,
+            "colored": false,
+            "common": {
+              "name": "Acme Ledger",
+              "symbol": "ACL",
+              "decimals": 2
+            }
+          }
+        ],
+        "groups": [
+          {
+            "symbol": "ACD",
+            "members": [
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+                "kind": 1
+              }
+            ]
+          },
+          {
+            "symbol": "ACL",
+            "members": [
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+                "kind": 3
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "withdraw-unshielded-again",
+      "circuit": "withdrawMetadata",
+      "args": {
+        "kind": 2
+      },
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+          "kind": 2,
+          "tombstone": true,
+          "payload": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e64000000000002046e616d650500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expected": {
+        "identities": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+            "kind": 1,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Acme Shield",
+              "symbol": "ACD",
+              "decimals": 2
+            }
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+            "kind": 2,
+            "visible": false,
+            "colored": true,
+            "common": {}
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+            "kind": 3,
+            "visible": true,
+            "colored": false,
+            "common": {
+              "name": "Acme Ledger",
+              "symbol": "ACL",
+              "decimals": 2
+            }
+          }
+        ],
+        "groups": [
+          {
+            "symbol": "ACD",
+            "members": [
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+                "kind": 1
+              }
+            ]
+          },
+          {
+            "symbol": "ACL",
+            "members": [
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+                "kind": 3
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "republish",
+      "circuit": "publishMetadata",
+      "args": {},
+      "caller": "owner",
+      "events": [
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+          "kind": 1,
+          "name": "Acme Dollar",
+          "symbol": "ACD",
+          "decimals": 2,
+          "payload": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e64000000000001046e616d65010b41636d6520446f6c6c61720673796d626f6c010341434408646563696d616c7302010200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+          "kind": 2,
+          "name": "Acme Dollar",
+          "symbol": "ACD",
+          "decimals": 2,
+          "payload": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e64000000000002046e616d65010b41636d6520446f6c6c61720673796d626f6c010341434408646563696d616c7302010200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+          "kind": 3,
+          "name": "Acme Dollar",
+          "symbol": "ACD",
+          "decimals": 2,
+          "payload": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e64000000000003046e616d65010b41636d6520446f6c6c61720673796d626f6c010341434408646563696d616c7302010200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expected": {
+        "identities": [
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+            "kind": 1,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Acme Dollar",
+              "symbol": "ACD",
+              "decimals": 2
+            }
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+            "kind": 2,
+            "visible": true,
+            "colored": true,
+            "common": {
+              "name": "Acme Dollar",
+              "symbol": "ACD",
+              "decimals": 2
+            }
+          },
+          {
+            "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+            "kind": 3,
+            "visible": true,
+            "colored": false,
+            "common": {
+              "name": "Acme Dollar",
+              "symbol": "ACD",
+              "decimals": 2
+            }
+          }
+        ],
+        "groups": [
+          {
+            "symbol": "ACD",
+            "members": [
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+                "kind": 1
+              },
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+                "kind": 2
+              },
+              {
+                "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+                "kind": 3
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

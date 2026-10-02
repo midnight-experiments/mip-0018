@@ -1,0 +1,25 @@
+{
+  "name": "@mip0018/example-minimal",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Smallest MIP-0018 emitters without OpenZeppelin: create-and-destroy, owner key, publish-once.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "compile": "node scripts/compile.ts",
+    "create-and-destroy": "tsx scripts/create-and-destroy.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "0.20.0",
+    "@mip0018/compact": "0.1.0"
+  },
+  "devDependencies": {
+    "@mip0018/codec": "0.1.0",
+    "@mip0018/consumer": "0.1.0",
+    "@mip0018/midnight": "0.1.0",
+    "@types/node": "24.19.1",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "network": {
+    "id": "stagenet",
+    "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+    "indexer": "https://indexer.stagenet.shielded.tools/api/v4/graphql"
+  },
+  "contract": "9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3",
+  "snapshot": {
+    "indexerTip": {
+      "height": 714820,
+      "hash": "ea8f23081b2fb2d68f56d6722fc2e0648eac783b23e9bda78d77b6b9b73a15d6"
+    },
+    "toBlock": 714820,
+    "nodeHashAtTip": "0xea8f23081b2fb2d68f56d6722fc2e0648eac783b23e9bda78d77b6b9b73a15d6",
+    "tipMatchesNode": true,
+    "finalizedHeight": 714820
+  },
+  "pages": 2,
+  "counts": {
+    "events": 3,
+    "accepted": 3,
+    "rejected": 0,
+    "ignored": 0
+  },
+  "events": [
+    {
+      "id": 53471,
+      "block": {
+        "height": 714796,
+        "hash": "63e97aadb5c5fbebf311936a5dd38d6f764d7ad4ed0f1b709efaa0d6e189e056"
+      },
+      "txHash": "71fb2c2d9ade1a3906ad92b3d245e6578478d58cac52d4f3f4c01fdbea2fc7e2",
+      "txId": 24265,
+      "result": "accept",
+      "identity": "stagenet|9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "records": 4
+    },
+    {
+      "id": 53477,
+      "block": {
+        "height": 714804,
+        "hash": "854c6d8129ae198422ed366783d34f53209bcdd92e153f41825ac265dd3f9cb2"
+      },
+      "txHash": "2514eeca34a802c11ade6a3da9dd6bd19c44aa5dc9328d5f989a063a5cc9c2e9",
+      "txId": 24268,
+      "result": "accept",
+      "identity": "stagenet|9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "records": 2
+    },
+    {
+      "id": 53485,
+      "block": {
+        "height": 714813,
+        "hash": "ab2e8a0400a3610a2f36dbbe221507bd661e09724d13a96af569f41dc4f3637b"
+      },
+      "txHash": "35858a38a3f507ce06b0e878b79d5b3e183a2bc73cac04e1b193ca5b4712a8d6",
+      "txId": 24270,
+      "result": "accept",
+      "identity": "stagenet|9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "records": 1
+    }
+  ],
+  "identities": [
+    {
+      "key": "stagenet|9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "network": "stagenet",
+      "contractAddress": "9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "visible": false,
+      "colored": false,
+      "color": null,
+      "fields": [],
+      "common": {}
+    }
+  ],
+  "groups": [],
+  "expectation": {
+    "ok": true,
+    "differences": []
+  }
+}
