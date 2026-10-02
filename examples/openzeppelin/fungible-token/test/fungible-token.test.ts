@@ -8,9 +8,10 @@
 //   * mint, transfer and burn emit nothing (MIP "Publishing: no events in normal operation");
 //   * Ownable: a non-owner cannot publish, rename, withdraw, mint or burn (nothing emitted).
 
-import { classifyEvent, decodePayload, decodeUtf8, EVENT_NAME, toHex } from '@mip0018/codec';
+import { decodePayload, decodeUtf8, toHex } from '@mip0018/codec';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { compileExample, type Variant } from '../../src/examples.ts';
+import { expectStepEvents, sortedState } from '../../src/expect.ts';
 import {
   account,
   accountId,
@@ -23,7 +24,6 @@ import {
   loadMetadata,
   mintsOf,
   utf8,
-  type CallOutcome,
   type OzPrivateState,
   type Simulator,
   type Step,
@@ -49,22 +49,6 @@ const deploy = (variant: Variant = 'with-metadata'): Promise<Simulator<OzPrivate
 const argsOf = (step: Step): unknown[] =>
   step.circuit === 'setMetadata' ? [utf8(step.args.newName as string), utf8(step.args.newSymbol as string)] : [];
 
-const expectEvents = (out: CallOutcome, step: Step) => {
-  expect(out.misc).toHaveLength(step.events.length);
-  step.events.forEach((e, i) => {
-    const m = out.misc[i]!;
-    expect(m.address).toBe(ADDRESS);
-    expect(toHex(m.name)).toBe(toHex(EVENT_NAME));
-    expect(toHex(m.payload)).toBe(e.payload);
-    expect(classifyEvent({ type: 'Misc', name: m.name, payload: m.payload }).result).toBe('accept');
-  });
-};
-
-const sortState = <T extends { identities: { domainSep: string; kind: number }[] }>(s: T): T => ({
-  ...s,
-  identities: [...s.identities].sort((a, b) => (a.domainSep + a.kind).localeCompare(b.domainSep + b.kind)),
-});
-
 describe('metadata.json', () => {
   it('every payload equals the reference encoder', () => {
     for (const step of [...META.steps, ...META.lifecycle])
@@ -81,7 +65,7 @@ describe('MyFungibleToken (OpenZeppelin FungibleToken + Ownable + MIP-0018)', ()
   it('publishMetadata() emits the metadata.json payload: kind 3, constant domainSep, the constructor literals', async () => {
     const sim = await deploy();
     const out = await callAs(sim, OWNER, 'publishMetadata');
-    expectEvents(out, META.steps[0]!);
+    expectStepEvents(out, META.steps[0]!, ADDRESS);
     const decoded = decodePayload(out.misc[0]!.payload);
     if (!decoded.ok) throw new Error(decoded.reason);
     expect(toHex(decoded.header.domainSep)).toBe(META.identities[0]!.domainSep.slice(2));
@@ -97,9 +81,9 @@ describe('MyFungibleToken (OpenZeppelin FungibleToken + Ownable + MIP-0018)', ()
     const chain = new Chain();
     for (const step of [...META.steps, ...META.lifecycle]) {
       const out = await callAs(sim, OWNER, step.circuit, ...argsOf(step));
-      expectEvents(out, step);
+      expectStepEvents(out, step, ADDRESS);
       chain.apply(out);
-      expect(sortState(chain.snapshot(ADDRESS)), step.id).toEqual(sortState(step.expected ?? META.expected));
+      expect(sortedState(chain.snapshot(ADDRESS)), step.id).toEqual(sortedState(step.expected ?? META.expected));
     }
   });
 
