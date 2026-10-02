@@ -36,11 +36,14 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/C02
 ```
 
-## Transactions (filled in by S5)
+## Transactions (Stagenet, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
-| `deploy` | _S5_ | _S5_ | _S5_ |
-| `mint` | _S5_ | _S5_ | _S5_ |
-| `publish` | _S5_ | _S5_ | _S5_ |
+Contract `MyShieldedToken` at `0ee5f31961f9df197055c49dda8f87275af50c3554ba701ffa1837537735e532`; signer mn_addr_stagenet1vw57646su9y5z6myarm93m6kcn62j97z0yma94lfkhmta6pz5h5q6utr3k.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `deploy` | deploy | `f7324b4b330d79960e35320c1ce9b3d4234e8afaba2eff016aba578ad4add267` | 714551 (`8258acc0bab85501…`) | SUCCESS | 6,684,990,545,016,109 | 6.685 |
+| `mint` | call `mint` | `90dbd77e00c6c4dda189488ac7c45420089b43b81a6fff0b845db4a64853dfcd` | 714557 (`6b446e1f915e3817…`) | SUCCESS | 207,554,021,072,761 | 0.208 |
+| `publish` | call `publishMetadata` | `133501d0ee8b313926579b8c1b1b9a5e17450d8091dc3b10666939ca4c30f809` | 714564 (`49902cefcb355a4a…`) | SUCCESS | 173,910,877,652,190 | 0.174 |
+| **total** | | | | | **7,066,455,443,741,060** | **7.066** |
 
