@@ -17,7 +17,7 @@ docker/run.sh exec <command>         # any command in the image
 - Versions are pinned in [`toolchain.json`](toolchain.json); `docker/run.sh check:pins` keeps the Dockerfile, the compose file and the manifests consistent with it. Only official binaries: Compact releases from `midnightntwrk/compact`, `midnightntwrk/*` images by digest, npm packages from the official scopes.
 - Compile every Compact file with Compact 0.35.0 and `--feature-zkir-v3`.
 
-Before opening or updating a pull request: `docker/run.sh ci lint typecheck test check:pins check:mip-pin check:conformance-matrix`.
+Before opening or updating a pull request: `docker/run.sh ci lint typecheck test check:pins check:secrets check:mip-pin check:conformance-matrix`.
 
 ## The MIP is the authority
 

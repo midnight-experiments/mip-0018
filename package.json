@@ -29,10 +29,12 @@
     "spike:local": "npm run local -w test-contracts/toolchain-spike --",
     "spike:stagenet": "npm run stagenet -w test-contracts/toolchain-spike --",
     "local:fund": "npm run fund -w test-contracts/toolchain-spike --",
-    "spike:check": "npm run check -w test-contracts/toolchain-spike --"
+    "spike:check": "npm run check -w test-contracts/toolchain-spike --",
+    "check:secrets": "node tools/secret-scan.mjs --self-test && node tools/secret-scan.mjs --history"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@scure/bip39": "2.4.0",
     "@types/node": "24.19.1",
     "eslint": "10.11.0",
     "globals": "17.13.0",
