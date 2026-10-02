@@ -9,8 +9,8 @@ Q19). Spec FR-023; MIP "Security Considerations — Spam and cost".
 - **Verifier key**: what the contract stores on chain per circuit (the deployed operation holds only
   this key: observed 1,353-byte key → 1,362-byte operation, no ZKIR).
 - **Proving time**: one proof of the circuit by the official proof server on this host (median).
-- **Fees (DUST)**: paid per transaction; local-stack fees below, Stagenet fees filled in by the
-  Stagenet matrix (S5) from real receipts.
+- **Fees (DUST)**: paid per transaction; local-stack fees below, Stagenet fees from the real receipts of
+  the Stagenet cases ([Fees on Stagenet](#fees-on-stagenet)).
 
 Reproduce (Docker; the proving column needs a proof server, e.g. the local stack's):
 
@@ -135,9 +135,52 @@ the circuit size.
 
 ## Fees on Stagenet
 
-To be filled by the Stagenet matrix (S5) from indexer receipts (`fee` of each transaction), one row
-per emitting circuit shape deployed there.
+Real receipts of the Stagenet cases ([`deployments/stagenet/`](../deployments/stagenet/README.md), run 2026-10-02,
+node `2.0.0-d9729c13`, ledger 9.1.0.0-rc.3, proof servers rc.8 contract / rc.6 DUST): the indexer's `fee` of every
+included transaction, as recorded in each case's `record.json`. k from the tables above. 1 DUST = 10^15 SPECK.
 
-| Case | Circuit | k | Fee (SPECK) | ≈ DUST |
-|---|---|---:|---:|---:|
-| S0-SPIKE | `SpikeEmitter.publishMetadata` (literal A1) | 6 | 169,392,887,855,896 | 0.169 |
+| Case | Transaction (circuit shape) | k | Txs | Fee (SPECK) | ≈ DUST |
+|---|---|---:|---:|---:|---:|
+| S0-SPIKE | `SpikeEmitter.publishMetadata` (literal A1) | 6 | 1 | 169,392,887,855,896 | 0.169 |
+| C01 | deploy `MyFungibleToken` (10 circuits) | — | 1 | 6,967,424,959,418,516 | 6.967 |
+| C01 | `MyFungibleToken.publishMetadata` | 13 | 1 | 170,964,821,521,367 | 0.171 |
+| C02 | deploy `MyShieldedToken` (9 circuits) | — | 1 | 6,684,990,545,016,109 | 6.685 |
+| C02 | `MyShieldedToken.mint` | 14 | 1 | 207,554,021,072,761 | 0.208 |
+| C02 | `MyShieldedToken.publishMetadata` | 15 | 1 | 173,910,877,652,190 | 0.174 |
+| C03 | deploy `MyUnshieldedToken` (8 circuits) | — | 1 | 6,114,710,014,147,492 | 6.115 |
+| C03 | `MyUnshieldedToken.mint` | 13 | 1 | 220,552,661,229,721 | 0.221 |
+| C03 | `MyUnshieldedToken.publishMetadata` | 15 | 1 | 175,585,860,553,067 | 0.176 |
+| C04 | deploy `MyMultiKindToken` (8 circuits) | — | 1 | 6,862,539,443,348,953 | 6.863 |
+| C04 | `MyMultiKindToken.mintShielded` | 14 | 1 | 211,121,297,175,009 | 0.211 |
+| C04 | `MyMultiKindToken.mintUnshielded` | 13 | 1 | 222,971,902,036,569 | 0.223 |
+| C04 | `MyMultiKindToken.mintLedger` | 13 | 1 | 268,203,515,612,567 | 0.268 |
+| C04 | `MyMultiKindToken.publishMetadata` | 16 | 1 | 192,837,905,228,409 | 0.193 |
+| C05 | deploy `MyTokenFamily` (8 circuits) | — | 1 | 6,380,287,536,036,953 | 6.380 |
+| C05 | `MyTokenFamily.mint` | 14 | 2 | 210,787,300,549,442 – 210,866,712,090,850 | 0.211 |
+| C05 | `MyTokenFamily.publishMetadata` | 15 | 3 | 176,205,117,075,003 | 0.176 |
+| C06 | deploy `OwnerKey` (5 circuits) | — | 1 | 4,672,892,956,309,085 | 4.673 |
+| C06 | `OwnerKey.publishMetadata` | 15 | 1 | 174,323,270,749,595 | 0.174 |
+| C06 | `OwnerKey.setMetadata` | 15 | 2 | 173,921,391,761,418 – 174,135,957,735,567 | 0.174 |
+| C06 | `OwnerKey.withdrawMetadata` | 15 | 2 | 173,510,273,470,794 – 173,908,517,361,446 | 0.174 |
+| C07, C08 | deploy `RawEmitter` (2 circuits) | — | 2 | 2,140,013,597,148,026 – 2,144,366,292,780,833 | 2.140–2.144 |
+| C07 | `RawEmitter.emitRaw` | 16 | 22 | 175,690,178,994,563 – 178,207,494,451,490 | 0.176–0.178 |
+| C08 | `RawEmitter.emitTwo` | 17 | 1 | 181,140,518,274,496 | 0.181 |
+| C10 | deploy `CreateAndDestroy` (2 circuits) | — | 1 | 2,024,952,380,274,544 | 2.025 |
+| C10 | `CreateAndDestroy.publishMetadata` | 14 | 1 | 174,756,276,986,532 | 0.175 |
+| C10 | `VerifierKeyRemove(publishMetadata, v4)` on `CreateAndDestroy` | — | 1 | 38,781,766,700,352 | 0.039 |
+
+What the receipts show:
+
+- **A metadata transaction costs ≈ 0.17–0.19 DUST on Stagenet whatever its circuit size**: k = 6 (literal A1,
+  S0-SPIKE) 0.169, k = 13–15 publishes, renames and tombstones 0.171–0.176, k = 16 (three events in one call, C04)
+  0.193, k = 16–17 raw emitter 0.176–0.181. The fee follows the transaction (its proof, inputs and DUST spend), not
+  the circuit's k; k costs the issuer proving time and prover-key size instead (tables above). A mint costs a little
+  more (0.21–0.27 DUST: it also creates the coin / UTXO / ledger balance).
+- **Deploys dominate**: a deploy stores every circuit's verifier key, so its fee grows with the number of circuits —
+  2.0–2.1 DUST for 2 circuits (raw emitter, create-and-destroy), 4.7 for 5 (`OwnerKey`), 6.1–7.0 for the 8–10 circuit
+  OpenZeppelin examples. Adding metadata circuits to a token therefore costs mostly at deployment (≈ 0.6–0.9 DUST
+  per additional verifier key here), and an existing contract can add one later with a `VerifierKeyInsert` (case U1).
+- **Removing a key is cheap** (`VerifierKeyRemove`, 0.039 DUST — create-and-destroy, C10).
+- Stagenet fees were ≈ 1.17× the local chain's for the same matrix (C01–C10: 51.93 DUST over 53 transactions on
+  Stagenet vs ≈ 44.4 DUST locally); a contract's verifier keys deployed on Stagenet equal, byte for byte, the
+  SHA-256s in `costs.json` (49/49 in C01–C10 — the builds are deterministic).

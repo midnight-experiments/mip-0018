@@ -93,8 +93,8 @@ steps
 ```
 
 The fees are in SPECK (10^15 SPECK = 1 DUST): about 4.94 DUST for deploying the token with the verifier keys of all
-its circuits, 0.16 DUST for the publish (local chain; Stagenet costs are in [`docs/costs.md`](../../docs/costs.md)
-once S5 has run).
+its circuits, 0.16 DUST for the publish (local chain). On Stagenet the same token cost 6.967 DUST to deploy and
+0.171 DUST to publish (case C01; all Stagenet fees in [`docs/costs.md`](../../docs/costs.md#fees-on-stagenet)).
 
 Re-running the same command changes nothing: every step is already completed on chain. Passing `--metadata` other
 than what the contract emits (its values are compiled in) is refused before anything is built.
@@ -261,11 +261,12 @@ case folders [`deployments/stagenet/cases/`](../../deployments/stagenet/cases/RE
 
 | Case | What | Contract | Publish transaction |
 |---|---|---|---|
-| [C01](../../deployments/stagenet/cases/C01/README.md) | OpenZeppelin fungible token: deploy, publish | _S5_ | _S5_ |
-| [C06](../../deployments/stagenet/cases/C06/README.md) | minimal OwnerKey: publish, rename, tombstone ×2, revive | _S5_ | _S5_ |
-| [C10](../../deployments/stagenet/cases/C10/README.md) | minimal create-and-destroy | _S5_ | _S5_ |
+| [C01](../../deployments/stagenet/cases/C01/README.md) | OpenZeppelin fungible token: deploy, publish | `98a90519419e2ebb514b7c6ce87ee7f6f4f9753d9ee6f533c5d1c25b9d437dcf` | `a6fff9fb3f034aea393ff37fcd4343c418c3bfcc7cb22c502c1c1a6ffbc55dfd` (block 714501) |
+| [C06](../../deployments/stagenet/cases/C06/README.md) | minimal OwnerKey: publish, rename, tombstone ×2, revive | `9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3` | `71fb2c2d9ade1a3906ad92b3d245e6578478d58cac52d4f3f4c01fdbea2fc7e2` (block 714796; then rename 714804, tombstone 714813, tombstone again 714827, revive 714835) |
+| [C10](../../deployments/stagenet/cases/C10/README.md) | minimal create-and-destroy | `048ec49aacdde9ef2fee1bd51c651df46d3224578e36a1e89bdbb88842edf0f6` | `85d6f8a241ceff9935dc1aec51e5c5c1c51818dd0a41ebf7b850e2ff413a5b4d` (block 715177; key removed in 715183) |
 
-(_S5_: filled in when the Stagenet matrix runs.)
+Run on 2026-10-02 with wallet 1 of this repository's test wallets; every case re-checks wallet-free with
+`docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/<ID>`.
 
 ## Appendix: the same with plain midnight-js
 

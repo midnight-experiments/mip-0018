@@ -44,7 +44,7 @@ MIP-0018 needs MIP-0002 `Misc` events, so it **requires Compact 0.34.0 or later*
 | Backwards Compatibility — Existing contracts | `examples/upgrade-existing-contract`, `docs/upgrade-guide.md` | planned (S6) |
 | Security Considerations | `docs/consumer-guide.md`, [`SECURITY.md`](SECURITY.md) | planned (S4) |
 | Testing (normative vectors) | `vectors/` + runner contract | planned (S1) |
-| Implementation Plan step 3 (public test network) | `deployments/stagenet/` | first case from S0; matrix planned (S5) |
+| Implementation Plan step 3 (public test network) | [`deployments/stagenet/`](deployments/stagenet/README.md) | S0-SPIKE + matrix C01–C10 and IDX run on Stagenet 2026-10-02, each re-checkable wallet-free (S5); upgrade case U1 (S6b) |
 | Every MUST / SHOULD | [`docs/conformance-matrix.md`](docs/conformance-matrix.md) | skeleton (S0) |
 
 ## Quickstart (Docker only)

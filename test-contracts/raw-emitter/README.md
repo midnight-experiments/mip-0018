@@ -7,7 +7,8 @@
 Purpose: put events on a test network that a conforming MIP-0018 consumer must **reject** (malformed
 payloads, MIP tests R1–R6), **ignore** (`mip-0018:token-metadata[v2]` and foreign names) or accept at
 **capacity** (A2), next to valid ones, and two events in **one transaction** (MIP test S7). Used by the
-Stagenet matrix (S5).
+Stagenet cases [C07](../../deployments/stagenet/cases/C07/README.md) (22 vectors) and
+[C08](../../deployments/stagenet/cases/C08/README.md) (S7b).
 
 | Circuit | Who | Emits |
 |---|---|---|
