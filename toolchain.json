@@ -18,9 +18,7 @@
     "runtime": "0.20.0",
     "ledgerTarget": "ledger-9.1.0.0-rc.3",
     "zkir": "zkir-3.1.0-rc.1",
-    "flags": [
-      "--feature-zkir-v3"
-    ],
+    "flags": ["--feature-zkir-v3"],
     "minimumForMisc": "0.34.0 (language 0.26.0, runtime 0.19.0)",
     "release": {
       "tag": "compactc-v0.35.0",
