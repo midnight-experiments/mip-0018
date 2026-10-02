@@ -1,0 +1,44 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// A deliberately tiny ledger token (kind 3) used only to give the MIP-0018 examples normal token
+// operations (mint, transfer) that must NOT emit metadata. Not a token standard: public balances
+// keyed by an account id, no allowances, no supply tracking.
+//
+// Account id = persistentHash(["mip0018:minimal:account", secretKey]); the secret key comes from
+// the `secretKey` witness (the caller's private state).
+
+pragma language_version >= 0.26.0;
+
+module MinimalToken {
+  import CompactStandardLibrary;
+
+  export ledger balances: Map<Bytes<32>, Uint<64>>;
+
+  witness secretKey(): Bytes<32>;
+
+  export pure circuit accountId(sk: Bytes<32>): Bytes<32> {
+    return persistentHash<Vector<2, Bytes<32>>>([pad(32, "mip0018:minimal:account"), sk]);
+  }
+
+  /** The caller's account id (from the secretKey witness). */
+  export circuit caller(): Bytes<32> {
+    return accountId(secretKey());
+  }
+
+  /** Credits `amount` to `to`. Callers decide who may mint. */
+  export circuit _mint(to: Bytes<32>, amount: Uint<64>): [] {
+    const account = disclose(to);
+    const before = balances.member(account) ? balances.lookup(account) : 0;
+    balances.insert(account, disclose((before + amount) as Uint<64>));
+  }
+
+  /** Moves `amount` from the caller's account to `to`. Emits nothing. */
+  export circuit transfer(to: Bytes<32>, amount: Uint<64>): [] {
+    const sender = disclose(caller());
+    assert(balances.member(sender), "MinimalToken: insufficient balance");
+    const fromBalance = balances.lookup(sender);
+    assert(fromBalance >= disclose(amount), "MinimalToken: insufficient balance");
+    balances.insert(sender, disclose(fromBalance - amount));
+    _mint(to, amount);
+  }
+}
