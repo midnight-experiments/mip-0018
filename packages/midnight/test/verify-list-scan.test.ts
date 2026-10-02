@@ -118,6 +118,51 @@ describe('list (recorded Stagenet)', () => {
   });
 });
 
+describe('indexer data with trailing zero bytes dropped (MIP "Consuming": zero extension)', () => {
+  /** The recorded tape with every MiscContractEvent name/payload trimmed of its trailing zero bytes. */
+  const trimmedReplay = (name: string) => {
+    const trim = (h: string) => h.replace(/(00)+$/u, '');
+    const tape = loadTape(join(dir, `${name}.tape.json`));
+    let trimmed = 0;
+    const walk = (v: unknown): void => {
+      if (Array.isArray(v)) v.forEach(walk);
+      else if (v !== null && typeof v === 'object') {
+        const o = v as Record<string, unknown>;
+        if (typeof o.name === 'string' && typeof o.payload === 'string' && o.payload.length === 512) {
+          o.name = trim(o.name);
+          o.payload = trim(o.payload);
+          trimmed++;
+        }
+        Object.values(o).forEach(walk);
+      }
+    };
+    walk(tape);
+    expect(trimmed).toBeGreaterThan(0);
+    return new HttpClient({ fetch: replayFetch(tape), attempts: 1 });
+  };
+
+  it('verify: the trimmed event is zero-extended, equals the raw log op and is A1', async () => {
+    const r = await verifyEmission({
+      profile,
+      contract: SPIKE,
+      tx: PUBLISH,
+      http: trimmedReplay('verify-spike-publish'),
+      expect: { metadata: A1_META },
+    });
+    expect(r.outcome).toBe('ok');
+    expect(r.checks.every((c) => c.ok)).toBe(true);
+    expect(r.events[0]).toMatchObject({ inRawTransaction: true, classification: { result: 'accept', kind: 3 } });
+    expect(r.events[0]!.name).toHaveLength(64);
+    expect(r.events[0]!.payload).toHaveLength(512);
+  });
+
+  it('list: the trimmed event gives the same identity', async () => {
+    const r = await listMetadata({ profile, contract: SPIKE, toBlock: 710820, http: trimmedReplay('list-spike') });
+    expect(r.counts).toEqual({ events: 1, accepted: 1, rejected: 0, ignored: 0 });
+    expect(r.identities[0]!.common).toEqual({ name: 'Acme Token', symbol: 'ACME', decimals: 6n, standards: ['mip-0004'] });
+  });
+});
+
 describe('scanner', () => {
   it('replays blocks 710800..710820 (polling) to the recorded state', async () => {
     const t = mkdtempSync(join(tmpdir(), 'scan-'));

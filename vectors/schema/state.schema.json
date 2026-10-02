@@ -15,6 +15,22 @@
     "steps": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/step" } },
     "expect": { "$ref": "#/$defs/stateExpectation" }
   },
+  "if": { "properties": { "normative": { "const": true } } },
+  "then": {
+    "description": "Normative vectors carry the full 32-byte name and 256-byte payload in every step, as the MIP's Testing items do.",
+    "properties": {
+      "steps": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name_hex": { "$ref": "payload.schema.json#/$defs/hex32" },
+            "payload_hex": { "$ref": "payload.schema.json#/$defs/hex256" }
+          }
+        }
+      }
+    }
+  },
   "$defs": {
     "network": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$" },
     "position": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
@@ -41,8 +57,8 @@
         "event": { "$ref": "#/$defs/position" },
         "contractAddress": { "$ref": "payload.schema.json#/$defs/hex32" },
         "type": { "$ref": "payload.schema.json#/$defs/eventType" },
-        "name_hex": { "$ref": "payload.schema.json#/$defs/hex32" },
-        "payload_hex": { "$ref": "payload.schema.json#/$defs/hex256" }
+        "name_hex": { "$ref": "payload.schema.json#/$defs/observedNameHex" },
+        "payload_hex": { "$ref": "payload.schema.json#/$defs/observedPayloadHex" }
       }
     },
     "rollbackStep": {

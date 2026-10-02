@@ -14,12 +14,12 @@ const ADAPTER = fileURLToPath(new URL('../bin/vector-adapter.js', import.meta.ur
 const vectors = loadVectors();
 
 describe('reference consumer against the vectors', () => {
-  it('passes every normative (67) and informative (34) vector in-process', async () => {
+  it('passes every normative (67) and informative (43) vector in-process', async () => {
     const report = await runVectors(vectors, async (req) => handleRequest(req));
     const failed = report.results.filter((r) => !r.ok);
     if (failed.length > 0) console.log(formatReport(report));
     expect(report.normative).toEqual({ passed: 67, total: 67 });
-    expect(report.informative).toEqual({ passed: 34, total: 34 });
+    expect(report.informative).toEqual({ passed: 43, total: 43 });
     expect(report.results.flatMap((r) => r.notes)).toEqual([]); // reason codes and offsets match too
   });
 
@@ -39,7 +39,7 @@ describe('reference consumer against the vectors', () => {
       timeout: 120_000,
     });
     expect(r.stderr).toBe('');
-    expect(r.stdout).toMatch(/normative: 67\/67 passed; informative: 34\/34 passed/);
+    expect(r.stdout).toMatch(/normative: 67\/67 passed; informative: 43\/43 passed/);
     expect(r.stdout).not.toMatch(/^FAIL/m);
     expect(r.stdout).not.toMatch(/note:/);
     expect(r.status).toBe(0);
@@ -47,7 +47,7 @@ describe('reference consumer against the vectors', () => {
 
   it('the adapter answers malformed requests with an error line instead of crashing', () => {
     const r = spawnSync(process.execPath, [ADAPTER], {
-      input: 'not json\n{"id":"x","op":"nope"}\n{"id":"y","op":"decode","type":"Misc","name_hex":"00","payload_hex":""}\n',
+      input: 'not json\n{"id":"x","op":"nope"}\n{"id":"y","op":"decode","type":"Misc","name_hex":"zz","payload_hex":""}\n',
       encoding: 'utf8',
     });
     const lines = r.stdout

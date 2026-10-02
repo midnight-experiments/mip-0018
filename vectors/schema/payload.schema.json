@@ -19,11 +19,31 @@
     "event": { "$ref": "#/$defs/event" },
     "expect": { "$ref": "#/$defs/decodeExpectation" }
   },
+  "if": { "properties": { "normative": { "const": true } } },
+  "then": {
+    "description": "Normative vectors carry the full 32-byte name and 256-byte payload, as the MIP's Testing items do.",
+    "properties": {
+      "event": {
+        "type": "object",
+        "properties": { "name_hex": { "$ref": "#/$defs/hex32" }, "payload_hex": { "$ref": "#/$defs/hex256" } }
+      }
+    }
+  },
   "$defs": {
     "vectorId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
     "hex": { "type": "string", "pattern": "^([0-9a-f]{2})*$" },
     "hex32": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "hex256": { "type": "string", "pattern": "^[0-9a-f]{512}$" },
+    "observedNameHex": {
+      "description": "An event name as a source returned it: 32 bytes, or fewer when the source dropped trailing zero bytes (consumers zero-extend it, MIP \"Consuming\"). Informative vectors may give a longer value, which is another name.",
+      "type": "string",
+      "pattern": "^([0-9a-f]{2}){0,64}$"
+    },
+    "observedPayloadHex": {
+      "description": "An event payload as a source returned it: 256 bytes, or fewer when the source dropped trailing zero bytes (consumers zero-extend it, MIP \"Consuming\"). Informative vectors may give a longer value, which consumers reject.",
+      "type": "string",
+      "pattern": "^([0-9a-f]{2}){0,512}$"
+    },
     "uintDecimal": {
       "description": "An unsigned integer as a decimal string (no sign, no leading zeros), so that every width up to 31 bytes is exact in every language.",
       "type": "string",
@@ -64,10 +84,10 @@
       "required": ["type", "name_hex", "payload_hex"],
       "properties": {
         "type": { "$ref": "#/$defs/eventType" },
-        "name_hex": { "$ref": "#/$defs/hex32" },
-        "payload_hex": { "$ref": "#/$defs/hex256" },
+        "name_hex": { "$ref": "#/$defs/observedNameHex" },
+        "payload_hex": { "$ref": "#/$defs/observedPayloadHex" },
         "payload_file": {
-          "description": "The same 256 payload bytes as a binary file next to this JSON file.",
+          "description": "The same payload bytes as a binary file next to this JSON file.",
           "type": "string",
           "pattern": "^[A-Za-z0-9._-]+\\.bin$"
         }

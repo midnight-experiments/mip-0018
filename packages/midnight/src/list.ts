@@ -12,7 +12,7 @@
 //     1 and 2 come from ledger-v9 `rawTokenType` injected into the consumer
 
 import { MetadataState, type IdentityView, type SymbolGroup } from '@mip0018/consumer';
-import { hexToBytes, normAddress, normHex } from './hex.ts';
+import { hexToBytes, normAddress, normHex, zeroExtendHex } from './hex.ts';
 import { HttpClient } from './http.ts';
 import { Indexer, type IndexedMiscEvent } from './indexer.ts';
 import { checkIdentity, type NetworkProfile } from './network.ts';
@@ -72,13 +72,11 @@ export function reduceEvents(
   );
   const listed: ListedEvent[] = [];
   for (const e of sorted) {
-    const name = normHex(e.name ?? '');
-    const payload = normHex(e.payload ?? '');
+    // MIP "Consuming": treat missing trailing bytes as zero (name 32, payload 256) before decoding. A longer name is
+    // another name (ignored) and a longer payload is rejected by the codec.
+    const name = zeroExtendHex(e.name ?? '', 32, 'event name');
+    const payload = zeroExtendHex(e.payload ?? '', 256, 'event payload');
     const base = { id: e.id, block: e.transaction.block, txHash: e.transaction.hash, txId: e.transaction.id };
-    if (name.length !== 64 || payload.length !== 512) {
-      listed.push({ ...base, result: 'ignore', reason: 'undecodable-misc-data' });
-      continue;
-    }
     const r = state.apply({
       network,
       contractAddress: normHex(e.contractAddress),

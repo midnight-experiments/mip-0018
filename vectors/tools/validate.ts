@@ -56,11 +56,11 @@ export function validateAll(dir: string = VECTORS_DIR): { errors: string[]; chec
       listed.add(v.entry.bin);
       const bin = readFileSync(join(dir, v.entry.bin));
       const ev = v.data.event as Json;
-      if (bin.length !== 256) errors.push(`${v.entry.bin}: ${bin.length} bytes, expected 256`);
+      if (v.entry.normative && bin.length !== 256) errors.push(`${v.entry.bin}: ${bin.length} bytes, expected 256`);
       if (toHex(bin) !== ev.payload_hex) errors.push(`${v.entry.bin}: bytes differ from payload_hex in ${v.entry.file}`);
     }
   }
-  const vectorFiles = ['payload', 'state', 'informative/state', 'informative/uri']
+  const vectorFiles = ['payload', 'state', 'informative/state', 'informative/uri', 'informative/zero-extension']
     .flatMap((d) => listFiles(d, dir))
     .filter((f) => /\/[^/]+\.(json|bin)$/.test(f) && !f.includes('/investigation/') && !f.endsWith('/verdicts.json'));
   for (const f of vectorFiles) if (!listed.has(f)) errors.push(`${f}: not listed in ${MANIFEST_FILE}`);

@@ -189,9 +189,12 @@ interface PayloadDef {
 
 function payloadVector(d: PayloadDef): void {
   claimId(d.id);
-  check(d.payload.length === 256, `${d.id}: payload must be 256 bytes`);
   const dir = d.dir ?? 'payload';
   const normative = d.normative ?? true;
+  // Normative vectors are the MIP's Testing items: full 32-byte name, 256-byte payload. Only the informative
+  // zero-extension vectors give a name or payload as a source that dropped trailing zeros would (or a longer one).
+  check(d.payload.length === 256 || (!normative && d.testId === 'INF-ZEXT'), `${d.id}: payload must be 256 bytes`);
+  check((d.name ?? NAME_V1).length === 32 || (!normative && d.testId === 'INF-ZEXT'), `${d.id}: name must be 32 bytes`);
   const v: Record<string, unknown> = {
     id: d.id,
     mip: { commit: MIP.commit, testId: d.testId },
@@ -1216,6 +1219,131 @@ stateVector({
   dir: 'informative/state',
 });
 
+// ---- zero extension (MIP "Consuming", 78ecbb4: missing trailing bytes are zero; name 32, payload 256) ----
+// Each vector gives the name and/or payload as a source that drops trailing zero bytes returns it (raw ledger data,
+// the Compact runtime), and expects exactly the decision and records of the full form, built by the same construction
+// as the normative vector it trims. Plus the two longer cases: a 257-byte payload and a 33-byte name.
+const ZEXT_BASIS =
+  'MIP "Consuming" (78ecbb4): "Some sources drop trailing zero bytes; consumers MUST treat missing trailing bytes as zero, so that every `name` is 32 bytes and every `payload` 256 bytes, before decoding." The expected result is the full form\'s.';
+const ZEXT_DIR = 'informative/zero-extension';
+/** The bytes without their trailing zero bytes, as such a source returns them. */
+function trimZeros(b: Bytes): Bytes {
+  let end = b.length;
+  while (end > 0 && b[end - 1] === 0) end--;
+  return b.slice(0, end);
+}
+const NAME_V1_TRIMMED = trimZeros(NAME_V1);
+check(NAME_V1_TRIMMED.length === 27, 'the v1 name has 5 trailing zero bytes');
+function zextAccept(id: string, description: string, full: Built, recs: Rec[], ev: { name: Bytes; payload: Bytes }): void {
+  payloadVector({
+    id,
+    testId: 'INF-ZEXT',
+    normative: false,
+    description,
+    basis: ZEXT_BASIS,
+    name: ev.name,
+    payload: ev.payload,
+    expect: {
+      result: 'accept',
+      header: { domainSep: toHex(full.bytes.subarray(0, 32)), kind: full.bytes[32] },
+      records: recs.map((r, i) => recordJson(r, full.offsets[i] as number)),
+      contentEnd: full.contentEnd,
+    },
+    dir: ZEXT_DIR,
+  });
+}
+const zextReject = (id: string, description: string, ev: { name?: Bytes; payload: Bytes }, reason: string, offset: number) =>
+  payloadVector({
+    id,
+    testId: 'INF-ZEXT',
+    normative: false,
+    description,
+    basis: ZEXT_BASIS,
+    name: ev.name ?? NAME_V1,
+    payload: ev.payload,
+    expect: { result: 'reject', reason, offset },
+    dir: ZEXT_DIR,
+  });
+const A1_TRIMMED = trimZeros(A1.bytes);
+check(A1_TRIMMED.length === 95, 'A1 without its padding is 95 bytes');
+zextAccept('INF-ZEXT-1', "A1 with the payload's 161 trailing zero bytes dropped (95 bytes): accepted exactly as A1.", A1, A1_RECS, {
+  name: NAME_V1,
+  payload: A1_TRIMMED,
+});
+zextAccept('INF-ZEXT-2', "A1 with the name's 5 trailing zero bytes dropped (27 bytes): accepted exactly as A1.", A1, A1_RECS, {
+  name: NAME_V1_TRIMMED,
+  payload: A1.bytes,
+});
+zextAccept('INF-ZEXT-3', 'A1 with both the name (27 bytes) and the payload (95 bytes) trimmed: accepted exactly as A1.', A1, A1_RECS, {
+  name: NAME_V1_TRIMMED,
+  payload: A1_TRIMMED,
+});
+const A3B_RECS = [rec('data', BYTES, [0x01, 0x00, 0x00])];
+const A3B = build(D11, 3, A3B_RECS);
+const A3B_TRIMMED = trimZeros(A3B.bytes);
+check(A3B_TRIMMED.length === 41, "A3b trimmed loses the value's two zero bytes");
+zextAccept(
+  'INF-ZEXT-4',
+  'A3b trimmed (41 bytes): the value 01 00 00 is the last record, so trimming drops its two zero bytes too; zero extension restores them and the value is still 01 00 00 (value length 3), exactly as A3b.',
+  A3B,
+  A3B_RECS,
+  { name: NAME_V1, payload: A3B_TRIMMED },
+);
+const R1_TRIMMED = trimZeros(cat(D11, [3]));
+check(R1_TRIMMED.length === 33, 'R1 trimmed is the 33-byte header');
+zextReject(
+  'INF-ZEXT-5',
+  'R1 trimmed (the 33-byte header alone): zero-extended it is R1 and is rejected the same way (no records).',
+  { payload: R1_TRIMMED },
+  'no-records',
+  33,
+);
+zextReject(
+  'INF-ZEXT-6',
+  'An empty payload with the v1 name: zero-extended it is 256 zero bytes, so kind is 0 and the event is rejected.',
+  { payload: EMPTY },
+  'bad-kind',
+  32,
+);
+zextReject(
+  'INF-ZEXT-7',
+  'A 257-byte payload (A1 followed by one more zero byte): longer than 256 bytes, so it cannot be decoded as defined in the MIP and the event is rejected.',
+  { payload: cat(A1.bytes, [0]) },
+  'bad-payload-length',
+  0,
+);
+payloadVector({
+  id: 'INF-ZEXT-8',
+  testId: 'INF-ZEXT',
+  normative: false,
+  description:
+    'A 33-byte name (the v1 name followed by one more zero byte) with the A1 payload: not the 32-byte v1 name, so the event is ignored ("any other name").',
+  basis: `${ZEXT_BASIS} Zero extension only adds missing bytes; a longer name is another name (MIP "Event": consumers MUST ignore Misc events with any other name).`,
+  name: cat(NAME_V1, [0]),
+  payload: A1.bytes,
+  expect: { result: 'ignore', reason: 'other-name' },
+  dir: ZEXT_DIR,
+});
+stateVector({
+  id: 'INF-ZEXT-S1',
+  testId: 'INF-ZEXT',
+  normative: false,
+  description:
+    'Reducer: A1, then name = "Beta", both observed with the name and payload trimmed: the identity is visible with name "Beta" and A1\'s other three fields, exactly as with the full forms.',
+  basis: ZEXT_BASIS,
+  steps: [
+    apply({ block: 1, name: NAME_V1_TRIMMED, payload: A1_TRIMMED }),
+    apply({ block: 2, name: NAME_V1_TRIMMED, payload: trimZeros(build(D11, 3, [R.name('Beta')]).bytes) }),
+  ],
+  identities: [
+    identity({
+      kind: 3,
+      fields: [F.name('Beta', true), F.symbol('ACME', true), F.decimals(6, true), F.standards('mip-0004', true)],
+    }),
+  ],
+  dir: ZEXT_DIR,
+});
+
 // ===============================================================================================================
 // Manifest, sums, write / check
 // ===============================================================================================================
@@ -1239,7 +1367,7 @@ emit(
 );
 
 /** Folders the generator owns completely (stale files there are an error / are removed). */
-const GENERATED_DIRS = ['payload', 'state', 'informative/state'];
+const GENERATED_DIRS = ['payload', 'state', 'informative/state', 'informative/zero-extension'];
 function isGeneratedPath(rel: string): boolean {
   if (GENERATED_DIRS.some((d) => rel.startsWith(`${d}/`))) return true;
   return /^informative\/uri\/[^/]+$/.test(rel) && rel !== 'informative/uri/README.md';

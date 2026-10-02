@@ -46,6 +46,7 @@ export const UINT_MAX_BYTES = 31;
 
 /** Reasons a payload is rejected (repository-defined, informative; the MIP only says "reject"). */
 export type RejectReason =
+  /** The payload is longer than 256 bytes (a shorter one is zero-extended). */
   | 'bad-payload-length'
   | 'bad-kind'
   | 'no-records'

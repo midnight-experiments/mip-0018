@@ -17,9 +17,9 @@
   "counts": {
     "normative-payload": 40,
     "normative-state": 27,
-    "informative-payload": 26,
-    "informative-state": 8,
-    "total": 101
+    "informative-payload": 34,
+    "informative-state": 9,
+    "total": 110
   },
   "vectors": [
     {
@@ -793,6 +793,77 @@
       "kind": "state",
       "file": "informative/state/INF-COMMON-1.json",
       "testId": "INF-COMMON",
+      "normative": false
+    },
+    {
+      "id": "INF-ZEXT-1",
+      "kind": "payload",
+      "file": "informative/zero-extension/INF-ZEXT-1.json",
+      "bin": "informative/zero-extension/INF-ZEXT-1.bin",
+      "testId": "INF-ZEXT",
+      "normative": false
+    },
+    {
+      "id": "INF-ZEXT-2",
+      "kind": "payload",
+      "file": "informative/zero-extension/INF-ZEXT-2.json",
+      "bin": "informative/zero-extension/INF-ZEXT-2.bin",
+      "testId": "INF-ZEXT",
+      "normative": false
+    },
+    {
+      "id": "INF-ZEXT-3",
+      "kind": "payload",
+      "file": "informative/zero-extension/INF-ZEXT-3.json",
+      "bin": "informative/zero-extension/INF-ZEXT-3.bin",
+      "testId": "INF-ZEXT",
+      "normative": false
+    },
+    {
+      "id": "INF-ZEXT-4",
+      "kind": "payload",
+      "file": "informative/zero-extension/INF-ZEXT-4.json",
+      "bin": "informative/zero-extension/INF-ZEXT-4.bin",
+      "testId": "INF-ZEXT",
+      "normative": false
+    },
+    {
+      "id": "INF-ZEXT-5",
+      "kind": "payload",
+      "file": "informative/zero-extension/INF-ZEXT-5.json",
+      "bin": "informative/zero-extension/INF-ZEXT-5.bin",
+      "testId": "INF-ZEXT",
+      "normative": false
+    },
+    {
+      "id": "INF-ZEXT-6",
+      "kind": "payload",
+      "file": "informative/zero-extension/INF-ZEXT-6.json",
+      "bin": "informative/zero-extension/INF-ZEXT-6.bin",
+      "testId": "INF-ZEXT",
+      "normative": false
+    },
+    {
+      "id": "INF-ZEXT-7",
+      "kind": "payload",
+      "file": "informative/zero-extension/INF-ZEXT-7.json",
+      "bin": "informative/zero-extension/INF-ZEXT-7.bin",
+      "testId": "INF-ZEXT",
+      "normative": false
+    },
+    {
+      "id": "INF-ZEXT-8",
+      "kind": "payload",
+      "file": "informative/zero-extension/INF-ZEXT-8.json",
+      "bin": "informative/zero-extension/INF-ZEXT-8.bin",
+      "testId": "INF-ZEXT",
+      "normative": false
+    },
+    {
+      "id": "INF-ZEXT-S1",
+      "kind": "state",
+      "file": "informative/zero-extension/INF-ZEXT-S1.json",
+      "testId": "INF-ZEXT",
       "normative": false
     }
   ]

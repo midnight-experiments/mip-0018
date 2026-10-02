@@ -14,8 +14,8 @@
         "id": { "$ref": "payload.schema.json#/$defs/vectorId" },
         "op": { "const": "decode" },
         "type": { "$ref": "payload.schema.json#/$defs/eventType" },
-        "name_hex": { "$ref": "payload.schema.json#/$defs/hex32" },
-        "payload_hex": { "$ref": "payload.schema.json#/$defs/hex256" }
+        "name_hex": { "$ref": "payload.schema.json#/$defs/observedNameHex" },
+        "payload_hex": { "$ref": "payload.schema.json#/$defs/observedPayloadHex" }
       }
     },
     "stateRequest": {

@@ -4,6 +4,7 @@
 // `byteAt`, which throws on an out-of-bounds index — an invariant the fuzz tests assert is never violated. Returned
 // keys/values are copies, so callers never alias the input buffer.
 import { DOMAIN_SEP_SIZE, KIND_OFFSET, PAYLOAD_SIZE, RECORDS_OFFSET, type RejectReason, ValType } from './constants.ts';
+import { zeroExtend } from './hex.ts';
 import { ALL_CODEC_RULES, type CodecRules } from './rules.ts';
 import { checkValue, decodeUintWith } from './values.ts';
 
@@ -60,17 +61,22 @@ function copy(buf: Uint8Array, start: number, end: number): Uint8Array {
 }
 
 /**
- * Decodes and validates a 256-byte MIP-0018 payload. Never throws for any `Uint8Array` input; returns either the
- * header and records or the first failing check. Throws `TypeError` only when `payload` is not a `Uint8Array`.
+ * Decodes and validates a MIP-0018 payload. A payload shorter than 256 bytes is zero-extended first (MIP "Consuming":
+ * some sources drop trailing zero bytes); a longer one is rejected (`bad-payload-length`). Never throws for any
+ * `Uint8Array` input; returns either the header and records or the first failing check. Throws `TypeError` only when
+ * `payload` is not a `Uint8Array`.
  */
 export function decodePayload(payload: Uint8Array): DecodeResult {
   return decodePayloadWith(payload, ALL_CODEC_RULES);
 }
 
 /** `decodePayload` with explicit rule switches (rule-mutation testing only). */
-export function decodePayloadWith(payload: Uint8Array, rules: CodecRules): DecodeResult {
-  if (!(payload instanceof Uint8Array)) throw new TypeError('payload must be a Uint8Array');
-  if (payload.length !== PAYLOAD_SIZE) return { ok: false, reason: 'bad-payload-length', offset: 0 };
+export function decodePayloadWith(input: Uint8Array, rules: CodecRules): DecodeResult {
+  if (!(input instanceof Uint8Array)) throw new TypeError('payload must be a Uint8Array');
+  // Consuming: missing trailing bytes are zero. Mutation only (`zeroExtend: false`): a short payload is rejected.
+  const extended = rules.zeroExtend || input.length >= PAYLOAD_SIZE ? zeroExtend(input, PAYLOAD_SIZE) : undefined;
+  if (extended === undefined) return { ok: false, reason: 'bad-payload-length', offset: 0 };
+  const payload: Uint8Array = extended;
 
   // Check 1: kind.
   const kind = byteAt(payload, KIND_OFFSET);

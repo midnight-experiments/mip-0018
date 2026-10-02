@@ -29,4 +29,4 @@ export { commonRecords, encodePayload, InvalidHeader, InvalidRecord, PayloadTooL
 export { classifyEvent, isMip0018Name, splitMiscData, type Classification, type ObservedMisc } from './classify.ts';
 export { checkValue, decodeUint, decodeUtf8, encodeUint, minimalUintWidth } from './values.ts';
 export { isRfc3986Uri, RFC3986_URI } from './uri.ts';
-export { bytesEqual, fromHex, toHex } from './hex.ts';
+export { bytesEqual, fromHex, toHex, zeroExtend } from './hex.ts';

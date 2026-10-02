@@ -3,6 +3,8 @@
 // Not part of the public API (exported from `@mip0018/codec/internal`).
 
 export interface CodecRules {
+  /** Consuming — a `name` shorter than 32 bytes and a `payload` shorter than 256 bytes are zero-extended first. */
+  zeroExtend: boolean;
   /** "Must ignore" — only `Misc` events are considered. */
   typeCheck: boolean;
   /** "Must ignore" — only the exact 32-byte v1 name is considered. */
@@ -34,6 +36,7 @@ export interface CodecRules {
 }
 
 export const ALL_CODEC_RULES: Readonly<CodecRules> = Object.freeze({
+  zeroExtend: true,
   typeCheck: true,
   nameCheck: true,
   kind: true,

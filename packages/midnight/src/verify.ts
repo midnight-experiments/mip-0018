@@ -26,7 +26,7 @@ import {
   type Classification,
   type MetadataRecord,
 } from '@mip0018/codec';
-import { bytesToHex, hexToBytes, normAddress, normHex, normTxHash } from './hex.ts';
+import { bytesToHex, hexToBytes, normAddress, normHex, normTxHash, zeroExtendHex } from './hex.ts';
 import { HttpClient } from './http.ts';
 import { Indexer, type IndexedMiscEvent, type IndexedTransaction, type BlockInfo } from './indexer.ts';
 import { checkIdentity, type NetworkProfile } from './network.ts';
@@ -164,10 +164,11 @@ export function compareExpectation(ev: VerifiedEvent, e: EventExpectation): { ok
   return { ok: d.length === 0, differences: d };
 }
 
+/**
+ * Classifies a `Misc` event given as hex. A short name or payload is zero-extended first (MIP "Consuming": some sources
+ * drop trailing zero bytes); a longer name is another name (ignore) and a longer payload is rejected.
+ */
 export function classify(nameHex: string, payloadHex: string): VerifiedEvent['classification'] {
-  if (nameHex.length !== 64 || payloadHex.length !== 512) {
-    return { result: 'ignore', reason: 'undecodable-misc-data' };
-  }
   const c = classifyEvent({ type: 'Misc', name: hexToBytes(nameHex), payload: hexToBytes(payloadHex) });
   if (c.result === 'ignore') return { result: 'ignore', reason: c.reason };
   if (c.result === 'reject') return { result: 'reject', reason: c.reason, offset: c.offset };
@@ -301,8 +302,9 @@ export async function verifyEmission(o: VerifyOptions): Promise<VerifyReport> {
   const appliedLogs = decoded ? miscLogsOf(decoded, contract).filter((l) => partApplied(l.phase, l.segment, t.transactionResult)) : [];
   let cursor = 0;
   evs.forEach((e, index) => {
-    const name = normHex(e.name ?? '');
-    const payload = normHex(e.payload ?? '');
+    // MIP "Consuming": treat missing trailing bytes as zero (name 32, payload 256) before comparing or decoding.
+    const name = zeroExtendHex(e.name ?? '', 32, 'event name');
+    const payload = zeroExtendHex(e.payload ?? '', 256, 'event payload');
     const v: VerifiedEvent = {
       index,
       id: e.id,

@@ -21,8 +21,18 @@ describe('schemas', () => {
   const a1 = JSON.parse(readFileSync(join(VECTORS_DIR, 'payload/A1.json'), 'utf8'));
   const s1a = JSON.parse(readFileSync(join(VECTORS_DIR, 'state/S1a.json'), 'utf8'));
 
-  it('rejects a payload vector with a short payload', () => {
+  it('rejects a normative payload vector with a short payload or name; accepts them in an informative vector', () => {
     expect(payload({ ...a1, event: { ...a1.event, payload_hex: '00' } })).toBe(false);
+    expect(payload({ ...a1, event: { ...a1.event, name_hex: a1.event.name_hex.slice(0, 54) } })).toBe(false);
+    const informative = { ...a1, normative: false, mip: { ...a1.mip, testId: 'INF-ZEXT' }, basis: 'MIP "Consuming"' };
+    expect(payload({ ...informative, event: { ...a1.event, payload_hex: a1.event.payload_hex.slice(0, 190) } })).toBe(true);
+    expect(payload({ ...informative, event: { ...a1.event, payload_hex: 'zz' } })).toBe(false);
+  });
+  it('rejects a normative state step with a short payload', () => {
+    const bad = structuredClone(s1a);
+    bad.steps[0].payload_hex = bad.steps[0].payload_hex.slice(0, 100);
+    expect(state(bad)).toBe(false);
+    expect(state({ ...bad, normative: false, basis: 'x' })).toBe(true);
   });
   it('rejects an accept expectation without records', () => {
     expect(payload({ ...a1, expect: { result: 'accept', header: a1.expect.header, contentEnd: 95 } })).toBe(false);

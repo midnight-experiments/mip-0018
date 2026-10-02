@@ -25,3 +25,16 @@ export function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
   for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
   return true;
 }
+
+/**
+ * MIP "Consuming": "Some sources drop trailing zero bytes; consumers MUST treat missing trailing bytes as zero, so that
+ * every `name` is 32 bytes and every `payload` 256 bytes, before decoding." Returns `bytes` zero-extended to `size`
+ * (a copy when shorter, the input itself when exactly `size`), or `undefined` when `bytes` is longer than `size`.
+ */
+export function zeroExtend(bytes: Uint8Array, size: number): Uint8Array | undefined {
+  if (bytes.length === size) return bytes;
+  if (bytes.length > size) return undefined;
+  const out = new Uint8Array(size);
+  out.set(bytes, 0);
+  return out;
+}

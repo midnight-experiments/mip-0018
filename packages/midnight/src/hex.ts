@@ -21,6 +21,16 @@ export function normHexBytes(value: string, bytes: number, what = 'hex value'): 
   return h;
 }
 
+/**
+ * MIP "Consuming": "Some sources drop trailing zero bytes; consumers MUST treat missing trailing bytes as zero, so that
+ * every `name` is 32 bytes and every `payload` 256 bytes, before decoding." Normalizes the hex and zero-extends it to
+ * `bytes`; a longer value is returned unchanged (classification then ignores the name or rejects the payload).
+ */
+export function zeroExtendHex(value: string, bytes: number, what = 'hex value'): string {
+  const h = normHex(value, what);
+  return h.length < bytes * 2 ? h.padEnd(bytes * 2, '0') : h;
+}
+
 export function hexToBytes(value: string): Uint8Array {
   return Uint8Array.from(Buffer.from(normHex(value), 'hex'));
 }

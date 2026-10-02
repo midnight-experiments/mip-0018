@@ -24,15 +24,17 @@ function int(v: unknown, what: string): number {
   return v;
 }
 
-function hex32(v: unknown, what: string): Uint8Array {
-  const b = fromHex(str(v, what));
-  if (b.length !== 32) throw new TypeError(`${what} must be 32 bytes`);
-  return b;
+/**
+ * An event's name or payload as observed. Any length is passed on: the codec zero-extends a short `name` (32 bytes) or
+ * `payload` (256 bytes), ignores a longer name and rejects a longer payload (MIP "Consuming").
+ */
+function observed(v: unknown, what: string): Uint8Array {
+  return fromHex(str(v, what));
 }
 
 function decodeResponse(id: unknown, req: Json, codecRules: CodecRules): Json {
   const c = classifyEventWith(
-    { type: str(req.type, 'type'), name: hex32(req.name_hex, 'name_hex'), payload: fromHex(str(req.payload_hex, 'payload_hex')) },
+    { type: str(req.type, 'type'), name: observed(req.name_hex, 'name_hex'), payload: observed(req.payload_hex, 'payload_hex') },
     codecRules,
   );
   if (c.result === 'ignore') return { id, result: 'ignore', reason: c.reason };
@@ -85,8 +87,8 @@ function stateResponse(id: unknown, req: Json, opts: AdapterOptions): Json {
         tx: int(step.tx, 'tx'),
         event: int(step.event, 'event'),
         type: str(step.type, 'type'),
-        name: hex32(step.name_hex, 'name_hex'),
-        payload: fromHex(str(step.payload_hex, 'payload_hex')),
+        name: observed(step.name_hex, 'name_hex'),
+        payload: observed(step.payload_hex, 'payload_hex'),
       });
     } else if (step.op === 'rollback') {
       state.rollbackTo(str(step.network, 'network'), int(step.toBlock, 'toBlock'));

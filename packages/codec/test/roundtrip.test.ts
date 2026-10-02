@@ -1,7 +1,8 @@
-// Round trip: encode(decode(p)) == p for every accepted vector, and decode(encode(x)) == x for generated records.
+// Round trip: encode(decode(p)) == p for every accepted vector (the zero-extended p for the informative vectors whose
+// payload has its trailing zero bytes dropped), and decode(encode(x)) == x for generated records.
 import { loadVectors } from '@mip0018/vectors/runner';
 import { describe, expect, it } from 'vitest';
-import { decodePayload, encodePayload, fromHex, toHex } from '../src/index.ts';
+import { decodePayload, encodePayload, fromHex, toHex, zeroExtend } from '../src/index.ts';
 import { validRecords } from './gen.ts';
 import { makeRng } from './prng.ts';
 
@@ -9,14 +10,14 @@ const accepted = loadVectors().filter((v) => v.entry.kind === 'payload' && (v.da
 
 describe('round trip', () => {
   it('covers every accepted payload vector (normative and informative)', () => {
-    expect(accepted.length).toBe(11 + 16); // A1-A5 sub-cases + 16 accepted URI cases
+    expect(accepted.length).toBe(11 + 16 + 4); // A1-A5 sub-cases + 16 accepted URI cases + 4 trimmed (INF-ZEXT-1…4)
   });
   for (const v of accepted) {
     it(`encode(decode(${v.entry.id})) is the fixture`, () => {
       const p = fromHex((v.data.event as { payload_hex: string }).payload_hex);
       const d = decodePayload(p);
       expect(d.ok).toBe(true);
-      if (d.ok) expect(toHex(encodePayload(d.header, d.records))).toBe(toHex(p));
+      if (d.ok) expect(toHex(encodePayload(d.header, d.records))).toBe(toHex(zeroExtend(p, 256)!));
     });
   }
 

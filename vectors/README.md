@@ -7,7 +7,7 @@ extras, a JSON Schema for each format, an independent generator and a runner any
 |---|---|
 | MIP text | [`midnightntwrk/midnight-improvement-proposals@78ecbb4b1ba57371e84fe45f705991ab7b996a61` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/78ecbb4b1ba57371e84fe45f705991ab7b996a61/mips/mip-0018-on-chain-token-metadata.md), SHA-256 `b9092746ecf5660496535688a2dea152eb23d932b6eeb6b5a182c23426eec1a1`, under review in [PR #340](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340) |
 | Event name | `pad(32, "mip-0018:token-metadata[v1]")` = `6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000` |
-| Vectors | **67 normative** (40 payload, 27 state) and **34 informative** (26 payload, 8 state) — `manifest.json` lists every one |
+| Vectors | **67 normative** (40 payload, 27 state) and **43 informative** (34 payload, 9 state) — `manifest.json` lists every one |
 | Integrity | `SHA256SUMS` covers every fixture, schema and the manifest (`cd vectors && sha256sum -c SHA256SUMS`) |
 
 The MIP text is the authority. Where this folder had to choose something the MIP does not determine, the choice is
@@ -17,10 +17,11 @@ labelled informative and, if it should be settled upstream, recorded as a note i
 
 | Path | Content |
 |---|---|
-| `payload/<id>.json` + `<id>.bin` | Normative payload vectors (A1–A5, R1–R6, the ignore rule): one observed event and the expected classify/decode result. `.bin` holds the same 256 payload bytes |
+| `payload/<id>.json` + `<id>.bin` | Normative payload vectors (A1–A5, R1–R6, the ignore rule): one observed event and the expected classify/decode result. `.bin` holds the same 256 payload bytes (the informative zero-extension vectors' `.bin` holds the bytes as observed) |
 | `state/<id>.json` | Normative state vectors (S1–S9, plus state companions of A3–A5): a sequence of observed events in chain order and the state that must result |
 | `informative/uri/` | The 26 URI cases with the RFC 3986 `URI` verdict (owner ruling Q20 = ERC-721's rule, note N1) and the investigation data; see its README |
-| `informative/state/` | `standards` list format and common-field forms derived from the MIP text but not in its Testing list (`INF-STD-6/7` illustrate note N5) |
+| `informative/state/` | `standards` list format and common-field forms derived from the MIP text but not in its Testing list (`INF-STD-6/7`: the byte rule for identifiers) |
+| `informative/zero-extension/` | The MIP's Consuming rule (`78ecbb4`): a `name` or `payload` with its trailing zero bytes dropped, as some sources return it, gives exactly the full form's result; a 257-byte payload is rejected and a 33-byte name is another name |
 | `schema/` | JSON Schemas (2020-12): `payload.schema.json`, `state.schema.json`, `runner.schema.json` (protocol), `manifest.schema.json` |
 | `manifest.json` | MIP pin, event name, counts, and every vector with its MIP test id and normative flag |
 | `tools/generate.ts` | The generator (`--check` mode for CI) |
@@ -64,7 +65,9 @@ Unless a vector says otherwise: `domainSep = 0x11 × 32`, `kind = 3`, network `t
 All bytes are lowercase hex. Integers that can exceed 2^53 (decoded `valType` 2 values, raw amounts, `decimals`) are
 decimal strings. Schemas: `schema/*.schema.json`.
 
-**Payload vector** — `{id, mip:{commit, testId}, normative, description, basis?, event:{type, name_hex, payload_hex, payload_file}, expect}` where `expect` is one of
+**Payload vector** — `{id, mip:{commit, testId}, normative, description, basis?, event:{type, name_hex, payload_hex, payload_file}, expect}`.
+`name_hex` is 32 bytes and `payload_hex` 256 bytes in every normative vector; only the informative zero-extension
+vectors give them as a source that dropped trailing zero bytes returns them (shorter), or longer. `expect` is one of
 
 - `{result:"accept", header:{domainSep, kind}, records:[{offset, key_hex, valType, value_hex, decoded?}], contentEnd}`
   — `offset` is the record's `keyLen` byte; `decoded` (type 2 only) is the integer; `contentEnd` is the offset right
@@ -77,7 +80,7 @@ repository-defined and informative:
 
 | `reason` | Check |
 |---|---|
-| `bad-payload-length` | payload is not 256 bytes |
+| `bad-payload-length` | payload is longer than 256 bytes (a shorter one is zero-extended first) |
 | `bad-kind` | byte 32 is not 1, 2 or 3 (`offset` 32) |
 | `no-records` | no record before the zero padding (`offset` 33) |
 | `nonzero-padding` | a non-zero byte after a zero `keyLen` (`offset` = that byte) |
@@ -149,12 +152,24 @@ node vectors/tools/validate.ts
 
 ## Informative vectors and repository conventions
 
-- **URI (`valType` 4)** — `informative/uri/`: RFC 3986 `URI` as ERC-721 uses it (scheme required, fragment allowed,
-  ASCII only); 16 accept, 10 reject. Note N1 proposes this wording upstream.
+- **URI (`valType` 4)** — `informative/uri/`: RFC 3986 `URI` (scheme required, fragment allowed, no relative
+  references, ASCII only); 16 accept, 10 reject. This is now the MIP's own text (`78ecbb4`, from note N1; the owner's
+  ruling Q20 followed ERC-721, which defines URIs by RFC 3986).
+- **Zero extension** — `informative/zero-extension/` (`INF-ZEXT-*`): the MIP's Consuming section (`78ecbb4`) says
+  "Some sources drop trailing zero bytes; consumers MUST treat missing trailing bytes as zero, so that every `name` is
+  32 bytes and every `payload` 256 bytes, before decoding." A1 with a trimmed payload (95 bytes), a trimmed name
+  (27 bytes) or both, and A3b trimmed (the value `01 00 00` loses its zeros with the padding and gets them back) give
+  exactly the full forms' records; R1 trimmed and an empty payload are rejected as the full forms are; a reducer case
+  (`INF-ZEXT-S1`) applies two trimmed events. The MIP's Testing list has no vector for this rule, so these are
+  informative; the rule-mutation test shows they catch a consumer that does not zero-extend. Two longer inputs: a
+  257-byte payload is rejected (it cannot be decoded as the MIP defines a payload) and a 33-byte name is ignored (it
+  is not the 32-byte name; "consumers MUST ignore `Misc` events with any other name").
 - **`standards` and common fields** — `informative/state/`: trailing/leading spaces and tabs are malformed (unusable),
   an empty value claims nothing (usable), duplicates are allowed; wrong types/forms of `name`, `symbol`, `decimals`
   are unusable. `INF-STD-6/7`: identifiers containing U+00A0 or U+0085 are usable under the MIP's byte rule ("no byte
-  in 0x00–0x20 or 0x7f"); note N5 asks the MIP to say so explicitly.
+  in 0x00–0x20 or 0x7f"), which the reference applies exactly as written. (Their `basis` field still names "note N5":
+  the note was renumbered N6 when the notes were merged and later withdrawn by the owner as out of scope; the vector
+  files are only re-pinned, never edited.)
 - **JSON (`valType` 3)** — no informative vectors: each consumer uses its platform's JSON parser on the strictly decoded
   UTF-8 text (owner ruling).
 - **Display formatting** beyond S8 (trailing zeros, very large `decimals`) is a presentation choice of each consumer

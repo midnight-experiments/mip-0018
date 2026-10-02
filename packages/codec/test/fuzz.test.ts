@@ -1,9 +1,20 @@
 // Fuzz: random 256-byte payloads never make the decoder throw or read out of bounds (every read goes through a
-// bounds-checked accessor that throws BoundsInvariantError), every accepted payload is internally consistent, and
-// encode(decode(p)) == p for every accepted payload. Fixed seed + one random seed (logged; FUZZ_SEED reproduces it).
+// bounds-checked accessor that throws BoundsInvariantError), every accepted payload is internally consistent,
+// encode(decode(p)) == p for every accepted payload, and the payload with its trailing zero bytes dropped (as some
+// sources return it) decodes exactly like p (MIP "Consuming": zero extension). Fixed seed + one random seed (logged;
+// FUZZ_SEED reproduces it).
 import { loadVectors } from '@mip0018/vectors/runner';
 import { describe, expect, it } from 'vitest';
-import { classifyEvent, decodePayload, encodePayload, EVENT_NAME, fromHex, toHex, type RejectReason } from '../src/index.ts';
+import {
+  classifyEvent,
+  decodePayload,
+  encodePayload,
+  EVENT_NAME,
+  fromHex,
+  toHex,
+  type DecodeResult,
+  type RejectReason,
+} from '../src/index.ts';
 import { structuredPayload } from './gen.ts';
 import { makeRng, type Rng } from './prng.ts';
 
@@ -30,7 +41,24 @@ const REASONS = new Set<RejectReason>([
 
 const seeds = loadVectors()
   .filter((v) => v.entry.kind === 'payload')
-  .map((v) => fromHex((v.data.event as { payload_hex: string }).payload_hex));
+  .map((v) => fromHex((v.data.event as { payload_hex: string }).payload_hex))
+  .filter((p) => p.length === 256); // the informative zero-extension vectors are not 256 bytes
+
+const NAME_TRIMMED = EVENT_NAME.subarray(0, 27);
+
+/** The payload as a source that drops trailing zero bytes returns it. */
+function trimZeros(p: Uint8Array): Uint8Array {
+  let end = p.length;
+  while (end > 0 && p[end - 1] === 0) end--;
+  return p.subarray(0, end);
+}
+
+/** A comparable rendering of a decode result. */
+function render(d: DecodeResult): string {
+  if (!d.ok) return `reject ${d.reason} @${d.offset}`;
+  const recs = d.records.map((r) => `${r.offset}:${toHex(r.key)}:${r.valType}:${toHex(r.value)}:${String(r.integer)}`);
+  return `accept ${toHex(d.header.domainSep)} ${d.header.kind} ${d.contentEnd} ${recs.join(',')}`;
+}
 
 function mutated(r: Rng): Uint8Array {
   const p = r.pick(seeds).slice();
@@ -85,6 +113,12 @@ function checkOne(p: Uint8Array, s: Stats): void {
   } catch (e) {
     fail(`classifyEvent threw ${(e as Error).message}`);
   }
+  // Zero extension: the trimmed payload (and a trimmed name) give exactly the same decision and records.
+  const t = trimZeros(p);
+  if (render(decodePayload(t)) !== render(d)) fail(`decode of the ${t.length}-byte trimmed payload differs`);
+  const full = classifyEvent({ type: 'Misc', name: EVENT_NAME, payload: p });
+  const trimmed = classifyEvent({ type: 'Misc', name: NAME_TRIMMED, payload: t });
+  if (full.result !== trimmed.result) fail('classifyEvent of the trimmed name and payload differs');
 }
 
 function campaign(seed: number): Stats {
@@ -113,9 +147,13 @@ describe('fuzz', () => {
     }, 120_000);
   }
 
-  it('non-256-byte inputs are rejected, not thrown', () => {
-    for (const n of [0, 1, 32, 255, 257, 288, 4096])
+  it('inputs longer than 256 bytes are rejected, shorter ones zero-extended — never thrown', () => {
+    for (const n of [257, 288, 4096])
       expect(decodePayload(new Uint8Array(n))).toEqual({ ok: false, reason: 'bad-payload-length', offset: 0 });
+    for (const n of [0, 1, 32, 33, 255]) expect(decodePayload(new Uint8Array(n))).toEqual({ ok: false, reason: 'bad-kind', offset: 32 });
+    const a1 = seeds[0]!;
+    expect(render(decodePayload(a1.subarray(0, 95)))).toBe(render(decodePayload(a1)));
+    expect(decodePayload(Uint8Array.from([...a1, 0]))).toEqual({ ok: false, reason: 'bad-payload-length', offset: 0 });
   });
 
   it('decoding a view into a larger buffer reads only the view', () => {

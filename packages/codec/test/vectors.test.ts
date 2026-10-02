@@ -25,9 +25,9 @@ function respond(ev: { type: string; name_hex: string; payload_hex: string }): R
 }
 
 describe('codec against the payload vectors', () => {
-  it('covers 40 normative and 26 informative payload vectors', () => {
+  it('covers 40 normative and 34 informative payload vectors', () => {
     expect(payloadVectors.filter((v) => v.entry.normative).length).toBe(40);
-    expect(payloadVectors.filter((v) => !v.entry.normative).length).toBe(26);
+    expect(payloadVectors.filter((v) => !v.entry.normative).length).toBe(26 + 8); // URI cases + zero extension
   });
   for (const v of payloadVectors) {
     it(`${v.entry.id} [${v.entry.testId}]${v.entry.normative ? '' : ' (informative)'}`, () => {
