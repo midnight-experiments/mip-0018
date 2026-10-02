@@ -1,0 +1,167 @@
+[
+ {
+  "url": "https://rpc.stagenet.shielded.tools",
+  "body": {
+   "id": 1,
+   "jsonrpc": "2.0",
+   "method": "chain_getBlockHash",
+   "params": [
+    0
+   ]
+  },
+  "status": 200,
+  "response": {
+   "jsonrpc": "2.0",
+   "id": 1,
+   "result": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491"
+  }
+ },
+ {
+  "url": "https://indexer.stagenet.shielded.tools/api/v4/graphql",
+  "body": {
+   "query": "query { block { height hash timestamp } }",
+   "variables": {}
+  },
+  "status": 200,
+  "response": {
+   "data": {
+    "block": {
+     "height": 711186,
+     "hash": "cfd5ace3e799fbef6cda5a8d314e6d9951940c24b6fca60cd148871a1f17d833",
+     "timestamp": 1790908380000
+    }
+   }
+  }
+ },
+ {
+  "url": "https://rpc.stagenet.shielded.tools",
+  "body": {
+   "id": 1,
+   "jsonrpc": "2.0",
+   "method": "chain_getBlockHash",
+   "params": [
+    711186
+   ]
+  },
+  "status": 200,
+  "response": {
+   "jsonrpc": "2.0",
+   "id": 1,
+   "result": "0xcfd5ace3e799fbef6cda5a8d314e6d9951940c24b6fca60cd148871a1f17d833"
+  }
+ },
+ {
+  "url": "https://rpc.stagenet.shielded.tools",
+  "body": {
+   "id": 1,
+   "jsonrpc": "2.0",
+   "method": "chain_getFinalizedHead",
+   "params": []
+  },
+  "status": 200,
+  "response": {
+   "jsonrpc": "2.0",
+   "id": 1,
+   "result": "0xcfd5ace3e799fbef6cda5a8d314e6d9951940c24b6fca60cd148871a1f17d833"
+  }
+ },
+ {
+  "url": "https://rpc.stagenet.shielded.tools",
+  "body": {
+   "id": 1,
+   "jsonrpc": "2.0",
+   "method": "chain_getHeader",
+   "params": [
+    "0xcfd5ace3e799fbef6cda5a8d314e6d9951940c24b6fca60cd148871a1f17d833"
+   ]
+  },
+  "status": 200,
+  "response": {
+   "jsonrpc": "2.0",
+   "id": 1,
+   "result": {
+    "parentHash": "0x994edcc7a05885124262b76d1fdb7791648d17b53a66376d2ced5efbbf2158cc",
+    "number": "0xada12",
+    "stateRoot": "0xcfe17330a1bf4667ed4439b3704940533b4db5973ba1c945de5c2e1382d3ee75",
+    "extrinsicsRoot": "0xadde1ac748fc203e5a93d1daca38c12803fb217473df04d481515704987911c1",
+    "digest": {
+     "logs": [
+      "0x066175726120fa83ca1100000000",
+      "0x066d63736880504bc2c7379c62e3d3aaf725910ef371cb5e1b2eac7268329563590749d87132",
+      "0x044d4e53561080841e00",
+      "0x0442454546840396435ab5eb3b4f59fa999456347e71693f4f0112e42a8ba7dc21e96b4bf55fdc",
+      "0x05617572610101a8f68abf512e0e63e43bab375891f3cd39b4a110b1575055ac6012e3b1d4596c7978989f54ea310cfd48b2638e5cdc161b2f3de156d576cc76a5bffe478f768a"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "url": "https://indexer.stagenet.shielded.tools/api/v4/graphql",
+  "body": {
+   "query": "query ($filter: ContractEventFilter!, $limit: Int!, $offset: Int!) {\n    contractEvents(filter: $filter, limit: $limit, offset: $offset) { \n  __typename id contractAddress transactionId raw\n  ... on MiscContractEvent { name payload }\n  transaction { id hash block { height hash } ... on RegularTransaction { transactionResult { status segments { id success } } } }\n }\n  }",
+   "variables": {
+    "filter": {
+     "contractAddress": "18097aeb608f35d83a65b2cad987084c97c6e9d1dc02973f2a6f6cc2fcdd76e1",
+     "types": [
+      "MISC"
+     ],
+     "toBlock": 710820
+    },
+    "limit": 500,
+    "offset": 0
+   }
+  },
+  "status": 200,
+  "response": {
+   "data": {
+    "contractEvents": [
+     {
+      "__typename": "MiscContractEvent",
+      "id": 53254,
+      "contractAddress": "18097aeb608f35d83a65b2cad987084c97c6e9d1dc02973f2a6f6cc2fcdd76e1",
+      "transactionId": 24127,
+      "raw": "6d69646e696768743a6576656e745b7631345d3a08000d027f036d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000111111111111111111111111111111111111111111111111111111111111111103046e616d65010a41636d6520546f6b656e0673796d626f6c010441434d4508646563696d616c73020106097374616e646172647301086d69702d30303034200904006101223050717f704fe47d1bd0b6b91da8ea248139d2d15a23a2eab7cf07d5a5141800005b760318097aeb608f35d83a65b2cad987084c97c6e9d1dc02973f2a6f6cc2fcdd76e13c7075626c6973684d65746164617461040a01",
+      "name": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+      "payload": "111111111111111111111111111111111111111111111111111111111111111103046e616d65010a41636d6520546f6b656e0673796d626f6c010441434d4508646563696d616c73020106097374616e646172647301086d69702d303030340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "transaction": {
+       "id": 24127,
+       "hash": "223050717f704fe47d1bd0b6b91da8ea248139d2d15a23a2eab7cf07d5a51418",
+       "transactionResult": {
+        "status": "SUCCESS",
+        "segments": null
+       },
+       "block": {
+        "height": 710810,
+        "hash": "0cadba2817cc6fd9e1e25905b0241762f2a5df517bd90de4623e1f1f23929658"
+       }
+      }
+     }
+    ]
+   }
+  }
+ },
+ {
+  "url": "https://indexer.stagenet.shielded.tools/api/v4/graphql",
+  "body": {
+   "query": "query ($filter: ContractEventFilter!, $limit: Int!, $offset: Int!) {\n    contractEvents(filter: $filter, limit: $limit, offset: $offset) { \n  __typename id contractAddress transactionId raw\n  ... on MiscContractEvent { name payload }\n  transaction { id hash block { height hash } ... on RegularTransaction { transactionResult { status segments { id success } } } }\n }\n  }",
+   "variables": {
+    "filter": {
+     "contractAddress": "18097aeb608f35d83a65b2cad987084c97c6e9d1dc02973f2a6f6cc2fcdd76e1",
+     "types": [
+      "MISC"
+     ],
+     "toBlock": 710820
+    },
+    "limit": 500,
+    "offset": 1
+   }
+  },
+  "status": 200,
+  "response": {
+   "data": {
+    "contractEvents": []
+   }
+  }
+ }
+]

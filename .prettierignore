@@ -8,6 +8,8 @@ vectors/**/*.json
 vectors/**/*.bin
 vectors/SHA256SUMS
 test-contracts/*/records/
+# Recorded chain responses (byte-pinned fixtures).
+packages/midnight/test/fixtures/**/*.json
 # Prose is formatted by hand (tables, line breaks).
 *.md
 **/*.md
