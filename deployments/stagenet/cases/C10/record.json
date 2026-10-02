@@ -1,0 +1,213 @@
+{
+  "kind": "mip0018-run-record",
+  "schema": 1,
+  "createdAt": "2026-10-02T09:11:21.416Z",
+  "updatedAt": "2026-10-02T09:13:07.257Z",
+  "network": {
+    "id": "stagenet",
+    "networkId": "stagenet",
+    "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+    "indexer": "https://indexer.stagenet.shielded.tools/api/v4/graphql",
+    "rpc": "https://rpc.stagenet.shielded.tools"
+  },
+  "contract": {
+    "name": "CreateAndDestroy",
+    "managedDir": "examples/minimal/managed/CreateAndDestroy",
+    "verifierKeySha256": {
+      "publishMetadata": "673345081d673841d77565f1bd21795be96438a8ccceeb2d486876d421791bbf",
+      "transfer": "274d1bdc3edfff2450633d54ac9c56caa8701cd4afd9120a590cacbac01c76b3"
+    },
+    "adapter": "examples/minimal/mip0018.adapter.ts",
+    "privateStateId": "CreateAndDestroy",
+    "address": "048ec49aacdde9ef2fee1bd51c651df46d3224578e36a1e89bdbb88842edf0f6",
+    "constructorArgs": []
+  },
+  "steps": [
+    {
+      "id": "deploy",
+      "kind": "deploy",
+      "args": [],
+      "state": "completed",
+      "attempts": [
+        {
+          "at": "2026-10-02T09:11:27.119Z",
+          "event": "submitting 55147925c2967dea3aa0cef235765f1cd80f52968e44dd3ce87de2b05c9a1203"
+        },
+        {
+          "at": "2026-10-02T09:11:43.266Z",
+          "event": "node accepted 00d8b3ce22b70baf23b40c24d025a931392e0a8e8d67dd39b852532cce03e97cb6"
+        },
+        {
+          "at": "2026-10-02T09:11:44.141Z",
+          "event": "midnight-js: SucceedEntirely at block 715171"
+        },
+        {
+          "at": "2026-10-02T09:11:45.126Z",
+          "event": "completed: contract 048ec49aacdde9ef2fee1bd51c651df46d3224578e36a1e89bdbb88842edf0f6 on chain with publishMetadata, transfer"
+        }
+      ],
+      "startedAt": "2026-10-02T09:11:25.522Z",
+      "tx": {
+        "hash": "55147925c2967dea3aa0cef235765f1cd80f52968e44dd3ce87de2b05c9a1203",
+        "identifiers": [
+          "00b8990b69c4d23dd370168d0050cad5fef0cbb1fcc7d637cdf4bffd303fc41a00",
+          "00d8b3ce22b70baf23b40c24d025a931392e0a8e8d67dd39b852532cce03e97cb6"
+        ],
+        "ttl": "2026-10-02T10:11:25.000Z",
+        "txId": "00d8b3ce22b70baf23b40c24d025a931392e0a8e8d67dd39b852532cce03e97cb6"
+      },
+      "inclusion": {
+        "height": 715171,
+        "hash": "da8f362a8a9a3cd8252ec3c655928a1bab65c2a62eb7b0219dc5003f3c45cf71",
+        "status": "SUCCESS",
+        "fee": "2024952380274544"
+      },
+      "observed": {
+        "exists": true,
+        "operations": [
+          "publishMetadata",
+          "transfer"
+        ],
+        "block": {
+          "height": 715171,
+          "hash": "da8f362a8a9a3cd8252ec3c655928a1bab65c2a62eb7b0219dc5003f3c45cf71"
+        },
+        "txHash": "55147925c2967dea3aa0cef235765f1cd80f52968e44dd3ce87de2b05c9a1203"
+      },
+      "completedAt": "2026-10-02T09:11:45.126Z"
+    },
+    {
+      "id": "publish",
+      "kind": "call",
+      "circuit": "publishMetadata",
+      "args": [],
+      "state": "completed",
+      "attempts": [
+        {
+          "at": "2026-10-02T09:12:02.740Z",
+          "event": "submitting 85d6f8a241ceff9935dc1aec51e5c5c1c51818dd0a41ebf7b850e2ff413a5b4d"
+        },
+        {
+          "at": "2026-10-02T09:12:19.305Z",
+          "event": "node accepted 00f04adf8c4453d46cd8d48ca39f906fe2b1e18fe08efbd687fc9aa858d48a9922"
+        },
+        {
+          "at": "2026-10-02T09:12:20.057Z",
+          "event": "midnight-js: SucceedEntirely at block 715177"
+        },
+        {
+          "at": "2026-10-02T09:12:21.364Z",
+          "event": "completed: 1 expected Misc event(s) observed in 85d6f8a241ceff9935dc1aec51e5c5c1c51818dd0a41ebf7b850e2ff413a5b4d"
+        }
+      ],
+      "startedAt": "2026-10-02T09:11:55.630Z",
+      "expectedEvents": [
+        {
+          "name": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+          "payload": "111111111111111111111111111111111111111111111111111111111111111103046e616d65010a41636d6520546f6b656e0673796d626f6c010441434d4508646563696d616c73020106097374616e646172647301086d69702d303030340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "tx": {
+        "hash": "85d6f8a241ceff9935dc1aec51e5c5c1c51818dd0a41ebf7b850e2ff413a5b4d",
+        "identifiers": [
+          "007286c924fdd0c20cd9df75a9b7646bbe89e43c24431a752efc6b21171dd34930",
+          "00f04adf8c4453d46cd8d48ca39f906fe2b1e18fe08efbd687fc9aa858d48a9922"
+        ],
+        "ttl": "2026-10-02T10:11:58.000Z",
+        "txId": "00f04adf8c4453d46cd8d48ca39f906fe2b1e18fe08efbd687fc9aa858d48a9922"
+      },
+      "inclusion": {
+        "height": 715177,
+        "hash": "6fd0b9bd9d100a68944f78e4f01ca150cf34c43a762d93dc228ac9ecc75ee7df",
+        "status": "SUCCESS",
+        "fee": "174756276986532"
+      },
+      "observed": {
+        "inclusion": {
+          "height": 715177,
+          "hash": "6fd0b9bd9d100a68944f78e4f01ca150cf34c43a762d93dc228ac9ecc75ee7df",
+          "status": "SUCCESS",
+          "fee": "174756276986532"
+        },
+        "events": [
+          {
+            "id": 53557,
+            "name": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+            "payload": "111111111111111111111111111111111111111111111111111111111111111103046e616d65010a41636d6520546f6b656e0673796d626f6c010441434d4508646563696d616c73020106097374616e646172647301086d69702d303030340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      "completedAt": "2026-10-02T09:12:21.364Z"
+    },
+    {
+      "id": "verifier-key-remove:publishMetadata",
+      "kind": "verifier-key-remove",
+      "circuit": "publishMetadata",
+      "state": "completed",
+      "attempts": [
+        {
+          "at": "2026-10-02T09:12:37.706Z",
+          "event": "submitting 1d8e26b699805c37ebf28a025218d6ef516b9ac9a8fd54a9b9543c411da4f422"
+        },
+        {
+          "at": "2026-10-02T09:12:55.335Z",
+          "event": "node accepted 003a012f488c4f0b67f89fcb5debe732e330f4a90feeb32ddf4cae65f55be09c0b"
+        },
+        {
+          "at": "2026-10-02T09:12:56.198Z",
+          "event": "midnight-js submitTx: SucceedEntirely at block 715183"
+        },
+        {
+          "at": "2026-10-02T09:12:56.721Z",
+          "event": "completed: publishMetadata has no verifier key any more"
+        }
+      ],
+      "startedAt": "2026-10-02T09:12:35.734Z",
+      "tx": {
+        "hash": "1d8e26b699805c37ebf28a025218d6ef516b9ac9a8fd54a9b9543c411da4f422",
+        "identifiers": [
+          "006f4b80055d556001275e056dcf5da410587f6e0eace96f90001397a9a6199ab9",
+          "003a012f488c4f0b67f89fcb5debe732e330f4a90feeb32ddf4cae65f55be09c0b"
+        ],
+        "ttl": "2026-10-02T09:42:36.000Z",
+        "txId": "003a012f488c4f0b67f89fcb5debe732e330f4a90feeb32ddf4cae65f55be09c0b"
+      },
+      "inclusion": {
+        "height": 715183,
+        "hash": "90893e2595308a42a0d308418c765f8dd0015928388f6233d55eb50f891bd42c",
+        "status": "SUCCESS",
+        "fee": "38781766700352"
+      },
+      "observed": {
+        "exists": true,
+        "operations": [
+          "transfer"
+        ],
+        "block": {
+          "height": 715183,
+          "hash": "90893e2595308a42a0d308418c765f8dd0015928388f6233d55eb50f891bd42c"
+        },
+        "txHash": "1d8e26b699805c37ebf28a025218d6ef516b9ac9a8fd54a9b9543c411da4f422"
+      },
+      "completedAt": "2026-10-02T09:12:56.721Z"
+    },
+    {
+      "id": "publish-again",
+      "kind": "call",
+      "circuit": "publishMetadata",
+      "args": [],
+      "state": "pending",
+      "attempts": [
+        {
+          "at": "2026-10-02T09:13:07.257Z",
+          "event": "refused before submission: publishMetadata has no verifier key on 048ec49aacdde9ef2fee1bd51c651df46d3224578e36a1e89bdbb88842edf0f6 (removed?); nothing submitted"
+        }
+      ],
+      "startedAt": "2026-10-02T09:13:06.513Z",
+      "error": "publishMetadata has no verifier key on 048ec49aacdde9ef2fee1bd51c651df46d3224578e36a1e89bdbb88842edf0f6 (removed?); nothing submitted"
+    }
+  ],
+  "signer": {
+    "unshieldedAddress": "mn_addr_stagenet1vw57646su9y5z6myarm93m6kcn62j97z0yma94lfkhmta6pz5h5q6utr3k"
+  }
+}
