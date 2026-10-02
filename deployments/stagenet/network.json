@@ -63,6 +63,35 @@
         }
       },
       "requests": 9
+    },
+    {
+      "label": "after the matrix C01–C10 and IDX (before U1)",
+      "observedAt": "2026-10-02T09:15:55.113Z",
+      "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+      "genesisMatchesPin": true,
+      "node": {
+        "chain": "Midnight Stagenet",
+        "name": "Midnight Node",
+        "version": "2.0.0-d9729c13",
+        "specName": "midnight",
+        "specVersion": 2000000,
+        "transactionVersion": 4,
+        "stateVersion": 1,
+        "finalizedHead": {
+          "hash": "0x405acef3e8d7f47fc96dd90c067ba2a699ede61705e642b5ddb532c995a51621",
+          "height": 715212
+        },
+        "bestHeight": 715215
+      },
+      "indexer": {
+        "latestBlock": {
+          "height": 715212,
+          "hash": "405acef3e8d7f47fc96dd90c067ba2a699ede61705e642b5ddb532c995a51621",
+          "timestamp": 1790932536000,
+          "protocolVersion": 2000000
+        }
+      },
+      "requests": 9
     }
   ]
 }

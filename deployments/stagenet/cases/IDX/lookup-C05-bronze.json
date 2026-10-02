@@ -1,0 +1,11 @@
+{
+  "found": false,
+  "color": "4024a88428ad97c4315b4f2f8ed05adaafaad6876a7ec7223ca84765b5083e69",
+  "scanned": {
+    "network": "stagenet",
+    "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+    "from": 714485,
+    "to": 715183
+  },
+  "identities": []
+}

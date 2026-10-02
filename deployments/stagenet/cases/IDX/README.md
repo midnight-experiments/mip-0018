@@ -43,7 +43,16 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/IDX
 ```
 
-## Scan (filled in by S5)
+## Scan (Stagenet)
 
-_S5_: the scanned range and the colors found.
+Blocks 714485–715183 (state `index/index-state.json`). Colors minted in that range (the scanner records every mint on the public chain, so a contract that is not one of these cases can appear too):
+
+| Case | Color | Contract | domainSep | Shielded (first mint) | Unshielded (first mint) |
+|---|---|---|---|---|---|
+| C04 | `042399246139df031a4780c684df8eaecd48b7e03a195bfe986cf22766bcbc16` | `86acf80ff386abb610aadbea0406039e7fe39893f440794c3c2bad86dd48570f` | `6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000` | 100000 (714643) | 100000 (714649) |
+| C05 | `81db4eef83089c5403c6af29d926d57ee6b6359ff7dc291dd19cb4c3e9cf7aa1` | `f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6` | `6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000` | 3 (714683) | — |
+| C05 | `8c74ec4a937d296f8234a2373812c2df3d962dba06dfe98cda390f9dea38491d` | `f2d1b6ebfea446cf2624cd498fc585eeb86dddf94e33229ce47107038d2251d6` | `6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000` | 5 (714689) | — |
+| C03 | `8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484` | `a3df52605d8b7210aa3e5cdc82de4bb2911975bc42c1a68be77044723b705f21` | `6d69702d303031383a6578616d706c653a756e736869656c6465640000000000` | — | 1000000 (714617) |
+| C02 | `be34ef4b78717b031040bf625e04ee033106efae4c766915d3cac2b7fda8f11b` | `0ee5f31961f9df197055c49dda8f87275af50c3554ba701ffa1837537735e532` | `6d69702d303031383a6578616d706c653a736869656c64656400000000000000` | 1000000 (714557) | — |
+| not a case (another Stagenet contract) | `e5afe273bcb1252cfbc81ad6ca1caaafe22312c8c29f9b104a2fe3ead980bb2d` | `7771c9e53afb45291ae2cecd48b5d55262734b08a98fc8276ed0f980031cd637` | `953ecfdd939bcb9df7bb4ddb9deeb4ebfa2447563c08f7973576c7ac492f9600` | 1040000 (714802) | — |
 

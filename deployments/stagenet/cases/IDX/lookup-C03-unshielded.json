@@ -1,0 +1,103 @@
+{
+  "found": true,
+  "color": "8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484",
+  "scanned": {
+    "network": "stagenet",
+    "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+    "from": 714485,
+    "to": 715183
+  },
+  "entry": {
+    "color": "8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484",
+    "contractAddress": "a3df52605d8b7210aa3e5cdc82de4bb2911975bc42c1a68be77044723b705f21",
+    "domainSep": "6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+    "unshielded": {
+      "firstMint": {
+        "height": 714617,
+        "blockHash": "508be90a481425b09c46a0ee146926f0bfff3e686ce1a2832d991427dd6bcdfb",
+        "txHash": "2ec3accadb3e77a05f0ca29d73ccbe879372d9c31587e109acc5d3076d9a437e"
+      },
+      "lastMint": {
+        "height": 714617,
+        "blockHash": "508be90a481425b09c46a0ee146926f0bfff3e686ce1a2832d991427dd6bcdfb",
+        "txHash": "2ec3accadb3e77a05f0ca29d73ccbe879372d9c31587e109acc5d3076d9a437e"
+      },
+      "mints": 1,
+      "amount": "1000000"
+    }
+  },
+  "identities": [
+    {
+      "contractAddress": "a3df52605d8b7210aa3e5cdc82de4bb2911975bc42c1a68be77044723b705f21",
+      "domainSep": "6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+      "kind": 2,
+      "mintedInRange": true
+    }
+  ],
+  "metadataSource": "live indexer at block 715199",
+  "resolved": [
+    {
+      "contractAddress": "a3df52605d8b7210aa3e5cdc82de4bb2911975bc42c1a68be77044723b705f21",
+      "domainSep": "6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+      "kind": 2,
+      "mintedInRange": true,
+      "metadata": {
+        "key": "stagenet|a3df52605d8b7210aa3e5cdc82de4bb2911975bc42c1a68be77044723b705f21|6d69702d303031383a6578616d706c653a756e736869656c6465640000000000|2",
+        "network": "stagenet",
+        "contractAddress": "a3df52605d8b7210aa3e5cdc82de4bb2911975bc42c1a68be77044723b705f21",
+        "domainSep": "6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+        "kind": 2,
+        "visible": true,
+        "colored": true,
+        "color": "8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484",
+        "fields": [
+          {
+            "key": "6e616d65",
+            "valType": 1,
+            "value": "41636d65205075626c6963",
+            "setAt": {
+              "block": "714624",
+              "tx": 24251,
+              "event": 53446,
+              "record": 0
+            },
+            "keyHex": "6e616d65",
+            "usable": true
+          },
+          {
+            "key": "73796d626f6c",
+            "valType": 1,
+            "value": "41505542",
+            "setAt": {
+              "block": "714624",
+              "tx": 24251,
+              "event": 53446,
+              "record": 1
+            },
+            "keyHex": "73796d626f6c",
+            "usable": true
+          },
+          {
+            "key": "646563696d616c73",
+            "valType": 2,
+            "value": "06",
+            "setAt": {
+              "block": "714624",
+              "tx": 24251,
+              "event": 53446,
+              "record": 2
+            },
+            "integer": "6",
+            "keyHex": "646563696d616c73",
+            "usable": true
+          }
+        ],
+        "common": {
+          "name": "Acme Public",
+          "symbol": "APUB",
+          "decimals": "6"
+        }
+      }
+    }
+  ]
+}

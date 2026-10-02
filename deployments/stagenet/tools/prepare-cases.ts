@@ -966,18 +966,26 @@ function recorded(c: CaseDef): string[] {
         }
       >;
     };
+    // which case deployed each contract (from the committed records); any other contract is someone else's on Stagenet
+    const caseOf = new Map<string, string>();
+    for (const id of readdirSync(CASES).sort()) {
+      const rp = join(CASES, id, 'record.json');
+      if (!existsSync(rp)) continue;
+      const rc = JSON.parse(readFileSync(rp, 'utf8')) as { contract: { address?: string; attached?: unknown } };
+      if (rc.contract.address && !rc.contract.attached && !caseOf.has(rc.contract.address)) caseOf.set(rc.contract.address, id);
+    }
     return [
       '## Scan (Stagenet)',
       '',
-      `Blocks ${s.fromHeight}–${s.nextHeight - 1} (state \`index/index-state.json\`). Colors minted in that range:`,
+      `Blocks ${s.fromHeight}–${s.nextHeight - 1} (state \`index/index-state.json\`). Colors minted in that range (the scanner records every mint on the public chain, so a contract that is not one of these cases can appear too):`,
       '',
-      '| Color | Contract | domainSep | Shielded (first mint) | Unshielded (first mint) |',
-      '|---|---|---|---|---|',
+      '| Case | Color | Contract | domainSep | Shielded (first mint) | Unshielded (first mint) |',
+      '|---|---|---|---|---|---|',
       ...Object.entries(s.colors)
         .sort(([a], [b]) => a.localeCompare(b))
         .map(
           ([color, e]) =>
-            `| \`${color}\` | \`${e.contractAddress}\` | \`${e.domainSep}\` | ${e.shielded ? `${e.shielded.amount} (${e.shielded.firstMint.height})` : '—'} | ${e.unshielded ? `${e.unshielded.amount} (${e.unshielded.firstMint.height})` : '—'} |`,
+            `| ${caseOf.get(e.contractAddress) ?? 'not a case (another Stagenet contract)'} | \`${color}\` | \`${e.contractAddress}\` | \`${e.domainSep}\` | ${e.shielded ? `${e.shielded.amount} (${e.shielded.firstMint.height})` : '—'} | ${e.unshielded ? `${e.unshielded.amount} (${e.unshielded.firstMint.height})` : '—'} |`,
         ),
       '',
     ];
