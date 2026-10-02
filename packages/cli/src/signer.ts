@@ -1,17 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Signing commands: wallet status|register-dust, deploy, publish, remove-circuit, deploy-and-publish.
+// Signing commands: wallet status|register-dust, deploy, publish, remove-circuit, deploy-and-publish, upgrade.
 // They run in the signer container (docker/signer.sh); the wallet secret is a FILE path, read once, never printed.
 // Run records are public (no secret); maintenance keys and witness private state go to the 0600 private-state file
 // in the signer's state directory (outside the repository).
 
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { checkIdentity, verifyEmission, type EventExpectation } from '@mip0018/midnight';
 import {
   StepError,
   callStep,
+  insertVerifierKeyStep,
+  preflightUpgrade,
+  provableCircuits,
+  readMaintenanceKeyFile,
+  recordUpgrade,
+  upgradeFor,
   closeWallet,
   deployStep,
   describeWallet,
@@ -30,6 +36,7 @@ import {
   type Run,
   type SignerEndpoints,
   type StepRecord,
+  type UpgradeSource,
   type WalletSession,
 } from '@mip0018/midnight/signer';
 import {
@@ -166,6 +173,8 @@ export async function cmdWallet(argv: string[]): Promise<number> {
           ['dust addr', id.dustAddress],
           ['NIGHT', `${id.night} STAR in ${id.nightUtxos} UTxO(s), ${id.nightUtxosRegisteredForDust} registered for DUST`],
           ['DUST', `${id.dust} SPECK`],
+          ...Object.entries(id.shieldedBalances).map(([c, n]): [string, string] => ['shielded', `${n} of color ${c}`]),
+          ...Object.entries(id.unshieldedTokenBalances).map(([c, n]): [string, string] => ['unshielded', `${n} of color ${c}`]),
         ]);
       return EXIT.ok;
     }
@@ -334,7 +343,15 @@ export async function cmdPublish(argv: string[]): Promise<number> {
   const src = await contractSource(v, recordPath);
   return withRun(v, recordPath, src, async (run) => {
     try {
-      await callStep(run, { circuit, args, ...(str(v, 'step') ? { stepId: str(v, 'step')! } : {}) });
+      // A circuit added later with `mip0018 upgrade` is called through the upgrade-only build it was compiled in.
+      const up = upgradeFor(run, circuit);
+      const via = up && !provableCircuits(run.o.artifacts.managedDir).includes(circuit) ? await upgradeSourceOf(up) : undefined;
+      await callStep(run, {
+        circuit,
+        args,
+        ...(str(v, 'step') ? { stepId: str(v, 'step')! } : {}),
+        ...(via ? { artifacts: via.artifacts, ...(via.adapter ? { adapter: via.adapter } : {}) } : {}),
+      });
       return EXIT.ok;
     } catch (e) {
       logger(v)(`publish: ${(e as Error).message}`);
@@ -475,6 +492,159 @@ export async function cmdDeployAndPublish(argv: string[]): Promise<number> {
       else printRun(run, recordPath);
     }
     return code;
+  });
+}
+
+// --------------------------------------------------------------------------------------------------------- upgrade
+
+export const UPGRADE_USAGE = `
+mip0018 upgrade --network <id> --record <run record of the deployed contract> --source <dir> --circuit <name>
+                [--args <json>] [--slot v4|v3] [--maintenance-key-file <path>] [--compile] [--no-call] [--step <id>] [--force]
+
+MIP-0018 "Existing contracts": adds <circuit> (e.g. publishMetadata) to an already-deployed contract with a maintenance
+VerifierKeyInsert signed by its maintenance authority, then calls it. Contract address, domainSep, color and every coin
+stay the same; the event is bound to the original address. docs/upgrade-guide.md explains the rules.
+
+  --source <dir>        the upgrade-only source: a directory with mip0018.adapter.ts (contract name, managed dir,
+                        compile script, witnesses), or with exactly one .compact file (compiled to <dir>/managed/<Name>)
+  --compile             compile even when the build exists (with keys; the adapter's compile script or compactc)
+
+Steps (each recorded in the run record; re-run the same command to resume):
+  1. preflight (reads only; refuses unless --force): <circuit> built with keys; every other provable circuit of the
+     upgrade build already on chain with the same key; the compiler's ledger layouts of the deployed build and the
+     upgrade build identical; the deployed state decodes identically through both builds' ledger() accessors
+  2. VerifierKeyInsert of keys/<circuit>.verifier (v4 slot for ZKIR-v3 circuits, Q23), signed with the contract's
+     maintenance key (the deploy-time key in the private-state file, or --maintenance-key-file: JSON {tag, value} or
+     hex, mode 0600). Skipped when the circuit already has exactly this key; refused when it has another key (the
+     ledger never overwrites) or when the key cannot sign for the contract's authority (frozen authority, not in the
+     committee, threshold > 1). --force submits anyway so the chain's answer is recorded (negative tests).
+  3. unless --no-call: call <circuit> through the upgrade build (as \`publish\`; --args are its arguments). Later
+     \`mip0018 publish --record … --circuit <circuit>\` calls find the upgrade build in the record.
+${SIGNER_HELP}
+Exit: 0 completed · 1 failed or refused · 2 usage · 4 outcome unknown (re-run)
+`;
+
+/** The upgrade build of a record entry (adapter or plain managed dir). */
+async function upgradeSourceOf(u: { adapter?: string; managedDir: string; contract: string }): Promise<UpgradeSource> {
+  if (u.adapter) {
+    const a = await loadAdapter(fromPortable(u.adapter));
+    return {
+      artifacts: { name: a.adapter.contract.name, managedDir: a.managedDir },
+      adapter: a.adapter,
+      adapterPath: portablePath(a.path),
+    };
+  }
+  return { artifacts: { name: u.contract, managedDir: fromPortable(u.managedDir) } };
+}
+
+/** --source <dir>: its mip0018.adapter.ts, or its single .compact file. Compiles when needed (with keys). */
+async function upgradeSource(dir: string, compile: boolean, log: (m: string) => void): Promise<UpgradeSource> {
+  const abs = resolve(dir);
+  if (!existsSync(abs)) throw new UsageError(`--source ${dir} does not exist`);
+  const adapterFile = join(abs, 'mip0018.adapter.ts');
+  if (existsSync(adapterFile)) {
+    const a = await loadAdapter(adapterFile);
+    const src: UpgradeSource = {
+      artifacts: { name: a.adapter.contract.name, managedDir: a.managedDir },
+      adapter: a.adapter,
+      adapterPath: portablePath(a.path),
+    };
+    if (compile || !existsSync(join(a.managedDir, 'keys'))) {
+      const c = a.adapter.compile;
+      if (!c) throw new UsageError(`${a.managedDir} has no keys and ${adapterFile} says nothing about compiling`);
+      log(`compiling the upgrade source: npm run ${c.script} -w ${c.workspace}`);
+      const r = spawnSync('npm', ['run', '-s', c.script, '-w', c.workspace], { cwd: repoRoot(), stdio: ['ignore', 'inherit', 'inherit'] });
+      if (r.status !== 0) throw new UsageError(`compiling ${c.workspace} failed`);
+    }
+    return src;
+  }
+  const sources = readdirSync(abs).filter((f) => f.endsWith('.compact'));
+  if (sources.length !== 1)
+    throw new UsageError(`${dir}: expected mip0018.adapter.ts or exactly one .compact file, found ${sources.length}`);
+  const name = basename(sources[0]!, '.compact');
+  const managedDir = join(abs, 'managed', name);
+  if (compile || !existsSync(join(managedDir, 'keys'))) {
+    log(`compiling ${sources[0]} (Compact, --feature-zkir-v3, with keys)`);
+    const r = spawnSync('compact', ['compile', '--feature-zkir-v3', join(abs, sources[0]!), managedDir], {
+      cwd: repoRoot(),
+      stdio: ['ignore', 'inherit', 'inherit'],
+    });
+    if (r.status !== 0) throw new UsageError(`compiling ${sources[0]} failed`);
+  }
+  return { artifacts: { name, managedDir } };
+}
+
+export async function cmdUpgrade(argv: string[]): Promise<number> {
+  const v = parse(
+    argv,
+    {
+      ...SIGNER_OPTIONS,
+      record: { type: 'string' },
+      source: { type: 'string' },
+      circuit: { type: 'string' },
+      args: { type: 'string' },
+      slot: { type: 'string', default: 'v4' },
+      'maintenance-key-file': { type: 'string' },
+      compile: { type: 'boolean', default: false },
+      'no-call': { type: 'boolean', default: false },
+      step: { type: 'string' },
+      force: { type: 'boolean', default: false },
+    },
+    UPGRADE_USAGE,
+  );
+  const recordPath = str(v, 'record', true)!;
+  const circuit = str(v, 'circuit', true)!;
+  const sourceDir = str(v, 'source', true)!;
+  const slot = str(v, 'slot') as 'v3' | 'v4';
+  if (slot !== 'v3' && slot !== 'v4') throw new UsageError('--slot is v4 (ZKIR v3 circuits) or v3');
+  const args = (jsonArg(v, 'args') ?? []) as unknown[];
+  if (!Array.isArray(args)) throw new UsageError('--args must be a JSON array');
+  const rec = loadRecord(recordPath);
+  if (!rec?.contract.address) throw new UsageError(`${recordPath}: no deployed contract recorded (deploy it with mip0018 deploy first)`);
+  const keyFile = str(v, 'maintenance-key-file');
+  const signingKey = keyFile ? readMaintenanceKeyFile(keyFile) : undefined;
+  const log = logger(v);
+  const up = await upgradeSource(sourceDir, v.compile === true, log);
+  const deployed = await contractSource({}, recordPath);
+  return withRun(v, recordPath, deployed, async (run) => {
+    const stepTag = str(v, 'step');
+    try {
+      const pf = await preflightUpgrade(run, up, circuit);
+      recordUpgrade(run, up, circuit, slot, pf, portablePath);
+      for (const n of pf.notes) log(`note: ${n}`);
+      if (!pf.ok) {
+        for (const p of pf.problems) log(`preflight: ${p}`);
+        if (v.force !== true)
+          throw new StepError(`preflight refused the upgrade (${pf.problems.length} problem(s)); nothing submitted`, 'refused');
+        log('--force: continuing despite the preflight problems');
+      } else
+        log(
+          `preflight ok: layout identical (${pf.layout?.rows.length ?? '?'} fields), deployed state decodes identically, ${circuit} key sha256 ${pf.verifierKeySha256.slice(0, 16)}…`,
+        );
+      await insertVerifierKeyStep(run, {
+        circuit,
+        verifierKey: pf.verifierKey,
+        slot,
+        ...(signingKey ? { signingKey } : {}),
+        force: v.force === true,
+        ...(stepTag ? { stepId: `${stepTag}:insert` } : {}),
+      });
+      if (!v['no-call'])
+        await callStep(run, {
+          circuit,
+          args,
+          artifacts: up.artifacts,
+          ...(up.adapter ? { adapter: up.adapter } : {}),
+          ...(stepTag ? { stepId: `${stepTag}:call` } : {}),
+        });
+      return EXIT.ok;
+    } catch (e) {
+      log(`upgrade: ${(e as Error).message}`);
+      return exitFor(e);
+    } finally {
+      if (v.json) emitJson(run.record);
+      else printRun(run, recordPath);
+    }
   });
 }
 
