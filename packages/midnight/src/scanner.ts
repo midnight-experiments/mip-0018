@@ -88,7 +88,15 @@ export interface ScanState {
   events: Record<string, IndexedEvent[]>;
   /** Contract deployments seen in the range (address → where). */
   deploys: Record<string, MintRef>;
-  stats: { blocks: number; transactions: number; contractCalls: number; deploys: number; decodeErrors: number; mints: number; events: number };
+  stats: {
+    blocks: number;
+    transactions: number;
+    contractCalls: number;
+    deploys: number;
+    decodeErrors: number;
+    mints: number;
+    events: number;
+  };
   errors: { height: number; txHash: string; message: string }[];
   updatedAt: string;
 }
@@ -293,7 +301,9 @@ export async function scan(o: ScanOptions): Promise<ScanResult> {
         if (state.nextHeight > end) break;
       }
     } catch (e) {
-      if (o.signal?.aborted) throw e;
+      // Ctrl-C in --follow: every block so far is checkpointed; stop cleanly.
+      if (o.signal?.aborted)
+        return { state, mode, blocksThisRun, requests: http.requests, seconds: Math.round((Date.now() - started) / 100) / 10 };
       log(`subscription failed at height ${state.nextHeight} (${(e as Error).message}); falling back to polling`);
       mode = 'polling';
     }

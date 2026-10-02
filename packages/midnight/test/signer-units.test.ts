@@ -100,6 +100,17 @@ describe('argument conversion', () => {
     expect(m[1]).toBe(1000n);
   });
 
+  it.runIf(haveSpike)('loads compiled contracts with and without witnesses (compact-js CompiledContract)', async () => {
+    const { loadCompiledContract } = await import('../src/signer/providers.ts');
+    const emitter = await loadCompiledContract({ name: 'SpikeEmitter', managedDir: join(spikeManaged, '..', 'SpikeEmitter') });
+    expect(emitter).toBeTruthy();
+    const oz = await loadCompiledContract(
+      { name: 'SpikeOzToken', managedDir: spikeManaged },
+      { wit_OwnableSK: (c: { privateState: unknown }) => [c.privateState, new Uint8Array(32)] },
+    );
+    expect(oz).toBeTruthy();
+  });
+
   it('typed-JSON convention for constructor arguments', () => {
     expect(
       fromJsonLoose([

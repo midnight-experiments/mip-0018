@@ -86,11 +86,14 @@ export interface CompiledArtifacts {
 /** Loads a compiled contract as a compact-js CompiledContract, with the adapter's witnesses or none. */
 export const loadCompiledContract = async (a: CompiledArtifacts, witnesses?: Record<string, unknown>) => {
   const mod = (await import(pathToFileURL(join(a.managedDir, 'contract', 'index.js')).href)) as { Contract: new (...x: never[]) => never };
-  const base = CompiledContract.make(a.name, mod.Contract as never);
-  const withW = witnesses
-    ? base.pipe(CompiledContract.withWitnesses(witnesses as never) as never)
-    : base.pipe(CompiledContract.withVacantWitnesses as never);
-  return (withW as { pipe: (f: unknown) => unknown }).pipe(CompiledContract.withCompiledFileAssets(a.managedDir as never)) as never;
+  const base = CompiledContract.make(a.name, mod.Contract as never) as unknown as { pipe: (...fs: unknown[]) => unknown };
+  const assets = CompiledContract.withCompiledFileAssets(a.managedDir as never);
+  // One pipe with both combinators (the intermediate value is not itself pipeable).
+  return (
+    witnesses
+      ? base.pipe(CompiledContract.withWitnesses(witnesses as never), assets)
+      : base.pipe(CompiledContract.withVacantWitnesses, assets)
+  ) as never;
 };
 
 export interface SubmissionHooks {

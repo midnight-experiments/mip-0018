@@ -176,7 +176,9 @@ export interface PublicIdentity {
  * module-local Symbol, which fails when npm installs more than one copy of wallet-sdk-address-format.
  */
 const bech32 = (networkId: string, item: unknown): string =>
-  (item as { constructor: { codec: { encode(n: string, i: unknown): { asString(): string } } } }).constructor.codec.encode(networkId, item).asString();
+  (item as { constructor: { codec: { encode(n: string, i: unknown): { asString(): string } } } }).constructor.codec
+    .encode(networkId, item)
+    .asString();
 
 export const describeWallet = (session: WalletSession, state: FacadeState): PublicIdentity => {
   const night = nativeToken().raw;

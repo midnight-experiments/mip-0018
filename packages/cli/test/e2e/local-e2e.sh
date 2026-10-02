@@ -5,7 +5,8 @@
 #
 # Needs the compiled contracts (full keys): docker/run.sh compile:spike; docker/run.sh exec 'npm run compile -w
 # test-contracts/scanner-mints'. Starts the stack (up.sh), runs every case below, prints PASS/FAIL lines (also in
-# $MIP0018_E2E_DIR/results.txt) and removes the stack (down.sh) unless MIP0018_E2E_KEEP=1. Exit = number of failures.
+# $MIP0018_E2E_DIR/results.txt) and removes the stack (down.sh) unless MIP0018_E2E_KEEP=1 (MIP0018_E2E_REUSE_STACK=1
+# runs against an already running stack and leaves it). Exit = number of failures.
 #
 # Cases: S0 spike through the package · wallet status / register-dust · deploy + publish with a crash right after
 # each submission and a resume (exactly one deploy, one event) · verify / list · re-publish skipped (already
@@ -58,9 +59,13 @@ cleanup() {
 trap cleanup EXIT
 
 # ------------------------------------------------------------------------------------------------------------ stack
-say "starting the local stack"
-"$repo/docker/local-stack/up.sh" >>"$LOGS/stack.log" 2>&1
-STACK_UP=1
+if [ -n "${MIP0018_E2E_REUSE_STACK:-}" ] && [ -f "$repo/docker/local-stack/ports.env" ]; then
+  say "reusing the running local stack (MIP0018_E2E_REUSE_STACK; it is left running)"
+else
+  say "starting the local stack"
+  "$repo/docker/local-stack/up.sh" >>"$LOGS/stack.log" 2>&1
+  STACK_UP=1
+fi
 # shellcheck disable=SC1091
 . "$repo/docker/local-stack/ports.env"
 NET="$MIP0018_STACK_NETWORK"
@@ -85,37 +90,39 @@ events_of() { gql "{\"query\":\"{ contractEvents(filter:{contractAddress:\\\"$1\
 jget() { py "import json,sys; d=json.load(open(sys.argv[1])); print(eval(sys.argv[2], {'d': d}))" "$1" "$2"; }
 
 # --------------------------------------------------------------------------------------- S0 spike through the package
-say "S0 spike (spike:local) through @mip0018/midnight"
-rc=0; MIP0018_DOCKER_NETWORK="$NET" MIP0018_DOCKER_ENV="-e SPIKE_RECORD=/e2e/records/spike-local.json -v $E2E:/e2e" \
-  "$repo/docker/run.sh" spike:local >"$LOGS/spike-local.out" 2>"$LOGS/spike-local.err" || rc=$?
-expect_rc "spike:local (deploy, A1 call, v4 VerifierKeyRemove, second call refused) via the package" 0 "$rc"
+if [ -z "${MIP0018_E2E_SKIP_SPIKE:-}" ]; then
+  say "S0 spike (spike:local) through @mip0018/midnight"
+  rc=0; MIP0018_DOCKER_NETWORK="$NET" MIP0018_DOCKER_ENV="-e SPIKE_RECORD=/e2e/records/spike-local.json -v $E2E:/e2e" \
+    "$repo/docker/run.sh" spike:local >"$LOGS/spike-local.out" 2>"$LOGS/spike-local.err" || rc=$?
+  expect_rc "spike:local (deploy, A1 call, v4 VerifierKeyRemove, second call refused) via the package" 0 "$rc"
+fi
 
 # ------------------------------------------------------------------------------------------------------- wallets
 say "funding wallet B"
 rc=0; "$repo/docker/local-stack/fund.sh" "$SECRETS/b.seed" 1000 >"$LOGS/fund-b.out" 2>"$LOGS/fund-b.err" || rc=$?
 expect_rc "fund.sh: wallet B funded and registered for DUST" 0 "$rc"
-rc=0; signer wallet-a $A wallet status --json || rc=$?
+rc=0; signer wallet-a wallet status $A --json || rc=$?
 expect_rc "wallet status (A)" 0 "$rc"
 CPK_A="$(jget "$LOGS/wallet-a.out" 'd["coinPublicKey"]')"
-rc=0; signer wallet-b-register $B wallet register-dust --json || rc=$?
+rc=0; signer wallet-b-register wallet register-dust $B --json || rc=$?
 expect_rc "wallet register-dust (B, already registered)" 0 "$rc"
 check "register-dust before-check skipped (all UTxOs registered)" test "$(jget "$LOGS/wallet-b-register.out" 'd["outcome"]')" = skipped
 
 # --------------------------------------------------------------------------- deploy + publish, crash and resume
 EM="test-contracts/toolchain-spike/managed/SpikeEmitter"
 say "SpikeEmitter: deploy killed right after submission"
-rc=0; EXTRA_ENV="-e MIP0018_TEST_CRASH_AFTER_SUBMIT=deploy" signer em-deploy-crash $A deploy --contract "$EM" --record /e2e/records/emitter.json || rc=$?
+rc=0; EXTRA_ENV="-e MIP0018_TEST_CRASH_AFTER_SUBMIT=deploy" signer em-deploy-crash deploy $A --contract "$EM" --record /e2e/records/emitter.json || rc=$?
 expect_killed "deploy killed by the test hook right after submission" "$rc" "$LOGS/em-deploy-crash.err"
 check "record holds the address and the submitted transaction (write-ahead)" py "import json; r=json.load(open('$RECORDS/emitter.json')); s=r['steps'][0]; assert r['contract'].get('address') and s['state']=='submitted' and s['tx']['hash'], s"
-rc=0; signer em-deploy-resume $A deploy --contract "$EM" --record /e2e/records/emitter.json --json || rc=$?
+rc=0; signer em-deploy-resume deploy $A --contract "$EM" --record /e2e/records/emitter.json --json || rc=$?
 expect_rc "deploy re-run (reconciles, skips)" 0 "$rc"
 EM_ADDR="$(jget "$RECORDS/emitter.json" 'd["contract"]["address"]')"
 check "deploy step completed after the resume" py "import json; s=json.load(open('$RECORDS/emitter.json'))['steps'][0]; assert s['state']=='completed', s"
 
 say "SpikeEmitter: publish killed right after submission"
-rc=0; EXTRA_ENV="-e MIP0018_TEST_CRASH_AFTER_SUBMIT=call" signer em-publish-crash $A publish --record /e2e/records/emitter.json --circuit publishMetadata || rc=$?
+rc=0; EXTRA_ENV="-e MIP0018_TEST_CRASH_AFTER_SUBMIT=call" signer em-publish-crash publish $A --record /e2e/records/emitter.json --circuit publishMetadata || rc=$?
 expect_killed "publish killed by the test hook right after submission" "$rc" "$LOGS/em-publish-crash.err"
-rc=0; signer em-publish-resume $A publish --record /e2e/records/emitter.json --circuit publishMetadata || rc=$?
+rc=0; signer em-publish-resume publish $A --record /e2e/records/emitter.json --circuit publishMetadata || rc=$?
 expect_rc "publish re-run (reconciles)" 0 "$rc"
 check "publish step completed with the expected event observed" py "import json; s=[x for x in json.load(open('$RECORDS/emitter.json'))['steps'] if x['kind']=='call'][0]; assert s['state']=='completed' and len(s['expectedEvents'])==1, s"
 check "exactly one Misc event on the emitter contract" test "$(events_of "$EM_ADDR")" = 1
@@ -132,41 +139,41 @@ rc=0; cli list-em list --network undeployed --contract "$EM_ADDR" --json || rc=$
 expect_rc "list emitter" 0 "$rc"
 check "list: one visible kind-3 identity with the A1 fields" py "import json; d=json.load(open('$LOGS/list-em.out')); i=d['identities']; assert len(i)==1 and i[0]['visible'] and i[0]['kind']==3 and i[0]['common']['name']=='Acme Token' and str(i[0]['common']['decimals'])=='6', i"
 
-rc=0; signer em-publish-again $A publish --record /e2e/records/emitter.json --circuit publishMetadata --step publish-again || rc=$?
+rc=0; signer em-publish-again publish $A --record /e2e/records/emitter.json --circuit publishMetadata --step publish-again || rc=$?
 expect_rc "publish the same metadata again (new step id)" 0 "$rc"
 check "before-check skipped it: no transaction, still one event" py "import json; s=[x for x in json.load(open('$RECORDS/emitter.json'))['steps'] if x['id']=='publish-again'][0]; assert s['state']=='completed' and 'tx' not in s and s.get('skipped'), s"
 check "still exactly one Misc event" test "$(events_of "$EM_ADDR")" = 1
 
-rc=0; signer em-remove $A remove-circuit --record /e2e/records/emitter.json --circuit publishMetadata || rc=$?
+rc=0; signer em-remove remove-circuit $A --record /e2e/records/emitter.json --circuit publishMetadata || rc=$?
 expect_rc "remove-circuit publishMetadata (v4)" 0 "$rc"
-rc=0; signer em-remove-again $A remove-circuit --record /e2e/records/emitter.json --circuit publishMetadata || rc=$?
+rc=0; signer em-remove-again remove-circuit $A --record /e2e/records/emitter.json --circuit publishMetadata || rc=$?
 expect_rc "remove-circuit re-run (already completed)" 0 "$rc"
-rc=0; signer em-publish-after-remove $A publish --record /e2e/records/emitter.json --circuit publishMetadata --step after-remove --force || rc=$?
+rc=0; signer em-publish-after-remove publish $A --record /e2e/records/emitter.json --circuit publishMetadata --step after-remove --force || rc=$?
 expect_rc "publish after the key removal is refused before submission" 1 "$rc"
 check "still exactly one Misc event after the refused publish" test "$(events_of "$EM_ADDR")" = 1
 
 # ------------------------------------------------------------------------------------------- deploy-and-publish
 say "deploy-and-publish --example toolchain-spike"
 A1_META='{"domainSep":"0x1111111111111111111111111111111111111111111111111111111111111111","kind":3,"name":"Acme Token","symbol":"ACME","decimals":6,"standards":["mip-0004"]}'
-rc=0; signer dap $A deploy-and-publish --example toolchain-spike --metadata "$A1_META" --record /e2e/records/dap.json || rc=$?
+rc=0; signer dap deploy-and-publish $A --example toolchain-spike --metadata "$A1_META" --record /e2e/records/dap.json || rc=$?
 expect_rc "deploy-and-publish (deploy → publish → verify with the metadata)" 0 "$rc"
-rc=0; signer dap-again $A deploy-and-publish --example toolchain-spike --metadata "$A1_META" --record /e2e/records/dap.json --no-verify || rc=$?
+rc=0; signer dap-again deploy-and-publish $A --example toolchain-spike --metadata "$A1_META" --record /e2e/records/dap.json --no-verify || rc=$?
 expect_rc "deploy-and-publish re-run (every step already completed)" 0 "$rc"
 
 # ------------------------------------------------------------------------------------- OZ Ownable token (kind 1)
 say "SpikeOzToken: owner deploy, mint, publish; non-owner refused"
 OZ_ADAPTER="test-contracts/toolchain-spike/spike-oz-token.adapter.ts"
 DS1="0x2222222222222222222222222222222222222222222222222222222222222222"
-rc=0; signer oz-deploy $A deploy --adapter "$OZ_ADAPTER" --args "[\"$DS1\",\"Spike Shielded\",\"SPS\",6]" --record /e2e/records/oz.json || rc=$?
+rc=0; signer oz-deploy deploy $A --adapter "$OZ_ADAPTER" --args "[\"$DS1\",\"Spike Shielded\",\"SPS\",6]" --record /e2e/records/oz.json || rc=$?
 expect_rc "deploy SpikeOzToken (owner secret only in the 0600 private state)" 0 "$rc"
 OZ_ADDR="$(jget "$RECORDS/oz.json" 'd["contract"]["address"]')"
-rc=0; signer oz-mint $A call --record /e2e/records/oz.json --circuit mint --args "[{\"bytes\":\"0x$CPK_A\"},1000,\"0x$(printf '01%.0s' $(seq 1 32))\"]" || rc=$?
+rc=0; signer oz-mint call $A --record /e2e/records/oz.json --circuit mint --args "[{\"bytes\":\"0x$CPK_A\"},1000,\"0x$(printf '01%.0s' $(seq 1 32))\"]" || rc=$?
 expect_rc "owner mints 1000 shielded (kind 1) to wallet A" 0 "$rc"
-rc=0; signer oz-publish $A publish --record /e2e/records/oz.json --circuit publishMetadata --args '[{"$utf8":"Spike Shld"},{"$utf8":"SPS"}]' || rc=$?
+rc=0; signer oz-publish publish $A --record /e2e/records/oz.json --circuit publishMetadata --args '[{"$utf8":"Spike Shld"},{"$utf8":"SPSH"}]' || rc=$?
 expect_rc "owner publishes kind-1 metadata" 0 "$rc"
 OZ_EVENTS_BEFORE="$(events_of "$OZ_ADDR")"
 cp "$RECORDS/oz.json" "$RECORDS/oz-nonowner.json"
-rc=0; signer oz-nonowner $B publish --record /e2e/records/oz-nonowner.json --circuit publishMetadata --args '[{"$utf8":"Evil Token"},{"$utf8":"EVIL"}]' --step non-owner || rc=$?
+rc=0; signer oz-nonowner publish $B --record /e2e/records/oz-nonowner.json --circuit publishMetadata --args '[{"$utf8":"Evil Token"},{"$utf8":"EVIL"}]' --step non-owner || rc=$?
 expect_rc "non-owner publish refused" 1 "$rc"
 check "non-owner: refused before submission (no transaction in the step)" py "import json; s=[x for x in json.load(open('$RECORDS/oz-nonowner.json'))['steps'] if x['id']=='non-owner'][0]; assert 'tx' not in s and s['state']=='pending', s"
 check "non-owner: the failure is the Ownable check" grep -q "caller is not the owner" "$LOGS/oz-nonowner.err"
@@ -178,18 +185,18 @@ SM="test-contracts/scanner-mints/managed/ScannerMints"
 DS2="0x3333333333333333333333333333333333333333333333333333333333333333"
 DS3="0x3434343434343434343434343434343434343434343434343434343434343434"
 DS4="0x3535353535353535353535353535353535353535353535353535353535353535"
-rc=0; signer sm-deploy $A deploy --contract "$SM" --record /e2e/records/sm.json || rc=$?
+rc=0; signer sm-deploy deploy $A --contract "$SM" --record /e2e/records/sm.json || rc=$?
 expect_rc "deploy ScannerMints" 0 "$rc"
 SM_ADDR="$(jget "$RECORDS/sm.json" 'd["contract"]["address"]')"
-rc=0; signer sm-mint-u1 $A call --record /e2e/records/sm.json --circuit mintUnshielded --args "[\"$DS2\",500]" || rc=$?
+rc=0; signer sm-mint-u1 call $A --record /e2e/records/sm.json --circuit mintUnshielded --args "[\"$DS2\",500]" || rc=$?
 expect_rc "mint unshielded 500 of domainSep 0x33…" 0 "$rc"
-rc=0; signer sm-mint-u2 $A call --record /e2e/records/sm.json --circuit mintUnshielded --args "[\"$DS3\",700]" || rc=$?
+rc=0; signer sm-mint-u2 call $A --record /e2e/records/sm.json --circuit mintUnshielded --args "[\"$DS3\",700]" || rc=$?
 expect_rc "mint unshielded 700 of domainSep 0x34…" 0 "$rc"
-rc=0; signer sm-mint-u1b $A call --record /e2e/records/sm.json --circuit mintUnshielded --args "[\"$DS2\",5]" || rc=$?
+rc=0; signer sm-mint-u1b call $A --record /e2e/records/sm.json --circuit mintUnshielded --args "[\"$DS2\",5]" || rc=$?
 expect_rc "mint unshielded 5 more of domainSep 0x33… (same color)" 0 "$rc"
-rc=0; signer sm-mint-s $A call --record /e2e/records/sm.json --circuit mintShielded --args "[\"$DS4\",900,\"0x$(printf '02%.0s' $(seq 1 32))\",{\"bytes\":\"0x$CPK_A\"}]" || rc=$?
+rc=0; signer sm-mint-s call $A --record /e2e/records/sm.json --circuit mintShielded --args "[\"$DS4\",900,\"0x$(printf '02%.0s' $(seq 1 32))\",{\"bytes\":\"0x$CPK_A\"}]" || rc=$?
 expect_rc "mint shielded 900 of domainSep 0x35… to wallet A" 0 "$rc"
-rc=0; signer sm-publish $A publish --record /e2e/records/sm.json --circuit publishMetadata --args "[\"$DS2\",2,{\"\$utf8\":\"UNSA\"}]" || rc=$?
+rc=0; signer sm-publish publish $A --record /e2e/records/sm.json --circuit publishMetadata --args "[\"$DS2\",2,{\"\$utf8\":\"UNSA\"}]" || rc=$?
 expect_rc "publish kind-2 metadata for 0x33…" 0 "$rc"
 
 # ------------------------------------------------------------------------------------------------- mint scanner
@@ -250,7 +257,7 @@ rc=0; cli lookup-k1 lookup --color "$C1" --state /e2e/index/full --network undep
 expect_rc "lookup the OZ shielded color (live metadata)" 0 "$rc"
 check "lookup kind 1 → (OZ contract, 0x22…, 1) with name/symbol/decimals" py "
 import json; d=json.load(open('$LOGS/lookup-k1.out')); r=d['resolved']; assert len(r)==1 and r[0]['kind']==1 and r[0]['contractAddress']=='$OZ_ADDR'
-m=r[0]['metadata']['common']; assert m['name']=='Spike Shld' and m['symbol']=='SPS' and str(m['decimals'])=='6', m
+m=r[0]['metadata']['common']; assert m['name']=='Spike Shld' and m['symbol']=='SPSH' and str(m['decimals'])=='6', m
 assert r[0]['metadata']['color']
 "
 rc=0; cli lookup-k2 lookup --color "$C2" --kind 2 --state /e2e/index/full --json || rc=$?
@@ -270,13 +277,13 @@ expect_rc "lookup --kind 3 (no color for ledger tokens)" 2 "$rc"
 
 # ------------------------------------------------------------------------------------------------- identity guards
 say "identity guards"
-rc=0; signer guard-genesis $A deploy --contract "$EM" --record /e2e/records/guard.json --genesis "0x$(printf 'de%.0s' $(seq 1 32))" || rc=$?
+rc=0; signer guard-genesis deploy $A --contract "$EM" --record /e2e/records/guard.json --genesis "0x$(printf 'de%.0s' $(seq 1 32))" || rc=$?
 expect_rc "wrong genesis aborts before any wallet or submission" 1 "$rc"
 check "wrong-genesis run created no record" test ! -e "$RECORDS/guard.json"
 check "wrong-genesis error names the chain mismatch" grep -q "wrong chain" "$LOGS/guard-genesis.err"
 rc=0; cli guard-public verify --network undeployed --indexer https://indexer.stagenet.shielded.tools/api/v4/graphql --rpc http://node:9944 --contract "$EM_ADDR" --tx "$PUB_TX" || rc=$?
 expect_rc "undeployed profile refuses a Stagenet URL (usage)" 2 "$rc"
-rc=0; signer guard-usage $B publish --record /e2e/records/emitter.json --bogus || rc=$?
+rc=0; signer guard-usage publish $B --record /e2e/records/emitter.json --bogus || rc=$?
 expect_rc "unknown option rejected before anything runs (usage)" 2 "$rc"
 
 # ------------------------------------------------------------------------------------------------------- secrets

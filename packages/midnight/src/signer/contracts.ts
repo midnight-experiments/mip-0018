@@ -410,7 +410,7 @@ export async function callStep(run: Run, input: CallInput): Promise<StepRecord> 
     // so the circuit's owner check fails locally and nothing is submitted.
     privateState = a.initialPrivateState();
     await run.psp.setFor(address, privateStateId, privateState);
-    run.log('no private state for this contract in this signer\'s file: created a fresh one');
+    run.log("no private state for this contract in this signer's file: created a fresh one");
   }
   const ctx: AdapterContext<unknown> = {
     privateState: privateState ?? undefined,
