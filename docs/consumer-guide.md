@@ -1,7 +1,7 @@
 # Consumer guide — read MIP-0018 token metadata (wallets, explorers, indexers)
 
 How to turn a contract's MIP-0018 events into the name, symbol and decimals a wallet or explorer shows, following the
-pinned MIP text ([MIP-0018 @ `b147c627`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/b147c627e1bb15b5d15cc73cf30c2a36afd34dbb/mips/mip-0018-on-chain-token-metadata.md)).
+pinned MIP text ([MIP-0018 @ `78ecbb4b`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/78ecbb4b1ba57371e84fe45f705991ab7b996a61/mips/mip-0018-on-chain-token-metadata.md)).
 The reference implementation of every step is in this repository and passes all normative vectors:
 
 | Step | Reference code | Wallet-free command |

@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { VECTORS_DIR } from '../tools/common.ts';
 
-// MIP-0018 @ b147c62, "Appendix A: Example event (informative)", transcribed line by line.
+// MIP-0018 @ 78ecbb4 (unchanged since b147c62), "Appendix A: Example event (informative)", transcribed line by line.
 const APPENDIX_A: Array<{ offset: number; hex: string; meaning: string }> = [
   { offset: 0, hex: '11'.repeat(32), meaning: 'domainSep' },
   { offset: 32, hex: '03', meaning: 'kind = ledger' },
@@ -51,7 +51,7 @@ describe('A1 equals MIP Appendix A', () => {
   it('is bound to the v1 event name and the pinned MIP commit', () => {
     expect(vector.event.type).toBe('Misc');
     expect(vector.event.name_hex).toBe('6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000');
-    expect(vector.mip.commit).toBe('b147c627e1bb15b5d15cc73cf30c2a36afd34dbb');
+    expect(vector.mip.commit).toBe('78ecbb4b1ba57371e84fe45f705991ab7b996a61');
     expect(vector.normative).toBe(true);
   });
 });

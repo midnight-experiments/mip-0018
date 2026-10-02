@@ -73,5 +73,5 @@ jobs:
           tags: ${{ env.MIP0018_IMAGE }}
           load: true
           cache-from: type=gha,scope=toolchain
-      - name: Check the MIP-0018 text at the pinned commit
+      - name: Check the MIP-0018 text at the pinned commit (toolchain.json) and that README, notes, vectors and schemas cite the same pin
         run: docker/run.sh check:mip-pin

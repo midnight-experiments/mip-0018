@@ -6,9 +6,32 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
 | | |
 |---|---|
 | MIP text these notes refer to | [`midnightntwrk/midnight-improvement-proposals@b147c627e1bb15b5d15cc73cf30c2a36afd34dbb` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/b147c627e1bb15b5d15cc73cf30c2a36afd34dbb/mips/mip-0018-on-chain-token-metadata.md) (SHA-256 `9ffba7e6a3123cd6683e5a779ac3b73c8a31a9724367cd98ee120be78720d842`) |
+| Current pin of this repository | [`midnightntwrk/midnight-improvement-proposals@78ecbb4b1ba57371e84fe45f705991ab7b996a61`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/78ecbb4b1ba57371e84fe45f705991ab7b996a61/mips/mip-0018-on-chain-token-metadata.md) (SHA-256 `b9092746ecf5660496535688a2dea152eb23d932b6eeb6b5a182c23426eec1a1`), the head of [PR #340](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340) on 2026-10-02: the owner's update that carries the approved notes ([what changed](#what-changed-in-78ecbb4)). The notes below keep their original wording and section references, which are those of `b147c62` |
 | How to add a note | One section per note: MIP section, problem, evidence, proposed change, what this repository does meanwhile, status. Append; never delete — change the status instead. |
 | Statuses | `NEEDS-DECISION` (options below, the authors choose) · `PROPOSED` (concrete text suggested) · `OWNER-APPROVED` (the project owner approved the text to take upstream) · `ACCEPTED-UPSTREAM` (merged into the MIP; link the commit) · `WITHDRAWN` (with the reason) |
 | Owner review | 2026-10-02 — approved: N1, N2, N3, N4, N5 (informative), N7, N8 (shortened), N10 (shortened), N11, N12 (reworded), N13, N16 (shortened); withdrawn as out of scope or skipped: N6, N9, N14, N15, N17, N18, N19 |
+
+## What changed in `78ecbb4`
+
+The owner updated PR #340 with the approved notes on 2026-10-02 (head `78ecbb4b1ba57371e84fe45f705991ab7b996a61`). Diff against `b147c62`, note by note:
+
+| Note | In `78ecbb4` | Where in the MIP |
+|---|---|---|
+| N1 URI = RFC 3986 `URI` | Included (reworded: "relative references are not" allowed; no ERC-721 reference) | Value types, `valType` 4 |
+| N2 trailing zero bytes | Included as a **MUST**: "consumers MUST treat missing trailing bytes as zero, so that every `name` is 32 bytes and every `payload` 256 bytes, before decoding" | Consuming — Reading events |
+| N3 one color for kinds 1 and 2 | Included as proposed | Token identity and authority — Lookup |
+| N4 toolchain as a minimum | Included as proposed | Implementation — Dependencies |
+| N5 key version of an inserted verifier key | **Not included** | — |
+| N7 scope of S8 and S9 | Included, reworded: S8 applies to "a consumer that displays amounts"; S9: "Grouping is a SHOULD, so two outcomes are valid: no groups at all, or exactly the following groups" | Testing — S8, S9 |
+| N8 "removed after use" | Included (owner's short form) | Publishing |
+| N10 what a mint is | Included (owner's one sentence) | Token identity and authority — Lookup |
+| N11 event order within a transaction | Included as proposed (normative sentence, not informative) | Applying records |
+| N12 getter equality at first publication; overrides via `standards` | Included (owner's wording) | Common fields |
+| N13 exact-length fixed-size fields | Included as proposed | Payload |
+| N16 a valid maintenance authority | Included (owner's short note) | Backwards Compatibility — Existing contracts |
+| — | Editorial: `Requires: "MIP-0002: Public Contract Log Emission for Compact"` (colon added) | Header |
+
+Effect on this repository (sub-plan S9): the pin moved to `78ecbb4`; the codec and the vector adapter zero-extend a short `name` (to 32 bytes) and `payload` (to 256 bytes) and keep rejecting a longer payload; the vector comparator accepts a consumer that reports no symbol groups or omits `display` (S8 not applicable), as the new Testing text says; the conformance matrix follows the new MUST/SHOULD sentences. No vector expectation and no Stagenet expectation changed.
 
 ---
 

@@ -22,8 +22,9 @@ up metadata, and real cases on Stagenet.
 | | |
 |---|---|
 | Proposal | [midnightntwrk/midnight-improvement-proposals PR #340](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340) — "Update MIP-0018 with community feedback" (open; the link moves to the merged file when #340 merges) |
-| Pinned text | [`b147c627e1bb15b5d15cc73cf30c2a36afd34dbb` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/b147c627e1bb15b5d15cc73cf30c2a36afd34dbb/mips/mip-0018-on-chain-token-metadata.md) |
-| SHA-256 of the pinned text | `9ffba7e6a3123cd6683e5a779ac3b73c8a31a9724367cd98ee120be78720d842` (`docker/run.sh check:mip-pin`) |
+| Pinned text | [`78ecbb4b1ba57371e84fe45f705991ab7b996a61` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/78ecbb4b1ba57371e84fe45f705991ab7b996a61/mips/mip-0018-on-chain-token-metadata.md) — the head of PR #340 on 2026-10-02, which carries the owner-approved proposal notes |
+| SHA-256 of the pinned text | `b9092746ecf5660496535688a2dea152eb23d932b6eeb6b5a182c23426eec1a1` (`docker/run.sh check:mip-pin` also checks that the vectors, schemas and docs cite this pin) |
+| Previous pin | [`b147c627e1bb15b5d15cc73cf30c2a36afd34dbb`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/b147c627e1bb15b5d15cc73cf30c2a36afd34dbb/mips/mip-0018-on-chain-token-metadata.md) (SHA-256 `9ffba7e6a3123cd6683e5a779ac3b73c8a31a9724367cd98ee120be78720d842`): the text [`MIP-PROPOSAL-NOTES.md`](MIP-PROPOSAL-NOTES.md) was written against and the Stagenet cases were prepared under. The payload layout and its validation rules did not change; the new consumer rule is to zero-extend a short `name`/`payload` before decoding — see [What changed in `78ecbb4`](MIP-PROPOSAL-NOTES.md#what-changed-in-78ecbb4) |
 | Authority | The pinned text decides every byte and rule. What this repository found that should be defined or changed upstream is in [`MIP-PROPOSAL-NOTES.md`](MIP-PROPOSAL-NOTES.md) (notes N1–N19, each with the owner's review: `OWNER-APPROVED` or `WITHDRAWN`); nothing is proposed upstream from here. |
 
 ## MIP section → repository

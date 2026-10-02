@@ -3,10 +3,10 @@
   "mip": {
     "id": "MIP-0018",
     "repository": "midnightntwrk/midnight-improvement-proposals",
-    "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
+    "commit": "78ecbb4b1ba57371e84fe45f705991ab7b996a61",
     "path": "mips/mip-0018-on-chain-token-metadata.md",
-    "sha256": "9ffba7e6a3123cd6683e5a779ac3b73c8a31a9724367cd98ee120be78720d842",
-    "url": "https://github.com/midnightntwrk/midnight-improvement-proposals/blob/b147c627e1bb15b5d15cc73cf30c2a36afd34dbb/mips/mip-0018-on-chain-token-metadata.md",
+    "sha256": "b9092746ecf5660496535688a2dea152eb23d932b6eeb6b5a182c23426eec1a1",
+    "url": "https://github.com/midnightntwrk/midnight-improvement-proposals/blob/78ecbb4b1ba57371e84fe45f705991ab7b996a61/mips/mip-0018-on-chain-token-metadata.md",
     "pr": "https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340"
   },
   "eventName": {

@@ -38,6 +38,9 @@ import type { ExampleName } from '../../../examples/openzeppelin/src/examples.ts
 
 const REPO = join(import.meta.dirname, '..', '..', '..');
 const CASES = join(REPO, 'deployments', 'stagenet', 'cases');
+// The MIP text the cases were prepared and run under (2026-10-02). It stays b147c62 in every case.json: the cases are
+// records of what was done. The repository is pinned to 78ecbb4 since S9, which changed no byte or expectation of
+// these cases; every case was re-checked against it (deployments/stagenet/README.md, "Re-checked against 78ecbb4").
 const MIP = { commit: 'b147c627e1bb15b5d15cc73cf30c2a36afd34dbb', eventName: 'mip-0018:token-metadata[v1]' };
 const EVENT_NAME_HEX = Buffer.from(MIP.eventName).toString('hex').padEnd(64, '0');
 /** Stand-in contract address for deriving expectations (colors are never part of them: they depend on the address). */

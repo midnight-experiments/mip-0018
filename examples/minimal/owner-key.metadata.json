@@ -2,7 +2,7 @@
   "$comment": "MIP-0018 metadata of examples/minimal (OwnerKey): what to deploy and publish, the exact payload of every event, and what a conforming consumer concludes. Same format as examples/openzeppelin/README.md#metadatajson. The domainSep is MIP Appendix A's (0x11 x 32), so the published payload equals test A1 byte-for-byte. Checked against the contract by packages/cli/test/adapters.test.ts.",
   "example": "minimal",
   "mip": {
-    "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
+    "commit": "78ecbb4b1ba57371e84fe45f705991ab7b996a61",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "contract": {
