@@ -1,0 +1,7 @@
+// SPDX-License-Identifier: Apache-2.0
+// Compile-fail fixture: a pure circuit cannot emit
+pragma language_version >= 0.26.0;
+import CompactStandardLibrary;
+import "../../src/Mip0018" prefix M_;
+pure circuit publish(): [] { M_emitPayload(M_tombstone(pad(32, "acme"), 3)); }
+export circuit publishMetadata(): [] { publish(); }

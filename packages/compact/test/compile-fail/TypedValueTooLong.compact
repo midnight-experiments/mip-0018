@@ -1,0 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Compile-fail fixture: valLen is one byte: a 256-byte value is a compile error
+pragma language_version >= 0.26.0;
+import CompactStandardLibrary;
+import "../../src/Mip0018" prefix M_;
+export circuit f(v: Bytes<256>): [] { const r = M_bytesRecord<1, 256>("k", v); }

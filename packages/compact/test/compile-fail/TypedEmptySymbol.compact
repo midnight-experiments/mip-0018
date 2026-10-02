@@ -1,0 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Compile-fail fixture: symbol must not be empty
+pragma language_version >= 0.26.0;
+import CompactStandardLibrary;
+import "../../src/Mip0018" prefix M_;
+export circuit f(): [] { M_emitPayload(M_commonFields<4, 0>(pad(32, "a"), 3, "Acme", "", 6)); }
