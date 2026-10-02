@@ -53,6 +53,8 @@ jobs:
         run: docker/run.sh check:secrets
       - name: Conformance matrix covers every MUST/SHOULD of the pinned MIP
         run: docker/run.sh check:conformance-matrix
+      - name: Relative links and anchors in the Markdown files resolve
+        run: docker/run.sh check:md-links
       - name: Compile the toolchain spike (Compact 0.35.0, ZKIR v3)
         run: docker/run.sh compile:spike -- --skip-zk
 

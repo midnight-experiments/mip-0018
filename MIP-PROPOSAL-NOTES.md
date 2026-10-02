@@ -222,7 +222,7 @@ They are notes for the MIP authors, not changes made here: the MIP text stays th
   not obvious: the fee of a metadata transaction hardly depends on the emitting circuit's size, and most of an
   issuer's cost is at deployment (one verifier key per circuit).
 - **Evidence** (Stagenet, ledger 9.1.0.0-rc.3, 2026-10-02; receipts in each case's `record.json`, table in
-  [`docs/costs.md`](../../docs/costs.md#fees-on-stagenet)): every transaction emitting one MIP-0018 event cost
+  [`docs/costs.md`](docs/costs.md#fees-on-stagenet)): every transaction emitting one MIP-0018 event cost
   0.169–0.179 DUST whatever its circuit (k = 6 literal A1 … k = 16 raw emitter; full 256-byte payloads and short ones
   alike — the 34 single-event transactions of C01–C10 plus S0-SPIKE); one call emitting three events 0.193 DUST (C04); two events 0.181 (C08); a tombstone
   0.174 (C06). Deploying the tokens cost 1.5 DUST (1 circuit) to 7.0 DUST (10 circuits, OpenZeppelin), i.e.
