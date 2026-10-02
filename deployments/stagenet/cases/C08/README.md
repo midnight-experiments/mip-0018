@@ -36,10 +36,13 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/C08
 ```
 
-## Transactions (filled in by S5)
+## Transactions (Stagenet, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
-| `deploy` | _S5_ | _S5_ | _S5_ |
-| `emit-two` | _S5_ | _S5_ | _S5_ |
+Contract `RawEmitter` at `65553c655286664ccb3f69f9313bf725900c46eee2289ae611d18fdf6f90ceb9`; signer mn_addr_stagenet1vw57646su9y5z6myarm93m6kcn62j97z0yma94lfkhmta6pz5h5q6utr3k.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `deploy` | deploy | `be73bf3cc7b4092126484e22e8f4489a85a2bb32de8c3547eee5b632357f7264` | 715098 (`48abf17e344fe3a3…`) | SUCCESS | 2,140,013,597,148,026 | 2.140 |
+| `emit-two` | call `emitTwo` | `75c43430395cc8608ccad188a9c0cb45051476f2cc7759d46f34f95204cb86c9` | 715109 (`bfa51938b9093383…`) | SUCCESS | 181,140,518,274,496 | 0.181 |
+| **total** | | | | | **2,321,154,115,422,522** | **2.321** |
 
