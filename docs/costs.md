@@ -1,8 +1,8 @@
 # Costs of MIP-0018 emitting circuits
 
 What it costs to emit MIP-0018 metadata from a Compact contract built with this repository's module
-(`packages/compact`), measured with **Compact 0.35.0 and `--feature-zkir-v3`** (owner decisions Q16,
-Q19). Spec FR-023; MIP "Security Considerations — Spam and cost".
+(`packages/compact`), measured with **Compact 0.35.0 and `--feature-zkir-v3`**, the repository's toolchain. MIP "Security
+Considerations — Spam and cost".
 
 - **k / rows**: circuit size from `zkir-v3 mock-compile` (the prover works on a 2^k-row table).
   Bigger circuits mean bigger prover keys, slower proving and slower key generation for the issuer.
@@ -48,11 +48,9 @@ docker/local-stack/down.sh
    that removes the key.
 5. **Proving time follows k** on this host (16 CPUs): ≈ 70–110 ms at k = 6, ≈ 1.9–2.0 s at k = 14,
    ≈ 3.4–4.6 s at k = 15, ≈ 6.8 s at k = 16, ≈ 17.5 s at k = 17 (median of 3; the first proof of a
-   size is slower while the prover loads its parameters). Re-measured 2026-10-03 for the `withdraw`
-   change (S10): every circuit whose source did not change reproduced its verifier key byte for byte;
-   the `withdraw` circuits (four Null records instead of one) grew by 202 rows where the header is
-   runtime (13,794 → 13,996 typed, 18,350 → 18,552 pure, `OwnerKey.withdrawMetadata` 17,441 → 17,643),
-   with the same k, and stayed at 48 rows with a literal header.
+   size is slower while the prover loads its parameters). Measured on 2026-10-03. A `withdraw` (four Null
+   records in one event) is 48 rows with a literal header and k = 14 (typed, 13,996 rows) or k = 15 (pure,
+   18,552 rows) with a runtime one; `OwnerKey.withdrawMetadata` is k = 15, 17,643 rows.
 
 6. **OpenZeppelin examples** ([`examples/openzeppelin`](../examples/openzeppelin/README.md#costs),
    measured with the same method by `examples/openzeppelin/scripts/costs.ts`; raw numbers and
@@ -133,7 +131,7 @@ Local undeployed chain (`docker/local-stack`: node `2.0.0-rc.4` = `2.0.0-d9729c1
 | `transfer` (normal operation, no event) | k = 13 | 239,480,966,879,273 | 0.239 | 24 s |
 | `VerifierKeyRemove(publishMetadata, v4)` | — | 39,208,571,663,470 | 0.039 | 17 s |
 
-For comparison, the S0 spike's literal `publishMetadata()` (k = 6) cost 144,627,804,062,124 SPECK
+For comparison, the toolchain spike's literal `publishMetadata()` (k = 6, case SPIKE) cost 144,627,804,062,124 SPECK
 locally and 169,392,887,855,896 SPECK on Stagenet: the fee is dominated by the transaction, not by
 the circuit size.
 
@@ -145,7 +143,7 @@ included transaction, as recorded in each case's `record.json`. k from the table
 
 | Case | Transaction (circuit shape) | k | Txs | Fee (SPECK) | ≈ DUST |
 |---|---|---:|---:|---:|---:|
-| S0-SPIKE | `SpikeEmitter.publishMetadata` (literal A1) | 6 | 1 | 169,392,887,855,896 | 0.169 |
+| SPIKE | `SpikeEmitter.publishMetadata` (literal A1) | 6 | 1 | 169,392,887,855,896 | 0.169 |
 | C01 | deploy `MyFungibleToken` (10 circuits) | — | 1 | 6,967,424,959,418,516 | 6.967 |
 | C01 | `MyFungibleToken.publishMetadata` | 13 | 1 | 170,964,821,521,367 | 0.171 |
 | C02 | deploy `MyShieldedToken` (9 circuits) | — | 1 | 6,684,990,545,016,109 | 6.685 |
@@ -165,7 +163,7 @@ included transaction, as recorded in each case's `record.json`. k from the table
 | C06 | deploy `OwnerKey` (5 circuits) | — | 1 | 4,672,892,956,309,085 | 4.673 |
 | C06 | `OwnerKey.publishMetadata` | 15 | 1 | 174,323,270,749,595 | 0.174 |
 | C06 | `OwnerKey.setMetadata` | 15 | 2 | 173,921,391,761,418 – 174,135,957,735,567 | 0.174 |
-| C06 | `OwnerKey.withdrawMetadata` (deployed before S10: one Null record at `name`) | 15 | 2 | 173,510,273,470,794 – 173,908,517,361,446 | 0.174 |
+| C06 | `OwnerKey.withdrawMetadata` (this deployment: one Null record at `name`) | 15 | 2 | 173,510,273,470,794 – 173,908,517,361,446 | 0.174 |
 | C07, C08 | deploy `RawEmitter` (2 circuits) | — | 2 | 2,140,013,597,148,026 – 2,144,366,292,780,833 | 2.140–2.144 |
 | C07 | `RawEmitter.emitRaw` | 16 | 22 | 175,690,178,994,563 – 178,207,494,451,490 | 0.176–0.178 |
 | C08 | `RawEmitter.emitTwo` | 17 | 1 | 181,140,518,274,496 | 0.181 |
@@ -176,7 +174,7 @@ included transaction, as recorded in each case's `record.json`. k from the table
 | U1 | `LegacyToken.mint` | 14 | 1 | 218,844,261,128,440 | 0.219 |
 | U1 | `VerifierKeyInsert(publishMetadata, v4)` on `LegacyToken` (2,121-byte key) | — | 1 | 911,152,349,650,192 | 0.911 |
 | U1 | `LegacyToken.publishMetadata` (upgrade build `LegacyTokenMetadata`) | 15 | 1 | 176,285,080,555,533 | 0.176 |
-| C11 (2026-10-03) | deploy `OwnerKey` (5 circuits; `withdrawMetadata` = `withdraw`) | — | 1 | 4,256,585,107,462,945 | 4.257 |
+| C11 | deploy `OwnerKey` (5 circuits; `withdrawMetadata` = `withdraw`) | — | 1 | 4,256,585,107,462,945 | 4.257 |
 | C11 | `OwnerKey.publishMetadata` | 15 | 1 | 177,637,726,570,864 | 0.178 |
 | C11 | `OwnerKey.withdrawMetadata` (four Null records in one event) | 15 | 2 | 177,262,764,778,656 – 177,305,324,270,339 | 0.177 |
 | C11 | `OwnerKey.setMetadata` (revive) | 15 | 1 | 177,069,017,822,064 | 0.177 |
@@ -184,7 +182,7 @@ included transaction, as recorded in each case's `record.json`. k from the table
 What the receipts show:
 
 - **A metadata transaction costs ≈ 0.17–0.19 DUST on Stagenet whatever its circuit size**: k = 6 (literal A1,
-  S0-SPIKE) 0.169, k = 13–15 publishes, renames and withdrawals 0.171–0.176, k = 16 (three events in one call, C04)
+  SPIKE) 0.169, k = 13–15 publishes, renames and withdrawals 0.171–0.176, k = 16 (three events in one call, C04)
   0.193, k = 16–17 raw emitter 0.176–0.181. The fee follows the transaction (its proof, inputs and DUST spend), not
   the circuit's k; k costs the issuer proving time and prover-key size instead (tables above). A mint costs a little
   more (0.21–0.27 DUST: it also creates the coin / UTXO / ledger balance).
@@ -195,9 +193,8 @@ What the receipts show:
 - **Removing a key is cheap** (`VerifierKeyRemove`, 0.039 DUST — create-and-destroy, C10); **inserting one costs
   about a deploy's share per key** (`VerifierKeyInsert` of a 2,121-byte key, 0.911 DUST — the existing-contract
   upgrade, U1; ≈ 0.59 DUST locally).
-- Stagenet fees were ≈ 1.17× the local chain's for the same matrix (C01–C10: 51.93 DUST over 53 transactions on
-  Stagenet vs ≈ 44.4 DUST locally; U1 2.76 DUST over 4 transactions); every deployed verifier key listed in a
-  `costs.json` equalled, byte for byte, the SHA-256 recorded there when the cases ran (the builds are
-  deterministic; Q24). Since S10 (`withdraw`, MIP `274a84f`) the `withdrawMetadata` rows describe the new circuit:
-  the contracts deployed in C01–C06 keep their earlier `withdrawMetadata` (one Null record at `name`; its key is in
-  each case's `record.json`), and only C06 called it.
+- Stagenet fees are ≈ 1.17× the local chain's for the same matrix (C01–C10: 51.93 DUST over 53 transactions on
+  Stagenet vs ≈ 44.4 DUST locally; U1 2.76 DUST over 4 transactions). Builds are deterministic: every deployed
+  verifier key equals, byte for byte, the SHA-256 in a `costs.json`, except `withdrawMetadata` in the contracts of
+  C01–C06, which were compiled from sources where it emits one Null record at `name` (each key is in the case's
+  `record.json`; only C06 calls it). C11's `withdrawMetadata` key equals the table.

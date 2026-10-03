@@ -32,8 +32,7 @@ Then, at deployment:
    payload = A1).
 3. **Create and destroy only:** remove the circuit with a maintenance update signed by the contract's
    maintenance authority: `VerifierKeyRemove("publishMetadata", ContractOperationVersion("v4"))`
-   (`v4` = the ZKIR-v3 key slot; midnight-js 5.0.0-rc.2's `removeVerifierKey()` removes `v3` only —
-   questions Q23).
+   (`v4` = the ZKIR-v3 key slot; midnight-js 5.0.0-rc.2's `removeVerifierKey()` removes `v3` only).
 
 Why the payload must be constant when the circuit is unguarded: until its key is removed (or, for
 `PublishOnce`, until it ran), anyone with the compiled artefacts can call it. With constant values they
@@ -65,8 +64,8 @@ Local run, 2026-10-01: deploy 1.221 DUST, `publishMetadata` 0.146 DUST, `transfe
 exactly one `Misc` event. Circuit sizes and proving times: [`docs/costs.md`](../../docs/costs.md).
 
 On Stagenet: `OwnerKey`'s publish → rename → withdraw ×2 → revive is case
-[C06](../../deployments/stagenet/cases/C06/README.md) (2026-10-02, deployed from the earlier `OwnerKey`, whose
-`withdrawMetadata` emitted a single Null at `name`), and the full withdrawal of the current `OwnerKey` (four Null
-records in one event) is case [C11](../../deployments/stagenet/cases/C11/README.md); `CreateAndDestroy` is case
+[C06](../../deployments/stagenet/cases/C06/README.md) (its contract was compiled from `OwnerKey.compact` at
+`70b54c6`, whose `withdrawMetadata` emits a single Null record at `name`), and the full withdrawal with `OwnerKey` as
+in this directory (four Null records in one event) is case [C11](../../deployments/stagenet/cases/C11/README.md); `CreateAndDestroy` is case
 [C10](../../deployments/stagenet/cases/C10/README.md). All re-check wallet-free with
 `docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/<ID>`.

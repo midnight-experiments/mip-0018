@@ -1,7 +1,7 @@
 # packages/compact — the MIP-0018 Compact module ("what to add to your contract")
 
 Byte-exact MIP-0018 `TokenMetadata` emission in a few lines of Compact, for the pinned MIP text
-[`midnightntwrk/midnight-improvement-proposals@78ecbb4b`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/274a84f221bcfc17e4b73e2c8b32fd8c028ea092/mips/mip-0018-on-chain-token-metadata.md)
+[`midnightntwrk/midnight-improvement-proposals@274a84f2`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/274a84f221bcfc17e4b73e2c8b32fd8c028ea092/mips/mip-0018-on-chain-token-metadata.md)
 (PR #340). Requires Compact ≥ 0.34.0 (MIP-0002 `Misc` events, ledger v9); built and tested with
 **Compact 0.35.0 (language 0.27.0) and `--feature-zkir-v3`**.
 
@@ -11,7 +11,7 @@ Byte-exact MIP-0018 `TokenMetadata` emission in a few lines of Compact, for the 
 | [`src/Mip0018Pure.compact`](src/Mip0018Pure.compact) | **Alternative API** — individual pure circuits returning bytes, composed with `Bytes[...]` spreads; same bytes, no `serialize` |
 | [`src/testing/`](src/testing) | `@mip0018/compact/testing`: compile with the pinned compiler and run circuits in compact-runtime 0.20.0, capturing the emitted MIP-0018 events |
 
-Both APIs were built and tested side by side (owner decision Q3): they emit identical bytes, equal to
+Both APIs are built and tested side by side: they emit identical bytes, equal to
 the repository's vectors and to `@mip0018/codec`.
 
 ## Add it to a contract
@@ -53,7 +53,7 @@ why the MIP names this circuit. Complete contracts: [`examples/minimal`](../../e
 
 **Deleting metadata** (MIP "Applying records", per-key tombstones): a Null record deletes its own field, and a token
 identity exists only while at least one of its fields has a value. `withdraw(domainSep, kind)` withdraws a token
-that published the common keys: once all four are deleted, consumers no longer reference the identity at all (not
+that published the common keys: once all four are deleted, consumers do not reference the identity at all (not
 in listings, lookups, groups or history); a later non-Null record describes it again with only that field. A token
 that also published other keys must add a Null record for each of them (or the identity stays, with those keys).
 To delete a single key, emit one Null record for it, e.g.
@@ -85,7 +85,7 @@ URI (scheme required, ASCII), or `standards` a well-formed list. String literals
 construction; values passed in at run time must be validated off chain before the call (e.g. with
 `@mip0018/codec`'s `encodePayload`, which rejects anything a consumer would reject).
 
-## Access control (MIP "Publishing", owner decision Q4)
+## Access control (MIP "Publishing")
 
 Anyone who can call a circuit that reaches `emitPayload` can rename or withdraw the token. Pick one:
 
@@ -94,7 +94,7 @@ Anyone who can call a circuit that reaches `emitPayload` can rename or withdraw 
    ([`examples/minimal/contracts/OwnerKey.compact`](../../examples/minimal/contracts/OwnerKey.compact)).
 2. **Create and destroy** — an unguarded `publishMetadata()` with a **constant** payload, called once
    by the deployer, whose verifier key the maintenance authority then removes with a
-   `VerifierKeyRemove` update: the circuit no longer exists
+   `VerifierKeyRemove` update, after which the circuit cannot be called
    ([`examples/minimal/contracts/CreateAndDestroy.compact`](../../examples/minimal/contracts/CreateAndDestroy.compact),
    tested on the local chain and on Stagenet, case [C10](../../deployments/stagenet/cases/C10/README.md)). Caveats: until the key is removed anyone holding the compiled artefacts
    can call the circuit (the deploy does not put the circuit's ZKIR on chain — only its verifier key —
@@ -102,8 +102,8 @@ Anyone who can call a circuit that reaches `emitPayload` can rename or withdraw 
    re-emit the same values. The contract needs a maintenance authority (midnight-js deploys with
    one), and with ZKIR v3 the key lives in the `v4` slot: midnight-js 5.0.0-rc.2's
    `removeVerifierKey()` removes `v3` only, so build the `MaintenanceUpdate` with
-   `VerifierKeyRemove(circuit, ContractOperationVersion('v4'))` (questions Q23; helper
-   `test-contracts/toolchain-spike/src/lib/maintenance.ts`).
+   `VerifierKeyRemove(circuit, ContractOperationVersion('v4'))` (helper
+   [`packages/midnight/src/signer/maintenance.ts`](../midnight/src/signer/maintenance.ts)).
 3. **Publish once** — an unguarded constant `publishMetadata()` that sets its own ledger flag
    ([`examples/minimal/contracts/PublishOnce.compact`](../../examples/minimal/contracts/PublishOnce.compact)).
    Keep the flag in your contract; do not reuse OpenZeppelin `Initializable` for it (modules importing

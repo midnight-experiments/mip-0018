@@ -3,7 +3,7 @@
 Everything here needs only Docker, this repository and public endpoints: no wallet, no secret, no account.
 `mip0018` runs in the pinned toolchain image (`docker/run.sh mip0018 -- <command> …`). On Stagenet the commands work
 against the recorded cases of [`deployments/stagenet/cases/`](../../deployments/stagenet/cases/README.md) (run on
-2026-10-02; contract addresses, transactions and blocks below are real). The outputs below are from Stagenet unless
+2026-10-02 and 2026-10-03; contract addresses, transactions and blocks below are real). The outputs below are from Stagenet unless
 marked "local"; the same commands also run on the local chain in the end-to-end test
 (`packages/cli/test/e2e/examples-e2e.sh`).
 
@@ -234,16 +234,16 @@ case IDX  network stagenet  /work/deployments/stagenet/cases/IDX
 result ok (7/7)
 ```
 
-Every Stagenet case re-checked against `274a84f` (2026-10-03, from a clean checkout in a wallet-free container — see
-[`deployments/stagenet/README.md`](../../deployments/stagenet/README.md)): C01 2/2, C02 3/3, C03 3/3, C04 4/4, C05 6/6,
-C06 11/11, C07 23/23, C08 2/2, C09 2/2, C10 4/4, C11 9/9 (the full withdrawal), IDX 7/7, U1 4/4 (the existing-contract
-upgrade). The transcripts on this page were refreshed on 2026-10-03 with the current tool.
+Every Stagenet case re-checks from a clean checkout in a wallet-free container (see
+[`deployments/stagenet/README.md`](../../deployments/stagenet/README.md)); the 13 cases hold 80 checks: C01 2, C02 3,
+C03 3, C04 4, C05 6, C06 11, C07 23, C08 2, C09 2, C10 4, C11 9 (the full withdrawal), IDX 7, U1 4 (the
+existing-contract upgrade).
 
 ## Stagenet cases
 
 | Case | What | Re-check |
 |---|---|---|
-| [C01](../../deployments/stagenet/cases/C01/README.md)–[C10](../../deployments/stagenet/cases/C10/README.md), [IDX](../../deployments/stagenet/cases/IDX/README.md), [U1](../../deployments/stagenet/cases/U1/README.md) | see the [case index](../../deployments/stagenet/cases/README.md) | `mip0018 recheck --network stagenet --case deployments/stagenet/cases/<ID>` |
+| [C01](../../deployments/stagenet/cases/C01/README.md)–[C11](../../deployments/stagenet/cases/C11/README.md), [IDX](../../deployments/stagenet/cases/IDX/README.md), [U1](../../deployments/stagenet/cases/U1/README.md) | see the [case index](../../deployments/stagenet/cases/README.md) | `mip0018 recheck --network stagenet --case deployments/stagenet/cases/<ID>` |
 
 Addresses, transactions, blocks and fees: the case table in [`deployments/stagenet/README.md`](../../deployments/stagenet/README.md)
 and each case's README (rendered from its `record.json`).

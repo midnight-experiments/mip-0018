@@ -32,8 +32,8 @@ What to put in the event:
 - **`name`, `symbol`, `decimals`** (SHOULD) — non-empty UTF-8, non-empty UTF-8, and `decimals` as a `Uint<8>`.
   Consumers assume no default: a token without `decimals` shows no amounts.
 - **`standards`** (MAY) — standards the token claims, as `mip-NNNN` identifiers separated by single spaces. Claim only
-  what the token implements: the OpenZeppelin examples publish none, because OpenZeppelin claims no MIP (question Q25).
-- **Exact bytes.** Keys and values are compared byte for byte. The MIP says it outright (Payload, since `78ecbb4`):
+  what the token implements: the OpenZeppelin examples publish none, because OpenZeppelin claims no MIP.
+- **Exact bytes.** Keys and values are compared byte for byte. The MIP says it outright (Payload):
   "Each fixed-size field must be exactly as long as the key or value it carries: a shorter value padded with zero
   bytes is a different value (for example `"AGL"` sent as a `Bytes<4>` is `"AGL\0"`), and consumers accept it as such."
   Every size in the module is the value's UTF-8 byte length.
@@ -43,7 +43,7 @@ What to put in the event:
   `decimals()`), publish the same values when you first publish. Nothing on chain checks this; the OpenZeppelin
   examples take both from one `metadata.json` and read `decimals` from the token state. "A later update, such as a
   rename, is the token's current metadata for consumers of this MIP even where the getters cannot change" (MIP Common
-  fields, since `78ecbb4`) — OpenZeppelin's `sealed` getters keep the old values after a rename. A MIP that
+  fields) — OpenZeppelin's `sealed` getters keep their values after a rename. A MIP that
   defines a token standard may restrict or override this for tokens that declare it in `standards`.
 
 When to emit (MIP "Publishing"): once after deployment (a Compact constructor cannot emit), and for extraordinary
@@ -88,12 +88,12 @@ export circuit withdrawMetadata(): [] {
 }
 ```
 
-A rename changes only the keys it carries. **Deleting** is per key (MIP "Applying records", since `274a84f`): a Null
+A rename changes only the keys it carries. **Deleting** is per key (MIP "Applying records"): a Null
 record deletes its own field, and "a token identity exists only while at least one of its fields has a value".
 
 - **Withdraw a token**: emit a Null record for each of its keys; one event can carry them all. `withdraw(domainSep,
   kind)` is that event for the common keys — Null records at `name`, `symbol`, `decimals` and `standards` (39 bytes of
-  records). Once every key is deleted, consumers no longer reference the identity at all (not listed, not found by a
+  records). Once every key is deleted, consumers do not reference the identity at all (not listed, not found by a
   lookup, in no group, no history); the next publish describes it again with only what it carries. **A token that
   published keys beyond these four must add a Null record for each of them** — otherwise those keys keep the identity
   alive with only them. Build that event with `nullRecord<K>(key)` and `payload<n>`, e.g.
@@ -103,14 +103,14 @@ record deletes its own field, and "a token identity exists only while at least o
   `Mip0018_emitPayload(Mip0018_payload1<4, 0>(Mip0018_header(domainSep, kind), Mip0018_nullRecord<4>("name")))`; the
   other fields stay. A Null record for a key that has no value changes nothing.
 
-**Two constructions, same bytes** (owner decision Q3). The default module `Mip0018` builds typed records that Compact
+**Two constructions, same bytes.** The default module `Mip0018` builds typed records that Compact
 serializes, so the compiler checks every size. The alternative `Mip0018Pure` composes the payload from individual
 pure circuits with `Bytes[...]` spreads; it exists because it does not rely on `serialize` for non-event types. Both
 emit identical bytes, equal to the vectors; the typed one is 1.3–1.5× smaller for runtime values (four runtime fields:
 k = 15 vs 16), so use it unless you have a reason not to.
 
 **What the compiler cannot check**: that a runtime UTF-8 value is valid UTF-8, a JSON value valid JSON, or a URI an
-RFC 3986 `URI` (scheme required, ASCII only — question Q20). String literals are fine; validate runtime arguments off
+RFC 3986 `URI` (scheme required, ASCII only). String literals are fine; validate runtime arguments off
 chain before the call, e.g. with `@mip0018/codec`'s `encodePayload`, which throws on anything a consumer would reject.
 A malformed event is rejected whole by every consumer.
 
@@ -121,21 +121,20 @@ docker/run.sh exec 'compact compile --feature-zkir-v3 --compact-path node_module
 ```
 
 (source path and output directory are yours; `managed/` output is never committed — builds are deterministic, and
-the verifier-key SHA-256s are in [`docs/costs.json`](costs.json) and [`examples/openzeppelin/costs.json`](../examples/openzeppelin/costs.json), question Q24). The examples have their own scripts,
+the verifier-key SHA-256s are in [`docs/costs.json`](costs.json) and [`examples/openzeppelin/costs.json`](../examples/openzeppelin/costs.json)). The examples have their own scripts,
 e.g. `docker/run.sh exec 'npm run -s compile -w examples/openzeppelin -- --keys --with-metadata-only fungible-token'`.
 
 ## 3. Choose who may publish
 
 Anyone who can call an emitting circuit can rename or withdraw the token, so the MIP says it "SHOULD be
-access-controlled, publish-once, or removed after use" (Publishing; "removed after use" since `78ecbb4`; owner
-decision Q4). Four patterns, all tested; sizes from [`docs/costs.md`](costs.md):
+access-controlled, publish-once, or removed after use" (Publishing). Four patterns, all tested; sizes from [`docs/costs.md`](costs.md):
 
 | Pattern | Example | Rename / withdraw later | `publishMetadata()` size | Caveats |
 |---|---|---|---|---|
 | OpenZeppelin `Ownable` | [`examples/openzeppelin`](../examples/openzeppelin/README.md) | yes, owner-only | fungible k = 13 (literal `domainSep`), native k = 15 | `Ownable_assertOnlyOwner()` first in every emitting circuit; the owner secret lives in the deployer's private state |
 | Owner key (hand-rolled) | [`OwnerKey`](../examples/minimal/contracts/OwnerKey.compact) | yes, owner-only | k = 15, 17,782 rows | the same idea without OpenZeppelin |
 | Publish once | [`PublishOnce`](../examples/minimal/contracts/PublishOnce.compact) | no | k = 14, 14,065 rows | payload must be **constant** (anyone may make the one call); keep the flag in your own ledger field — do not reuse OpenZeppelin `Initializable` (shared module state) |
-| Create and destroy | [`CreateAndDestroy`](../examples/minimal/contracts/CreateAndDestroy.compact) | no (only through a maintenance update) | k = 14, 14,041 rows | unguarded with a **constant** payload; the deployer calls it, then removes its verifier key (`VerifierKeyRemove` in the `v4` slot for ZKIR-v3 circuits — midnight-js 5.0.0-rc.2 removes only `v3`, question Q23). Until then anyone holding the compiled artefacts can call it, but can only re-emit the same values |
+| Create and destroy | [`CreateAndDestroy`](../examples/minimal/contracts/CreateAndDestroy.compact) | no (only through a maintenance update) | k = 14, 14,041 rows | unguarded with a **constant** payload; the deployer calls it, then removes its verifier key (`VerifierKeyRemove` in the `v4` slot for ZKIR-v3 circuits — midnight-js 5.0.0-rc.2 removes only `v3`). Until then anyone holding the compiled artefacts can call it, but can only re-emit the same values |
 
 Whatever the circuit's guard, the contract's **maintenance authority** can insert or remove circuits at any time, so it
 can change the metadata as well ([upgrade guide, Limits](upgrade-guide.md#limits)). Keep that key as carefully as the
@@ -146,11 +145,12 @@ owner key; `mip0018 deploy` stores it in the signer's 0600 private-state file.
 `mip0018` ([`packages/cli`](../packages/cli/README.md)) wraps midnight-js `deployContract` and `callTx` with a public
 **run record** per contract (every transaction is written before submission), a **before-check** that skips a step the
 chain already shows done, and an **after-check** that marks a step completed only when the indexer shows the expected
-events (questions Q13, Q27). Re-running a command resumes; it never deploys or publishes twice.
+events. Re-running a command resumes; it never deploys or publishes twice.
 
 Signing commands run in `docker/signer.sh`, the only container that mounts a wallet secret (read-only, from a 0700
-directory outside the repository). Two official proof servers are needed today: `proof-server` 9.0.0-rc.8 for the
-contract circuits (ZKIR v3) and 9.0.0-rc.6 for the wallet's DUST spends (question Q21).
+directory outside the repository). Two official proof servers are needed: `proof-server` 9.0.0-rc.8 for the
+contract circuits (it reads ZKIR v3) and 9.0.0-rc.6 for the wallet's DUST spends (the only one whose DUST proofs node
+2.0.0-rc.4 accepts).
 
 **Local chain first** (official images, no funds needed) — the shell set-up of
 [`examples/publish-and-emit`](../examples/publish-and-emit/README.md#1-local-chain-and-shell-set-up):
@@ -235,11 +235,11 @@ signer publish --network stagenet --mnemonic-file /run/mip0018/secrets/stagenet-
 signer publish --network stagenet --mnemonic-file /run/mip0018/secrets/stagenet-wallet.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --record deployments/stagenet/cases/C06/record.json --circuit setMetadata --args '[{"$utf8":"Acme Again"},{"$utf8":"ACMA"}]' --step revive
 ```
 
-What consumers then show: after the rename "Acme Prime"/"ACMP" (the old name only as marked history). C06's contract
-was deployed before `withdraw` existed — its `withdrawMetadata` emits a single Null record at `name`, so under the
-current MIP it deletes only `name` and the revive brings a name and a new symbol back next to the kept `decimals` and
-`standards` ([C06](../deployments/stagenet/cases/C06/README.md), expectations re-derived under `274a84f`). With the
-current `OwnerKey` ([C11](../deployments/stagenet/cases/C11/README.md)): after `withdrawMetadata` (four Null records in
+What consumers then show: after the rename "Acme Prime"/"ACMP" (the replaced name only as marked history). C06's
+deployed contract (`OwnerKey.compact` at `70b54c6`) has a `withdrawMetadata` that emits a single Null record at
+`name`: it deletes only `name`, and the revive sets a name and a new symbol next to the remaining `decimals` and
+`standards` ([C06](../deployments/stagenet/cases/C06/README.md)). With `OwnerKey` as in this repository
+([C11](../deployments/stagenet/cases/C11/README.md)): after `withdrawMetadata` (four Null records in
 one event) the token is not listed at all and has no group; after the revive it has **only** `name` and `symbol` —
 `decimals` and `standards` do not come back, so republish every field you want shown.
 
@@ -255,7 +255,7 @@ signer remove-circuit $A --record /walk/minimal.json --circuit publishMetadata
 signer publish $A --record /walk/minimal.json --circuit publishMetadata --step publish-again --force   # exit 1
 ```
 
-The last command is refused (`publishMetadata has no verifier key`): the circuit no longer exists. On Stagenet:
+The last command is refused (`publishMetadata has no verifier key`): the circuit cannot be called. On Stagenet:
 [C10](../deployments/stagenet/cases/C10/README.md).
 
 ## 6. Costs
@@ -273,7 +273,7 @@ From the Stagenet receipts ([`docs/costs.md`](costs.md#fees-on-stagenet)):
 ## 7. Existing contracts
 
 A token deployed without an emitting circuit does not need a redeployment if it has a usable maintenance authority
-(the MIP's own note since `78ecbb4`: "a valid maintenance authority is required"):
+(the MIP notes that "a valid maintenance authority is required"):
 compile an upgrade-only `publishMetadata()` against its exact ledger layout, insert its verifier key with
 `VerifierKeyInsert`, call it — address, `domainSep` and color stay the same. See the
 [upgrade guide](upgrade-guide.md) (`mip0018 upgrade`) and Stagenet case [U1](../deployments/stagenet/cases/U1/README.md).
@@ -286,7 +286,7 @@ compile an upgrade-only `publishMetadata()` against its exact ledger layout, ins
 | [C02](../deployments/stagenet/cases/C02/README.md), [C03](../deployments/stagenet/cases/C03/README.md) | native shielded / unshielded: the minted coin's color = the identity's color |
 | [C04](../deployments/stagenet/cases/C04/README.md) | one asset as kinds 1, 2, 3 from one publish: one symbol group |
 | [C05](../deployments/stagenet/cases/C05/README.md) | token family: three `domainSep`, three identities |
-| [C06](../deployments/stagenet/cases/C06/README.md) | lifecycle: publish (Appendix A bytes), rename, withdraw twice (the earlier contract: one Null at `name`), revive |
+| [C06](../deployments/stagenet/cases/C06/README.md) | lifecycle: publish (Appendix A bytes), rename, delete `name` with a Null record twice, revive |
 | [C11](../deployments/stagenet/cases/C11/README.md) | full withdrawal (four Null records in one event): the token disappears from `list`; withdraw again changes nothing; revive with only `name` and `symbol` |
 | [C09](../deployments/stagenet/cases/C09/README.md) | a non-owner's rename refused |
 | [C10](../deployments/stagenet/cases/C10/README.md) | create and destroy |

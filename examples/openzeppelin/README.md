@@ -8,7 +8,7 @@ lines that publish MIP-0018 `TokenMetadata` events with this repository's Compac
 
 Pinned: **`@openzeppelin/compact-contracts@0.4.0-alpha.5`** (Ledger v9, built upstream for Compact
 0.34.0), compiled here with **Compact 0.35.0 (language 0.27.0) and `--feature-zkir-v3`** — every
-example compiles with no compiler message. Access control is OpenZeppelin `Ownable` (owner decision Q4).
+example compiles with no compiler message. Access control is OpenZeppelin `Ownable`.
 
 | Example | Token | OpenZeppelin modules | MIP `kind` | `domainSep` | Color |
 |---|---|---|---|---|---|
@@ -62,13 +62,13 @@ export circuit withdrawMetadata(): [] {
      `tokenType(domainSep, contractAddress)`, is the color of the coins;
    - `name` and `symbol`: **the same literals the deployer passes to `initialize`**. OpenZeppelin
      stores them as `Opaque<"string">`, which a circuit cannot turn into bytes, so the circuit repeats
-     them. Nothing checks the two against each other (owner ruling: such a check becomes possible
-     once consumers can execute getters); the deploy scripts take both from `metadata.json`;
+     them. Nothing checks the two against each other (a check needs consumers that can execute
+     getters); the deploy scripts take both from `metadata.json`;
    - `decimals`: read from the module's `_decimals` (`Uint<8>`), so it always equals the getter.
 3. **Add `setMetadata(...)` and `withdrawMetadata()`** — owner-only rename (an extraordinary update;
    a new value of exactly the circuit's byte length) and withdrawal: `withdraw(domainSep, kind)` emits
    ONE event with a Null record at `name`, `symbol`, `decimals` and `standards` (a Null record deletes
-   its field; once a token has no field left, consumers no longer reference it at all — MIP "Applying
+   its field; once a token has no field left, consumers do not reference it at all — MIP "Applying
    records"). A token that published other keys adds a Null record for each of them (build that event
    with `nullRecord<K>(key)` and `payload<n>`); a single key is deleted the same way. Both circuits
    are optional; without them the metadata can still be changed later by inserting a circuit with a
@@ -85,23 +85,21 @@ metadata events" (every example tests that these emit nothing).
   rename or withdraw the token (MIP "Publishing"). The examples use `Ownable_assertOnlyOwner()`;
   `AccessControl_assertOnlyRole(...)` or `ZOwnablePK_assertOnlyOwner()` work the same way.
 - **Do not use `Initializable` for a publish-once flag.** Modules importing the same stateful module
-  share its state (LFDT-Minokawa/compact#270); OpenZeppelin's own modules stopped composing it. Keep
+  share its state (LFDT-Minokawa/compact#270); OpenZeppelin's own modules do not compose it. Keep
   your own `ledger metadataPublished: Boolean` if you want publish-once
   (`examples/minimal/contracts/PublishOnce.compact`).
 - **Renames do not change the getters.** `name()` / `symbol()` return the `sealed` constructor values
-  forever; after `setMetadata` the MIP-0018 metadata is the current one. The MIP says so since
-  `78ecbb4` (Common fields): a token with standard getters "SHOULD emit the same values
+  forever; after `setMetadata` the MIP-0018 metadata is the current one. The MIP says so (Common fields): a token with standard getters "SHOULD emit the same values
   those getters return when it first publishes them. A later update, such as a rename, is the token's
   current metadata for consumers of this MIP even where the getters cannot change." A MIP that defines
   a token standard MAY restrict or override this for tokens that declare that standard in `standards`.
 - **Claim only the standards your token implements.** OpenZeppelin 0.4.0-alpha.5 claims no MIP, so the
-  examples publish no `standards` (questions Q25). To claim some, use
+  examples publish no `standards`. To claim some, use
   `Mip0018_commonFieldsWithStandards<N, S, T>(…, "mip-00xx …")`.
 - **The generated TypeScript `Ledger` type does not include module state** (OpenZeppelin's `_balances`,
   `_domain`, …): read it through circuits (`balanceOf`, `tokenColor`) or re-export the fields.
 - **Never pad a value with zeros.** MIP-0018 compares keys and values as exact bytes: `"AGL"` in a
-  `Bytes<4>` is `"AGL\0"`, a different symbol (the MIP's Payload section says so since `78ecbb4`, from
-  MIP Payload section). With the module's builders a literal of the wrong length
+  `Bytes<4>` is `"AGL\0"`, a different symbol (MIP Payload section). With the module's builders a literal of the wrong length
   does not compile, and the runtime refuses a too-short argument — but an argument zero-padded to the
   circuit's size is emitted with its zeros. Make every generic size the value's UTF-8 byte length (the
   tests decode every emitted event and compare each value with `metadata.json`;
@@ -198,7 +196,7 @@ Measured 2026-10-03 (UTC): Compact 0.35.0 (debb05f94), language 0.27.0, ZKIR v3 
 
 ## Not here
 
-- Nothing is proposed or contributed to OpenZeppelin (owner decision Q6).
+- Nothing is proposed or contributed to OpenZeppelin from this repository.
 - Conversion between representations (OpenZeppelin's `NativeTokenConverter` is not on `main`).
 - Deploying: see [`examples/publish-and-emit`](../publish-and-emit) and the Stagenet cases in
   [`deployments/stagenet`](../../deployments/stagenet).

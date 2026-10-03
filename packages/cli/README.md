@@ -15,7 +15,7 @@ prints the details; every command has `--json`.
 | `wallet status` · `wallet register-dust [--estimate]` | yes | Public addresses and balances · DUST registration (skipped when already registered) |
 | `deploy (--contract <managed dir> \| --adapter <file> \| --example <name>) --record <file> [--args <json>]` | yes | midnight-js `deployContract` with a run record and before/after checks |
 | `publish --record <file> --circuit <name> [--args <json>] [--step <id>] [--force]` (`call` = alias) | yes | `findDeployedContract().callTx.<circuit>()`; skipped when the metadata already holds exactly what it would set |
-| `remove-circuit --record <file> --circuit <name>` | yes | Create-and-destroy: `VerifierKeyRemove` in the `v4` slot (Q23) |
+| `remove-circuit --record <file> --circuit <name>` | yes | Create-and-destroy: `VerifierKeyRemove` in the `v4` slot (where ZKIR v3 keys live) |
 | `deploy-and-publish --example <name> [--metadata <json>] --record <file>` | yes | compile → deploy → publish → verify, each step guarded |
 | `upgrade --record <file> --source <dir> --circuit <name>` | yes | Existing contracts: `VerifierKeyInsert` of the circuit (`v4` slot), then call it ([upgrade guide](../../docs/upgrade-guide.md)) |
 
@@ -25,7 +25,7 @@ outcome unknown (re-run to reconcile).
 Networks: `--network stagenet` uses the pinned public endpoints (rate-bounded) and checks the pinned genesis;
 `--network undeployed` needs `--indexer`/`--rpc` (or `MIP0018_INDEXER_URL` / `MIP0018_NODE_URL`) and refuses public
 hosts. Signing needs the two official proof servers (`--proof-server` for contract circuits, `--wallet-proof-server`
-for DUST spends; Q21), a wallet secret file (`--mnemonic-file`; on a local chain also `--seed-file` or
+for DUST spends), a wallet secret file (`--mnemonic-file`; on a local chain also `--seed-file` or
 `--dev-genesis-wallet`) and a private state directory outside the repository (`--state-dir`).
 
 Records are public JSON (contract address, transactions, observations — never a secret). Maintenance keys and

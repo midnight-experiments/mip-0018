@@ -13,9 +13,9 @@ packages/midnight/test/fixtures/**/*.json
 # Prose is formatted by hand (tables, line breaks).
 *.md
 **/*.md
-# Investigation evidence copied byte-for-byte from the F1 URI research.
+# Investigation evidence copied byte-for-byte (URI investigation).
 vectors/informative/uri/investigation/
-# Generated case folders (deployments/stagenet/tools/prepare-cases.ts) and the records/observations S5 adds
+# Generated case folders (deployments/stagenet/tools/prepare-cases.ts), run records and observations
 deployments/stagenet/cases/**
 # Stagenet identity observations appended by deployments/stagenet/tools/network-identity.ts (JSON.stringify layout)
 deployments/stagenet/network.json

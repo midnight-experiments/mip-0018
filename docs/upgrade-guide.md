@@ -2,8 +2,7 @@
 
 MIP-0018, "Backwards Compatibility Assessment — Existing contracts": a contract deployed without an
 emitting circuit does not need redeployment; its **maintenance authority** can add one. "Note: a valid
-maintenance authority is required." (MIP text since `78ecbb4`; what "valid"
-means in practice is check 1 below.)
+maintenance authority is required." (What "valid" means in practice is check 1 below.)
 
 1. Compile a `publishMetadata()` circuit against the contract's existing ledger layout. It reads the
    existing `domain` from state and emits it as `domainSep`.
@@ -100,7 +99,7 @@ Rules:
   (`Mip0018` declares none).
 - **Export only the circuit(s) you insert.** midnight-js `findDeployedContract` refuses a compiled
   contract whose circuits are not all on chain with byte-identical verifier keys. Compiling the whole
-  contract again would also produce keys for the old circuits, which differ as soon as the compiler
+  contract again would also produce keys for the existing circuits, which differ as soon as the compiler
   differs; the upgrade-only source avoids both problems. (Compact compiles every exported circuit;
   there is no per-circuit flag.)
 - **The value of `domainSep` comes from the state**, never from a literal you retype: the color is
@@ -162,8 +161,8 @@ Facts the tool relies on (ledger v9, `midnight-ledger` 9.1.0.0-rc.3):
   circuits (the Compact default) and `v4` for ZKIR v3 circuits (`--feature-zkir-v3`). Insert at the
   version of the circuit's proving system; a mismatch is included but fails. midnight-js 5.0.0-rc.2's
   `insertVerifierKey()` / `submitInsertVerifierKeyTx` always write `v3`, so the tool builds the
-  `MaintenanceUpdate` itself with the right version and submits it through midnight-js `submitTx`
-  (questions Q23). Old circuits keep their own slot: ledger v9 verifies both
+  `MaintenanceUpdate` itself with the right version and submits it through midnight-js `submitTx`.
+  Existing circuits keep their own slot: ledger v9 verifies both
   generations, so a contract compiled to ZKIR v2 can hold `v3` keys for its original circuits and a `v4`
   key for the new one (not exercised here: the template's `mint` is ZKIR v3 too).
 - **Authority and counter.** The update carries the authority's current counter and enough committee
@@ -204,7 +203,7 @@ color), and `lookup` resolves that color to the metadata published after the upg
 | Threshold > 1 | Needs that many committee signatures on one update; `mip0018 upgrade` signs with one key (collect the others with the ledger API) |
 | Ledger layout must be identical | The upgrade source repeats every ledger declaration verbatim; a mismatch is invisible on chain (see Step 2) |
 | No new ledger fields | No publish-once flag; reuse existing access control, or constant payload + remove the key after the call |
-| Key versions | Insert at the slot of the circuit's proving system (`v4` for ZKIR v3); midnight-js 5.0.0-rc.2 writes only `v3` (Q23) |
+| Key versions | Insert at the slot of the circuit's proving system (`v4` for ZKIR v3); midnight-js 5.0.0-rc.2 writes only `v3` |
 | No overwrite | An existing `publishMetadata` must be removed first; the ledger refuses an insert over it (see the run below) |
 | One circuit per run | The tool inserts one circuit per `upgrade` run (the ledger accepts several `SingleUpdate`s in one update); export only inserted circuits from the upgrade source |
 | Trust | The maintenance authority can remove and insert **any** circuit at any time — including `publishMetadata` and the token's own circuits. Whoever holds it controls the token's metadata as much as the owner check does |

@@ -5,7 +5,7 @@ extras, a JSON Schema for each format, an independent generator and a runner any
 
 | | |
 |---|---|
-| MIP text | [`midnightntwrk/midnight-improvement-proposals@274a84f221bcfc17e4b73e2c8b32fd8c028ea092` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/274a84f221bcfc17e4b73e2c8b32fd8c028ea092/mips/mip-0018-on-chain-token-metadata.md), SHA-256 `e64fe1429b9f7589077f1323572cf5c3ffa90c7c96690242a9e76d2658058d8b`, under review in [PR #340](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340) |
+| MIP text | [`midnightntwrk/midnight-improvement-proposals@274a84f221bcfc17e4b73e2c8b32fd8c028ea092` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/274a84f221bcfc17e4b73e2c8b32fd8c028ea092/mips/mip-0018-on-chain-token-metadata.md), SHA-256 `e64fe1429b9f7589077f1323572cf5c3ffa90c7c96690242a9e76d2658058d8b` (proposal: [PR #340](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340)) |
 | Event name | `pad(32, "mip-0018:token-metadata[v1]")` = `6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000` |
 | Vectors | **67 normative** (40 payload, 27 state) and **43 informative** (34 payload, 9 state) — `manifest.json` lists every one |
 | Integrity | `SHA256SUMS` covers every fixture, schema and the manifest (`cd vectors && sha256sum -c SHA256SUMS`) |
@@ -19,9 +19,9 @@ labelled informative.
 |---|---|
 | `payload/<id>.json` + `<id>.bin` | Normative payload vectors (A1–A5, R1–R6, the ignore rule): one observed event and the expected classify/decode result. `.bin` holds the same 256 payload bytes (the informative zero-extension vectors' `.bin` holds the bytes as observed) |
 | `state/<id>.json` | Normative state vectors (S1–S9, plus state companions of A3–A5): a sequence of observed events in chain order and the state that must result |
-| `informative/uri/` | The 26 URI cases with the RFC 3986 `URI` verdict (owner ruling Q20 = ERC-721's rule, now MIP text) and the investigation data; see its README |
+| `informative/uri/` | The 26 URI cases with the RFC 3986 `URI` verdict (the MIP's Value types rule) and the investigation data; see its README |
 | `informative/state/` | `standards` list format and common-field forms derived from the MIP text but not in its Testing list (`INF-STD-6/7`: the byte rule for identifiers) |
-| `informative/zero-extension/` | The MIP's Consuming rule (`78ecbb4`): a `name` or `payload` with its trailing zero bytes dropped, as some sources return it, gives exactly the full form's result; a 257-byte payload is rejected and a 33-byte name is another name |
+| `informative/zero-extension/` | The MIP's Consuming rule: a `name` or `payload` with its trailing zero bytes dropped, as some sources return it, gives exactly the full form's result; a 257-byte payload is rejected and a 33-byte name is another name |
 | `schema/` | JSON Schemas (2020-12): `payload.schema.json`, `state.schema.json`, `runner.schema.json` (protocol), `manifest.schema.json` |
 | `manifest.json` | MIP pin, event name, counts, and every vector with its MIP test id and normative flag |
 | `tools/generate.ts` | The generator (`--check` mode for CI) |
@@ -144,16 +144,6 @@ A consumer in any language is tested by a small adapter program:
    integrity (`SHA256SUMS`) or harness errors. Informative failures are reported but do not change the exit status.
    The JSON report (`--json`) lists the not-applicable checks under `notApplicable`.
 
-These rules changed with the re-pin to `78ecbb4` (sub-plan S9; questions file Q33, audit finding F-M1): earlier the
-runner also required single-member groups, every key and `display`. The expected files were not changed; the
-reference consumer still reports everything and passes either way.
-
-With the re-pin to `274a84f` (per-key tombstones, sub-plan S10) the identity shape lost `visible`: a Null record now
-deletes only its own field, and a token identity exists only while at least one of its fields has a value. The
-earlier tolerance "a hidden identity without fields equals an absent one" is gone: an identity reported without
-fields fails. S1a, S3a–S3d, S4a/S4b and S9d were rewritten for the new rules; every other state vector changed only by
-losing `visible`.
-
 Run it (Node ≥ 24; from the repository root):
 
 ```sh
@@ -171,7 +161,7 @@ languages.
 on any difference or stale file (run in CI). It is an **independent oracle**: payloads are built by explicit byte
 arithmetic and every expected result is written by hand — no decoder, no reducer, nothing imported from
 `packages/codec` or `packages/consumer`. It also checks A1 against a literal transcription of the MIP's Appendix A,
-the MIP's stated offsets (A1: 33/50/63/75/95; S1: 33/41/50) and the URI verdicts against the two independent grammars
+the MIP's stated offsets (A1: 33/50/63/75/95; S1: 33/41/48) and the URI verdicts against the two independent grammars
 of the investigation.
 
 ```sh
@@ -182,9 +172,8 @@ node vectors/tools/validate.ts
 ## Informative vectors and repository conventions
 
 - **URI (`valType` 4)** — `informative/uri/`: RFC 3986 `URI` (scheme required, fragment allowed, no relative
-  references, ASCII only); 16 accept, 10 reject. This is now the MIP's own text (`78ecbb4`; the owner's
-  ruling Q20 followed ERC-721, which defines URIs by RFC 3986).
-- **Zero extension** — `informative/zero-extension/` (`INF-ZEXT-*`): the MIP's Consuming section (`78ecbb4`) says
+  references, ASCII only); 16 accept, 10 reject. This is the MIP's Value types rule; ERC-721 defines URIs the same way (RFC 3986).
+- **Zero extension** — `informative/zero-extension/` (`INF-ZEXT-*`): the MIP's Consuming section says
   "Some sources drop trailing zero bytes; consumers MUST treat missing trailing bytes as zero, so that every `name` is
   32 bytes and every `payload` 256 bytes, before decoding." A1 with a trimmed payload (95 bytes), a trimmed name
   (27 bytes) or both, and A3b trimmed (the value `01 00 00` loses its zeros with the padding and gets them back) give
@@ -198,6 +187,6 @@ node vectors/tools/validate.ts
   are unusable. `INF-STD-6/7`: identifiers containing U+00A0 or U+0085 are usable under the MIP's byte rule ("no byte
   in 0x00–0x20 or 0x7f"), which the reference applies exactly as written.
 - **JSON (`valType` 3)** — no informative vectors: each consumer uses its platform's JSON parser on the strictly decoded
-  UTF-8 text (owner ruling).
+  UTF-8 text (the MIP's rule: "one complete UTF-8 JSON value", RFC 8259).
 - **Display formatting** beyond S8 (trailing zeros, very large `decimals`) is a presentation choice of each consumer
   and is not part of the vectors.

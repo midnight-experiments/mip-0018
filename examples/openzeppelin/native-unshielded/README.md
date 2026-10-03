@@ -4,7 +4,7 @@ A native unshielded token (unshielded UTXOs, MIP-0014 shape) owned with OpenZepp
 gains MIP-0018 metadata.
 
 **OpenZeppelin Compact Contracts 0.4.0-alpha.5 has no native unshielded token module** (none on
-`main`; earlier `NativeUnshieldedToken` drafts exist only on stale experimental branches for an older
+`main`; `NativeUnshieldedToken` drafts exist only on stale experimental branches for an older
 ledger). So the token part of this example uses the **Compact standard library directly**:
 `mintUnshieldedToken(_domain, amount, recipient)`, written in the style of OpenZeppelin's
 `NativeShieldedToken` (one token type; domain separator, name, symbol and decimals fixed at

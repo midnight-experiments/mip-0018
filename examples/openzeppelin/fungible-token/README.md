@@ -77,7 +77,7 @@ and emit nothing ("Normal token operation … MUST NOT emit metadata events").
   `examples/upgrade-existing-contract`). Never zero-pad a shorter value to fit: the zeros would be
   part of the emitted name ([`../test/exact-values.test.ts`](../test/exact-values.test.ts)).
 - **No `standards`** — OpenZeppelin's `FungibleToken` does not claim a MIP standard, so the example
-  claims none (questions Q25). To claim one your token implements, publish
+  claims none. To claim one your token implements, publish
   `Mip0018_commonFieldsWithStandards<9, 4, T>(…, "<identifiers>")` instead.
 - **Renames do not change the getters** — `name()` and `symbol()` keep returning the constructor
   values (they are `sealed`); after `setMetadata` the MIP-0018 metadata is the current one.
@@ -106,7 +106,7 @@ docker/run.sh exec 'npx vitest run examples/openzeppelin/fungible-token'
 | metadata.json payloads | every expected payload equals the reference encoder (`@mip0018/codec`) |
 | exact values | every emitted event of every step, decoded with `@mip0018/codec`: header and each key and value equal `metadata.json` exactly (no zero padding, `decimals` 1 byte) |
 | publish | one `Misc` event, name `mip-0018:token-metadata[v1]`, payload = `metadata.json`, decoded values = the constructor literals, `decimals` from state |
-| lifecycle | publish → rename → withdraw → withdraw again → revive: payload bytes and the reference consumer's state equal `metadata.json` after every step (after the withdrawal the token is no longer listed; the repeated withdrawal changes nothing; the revive lists it again with only the revived name and symbol) |
+| lifecycle | publish → rename → withdraw → withdraw again → revive: payload bytes and the reference consumer's state equal `metadata.json` after every step (after the withdrawal the token is not listed; the repeated withdrawal changes nothing; the revive lists it again with only the revived name and symbol) |
 | no color | the consumer derives no color for kind 3; minting creates no native mint effect |
 | normal operation | `mint`, `transfer`, `burn` emit no event (with and without metadata) and move balances as expected |
 | access control | a non-owner `publishMetadata`, `setMetadata`, `withdrawMetadata`, `mint`, `burn` fails (`Ownable: caller is not the owner`), nothing emitted |

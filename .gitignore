@@ -5,7 +5,7 @@ node_modules/
 dist/
 coverage/
 
-# Compact compiler output is never committed (decision Q24): builds are deterministic,
+# Compact compiler output is never committed: builds are deterministic,
 # and the verifier-key hashes of every circuit are recorded in docs/costs.json.
 managed/
 
