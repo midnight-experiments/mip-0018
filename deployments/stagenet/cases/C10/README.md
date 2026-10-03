@@ -6,6 +6,8 @@
 
 **Expected conclusion** (from the reference reducer, before any transaction): one event (= MIP Appendix A, A1, byte-for-byte); the key is gone; the second publish is refused before submission; list shows the A1 metadata.
 
+**MIP text**: prepared under `b147c62`.
+
 ## Steps (Stagenet)
 
 Values filled in by S5 when it runs: the records (`record.json`), observations (`observed-*.json`, `wallet-status.json`) and the transaction table below. Shell set-up (bash or zsh; S5 plan §S5a; the secret directory is mounted read-only into the signer container only):

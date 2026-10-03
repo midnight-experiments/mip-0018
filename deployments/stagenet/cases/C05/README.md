@@ -4,7 +4,9 @@
 
 **Demonstrates**: Separate identities per domainSep (vector S6) in one contract.
 
-**Expected conclusion** (from the reference reducer, before any transaction): 3 visible kind-1 identities ("Acme Medals", "MEDAL", 0), one per domain, in one group "MEDAL"; three distinct colors.
+**Expected conclusion** (from the reference reducer, before any transaction): 3 kind-1 identities ("Acme Medals", "MEDAL", 0), one per domain, in one group "MEDAL"; three distinct colors.
+
+**MIP text**: prepared under `b147c62`.
 
 - S3 delta: publishMetadata(domain) is called three times (three transactions); bronze is published but never minted.
 

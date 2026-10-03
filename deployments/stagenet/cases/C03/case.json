@@ -4,7 +4,7 @@
   "id": "C03",
   "title": "Native unshielded token (kind 2; std-lib mintUnshieldedToken + OpenZeppelin Ownable): deploy, mint to wallet 1, publish",
   "demonstrates": "color = wallet 1's UTXO token type; IDX resolves that color back to the identity.",
-  "conclusion": "1 visible kind-2 identity (\"Acme Public\", \"APUB\", 6) whose color is the token type of the UTXO wallet 1 received.",
+  "conclusion": "1 kind-2 identity (\"Acme Public\", \"APUB\", 6) whose color is the token type of the UTXO wallet 1 received.",
   "mip": {
     "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
     "eventName": "mip-0018:token-metadata[v1]"
@@ -150,7 +150,6 @@
         "expectIdentity": {
           "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
           "kind": 2,
-          "visible": true,
           "colored": true,
           "common": {
             "name": "Acme Public",

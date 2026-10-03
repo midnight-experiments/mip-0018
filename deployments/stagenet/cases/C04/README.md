@@ -4,7 +4,9 @@
 
 **Demonstrates**: Symbol grouping on chain (vector S9): three identities under one domainSep and symbol form one group; kinds 1 and 2 share one color.
 
-**Expected conclusion** (from the reference reducer, before any transaction): 3 visible identities ("Acme Dollar", "ACD", 2) in ONE group "ACD"; kinds 1 and 2 colored (same color), kind 3 not.
+**Expected conclusion** (from the reference reducer, before any transaction): 3 identities ("Acme Dollar", "ACD", 2) in ONE group "ACD"; kinds 1 and 2 colored (same color), kind 3 not.
+
+**MIP text**: prepared under `b147c62`.
 
 - S3 delta: the three identities are published by ONE publishMetadata() transaction with three events (not "publish ×3").
 

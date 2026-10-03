@@ -4,7 +4,9 @@
 
 **Demonstrates**: Independent events (vector S7b): event 0 sets name = "Good" and applies; event 1 is malformed (valType 6) and is rejected whole without undoing event 0.
 
-**Expected conclusion** (from the reference reducer, before any transaction): One visible identity (0x11…/3) with only name = "Good"; 2 events: 1 accepted, 1 rejected (reserved-valtype).
+**Expected conclusion** (from the reference reducer, before any transaction): One identity (0x11…/3) with only name = "Good"; 2 events: 1 accepted, 1 rejected (reserved-valtype).
+
+**MIP text**: prepared under `b147c62`.
 
 - A fresh raw-emitter deployment, so the state is S7b alone (independent of C07).
 

@@ -4,7 +4,7 @@
   "id": "C08",
   "title": "Raw emitter (test-only): emitTwo(valid, malformed) in one transaction",
   "demonstrates": "Independent events (vector S7b): event 0 sets name = \"Good\" and applies; event 1 is malformed (valType 6) and is rejected whole without undoing event 0.",
-  "conclusion": "One visible identity (0x11…/3) with only name = \"Good\"; 2 events: 1 accepted, 1 rejected (reserved-valtype).",
+  "conclusion": "One identity (0x11…/3) with only name = \"Good\"; 2 events: 1 accepted, 1 rejected (reserved-valtype).",
   "mip": {
     "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
     "eventName": "mip-0018:token-metadata[v1]"

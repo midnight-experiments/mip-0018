@@ -4,7 +4,7 @@
   "id": "C05",
   "title": "OpenZeppelin NativeShieldedTokenFamily: deploy, mint gold + silver, publish three domains",
   "demonstrates": "Separate identities per domainSep (vector S6) in one contract.",
-  "conclusion": "3 visible kind-1 identities (\"Acme Medals\", \"MEDAL\", 0), one per domain, in one group \"MEDAL\"; three distinct colors.",
+  "conclusion": "3 kind-1 identities (\"Acme Medals\", \"MEDAL\", 0), one per domain, in one group \"MEDAL\"; three distinct colors.",
   "mip": {
     "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
     "eventName": "mip-0018:token-metadata[v1]"
@@ -263,7 +263,6 @@
         "expectIdentity": {
           "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
           "kind": 1,
-          "visible": true,
           "colored": true,
           "common": {
             "name": "Acme Medals",
@@ -280,7 +279,6 @@
         "expectIdentity": {
           "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
           "kind": 1,
-          "visible": true,
           "colored": true,
           "common": {
             "name": "Acme Medals",

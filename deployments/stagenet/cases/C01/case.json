@@ -4,7 +4,7 @@
   "id": "C01",
   "title": "OpenZeppelin FungibleToken (kind 3): deploy, publish",
   "demonstrates": "The common fields in one event from an OpenZeppelin token; kind 3 has no color.",
-  "conclusion": "1 visible kind-3 identity with 3 usable fields (name \"Acme Gold\", symbol \"AGLD\", decimals 6); no standards (Q25); no color.",
+  "conclusion": "1 kind-3 identity with 3 usable fields (name \"Acme Gold\", symbol \"AGLD\", decimals 6); no standards (Q25); no color.",
   "mip": {
     "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
     "eventName": "mip-0018:token-metadata[v1]"

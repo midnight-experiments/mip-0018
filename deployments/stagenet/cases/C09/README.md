@@ -6,6 +6,8 @@
 
 **Expected conclusion** (from the reference reducer, before any transaction): the publish command exits 1 (refused before submission: 'Ownable: caller is not the owner'); the record step has no transaction; C01's contract still lists exactly C01's expected state.
 
+**MIP text**: prepared under `b147c62`.
+
 **Runs after**: C01
 
 - wallet 2 signs with its OWN private-state file: OpenZeppelin Ownable checks the caller's secret (witness), not the wallet; with wallet 1's private-state file it would be the owner.

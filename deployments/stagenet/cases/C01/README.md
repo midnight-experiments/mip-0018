@@ -4,7 +4,9 @@
 
 **Demonstrates**: The common fields in one event from an OpenZeppelin token; kind 3 has no color.
 
-**Expected conclusion** (from the reference reducer, before any transaction): 1 visible kind-3 identity with 3 usable fields (name "Acme Gold", symbol "AGLD", decimals 6); no standards (Q25); no color.
+**Expected conclusion** (from the reference reducer, before any transaction): 1 kind-3 identity with 3 usable fields (name "Acme Gold", symbol "AGLD", decimals 6); no standards (Q25); no color.
+
+**MIP text**: prepared under `b147c62`.
 
 - Q25: the OpenZeppelin examples publish no `standards`; the A1 shape (with standards) on Stagenet is C06/C10 (examples/minimal).
 

@@ -5,15 +5,14 @@
       "kind": 3,
       "colored": false,
       "common": {
-        "symbol": "ACMP",
-        "decimals": 6,
-        "standards": "mip-0004"
+        "name": "Acme Again",
+        "symbol": "ACMA"
       }
     }
   ],
   "groups": [
     {
-      "symbol": "ACMP",
+      "symbol": "ACMA",
       "members": [
         {
           "domainSep": "0x1111111111111111111111111111111111111111111111111111111111111111",

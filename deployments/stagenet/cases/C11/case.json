@@ -1,30 +1,23 @@
 {
   "kind": "mip0018-case",
   "schema": 1,
-  "id": "C06",
-  "title": "Minimal OwnerKey (kind 3, no OpenZeppelin) lifecycle: deploy, publish, rename, withdraw (Null at name), withdraw again, revive",
-  "demonstrates": "MIP \"Applying records\" on chain: latest value wins (S2); a Null record at `name` deletes only `name` — the identity keeps symbol, decimals and standards (S3a); a repeated Null at `name` changes nothing (S3b); a later record sets the field again and nothing from before the Null returns (the revive sets name and symbol; decimals and standards were never deleted).",
-  "conclusion": "after withdraw (and withdraw again): no name; symbol \"ACMP\", decimals 6, standards \"mip-0004\", group \"ACMP\"; final: name \"Acme Again\", symbol \"ACMA\", decimals 6, standards \"mip-0004\" (group \"ACMA\"); the A1 publish payload equals MIP Appendix A byte-for-byte.",
+  "id": "C11",
+  "title": "Minimal OwnerKey (kind 3) full withdrawal: deploy, publish, withdraw (four Null records, one event), withdraw again, revive",
+  "demonstrates": "MIP 274a84f \"Applying records\" on chain: one event with a Null record for each key (name, symbol, decimals, standards) deletes every field, so the token identity is not referenced at all — not listed, in no group, as if it had never been described (S3c); a repeated withdrawal changes nothing (S3b); a later record describes it again with only that field (the revive: name and symbol; decimals and standards do not return, S3d).",
+  "conclusion": "after publish: name \"Acme Token\", symbol \"ACME\", decimals 6, standards \"mip-0004\" (group \"ACME\"); after withdraw and after withdraw again: no identity and no group (`list`: identities none); final: ONLY name \"Acme Again\" and symbol \"ACMA\" (group \"ACMA\"); the withdraw payload = header + the four Null records (codec withdrawRecords()), the publish payload = MIP Appendix A.",
   "mip": {
-    "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
+    "commit": "274a84f221bcfc17e4b73e2c8b32fd8c028ea092",
     "eventName": "mip-0018:token-metadata[v1]"
-  },
-  "rederived": {
-    "mip": "274a84f221bcfc17e4b73e2c8b32fd8c028ea092",
-    "date": "2026-10-03",
-    "why": "MIP-0018 changed after these transactions: at 274a84f a Null record deletes only its own field (it withdrew the whole identity at b147c62/78ecbb4). The transactions are not re-sent; the expected states are re-derived from the same payloads with the current reference consumer. The expectations written before the transactions are in git history (commit e7d967a96a2bc32c5a7b00fe401132042b83a4dd)."
   },
   "source": {
     "example": "examples/minimal",
     "contract": "examples/minimal/contracts/OwnerKey.compact",
-    "metadata": "examples/minimal/owner-key.metadata.json",
-    "deployedFrom": "70b54c674260b13c0cdbf1df72457f77a3dba2fe — examples/minimal/contracts/OwnerKey.compact as deployed on 2026-10-02 (unchanged since 2a93be07163979657e0538fb077ac66c24b916b2): withdrawMetadata() emits ONE Null record at name; verifier key withdrawMetadata ba50827a038885613c531250ba02d301c82fe44ed8c555f5c9b36dd3576d1917 (record.json). The current OwnerKey emits four Null records (withdraw); that version runs as case C11."
+    "metadata": "examples/minimal/owner-key.metadata.json"
   },
   "notes": [
-    "S10 (MIP 274a84f, per-key tombstones): the expected states after withdraw, withdraw again and revive changed because the MIP changed after the transactions — the deployed withdrawMetadata deletes `name` only, so decimals and standards stay, and the revive brings back a name and a new symbol next to them. The original pre-written expectations (\"hidden, all fields cleared\"; final: only name and symbol) are in git history (e7d967a).",
-    "The observations of the 2026-10-02 run (observed-*.json) are kept as recorded; they show the consumer of that time (b147c62 rules, a `visible` flag). `recheck` checks the chain against the re-derived expectations.",
-    "Case-table delta: the S5 table says \"only name = New\"; OwnerKey renames with setMetadata(name, symbol), so the revive sets name and symbol (10- and 4-byte values: \"Acme Again\"/\"ACMA\").",
-    "Every intermediate state is re-checkable: `recheck` lists the contract as of each step's block (`list --to-block`)."
+    "Prepared under MIP 274a84f (S10 plan, decision D6); expected.json, expected-after-*.json and expect/*.json were committed before the first transaction.",
+    "Kind 3 has no color, so there is no color lookup: per the MIP \"Lookup\" section a ledger token is found by querying the contract's kind-3 events, which is `list` — after the withdrawal it must show no identity for (0x11…, 3) and no group.",
+    "The same OwnerKey source as examples/minimal at this commit (withdrawMetadata = Mip0018_withdraw); C06 ran the earlier version (one Null at name)."
   ],
   "placeholders": {
     "{net}": "network options (Stagenet: --network stagenet)",
@@ -104,60 +97,6 @@
       "stdout": "observed-list-after-publish.json"
     },
     {
-      "id": "rename",
-      "runner": "signer",
-      "wallet": "wallet1",
-      "argv": [
-        "publish",
-        "{net}",
-        "{signer}",
-        "--record",
-        "{out}/record.json",
-        "--circuit",
-        "setMetadata",
-        "--args",
-        "[{\"$utf8\":\"Acme Prime\"},{\"$utf8\":\"ACMP\"}]",
-        "--step",
-        "rename"
-      ],
-      "expectExit": 0,
-      "submits": "call"
-    },
-    {
-      "id": "verify-rename",
-      "runner": "wallet-free",
-      "argv": [
-        "verify",
-        "{net}",
-        "--record",
-        "{out}/record.json",
-        "--step",
-        "rename",
-        "--expect",
-        "@{case}/expect/rename.json",
-        "--wait",
-        "120",
-        "--json"
-      ],
-      "expectExit": 0,
-      "stdout": "observed-verify-rename.json"
-    },
-    {
-      "id": "list-after-rename",
-      "runner": "wallet-free",
-      "argv": [
-        "list",
-        "{net}",
-        "--record",
-        "{out}/record.json",
-        "--expect",
-        "@{case}/expected-after-rename.json",
-        "--json"
-      ],
-      "expectExit": 0,
-      "stdout": "observed-list-after-rename.json"
-    },
-    {
       "id": "withdraw",
       "runner": "signer",
       "wallet": "wallet1",
@@ -227,7 +166,7 @@
       ],
       "expectExit": 0,
       "submits": "call",
-      "note": "a repeated Null at `name` changes nothing, so the before-check would skip it: --force emits it anyway (vector S3b)"
+      "note": "the identity is already gone, so the before-check sees no change and would skip it: --force emits it anyway (vector S3b)"
     },
     {
       "id": "verify-withdraw-again",
@@ -328,11 +267,6 @@
       },
       {
         "record": "record.json",
-        "step": "rename",
-        "expect": "expect/rename.json"
-      },
-      {
-        "record": "record.json",
         "step": "withdraw",
         "expect": "expect/withdraw.json"
       },
@@ -352,11 +286,6 @@
         "record": "record.json",
         "expect": "expected-after-publish.json",
         "atStep": "publish"
-      },
-      {
-        "record": "record.json",
-        "expect": "expected-after-rename.json",
-        "atStep": "rename"
       },
       {
         "record": "record.json",

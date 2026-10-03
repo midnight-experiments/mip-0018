@@ -6,6 +6,8 @@
 
 **Expected conclusion** (from the reference reducer, before any transaction): 9 accepted, 9 rejected, 4 ignored events; one identity (0x11…/3) with exactly the accepted records' fields (expected.json lists every field).
 
+**MIP text**: prepared under `b147c62`.
+
 - --force: accepted vectors are emitted even when they would not change the state; rejected and ignored ones are never skipped (Q27).
 
 ## Steps (Stagenet)

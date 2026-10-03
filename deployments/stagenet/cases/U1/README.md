@@ -4,7 +4,9 @@
 
 **Demonstrates**: MIP "Existing contracts": a maintenance VerifierKeyInsert adds publishMetadata() to a deployed kind-1 token; the event is bound to the ORIGINAL address, so the color of the coins minted before the upgrade is the identity's color; address, domainSep, coins and the other circuit stay as they were. A key outside the maintenance committee is refused.
 
-**Expected conclusion** (from the reference reducer, before any transaction): same contract address before/after; entry points {mint} → {mint, publishMetadata} with the mint key unchanged; ledger data unchanged; 1 visible kind-1 identity ("Legacy Token", "LGCY", 6) whose color = the color of the coins wallet 1 received from the pre-upgrade mint; the scanner finds that mint before the insert and lookup resolves the color to the new metadata; the insert signed by another key is refused before submission and, forced, rejected by the node.
+**Expected conclusion** (from the reference reducer, before any transaction): same contract address before/after; entry points {mint} → {mint, publishMetadata} with the mint key unchanged; ledger data unchanged; 1 kind-1 identity ("Legacy Token", "LGCY", 6) whose color = the color of the coins wallet 1 received from the pre-upgrade mint; the scanner finds that mint before the insert and lookup resolves the color to the new metadata; the insert signed by another key is refused before submission and, forced, rejected by the node.
+
+**MIP text**: prepared under `b147c62`.
 
 - domainSep = pad(32, "mip-0018:example:upgrade") (a LegacyToken constructor argument; publishMetadata() reads it from the ledger).
 - The wrong-signer key is a throwaway ledger sampleSigningKey() in the signer state directory (0600) — never wallet material; it is not in the contract's one-key committee.

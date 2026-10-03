@@ -4,7 +4,9 @@
 
 **Demonstrates**: color = tokenType(domainSep, contract) = the color of the shielded coin minted to wallet 1.
 
-**Expected conclusion** (from the reference reducer, before any transaction): 1 visible kind-1 identity ("Acme Shield", "ASHD", 6) with a color equal to the minted coin color.
+**Expected conclusion** (from the reference reducer, before any transaction): 1 kind-1 identity ("Acme Shield", "ASHD", 6) with a color equal to the minted coin color.
+
+**MIP text**: prepared under `b147c62`.
 
 ## Steps (Stagenet)
 

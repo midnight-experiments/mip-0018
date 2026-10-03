@@ -4,7 +4,9 @@
 
 **Demonstrates**: color = wallet 1's UTXO token type; IDX resolves that color back to the identity.
 
-**Expected conclusion** (from the reference reducer, before any transaction): 1 visible kind-2 identity ("Acme Public", "APUB", 6) whose color is the token type of the UTXO wallet 1 received.
+**Expected conclusion** (from the reference reducer, before any transaction): 1 kind-2 identity ("Acme Public", "APUB", 6) whose color is the token type of the UTXO wallet 1 received.
+
+**MIP text**: prepared under `b147c62`.
 
 ## Steps (Stagenet)
 

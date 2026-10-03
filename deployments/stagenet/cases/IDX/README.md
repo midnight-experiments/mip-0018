@@ -6,6 +6,8 @@
 
 **Expected conclusion** (from the reference reducer, before any transaction): 6 minted colors (C02 shielded, C03 unshielded, C04 shielded + unshielded = one color, C05 gold, silver) resolve to their contract, domainSep and kind with the metadata of each case; C05 bronze (never minted) is "not minted in the scanned range".
 
+**MIP text**: prepared under `b147c62`.
+
 **Runs after**: C02, C03, C04, C05
 
 - U1 (S6b, the upgrade case, run after the matrix) scans its own block range and looks up its color in its own folder (cases/U1: steps index and lookup), so this scan stays the matrix's range.
