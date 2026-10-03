@@ -139,7 +139,7 @@ the circuit size.
 
 ## Fees on Stagenet
 
-Real receipts of the Stagenet cases ([`deployments/stagenet/`](../deployments/stagenet/README.md), run 2026-10-02,
+Real receipts of the Stagenet cases ([`deployments/stagenet/`](../deployments/stagenet/README.md), run 2026-10-02 (C11: 2026-10-03),
 node `2.0.0-d9729c13`, ledger 9.1.0.0-rc.3, proof servers rc.8 contract / rc.6 DUST): the indexer's `fee` of every
 included transaction, as recorded in each case's `record.json`. k from the tables above. 1 DUST = 10^15 SPECK.
 
@@ -176,6 +176,10 @@ included transaction, as recorded in each case's `record.json`. k from the table
 | U1 | `LegacyToken.mint` | 14 | 1 | 218,844,261,128,440 | 0.219 |
 | U1 | `VerifierKeyInsert(publishMetadata, v4)` on `LegacyToken` (2,121-byte key) | — | 1 | 911,152,349,650,192 | 0.911 |
 | U1 | `LegacyToken.publishMetadata` (upgrade build `LegacyTokenMetadata`) | 15 | 1 | 176,285,080,555,533 | 0.176 |
+| C11 (2026-10-03) | deploy `OwnerKey` (5 circuits; `withdrawMetadata` = `withdraw`) | — | 1 | 4,256,585,107,462,945 | 4.257 |
+| C11 | `OwnerKey.publishMetadata` | 15 | 1 | 177,637,726,570,864 | 0.178 |
+| C11 | `OwnerKey.withdrawMetadata` (four Null records in one event) | 15 | 2 | 177,262,764,778,656 – 177,305,324,270,339 | 0.177 |
+| C11 | `OwnerKey.setMetadata` (revive) | 15 | 1 | 177,069,017,822,064 | 0.177 |
 
 What the receipts show:
 
