@@ -89,7 +89,7 @@ for (const e of events) {
   console.log(`event ${e.id}: ${r.result}${'reason' in r ? ` (${r.reason})` : ''}`);
 }
 
-for (const id of state.identities().filter((i) => i.visible)) {
+for (const id of state.identities()) { // only identities that have at least one field
   const color = id.color ? toHex(id.color) : '-';
   const { name, symbol, decimals } = id.common; // usable values only; absent = show nothing
   console.log(`kind ${id.kind} ${name ?? '?'} (${symbol ?? '?'}) decimals ${decimals ?? '-'} color ${color}`);
@@ -160,7 +160,7 @@ Stagenet [C08](../deployments/stagenet/cases/C08/README.md)).
 | 2 unsigned integer | 1–31 bytes, little-endian; decode every width to a big integer (`06` and `06` + 15 zero bytes are both 6) |
 | 3 JSON | strict UTF-8, then your platform's JSON parser must accept the text as exactly one value (owner ruling F2) |
 | 4 URI | strict UTF-8, then the RFC 3986 `URI` rule — the MIP's own text since `78ecbb4` ("a scheme is required, a fragment is allowed, and relative references are not. All characters are ASCII"; owner ruling Q20 following ERC-721): `https://acme.example/logo.png#v2` and `ipfs://…` accept; `https://ä.example/`, `https://acme.example/a b.png` and `/relative/path` reject ([26 informative cases](../vectors/informative/uri/README.md)) |
-| 5 Null | `valLen` 0 (a tombstone) |
+| 5 Null | `valLen` 0 (a tombstone: deletes its field) |
 | 6–255 | reserved: reject the event |
 
 Keys are exact bytes: case-sensitive, no trimming or normalisation, zero bytes significant (`symbol` and `symbol\0`
@@ -184,11 +184,18 @@ that the indexer's order equals the ledger's.
 - **A record sets its field's current value**, replacing any earlier one. An event changes only the keys it carries; it
   is not a snapshot. A replaced value is never shown as current and never used as a fallback; you MAY keep it as
   clearly marked history.
-- **A Null record (any key) is a tombstone for the whole identity**: hide it, clear all its fields and its history. A
-  second tombstone changes nothing. The next non-Null record makes the identity visible again with only that field —
-  nothing from before the tombstone returns (vector `S3c`).
+- **A Null record deletes its own field** (MIP "Applying records", since `274a84f`): stop serving that field's value
+  and its earlier values (drop its marked history too) and never fall back to an earlier value. The identity's other
+  fields stay (vector `S3a`). A Null record for a field that has no value has no effect (`S3b`).
+- **A token identity exists only while at least one of its fields has a value.** Once its last field is deleted, do
+  not reference the identity at all — not in listings, lookups, groups or metadata history — "as if it had never been
+  described" (`S3c`); Null records alone never create one. A later non-Null record describes it again with only that
+  field; nothing from before returns (`S3d`). The reference consumer deletes the identity with its history:
+  `identities()`, `identity(…)`, `groups()` and `history(…)` no longer return it. An issuer withdraws a token by
+  emitting a Null record for each of its keys, in one event (`withdraw` in the Compact module).
 - **Reorganizations**: follow finalized blocks only, or recompute when blocks are removed. With the reference
-  consumer: `state.rollbackTo(network, height)` drops everything above `height` and recomputes (vectors `S4a`, `S4b`).
+  consumer: `state.rollbackTo(network, height)` drops everything above `height` and recomputes (vectors `S4a`, `S4b`: removing
+  the block that deleted an identity's last fields restores them).
 
 `MetadataState.apply` refuses an event whose `(block, tx, event)` is not after the previous one on that network
 (`ChainOrderError`), so an ordering bug fails loudly instead of producing a wrong state.
@@ -226,9 +233,10 @@ MUST NOT treat it as proof that the token conforms, and MUST NOT fetch or run co
 
 ### Symbol groups
 
-Group visible identities of the **same `(network, contractAddress)`** that have the same usable `symbol`, compared as
-exact bytes (`ACME` ≠ `acme` ≠ ` ACME`). Groups are presentation only: each member keeps its own fields, and a rename,
-symbol change or tombstone of one member changes no other. `state.groups()` returns them. Never group across contracts
+Group identities of the **same `(network, contractAddress)`** that have the same usable `symbol`, compared as
+exact bytes (`ACME` ≠ `acme` ≠ ` ACME`). Groups are presentation only: each member keeps its own fields, and a rename
+or symbol change of one member changes no other; deleting a member's `symbol` (a Null record at `symbol`) removes it
+from its group (`S9d`), and an identity with no field left is in no group. `state.groups()` returns them. Never group across contracts
 or networks.
 
 Grouping is a SHOULD. The MIP's Testing text (S9, since `78ecbb4`) says "two outcomes are valid: no groups at all, or
@@ -278,7 +286,7 @@ Considerations"):
   prove its members are interchangeable.
 - **Unauthorized updates**: anyone who can call a contract's emitting circuit can rename or withdraw its token. Showing
   earlier values as marked history (`new MetadataState({ keepHistory: true })`, `mip0018 list --history`) makes hostile
-  renames visible; a tombstone removes that history from metadata views, although the events stay on chain. A
+  renames visible; a Null record removes that field's history from metadata views, although the events stay on chain. A
   contract's maintenance authority can also insert new circuits, so it can change the metadata too
   ([upgrade guide, Limits](upgrade-guide.md#limits)).
 
@@ -313,8 +321,8 @@ docker/run.sh mip0018 -- lookup --network stagenet --state deployments/stagenet/
 color       8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484
 table       contract a3df52605d8b7210aa3e5cdc82de4bb2911975bc42c1a68be77044723b705f21  domainSep 6d69702d303031383a6578616d706c653a756e736869656c6465640000000000
 minted      unshielded ×1 first at 714617
-metadata    live indexer at block 715963
-  identity  domainSep 6d69702d303031383a6578616d706c653a756e736869656c6465640000000000  kind 2 (native unshielded)  visible  color 8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484
+metadata    live indexer at block 725062
+  identity  domainSep 6d69702d303031383a6578616d706c653a756e736869656c6465640000000000  kind 2 (native unshielded)  color 8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484
     name         "Acme Public"                            type 1  usable
     symbol       "APUB"                                   type 1  usable
     decimals     6                                        type 2  usable
@@ -322,7 +330,8 @@ metadata    live indexer at block 715963
 ```
 
 A color that was never minted in the scanned range is reported as such (exit 3) — a published identity is not proof
-that coins of its color exist (C05's bronze type).
+that coins of its color exist (C05's bronze type). A color whose identity was withdrawn (every field deleted) resolves
+to its contract and `domainSep` but shows no metadata, exactly like a token that was never described.
 
 ## 9. Test your consumer with the vectors
 

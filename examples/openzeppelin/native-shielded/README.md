@@ -81,7 +81,7 @@ that holds a coin can find the token's name, symbol and decimals.
    matter to a consumer: metadata belongs to the identity, not to a mint.
 
 A wallet holding a coin of that color finds `(contractAddress, domainSep)` through a mint index
-(`mip0018 index` / `lookup`) and then this identity: kind 1, visible, `name` "Acme Shield",
+(`mip0018 index` / `lookup`) and then this identity: kind 1, `name` "Acme Shield",
 `symbol` "ASHD", `decimals` 6, colored (`metadata.json` → `expected`).
 
 ## Tests

@@ -152,7 +152,7 @@ Measured 2026-10-03 (UTC): Compact 0.35.0 (debb05f94), language 0.27.0, ZKIR v3 
 |---|---|---:|---:|---:|---:|---:|
 | **`fungible-token` · `publishMetadata`** | MIP-0018: owner + constant domainSep, literal name/symbol, `decimals` from state | 13 | 6,716 | 11.3 MB | 2.1 kB | 1.4 s |
 | **`fungible-token` · `setMetadata`** | MIP-0018: owner + runtime name (9 B), symbol (4 B) | 14 | 8,424 | 22.6 MB | 2.1 kB | 2.5 s |
-| **`fungible-token` · `withdrawMetadata`** | MIP-0018: owner + tombstone | 13 | 2,057 | 11.3 MB | 2.1 kB | 1.4 s |
+| **`fungible-token` · `withdrawMetadata`** | MIP-0018: owner + `withdraw` (four Null records) | 13 | 2,057 | 11.3 MB | 2.1 kB | 1.4 s |
 | `fungible-token` · `mint` | token: owner mint | 13 | 2,568 | 11.3 MB | 2.1 kB | 1.6 s |
 | `fungible-token` · `transfer` | token: transfer | 13 | 2,615 | 11.3 MB | 2.1 kB | 1.5 s |
 | `fungible-token` · `burn` | token: owner burn | 13 | 2,543 | 11.3 MB | 2.1 kB | 1.3 s |
@@ -162,7 +162,7 @@ Measured 2026-10-03 (UTC): Compact 0.35.0 (debb05f94), language 0.27.0, ZKIR v3 
 | `fungible-token` · `decimals` | token: getter | 6 | 45 | 58.3 kB | 1.4 kB | 76 ms |
 | **`native-shielded` · `publishMetadata`** | MIP-0018: owner + `NativeShieldedToken__domain`, literal name/symbol, `decimals` from state | 15 | 20,362 | 45.1 MB | 2.1 kB | 4.9 s |
 | **`native-shielded` · `setMetadata`** | MIP-0018: owner + runtime name (11 B), symbol (4 B) | 15 | 22,192 | 45.1 MB | 2.1 kB | 5.3 s |
-| **`native-shielded` · `withdrawMetadata`** | MIP-0018: owner + tombstone | 14 | 15,908 | 22.6 MB | 2.1 kB | 2.9 s |
+| **`native-shielded` · `withdrawMetadata`** | MIP-0018: owner + `withdraw` (four Null records) | 14 | 15,908 | 22.6 MB | 2.1 kB | 2.9 s |
 | `native-shielded` · `mint` | token: owner mint (shielded coin) | 14 | 11,796 | 22.6 MB | 2.1 kB | 2.6 s |
 | `native-shielded` · `burn` | token: owner burn of a coin paid in | 16 | 40,754 | 90.2 MB | 2.1 kB | 10.5 s |
 | `native-shielded` · `tokenColor` | token: getter | 13 | 3,847 | 11.3 MB | 2.1 kB | 1.3 s |
@@ -171,7 +171,7 @@ Measured 2026-10-03 (UTC): Compact 0.35.0 (debb05f94), language 0.27.0, ZKIR v3 
 | `native-shielded` · `decimals` | token: getter | 6 | 45 | 58.3 kB | 1.4 kB | 114 ms |
 | **`native-unshielded` · `publishMetadata`** | MIP-0018: owner + `_domain`, literal name/symbol, `decimals` from state | 15 | 20,362 | 45.1 MB | 2.1 kB | 4.4 s |
 | **`native-unshielded` · `setMetadata`** | MIP-0018: owner + runtime name (11 B), symbol (4 B) | 15 | 22,193 | 45.1 MB | 2.1 kB | 5.1 s |
-| **`native-unshielded` · `withdrawMetadata`** | MIP-0018: owner + tombstone | 14 | 15,909 | 22.6 MB | 2.1 kB | 3.4 s |
+| **`native-unshielded` · `withdrawMetadata`** | MIP-0018: owner + `withdraw` (four Null records) | 14 | 15,909 | 22.6 MB | 2.1 kB | 3.4 s |
 | `native-unshielded` · `mint` | token: owner mint (unshielded UTXO) | 13 | 6,024 | 11.3 MB | 2.1 kB | 1.7 s |
 | `native-unshielded` · `tokenColor` | token: getter | 13 | 3,836 | 11.3 MB | 2.1 kB | 1.7 s |
 | `native-unshielded` · `name` | token: getter | 6 | 34 | 58.3 kB | 1.4 kB | 156 ms |
@@ -179,7 +179,7 @@ Measured 2026-10-03 (UTC): Compact 0.35.0 (debb05f94), language 0.27.0, ZKIR v3 
 | `native-unshielded` · `decimals` | token: getter | 6 | 34 | 58.2 kB | 1.4 kB | 140 ms |
 | **`multi-kind` · `publishMetadata`** | MIP-0018: owner + three events (kinds 1, 2, 3), ledger domainSep and decimals | 16 | 56,945 | 90.2 MB | 2.1 kB | 10.2 s |
 | **`multi-kind` · `setMetadata`** | MIP-0018: owner + runtime kind, name (11 B), symbol (3 B) | 15 | 22,060 | 45.1 MB | 2.1 kB | 5.4 s |
-| **`multi-kind` · `withdrawMetadata`** | MIP-0018: owner + tombstone, runtime kind | 14 | 15,927 | 22.6 MB | 2.1 kB | 2.8 s |
+| **`multi-kind` · `withdrawMetadata`** | MIP-0018: owner + `withdraw` (four Null records), runtime kind | 14 | 15,927 | 22.6 MB | 2.1 kB | 2.8 s |
 | `multi-kind` · `mintShielded` | token: owner mint (shielded coin) | 14 | 11,796 | 22.6 MB | 2.1 kB | 2.7 s |
 | `multi-kind` · `mintUnshielded` | token: owner mint (unshielded UTXO) | 13 | 6,024 | 11.3 MB | 2.1 kB | 1.5 s |
 | `multi-kind` · `mintLedger` | token: owner mint (ledger balance) | 13 | 2,568 | 11.3 MB | 2.1 kB | 1.6 s |
@@ -187,7 +187,7 @@ Measured 2026-10-03 (UTC): Compact 0.35.0 (debb05f94), language 0.27.0, ZKIR v3 
 | `multi-kind` · `balanceOf` | token: getter | 9 | 282 | 446.0 kB | 1.4 kB | 254 ms |
 | **`token-family` · `publishMetadata`** | MIP-0018: owner + runtime domain, literal name/symbol, `decimals` from state | 15 | 20,443 | 45.1 MB | 2.1 kB | 4.7 s |
 | **`token-family` · `setMetadata`** | MIP-0018: owner + runtime domain, name (11 B), symbol (5 B) | 15 | 22,421 | 45.1 MB | 2.1 kB | 5.4 s |
-| **`token-family` · `withdrawMetadata`** | MIP-0018: owner + tombstone, runtime domain | 14 | 15,983 | 22.6 MB | 2.1 kB | 3.6 s |
+| **`token-family` · `withdrawMetadata`** | MIP-0018: owner + `withdraw` (four Null records), runtime domain | 14 | 15,983 | 22.6 MB | 2.1 kB | 3.6 s |
 | `token-family` · `mint` | token: owner mint (shielded coin of one type) | 14 | 11,872 | 22.6 MB | 2.1 kB | 2.6 s |
 | `token-family` · `tokenColor` | token: getter | 13 | 3,923 | 11.3 MB | 2.1 kB | 2.0 s |
 | `token-family` · `name` | token: getter | 6 | 45 | 58.4 kB | 1.4 kB | 342 ms |

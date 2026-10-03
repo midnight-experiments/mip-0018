@@ -78,7 +78,7 @@ own event(s): here three types, `gold`, `silver` and `bronze`.
 2. For each type: `publishMetadata(<domain>)` as the owner (one `Misc` event each).
 3. Mint with `mint(domain, recipient, amount, nonce)`; it emits no metadata.
 
-A consumer then shows three visible kind-1 identities, each with its own color, in one `MEDAL`
+A consumer then shows three kind-1 identities, each with its own color, in one `MEDAL`
 group (`metadata.json` → `expected`).
 
 ## Tests

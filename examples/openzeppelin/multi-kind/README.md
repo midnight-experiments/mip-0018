@@ -87,7 +87,7 @@ together because they share the contract and the `symbol` ("Symbol grouping").
 2. Call `publishMetadata()` once: three `Misc` events (kinds 1, 2, 3), payloads in `metadata.json`.
 3. Mint any representation (`mintShielded`, `mintUnshielded`, `mintLedger`); none emits metadata.
 
-A consumer then shows three visible identities in one `ACD` group (`metadata.json` → `expected`).
+A consumer then shows three identities in one `ACD` group (`metadata.json` → `expected`).
 
 ## Tests
 

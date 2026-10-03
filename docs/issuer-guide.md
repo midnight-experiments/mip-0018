@@ -84,12 +84,24 @@ export circuit setMetadata(newName: Bytes<9>, newSymbol: Bytes<4>): [] {
 
 export circuit withdrawMetadata(): [] {
   Ownable_assertOnlyOwner();
-  Mip0018_emitPayload(Mip0018_tombstone(metadataDomain(), Mip0018_KIND_LEDGER()));
+  Mip0018_emitPayload(Mip0018_withdraw(metadataDomain(), Mip0018_KIND_LEDGER()));
 }
 ```
 
-A rename changes only the keys it carries; the tombstone withdraws the whole identity (consumers hide it and clear every
-field; the next publish starts from nothing).
+A rename changes only the keys it carries. **Deleting** is per key (MIP "Applying records", since `274a84f`): a Null
+record deletes its own field, and "a token identity exists only while at least one of its fields has a value".
+
+- **Withdraw a token**: emit a Null record for each of its keys; one event can carry them all. `withdraw(domainSep,
+  kind)` is that event for the common keys — Null records at `name`, `symbol`, `decimals` and `standards` (39 bytes of
+  records). Once every key is deleted, consumers no longer reference the identity at all (not listed, not found by a
+  lookup, in no group, no history); the next publish describes it again with only what it carries. **A token that
+  published keys beyond these four must add a Null record for each of them** — otherwise those keys keep the identity
+  alive with only them. Build that event with `nullRecord<K>(key)` and `payload<n>`, e.g.
+  `Mip0018_payload1<4, 0>(Mip0018_header(domainSep, kind), Mip0018_nullRecord<4>("logo"))` for a 4-byte key `logo`
+  (or put up to four Null records in one `payload4`).
+- **Delete a single key**: one Null record for it, e.g.
+  `Mip0018_emitPayload(Mip0018_payload1<4, 0>(Mip0018_header(domainSep, kind), Mip0018_nullRecord<4>("name")))`; the
+  other fields stay. A Null record for a key that has no value changes nothing.
 
 **Two constructions, same bytes** (owner decision Q3). The default module `Mip0018` builds typed records that Compact
 serializes, so the compiler checks every size. The alternative `Mip0018Pure` composes the payload from individual
@@ -223,12 +235,15 @@ signer publish --network stagenet --mnemonic-file /run/mip0018/secrets/stagenet-
 signer publish --network stagenet --mnemonic-file /run/mip0018/secrets/stagenet-wallet.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --record deployments/stagenet/cases/C06/record.json --circuit setMetadata --args '[{"$utf8":"Acme Again"},{"$utf8":"ACMA"}]' --step revive
 ```
 
-What consumers then show ([C06](../deployments/stagenet/cases/C06/README.md), every intermediate state re-checked):
-after the rename "Acme Prime"/"ACMP" (the old name only as marked history); after the withdrawal nothing; after the
-revive **only** `name` and `symbol` — `decimals` and `standards` cleared by the tombstone do not come back, so republish
-every field you want shown.
+What consumers then show: after the rename "Acme Prime"/"ACMP" (the old name only as marked history). C06's contract
+was deployed before `withdraw` existed — its `withdrawMetadata` emits a single Null record at `name`, so under the
+current MIP it deletes only `name` and the revive brings a name and a new symbol back next to the kept `decimals` and
+`standards` ([C06](../deployments/stagenet/cases/C06/README.md), expectations re-derived under `274a84f`). With the
+current `OwnerKey` ([C11](../deployments/stagenet/cases/C11/README.md)): after `withdrawMetadata` (four Null records in
+one event) the token is not listed at all and has no group; after the revive it has **only** `name` and `symbol` —
+`decimals` and `standards` do not come back, so republish every field you want shown.
 
-A publish that would change nothing (the same values again, a second tombstone) is skipped by the before-check; pass
+A publish that would change nothing (the same values again, a second withdrawal) is skipped by the before-check; pass
 `--force` to emit it anyway. A non-owner's call is refused before anything is submitted
 ([C09](../deployments/stagenet/cases/C09/README.md)).
 
@@ -247,7 +262,7 @@ The last command is refused (`publishMetadata has no verifier key`): the circuit
 
 From the Stagenet receipts ([`docs/costs.md`](costs.md#fees-on-stagenet)):
 
-- **A metadata transaction costs ≈ 0.17–0.19 DUST**, whatever the circuit size (publish, rename and tombstone alike).
+- **A metadata transaction costs ≈ 0.17–0.19 DUST**, whatever the circuit size (publish, rename and withdraw alike).
 - **The deploy dominates**: it stores every circuit's verifier key — about 0.6–0.9 DUST per extra circuit; the
   OpenZeppelin examples with three metadata circuits cost 6.1–7.0 DUST to deploy.
 - **Circuit size costs proving time, not fees**: a fully constant payload compiles to k = 6 (the bare `emit`); any
@@ -271,7 +286,8 @@ compile an upgrade-only `publishMetadata()` against its exact ledger layout, ins
 | [C02](../deployments/stagenet/cases/C02/README.md), [C03](../deployments/stagenet/cases/C03/README.md) | native shielded / unshielded: the minted coin's color = the identity's color |
 | [C04](../deployments/stagenet/cases/C04/README.md) | one asset as kinds 1, 2, 3 from one publish: one symbol group |
 | [C05](../deployments/stagenet/cases/C05/README.md) | token family: three `domainSep`, three identities |
-| [C06](../deployments/stagenet/cases/C06/README.md) | lifecycle: publish (Appendix A bytes), rename, tombstone twice, revive |
+| [C06](../deployments/stagenet/cases/C06/README.md) | lifecycle: publish (Appendix A bytes), rename, withdraw twice (the earlier contract: one Null at `name`), revive |
+| [C11](../deployments/stagenet/cases/C11/README.md) | full withdrawal (four Null records in one event): the token disappears from `list`; withdraw again changes nothing; revive with only `name` and `symbol` |
 | [C09](../deployments/stagenet/cases/C09/README.md) | a non-owner's rename refused |
 | [C10](../deployments/stagenet/cases/C10/README.md) | create and destroy |
 | [U1](../deployments/stagenet/cases/U1/README.md) | adding `publishMetadata()` to a deployed token |

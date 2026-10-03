@@ -151,7 +151,7 @@ mip0018 list --network undeployed --record /walk/fungible-token.json --expect @e
 "snapshot": { "indexerTip": { "height": 30, … }, "toBlock": 30, "tipMatchesNode": true, "finalizedHeight": 30 },
 "counts": { "events": 1, "accepted": 1, "rejected": 0, "ignored": 0 },
 "identities": [ { "domainSep": "6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000", "kind": 3,
-                  "visible": true, "colored": false, "common": { "name": "Acme Gold", "symbol": "AGLD", "decimals": "6" }, … } ],
+                  "colored": false, "common": { "name": "Acme Gold", "symbol": "AGLD", "decimals": "6" }, … } ],
 "expectation": { "ok": true, "differences": [] }
 ```
 
@@ -172,8 +172,10 @@ signer publish $A --record /walk/fungible-token.json --circuit publishMetadata -
 mip0018 list --network undeployed --record /walk/fungible-token.json --history
 ```
 
-Each `publish` prints the record (the before/after checks in action — the repeated tombstone without `--force` is
-skipped, because it would change nothing):
+`withdrawMetadata` emits one event with a Null record at `name`, `symbol`, `decimals` and `standards` (`withdraw` in
+the Compact module): every field is deleted, so consumers no longer reference the token at all until a later record
+describes it again (MIP "Applying records"). Each `publish` prints the record (the before/after checks in action — the
+repeated withdrawal without `--force` is skipped, because it would change nothing):
 
 ```text
 steps
@@ -184,14 +186,14 @@ steps
   withdraw-again-skipped             completed  no tx  (skipped: the contract metadata already holds exactly these values (before-check on the finalized transaction; nothing submitted))
 ```
 
-(`withdraw-again-skipped` is the same command without `--force`; with `--force` the second tombstone is emitted, as the
-Stagenet case C06 does on purpose.) After the revive, `list`:
+(`withdraw-again-skipped` is the same command without `--force`; with `--force` the second withdrawal is emitted, as
+the Stagenet cases C06 and C11 do on purpose.) After the revive, `list`:
 
 ```text
 contract    2b251a237e852e21251e023b8d5bebc8a4b90b4564668f946f4cc2f02ba1fcff  network undeployed
 snapshot    indexer block 131 (b96b3e69…7effe8d0) = node  to-block 131  node finalized 131
 events      5 (5 accepted, 0 rejected, 0 ignored) in 2 page(s)
-identity  domainSep 6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000  kind 3 (ledger)  visible  color -
+identity  domainSep 6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000  kind 3 (ledger)  color -
   name         "Acme Gold"                              type 1  usable
   symbol       "AGLD"                                   type 1  usable
   decimals     6                                        type 2  usable
@@ -207,8 +209,17 @@ source events
   96       block 131      tx c6594977…218efe0b  accept 6d69…0000/3 (3 record(s))
 ```
 
-The history is empty: the tombstone at block 120 cleared every field, and nothing from before a tombstone ever comes
-back (MIP "Updates"; vector S3c). Between the rename and the withdraw, `list --to-block 119` shows "Acme Bars"/"ABAR".
+The history is empty: the withdrawal at block 120 deleted every field, so the identity — with its history — was gone,
+and nothing from before it comes back (MIP "Applying records"; vectors S3c, S3d). Between the rename and the withdraw,
+`list --to-block 119` shows "Acme Bars"/"ABAR"; at block 120, `list` shows no identity.
+
+These transcripts were recorded on the local chain on 2026-10-02, before the per-key tombstone rule (MIP `274a84f`):
+the fungible token's `withdrawMetadata` then emitted a single Null record at `name` (the "1 record(s)" events at blocks
+120 and 126), which the consumer of that time applied to the whole identity. The current contract emits the four Null
+records described above (its events read "4 record(s)") and leads to the same final state. The `visible` column that
+`list` printed at that time is left out above: the current `list` has no such column. The same lifecycle with the
+current contract, recorded on Stagenet: case
+[C11](../../deployments/stagenet/cases/C11/README.md).
 
 ## 7. Create and destroy
 
@@ -262,10 +273,11 @@ case folders [`deployments/stagenet/cases/`](../../deployments/stagenet/cases/RE
 | Case | What | Contract | Publish transaction |
 |---|---|---|---|
 | [C01](../../deployments/stagenet/cases/C01/README.md) | OpenZeppelin fungible token: deploy, publish | `98a90519419e2ebb514b7c6ce87ee7f6f4f9753d9ee6f533c5d1c25b9d437dcf` | `a6fff9fb3f034aea393ff37fcd4343c418c3bfcc7cb22c502c1c1a6ffbc55dfd` (block 714501) |
-| [C06](../../deployments/stagenet/cases/C06/README.md) | minimal OwnerKey: publish, rename, tombstone ×2, revive | `9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3` | `71fb2c2d9ade1a3906ad92b3d245e6578478d58cac52d4f3f4c01fdbea2fc7e2` (block 714796; then rename 714804, tombstone 714813, tombstone again 714827, revive 714835) |
+| [C06](../../deployments/stagenet/cases/C06/README.md) | minimal OwnerKey (deployed before S10: withdraw = one Null at `name`): publish, rename, withdraw ×2, revive | `9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3` | `71fb2c2d9ade1a3906ad92b3d245e6578478d58cac52d4f3f4c01fdbea2fc7e2` (block 714796; then rename 714804, withdraw 714813, withdraw again 714827, revive 714835) |
+| [C11](../../deployments/stagenet/cases/C11/README.md) | minimal OwnerKey (current): publish, withdraw (four Null records) ×2, revive | `b05ee03f0e0f0edb6b3097d68c26a9c198365fe4900df493467d606738db6141` | `054ecbd532d6a4dc997269f147be7930726e7c434d5fc26f60e53df840563dd6` (block 724896; then withdraw 724916, withdraw again 724940, revive 724957) |
 | [C10](../../deployments/stagenet/cases/C10/README.md) | minimal create-and-destroy | `048ec49aacdde9ef2fee1bd51c651df46d3224578e36a1e89bdbb88842edf0f6` | `85d6f8a241ceff9935dc1aec51e5c5c1c51818dd0a41ebf7b850e2ff413a5b4d` (block 715177; key removed in 715183) |
 
-Run on 2026-10-02 with wallet 1 of this repository's test wallets; every case re-checks wallet-free with
+Run on 2026-10-02 (C11: 2026-10-03) with wallet 1 of this repository's test wallets; every case re-checks wallet-free with
 `docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/<ID>`.
 
 ## Appendix: the same with plain midnight-js

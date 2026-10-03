@@ -90,7 +90,7 @@ and emit nothing ("Normal token operation … MUST NOT emit metadata events").
 2. Call `publishMetadata()` as the owner right away. One `Misc` event, bound to the contract,
    payload = `metadata.json` → `steps[0].events[0].payload`.
 
-A consumer then shows one visible kind-3 identity with `name` "Acme Gold", `symbol` "AGLD",
+A consumer then shows one kind-3 identity with `name` "Acme Gold", `symbol` "AGLD",
 `decimals` 6, no color, in a one-member symbol group (`metadata.json` → `expected`).
 
 ## Tests

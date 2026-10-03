@@ -89,27 +89,29 @@ mip0018 list --network stagenet --record deployments/stagenet/cases/C06/record.j
 ```
 
 `list` pages every Misc event of the contract (until an empty page — a server that caps pages cannot truncate the
-list), applies them in chain order with the reference consumer and prints each token identity: visible or withdrawn,
-every field (usable or not), the color for kinds 1 and 2, the symbol groups and the source events. `--expect`
+list), applies them in chain order with the reference consumer and prints each token identity that has at least one
+field — every field (usable or not), the color for kinds 1 and 2 — the symbol groups and the source events. An identity
+whose fields were all deleted is not printed at all (MIP "Applying records"): a contract whose tokens were all withdrawn
+prints `identities  none`. `--expect`
 compares the state with an expected one (a case's `expected.json`, or an example's `metadata.json`).
 
 Stagenet, case C04 (`list --contract 86acf80f…570f --expect @deployments/stagenet/cases/C04/expected.json`):
 
 ```text
 contract    86acf80ff386abb610aadbea0406039e7fe39893f440794c3c2bad86dd48570f  network stagenet
-snapshot    indexer block 715222 (1dea59d7…1841bb1d) = node  to-block 715222  node finalized 715222
+snapshot    indexer block 725132 (31944c12…6303123d) = node  to-block 725132  node finalized 725133
 events      3 (3 accepted, 0 rejected, 0 ignored) in 2 page(s)
-identity  domainSep 6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000  kind 1 (native shielded)  visible  color 042399246139df031a4780c684df8eaecd48b7e03a195bfe986cf22766bcbc16
+identity  domainSep 6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000  kind 1 (native shielded)  color 042399246139df031a4780c684df8eaecd48b7e03a195bfe986cf22766bcbc16
   name         "Acme Dollar"                            type 1  usable
   symbol       "ACD"                                    type 1  usable
   decimals     2                                        type 2  usable
   display      1 base unit = 0.01 ACD
-identity  domainSep 6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000  kind 2 (native unshielded)  visible  color 042399246139df031a4780c684df8eaecd48b7e03a195bfe986cf22766bcbc16
+identity  domainSep 6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000  kind 2 (native unshielded)  color 042399246139df031a4780c684df8eaecd48b7e03a195bfe986cf22766bcbc16
   name         "Acme Dollar"                            type 1  usable
   symbol       "ACD"                                    type 1  usable
   decimals     2                                        type 2  usable
   display      1 base unit = 0.01 ACD
-identity  domainSep 6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000  kind 3 (ledger)  visible  color -
+identity  domainSep 6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000  kind 3 (ledger)  color -
   name         "Acme Dollar"                            type 1  usable
   symbol       "ACD"                                    type 1  usable
   decimals     2                                        type 2  usable
@@ -130,9 +132,9 @@ The state at an earlier block, with replaced values as history (case C06 as of i
 
 ```text
 contract    9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3  network stagenet
-snapshot    indexer block 715223 (593bd9c4…2a7455b6) = node  to-block 714804  node finalized 715223
+snapshot    indexer block 725134 (f313704a…8428a8aa) = node  to-block 714804  node finalized 725134
 events      2 (2 accepted, 0 rejected, 0 ignored) in 2 page(s)
-identity  domainSep 1111111111111111111111111111111111111111111111111111111111111111  kind 3 (ledger)  visible  color -
+identity  domainSep 1111111111111111111111111111111111111111111111111111111111111111  kind 3 (ledger)  color -
   name         "Acme Prime"                             type 1  usable
   symbol       "ACMP"                                   type 1  usable
   decimals     6                                        type 2  usable
@@ -146,6 +148,18 @@ history (replaced values; never current)
 source events
   53471    block 714796   tx 71fb2c2d…ea2fc7e2  accept 1111…1111/3 (4 record(s))
   53477    block 714804   tx 2514eeca…5cc9c2e9  accept 1111…1111/3 (2 record(s))
+```
+
+A withdrawn token (case C11 as of its withdrawal, block 724916 — one event with a Null record for each key):
+
+```text
+contract    b05ee03f0e0f0edb6b3097d68c26a9c198365fe4900df493467d606738db6141  network stagenet
+snapshot    indexer block 725135 (066c5c9f…d1c8f74c) = node  to-block 724916  node finalized 725135
+events      2 (2 accepted, 0 rejected, 0 ignored) in 2 page(s)
+identities  none: no token identity of this contract has a field with a value
+source events
+  54200    block 724896   tx 054ecbd5…40563dd6  accept 1111…1111/3 (4 record(s))
+  54204    block 724916   tx 5a869bf4…d1937150  accept 1111…1111/3 (4 record(s))
 ```
 
 ## 3. From a coin to its metadata: `index` and `lookup`
@@ -173,8 +187,8 @@ $ mip0018 lookup --network stagenet --state deployments/stagenet/cases/IDX/index
 color       8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484
 table       contract a3df52605d8b7210aa3e5cdc82de4bb2911975bc42c1a68be77044723b705f21  domainSep 6d69702d303031383a6578616d706c653a756e736869656c6465640000000000
 minted      unshielded ×1 first at 714617
-metadata    live indexer at block 715224
-  identity  domainSep 6d69702d303031383a6578616d706c653a756e736869656c6465640000000000  kind 2 (native unshielded)  visible  color 8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484
+metadata    live indexer at block 725062
+  identity  domainSep 6d69702d303031383a6578616d706c653a756e736869656c6465640000000000  kind 2 (native unshielded)  color 8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484
     name         "Acme Public"                            type 1  usable
     symbol       "APUB"                                   type 1  usable
     decimals     6                                        type 2  usable
@@ -196,7 +210,7 @@ mip0018 recheck --network stagenet --case deployments/stagenet/cases/C02
 ```
 
 `recheck` runs every check the case lists in its `case.json`: `verify` of each recorded transaction with its
-expectation, `list` against `expected.json` (and, for C06, the state after every lifecycle step with `--to-block`),
+expectation, `list` against `expected.json` (and, for C06 and C11, the state after every lifecycle step with `--to-block`),
 steps that had to be refused (no transaction), removed verifier keys, and colors (the scanner's table, the wallet's
 recorded balances, the live identity).
 
@@ -205,24 +219,25 @@ Stagenet:
 ```text
 case C02  network stagenet  /work/deployments/stagenet/cases/C02
   OK   verify publish                      tx 133501d0ee8b3139… block 714564: 1 event(s) accept, all 12 checks ok
-  OK   list record.json                    1 identity, 1 event(s) (1 accepted, 0 rejected, 0 ignored) = expected.json at block 714571
-  OK   color "mip-0018:example:shielded"/1 tokenType = be34ef4b78717b031040bf625e04ee033106efae4c766915d3cac2b7fda8f11b; wallet holds 1000000 of it (shielded); live identity ASHD visible=true
+  OK   list record.json                    1 identity, 1 event(s) (1 accepted, 0 rejected, 0 ignored) = expected.json at block 725142
+  OK   color "mip-0018:example:shielded"/1 tokenType = be34ef4b78717b031040bf625e04ee033106efae4c766915d3cac2b7fda8f11b; wallet holds 1000000 of it (shielded); live identity ASHD as expected
 result ok (3/3)
 
 case IDX  network stagenet  /work/deployments/stagenet/cases/IDX
-  OK   color "mip-0018:example:shielded"/1      tokenType = be34ef4b78717b031040bf625e04ee033106efae4c766915d3cac2b7fda8f11b; scanner: minted ×1 first at 714557; live identity ASHD visible=true
-  OK   color "mip-0018:example:unshielded"/2    tokenType = 8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484; scanner: minted ×1 first at 714617; live identity APUB visible=true
-  OK   color "mip-0018:example:multi-kind"/1    tokenType = 042399246139df031a4780c684df8eaecd48b7e03a195bfe986cf22766bcbc16; scanner: minted ×1 first at 714643; live identity ACD visible=true
-  OK   color "mip-0018:example:multi-kind"/2    tokenType = 042399246139df031a4780c684df8eaecd48b7e03a195bfe986cf22766bcbc16; scanner: minted ×1 first at 714649; live identity ACD visible=true
-  OK   color "mip-0018:example:family:gold"/1   tokenType = 81db4eef83089c5403c6af29d926d57ee6b6359ff7dc291dd19cb4c3e9cf7aa1; scanner: minted ×1 first at 714683; live identity MEDAL visible=true
-  OK   color "mip-0018:example:family:silver"/1 tokenType = 8c74ec4a937d296f8234a2373812c2df3d962dba06dfe98cda390f9dea38491d; scanner: minted ×1 first at 714689; live identity MEDAL visible=true
-  OK   color "mip-0018:example:family:bronze"/1 tokenType = 4024a88428ad97c4315b4f2f8ed05adaafaad6876a7ec7223ca84765b5083e69; not minted in the scanned range [714485, 715183], as expected; live identity MEDAL visible=true
+  OK   color "mip-0018:example:shielded"/1      tokenType = be34ef4b78717b031040bf625e04ee033106efae4c766915d3cac2b7fda8f11b; scanner: minted ×1 first at 714557; live identity ASHD as expected
+  OK   color "mip-0018:example:unshielded"/2    tokenType = 8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484; scanner: minted ×1 first at 714617; live identity APUB as expected
+  OK   color "mip-0018:example:multi-kind"/1    tokenType = 042399246139df031a4780c684df8eaecd48b7e03a195bfe986cf22766bcbc16; scanner: minted ×1 first at 714643; live identity ACD as expected
+  OK   color "mip-0018:example:multi-kind"/2    tokenType = 042399246139df031a4780c684df8eaecd48b7e03a195bfe986cf22766bcbc16; scanner: minted ×1 first at 714649; live identity ACD as expected
+  OK   color "mip-0018:example:family:gold"/1   tokenType = 81db4eef83089c5403c6af29d926d57ee6b6359ff7dc291dd19cb4c3e9cf7aa1; scanner: minted ×1 first at 714683; live identity MEDAL as expected
+  OK   color "mip-0018:example:family:silver"/1 tokenType = 8c74ec4a937d296f8234a2373812c2df3d962dba06dfe98cda390f9dea38491d; scanner: minted ×1 first at 714689; live identity MEDAL as expected
+  OK   color "mip-0018:example:family:bronze"/1 tokenType = 4024a88428ad97c4315b4f2f8ed05adaafaad6876a7ec7223ca84765b5083e69; not minted in the scanned range [714485, 715183], as expected; live identity MEDAL as expected
 result ok (7/7)
 ```
 
-Every Stagenet case re-checked (2026-10-02, also from a clean checkout in a wallet-free container — see
+Every Stagenet case re-checked against `274a84f` (2026-10-03, from a clean checkout in a wallet-free container — see
 [`deployments/stagenet/README.md`](../../deployments/stagenet/README.md)): C01 2/2, C02 3/3, C03 3/3, C04 4/4, C05 6/6,
-C06 11/11, C07 23/23, C08 2/2, C09 2/2, C10 4/4, IDX 7/7, U1 4/4 (the existing-contract upgrade).
+C06 11/11, C07 23/23, C08 2/2, C09 2/2, C10 4/4, C11 9/9 (the full withdrawal), IDX 7/7, U1 4/4 (the existing-contract
+upgrade). The transcripts on this page were refreshed on 2026-10-03 with the current tool.
 
 ## Stagenet cases
 
