@@ -26,7 +26,6 @@
         "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
         "kind": 3,
-        "visible": true,
         "fields": {
           "73796d626f6c": {
             "key_text": "symbol",

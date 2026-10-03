@@ -42,17 +42,17 @@ labelled informative.
 | R3 Non-zero after a zero `keyLen` | `payload/R3a` (next byte), `R3b` (last byte) |
 | R4 `kind` / `valType` | `payload/R4a` (kind 0), `R4b` (4), `R4c` (255), `R4d` (valType 6), `R4e` (255) |
 | R5 Value rules | `payload/R5a` (invalid UTF-8, type 1), `R5b` (type 3), `R5c` (type 4), `R5d` (invalid JSON), `R5e` (relative URI), `R5f` (0-byte integer), `R5g` (32-byte integer), `R5h` (Null with `valLen` 1) |
-| R6 Valid then invalid | `payload/R6a` (valid record, then invalid), `R6b` (tombstone, then invalid) |
+| R6 Valid then invalid | `payload/R6a` (valid record, then invalid), `R6b` (tombstone at `retire`, then invalid) |
 | Must ignore | `payload/I1a` (`[v2]` name, valid payload), `I1b` (`[v2]` name, payload invalid under v1), `I2a` (other name), `I2b` (v1 text, non-zero padding byte), `I3` (other event type) |
-| S1 Order within an event | `state/S1a` (with the Null at `retire`, offsets 33/41/50), `S1b` (without) |
+| S1 Order within an event | `state/S1a` (`name = "A"`, Null at `name`, `name = "B"` at offsets 33/41/48), `S1b` (without the Null) |
 | S2 Latest value wins | `state/S2a` (four events, then `Beta`), `S2b` (one event, then `Beta`) |
-| S3 Tombstone | `state/S3a` (kind 1 withdrawn, kind 3 unchanged), `S3b` (repeated tombstone), `S3c` (revive with only `name`), `S3d` (Null at key `name`) |
-| S4 Reorganization | `state/S4a` (tombstone block removed → restored), `S4b` (re-added → withdrawn) |
+| S3 Tombstone | `state/S3a` (Null at `name`: kind 1 keeps `symbol`, `decimals`, `standards`; kind 3 unchanged), `S3b` (a second Null at `name` and a Null at `retire` change nothing), `S3c` (Nulls for kind 1's remaining keys in one event: kind 1 not referenced at all; kind 3 unchanged), `S3d` (`name = "New"` describes kind 1 again with only `name`) |
+| S4 Reorganization | `state/S4a` (S3c's block removed → kind 1's last three fields restored), `S4b` (re-added → kind 1 not referenced again) |
 | S5 Unusable fields | `state/S5a` (empty `name`), `S5b` (type-1 `decimals`), `S5c` (`standards` with two spaces) |
 | S6 Separate identities | `state/S6a` (kinds 1/2/3, no color for 3), `S6b` (two contracts) |
 | S7 Independent events | `state/S7a` (malformed event first), `S7b` (malformed event second) |
 | S8 Display | `state/S8` |
-| S9 Symbol grouping | `state/S9a` (membership), `S9b` (rename), `S9c` (symbol change moves one member), `S9d` (tombstone removes a member) |
+| S9 Symbol grouping | `state/S9a` (membership), `S9b` (rename), `S9c` (symbol change moves one member), `S9d` (a Null at `symbol` removes a member; it keeps its `name`) |
 
 Sub-cases beyond the MIP's literal examples (R2c–R2f, R3b, I1b, I2b, S7b, the state companions) apply the same MIP
 sentence to another position or order; none adds a rule.
@@ -96,11 +96,12 @@ repository-defined and informative:
   `{op:"rollback", network, toBlock}` — a reorganization that removes every block above `toBlock` on that network.
   Steps are in chain order per network: `(block, tx, event)` strictly increasing; after a rollback the next event is
   above `toBlock`.
-- `expect.identities[]` is `{network, contractAddress, domainSep, kind, visible, colored?, fields:{<key_hex>:{valType, value_hex, usable?}}}`;
-  `usable` is given for the four common keys (`name`, `symbol`, `decimals`, `standards`); `colored` says whether a
+- `expect.identities[]` is `{network, contractAddress, domainSep, kind, colored?, fields:{<key_hex>:{valType, value_hex, usable?}}}`,
+  every token identity that exists, i.e. that has at least one field (`fields` is never empty). An identity whose
+  last field was deleted is not listed: the MIP says consumers "MUST NOT reference the identity at all". `usable` is given for the four common keys (`name`, `symbol`, `decimals`, `standards`); `colored` says whether a
   color `tokenType(domainSep, contractAddress)` is derived (kinds 1 and 2 only).
 - `expect.groups[]` (S9 only) is `{network, contractAddress, symbol_hex, members:[{domainSep, kind}]}`, written the way
-  the reference consumer reports groups: every visible identity with a usable `symbol` is in exactly one group of its
+  the reference consumer reports groups: every identity with a usable `symbol` is in exactly one group of its
   `(network, contractAddress)` and exact symbol bytes, single-member groups included. Only the groups of two or more
   members are compared (see the runner contract): they are the groups the MIP's S9 names.
 - `expect.display[]` is `{network, contractAddress, domainSep, kind, raw, decimals, text}`: `raw` displayed with that
@@ -117,16 +118,17 @@ A consumer in any language is tested by a small adapter program:
      `{"id", "result", "reason"?, "offset"?, "header"?, "records"?, "contentEnd"?}` with the payload-vector `expect` shape.
    - `{"id", "op":"state", "steps":[…], "display"?:[{network, contractAddress, domainSep, kind, raw}]}` → start from an
      empty state, apply the steps, and respond `{"id", "identities":[…], "groups"?:[…], "display"?:[…]}` with the
-     state-vector `expect` shape. Report every identity of the vector (a hidden identity without fields may be
-     omitted) with at least its common keys (`name`, `symbol`, `decimals`, `standards`); other keys may be left out.
+     state-vector `expect` shape. Report every identity that has at least one field, never one whose last field was
+     deleted (no empty `fields`), with at least its common keys (`name`, `symbol`, `decimals`, `standards`); other keys may be left out.
      Omit `groups` (or send `[]`) if the consumer does not group symbols, and omit `display` if it does not display
      amounts.
    - A `name_hex`/`payload_hex` may be shorter than 32/256 bytes (informative zero-extension vectors): zero-extend it,
      as the MIP's Consuming section requires.
    - Respond `{"id", "error":"…"}` if a request cannot be processed (the vector fails).
 3. Comparison: only properties present in `expect` are compared; hex is compared case-insensitively; `reason` and
-   `offset` differences are notes (`--notes`), never failures; a hidden identity without fields equals an absent one;
-   a missing or extra identity fails; `usable` is compared where expected.
+   `offset` differences are notes (`--notes`), never failures; a missing or extra identity fails, and so does an
+   identity reported without fields ("Once its last field is deleted, consumers MUST NOT reference the identity at
+   all", MIP "Applying records"); `usable` is compared where expected.
    - **Fields**: a missing common key (`name`, `symbol`, `decimals`, `standards`) fails; any other key is optional —
      not reporting it is a note, because "Indexers MAY index only some tokens or keys" (MIP, Consuming) — and a reported
      key must equal the expectation; a reported key the expectation does not have fails.
@@ -145,6 +147,12 @@ A consumer in any language is tested by a small adapter program:
 These rules changed with the re-pin to `78ecbb4` (sub-plan S9; questions file Q33, audit finding F-M1): earlier the
 runner also required single-member groups, every key and `display`. The expected files were not changed; the
 reference consumer still reports everything and passes either way.
+
+With the re-pin to `274a84f` (per-key tombstones, sub-plan S10) the identity shape lost `visible`: a Null record now
+deletes only its own field, and a token identity exists only while at least one of its fields has a value. The
+earlier tolerance "a hidden identity without fields equals an absent one" is gone: an identity reported without
+fields fails. S1a, S3a–S3d, S4a/S4b and S9d were rewritten for the new rules; every other state vector changed only by
+losing `visible`.
 
 Run it (Node ≥ 24; from the repository root):
 

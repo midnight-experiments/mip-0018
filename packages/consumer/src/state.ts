@@ -294,8 +294,7 @@ export class MetadataState {
   /** Displays a raw amount of an identity with its current usable `decimals` (no default when there is none). */
   display(identity: IdentityView | undefined, raw: bigint): DisplayResult {
     const f = identity?.fields.find((x) => x.keyHex === KEY_DECIMALS);
-    if (identity === undefined || f === undefined || f.usable !== true || f.integer === undefined)
-      return { decimals: null, text: null };
+    if (identity === undefined || f === undefined || f.usable !== true || f.integer === undefined) return { decimals: null, text: null };
     if (!this.rules.displayDecimals) return { decimals: f.integer, text: raw.toString() }; // mutation only
     return { decimals: f.integer, text: formatAmount(raw, f.integer) };
   }

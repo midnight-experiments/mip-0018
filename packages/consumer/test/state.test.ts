@@ -59,7 +59,7 @@ describe('chain order', () => {
 });
 
 describe('history (MAY, marked) and tombstones', () => {
-  it('keeps replaced values as marked history, never as current; a Null record drops only its own field\'s history', () => {
+  it("keeps replaced values as marked history, never as current; a Null record drops only its own field's history", () => {
     const s = new MetadataState({ keepHistory: true });
     s.apply(ev(1, 3, [record.utf8('name', 'Alpha'), record.utf8('symbol', 'ALP')]));
     s.apply(ev(2, 3, [record.utf8('name', 'Beta'), record.utf8('symbol', 'BET')]));
@@ -144,7 +144,7 @@ describe('per-key tombstones (MIP "Applying records")', () => {
     expect(id.fields.map((f) => f.keyHex)).toEqual([NAME]);
     expect(id.common).toEqual({ name: 'New' }); // no standards: the earlier list does not return
   });
-  it('deleting a member\'s symbol removes it from its group (S9)', () => {
+  it("deleting a member's symbol removes it from its group (S9)", () => {
     const s = new MetadataState();
     s.apply(ev(1, 1, [record.utf8('name', 'One'), record.utf8('symbol', 'ACME')], { event: 0 }));
     s.apply(ev(1, 3, [record.utf8('name', 'Three'), record.utf8('symbol', 'ACME')], { event: 1 }));

@@ -5,7 +5,7 @@
     "testId": "A5"
   },
   "normative": true,
-  "description": "Non-tombstones (state): after name = \"Acme\" and empty bytes at \"blob\", the identity is visible with both fields.",
+  "description": "Non-tombstones (state): after name = \"Acme\" and empty bytes at \"blob\", the identity has both fields.",
   "steps": [
     {
       "op": "apply",
@@ -26,7 +26,6 @@
         "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
         "kind": 3,
-        "visible": true,
         "fields": {
           "6e616d65": {
             "key_text": "name",

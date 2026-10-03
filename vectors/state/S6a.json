@@ -59,7 +59,6 @@
         "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
         "kind": 1,
-        "visible": true,
         "colored": true,
         "fields": {
           "6e616d65": {
@@ -89,7 +88,6 @@
         "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
         "kind": 2,
-        "visible": true,
         "colored": true,
         "fields": {
           "6e616d65": {
@@ -119,7 +117,6 @@
         "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
         "kind": 3,
-        "visible": true,
         "colored": false,
         "fields": {
           "6e616d65": {

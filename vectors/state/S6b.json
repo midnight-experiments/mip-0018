@@ -48,7 +48,6 @@
         "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
         "kind": 1,
-        "visible": true,
         "colored": true,
         "fields": {
           "6e616d65": {
@@ -78,7 +77,6 @@
         "contractAddress": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
         "kind": 1,
-        "visible": true,
         "colored": true,
         "fields": {
           "6e616d65": {

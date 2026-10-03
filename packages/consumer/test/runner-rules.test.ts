@@ -105,7 +105,9 @@ describe('runner rules on the reference consumer’s responses', () => {
       }),
     );
     expect(failed(noName).length).toBeGreaterThan(20);
-    expect(noName.results.find((x) => x.id === 'S1a')!.failures.join()).toMatch(/field 6e616d65 \(name\) missing/);
+    expect(noName.results.find((x) => x.id === 'S2a')!.failures.join()).toMatch(/field 6e616d65 \(name\) missing/);
+    // An identity left with no fields at all is a reference the MIP forbids (S1a has only `name`).
+    expect(noName.results.find((x) => x.id === 'S1a')!.failures.join()).toMatch(/reported without fields/);
   });
 
   it('a consumer that reports a key the expectation does not have still fails', async () => {
