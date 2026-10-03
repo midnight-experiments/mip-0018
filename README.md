@@ -22,7 +22,7 @@ is in the [conformance matrix](docs/conformance-matrix.md), with its tests or th
 |---|---|
 | Proposal | [midnightntwrk/midnight-improvement-proposals PR #340](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340) |
 | Pinned text | [`274a84f221bcfc17e4b73e2c8b32fd8c028ea092` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/274a84f221bcfc17e4b73e2c8b32fd8c028ea092/mips/mip-0018-on-chain-token-metadata.md) |
-| SHA-256 of the pinned text | `e64fe1429b9f7589077f1323572cf5c3ffa90c7c96690242a9e76d2658058d8b` (`docker/run.sh check:mip-pin` checks it, and that the vectors, schemas, Stagenet cases and docs cite this commit and no other MIP-0018 commit) |
+| SHA-256 of the pinned text | `e64fe1429b9f7589077f1323572cf5c3ffa90c7c96690242a9e76d2658058d8b` (`docker/run.sh check:mip-pin` checks it, that the vectors, schemas and Stagenet cases cite this commit, and that no tracked file cites another commit of the MIP text) |
 | Authority | The pinned text decides every byte and rule. |
 
 ## MIP section → repository
