@@ -98,7 +98,7 @@ for (const g of state.groups()) console.log(`group "${new TextDecoder().decode(g
 ```
 
 Saved as `consumer-example.ts` at the repository root and run with `docker/run.sh exec 'node consumer-example.ts'`
-(2026-10-02):
+(2026-10-03):
 
 ```text
 event 53453: accept
