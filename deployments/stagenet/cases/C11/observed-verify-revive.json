@@ -108,13 +108,13 @@
     {
       "id": "finalized",
       "ok": true,
-      "message": "block 724957 ≤ finalized 724961"
+      "message": "block 724957 ≤ finalized 726328"
     }
   ],
   "notes": [],
   "indexerTip": {
-    "height": 724960,
-    "hash": "5042414ab0b1ca08d140099dcacd38e8830dc6c78f0920f852e1df0f0a80e88e"
+    "height": 726328,
+    "hash": "08990fb323a72361b97e0a4af023c826b877ca60c7f3cd2bfe93eb6ebc4ddb73"
   },
   "inclusion": {
     "height": 724957,
@@ -122,7 +122,7 @@
     "status": "SUCCESS",
     "segments": null,
     "nodeBlockHash": "0x958f398aea61fc3ac1a4e30ab8829aed974a40c778517acd4d6440d475392f19",
-    "finalizedHeight": 724961,
+    "finalizedHeight": 726328,
     "finalized": true,
     "extrinsicIndex": 3
   },

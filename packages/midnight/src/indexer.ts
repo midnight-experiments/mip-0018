@@ -121,6 +121,9 @@ export const QUERIES = {
   contractState: `query ($address: HexEncoded!) {
     contractAction(address: $address) { __typename state transaction { hash block { height hash } } }
   }`,
+  contractStateAt: `query ($address: HexEncoded!, $h: Int!) {
+    contractAction(address: $address, offset: { blockOffset: { height: $h } }) { __typename state transaction { hash block { height hash } } }
+  }`,
   contractActions: `subscription ($address: HexEncoded!, $h: Int!) {
     contractActions(address: $address, offset: { height: $h }) {
       __typename address ... on ContractCall { entryPoint }
@@ -229,10 +232,20 @@ export class Indexer {
   }
 
   /** The contract's latest serialized state (hex) and the transaction that produced it, or null if unknown. */
-  async contractState(contractAddress: string): Promise<{ state: string; txHash: string; block: BlockRef; action: string } | null> {
+  /**
+   * The contract's state after its latest action — or, with `atBlock`, after its action in that block (null when the
+   * contract has no action in that block).
+   */
+  async contractState(
+    contractAddress: string,
+    atBlock?: number,
+  ): Promise<{ state: string; txHash: string; block: BlockRef; action: string } | null> {
     const d = await this.query<{
       contractAction: null | { __typename: string; state: string; transaction: { hash: string; block: BlockRef } };
-    }>(QUERIES.contractState, { address: normAddress(contractAddress) });
+    }>(
+      atBlock === undefined ? QUERIES.contractState : QUERIES.contractStateAt,
+      atBlock === undefined ? { address: normAddress(contractAddress) } : { address: normAddress(contractAddress), h: atBlock },
+    );
     if (!d.contractAction) return null;
     return {
       state: normHex(d.contractAction.state),

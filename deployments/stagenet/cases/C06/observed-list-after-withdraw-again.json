@@ -7,13 +7,13 @@
   "contract": "9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3",
   "snapshot": {
     "indexerTip": {
-      "height": 714828,
-      "hash": "7e14f7b1bd250be603c420ee0d38ecdad8d5be98de9bb25773ad0e067d9ec47c"
+      "height": 726276,
+      "hash": "eeee8098ce9e68d61f832760989bc0172c4321dffbc0dd9ec69a43ae4cbce52d"
     },
-    "toBlock": 714828,
-    "nodeHashAtTip": "0x7e14f7b1bd250be603c420ee0d38ecdad8d5be98de9bb25773ad0e067d9ec47c",
+    "toBlock": 714827,
+    "nodeHashAtTip": "0xeeee8098ce9e68d61f832760989bc0172c4321dffbc0dd9ec69a43ae4cbce52d",
     "tipMatchesNode": true,
-    "finalizedHeight": 714828
+    "finalizedHeight": 726276
   },
   "pages": 2,
   "counts": {
@@ -87,14 +87,73 @@
       "contractAddress": "9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3",
       "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
       "kind": 3,
-      "visible": false,
       "colored": false,
       "color": null,
-      "fields": [],
-      "common": {}
+      "fields": [
+        {
+          "key": "73796d626f6c",
+          "valType": 1,
+          "value": "41434d50",
+          "setAt": {
+            "block": "714804",
+            "tx": 24268,
+            "event": 53477,
+            "record": 1
+          },
+          "keyHex": "73796d626f6c",
+          "usable": true
+        },
+        {
+          "key": "646563696d616c73",
+          "valType": 2,
+          "value": "06",
+          "setAt": {
+            "block": "714796",
+            "tx": 24265,
+            "event": 53471,
+            "record": 2
+          },
+          "integer": "6",
+          "keyHex": "646563696d616c73",
+          "usable": true
+        },
+        {
+          "key": "7374616e6461726473",
+          "valType": 1,
+          "value": "6d69702d30303034",
+          "setAt": {
+            "block": "714796",
+            "tx": 24265,
+            "event": 53471,
+            "record": 3
+          },
+          "keyHex": "7374616e6461726473",
+          "usable": true
+        }
+      ],
+      "common": {
+        "symbol": "ACMP",
+        "decimals": "6",
+        "standards": [
+          "mip-0004"
+        ]
+      }
     }
   ],
-  "groups": [],
+  "groups": [
+    {
+      "network": "stagenet",
+      "contractAddress": "9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3",
+      "symbol": "41434d50",
+      "members": [
+        {
+          "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+          "kind": 3,
+          "key": "stagenet|9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3|1111111111111111111111111111111111111111111111111111111111111111|3"
+        }
+      ]
+    }
+  ],
   "expectation": {
     "ok": true,
     "differences": []

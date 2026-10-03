@@ -7,13 +7,13 @@
   "contract": "b05ee03f0e0f0edb6b3097d68c26a9c198365fe4900df493467d606738db6141",
   "snapshot": {
     "indexerTip": {
-      "height": 724924,
-      "hash": "3197e46b0cd87762187bd029e6c11d437c387872e9a9776250441590b1cee163"
+      "height": 726321,
+      "hash": "9498a04758d00cfef4046e2067b709d1caf8129d7313a578943223ea866b65b2"
     },
-    "toBlock": 724924,
-    "nodeHashAtTip": "0x3197e46b0cd87762187bd029e6c11d437c387872e9a9776250441590b1cee163",
+    "toBlock": 724916,
+    "nodeHashAtTip": "0x9498a04758d00cfef4046e2067b709d1caf8129d7313a578943223ea866b65b2",
     "tipMatchesNode": true,
-    "finalizedHeight": 724924
+    "finalizedHeight": 726321
   },
   "pages": 2,
   "counts": {
