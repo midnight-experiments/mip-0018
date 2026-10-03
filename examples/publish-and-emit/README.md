@@ -145,7 +145,8 @@ mip0018 verify --network undeployed --record /walk/fungible-token.json --step pu
 mip0018 list --network undeployed --record /walk/fungible-token.json --expect @examples/openzeppelin/fungible-token/metadata.json
 ```
 
-`verify` prints the same report as above (`result ok (exit 0)`). `list --json` (excerpt):
+`verify` prints the same report as above (`result ok (exit 0)`). `list --json` (excerpt; recorded 2026-10-02 — the
+`visible` property it printed then is no longer part of the output and is left out):
 
 ```text
 "snapshot": { "indexerTip": { "height": 30, … }, "toBlock": 30, "tipMatchesNode": true, "finalizedHeight": 30 },
