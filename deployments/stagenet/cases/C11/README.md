@@ -49,13 +49,16 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/C11
 ```
 
-## Transactions (filled in by S5)
+## Transactions (Stagenet, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
-| `deploy` | _S5_ | _S5_ | _S5_ |
-| `publish` | _S5_ | _S5_ | _S5_ |
-| `withdraw` | _S5_ | _S5_ | _S5_ |
-| `withdraw-again` | _S5_ | _S5_ | _S5_ |
-| `revive` | _S5_ | _S5_ | _S5_ |
+Contract `OwnerKey` at `b05ee03f0e0f0edb6b3097d68c26a9c198365fe4900df493467d606738db6141`; signer mn_addr_stagenet1vw57646su9y5z6myarm93m6kcn62j97z0yma94lfkhmta6pz5h5q6utr3k.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `deploy` | deploy | `a2ac2098136c88b274cbd7d76c24138116b7ff1c597090bad9216b43ce2fd68e` | 724875 (`ecde936a3383ab39…`) | SUCCESS | 4,256,585,107,462,945 | 4.257 |
+| `publish` | call `publishMetadata` | `054ecbd532d6a4dc997269f147be7930726e7c434d5fc26f60e53df840563dd6` | 724896 (`3c32f9c7237cbe0a…`) | SUCCESS | 177,637,726,570,864 | 0.178 |
+| `withdraw` | call `withdrawMetadata` | `5a869bf483d93b4eb8cbdfb06231743e556f050e36bcb1c26e4de07cd1937150` | 724916 (`e73a94296bfd8b4c…`) | SUCCESS | 177,305,324,270,339 | 0.177 |
+| `withdraw-again` | call `withdrawMetadata` | `e5568690f26fc22b58d981601890c0deba61f31a0f7bde7ed383272a14ba6c25` | 724940 (`51a8e233db4fcd52…`) | SUCCESS | 177,262,764,778,656 | 0.177 |
+| `revive` | call `setMetadata` | `9a630169ff20c91bd297d81e6c92238f8e7d5a1df173bc1373d03dea9851c78d` | 724957 (`958f398aea61fc3a…`) | SUCCESS | 177,069,017,822,064 | 0.177 |
+| **total** | | | | | **4,965,859,940,904,868** | **4.966** |
 
