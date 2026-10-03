@@ -1,4 +1,4 @@
-// MIP "Consuming" (78ecbb4): "Some sources drop trailing zero bytes; consumers MUST treat missing trailing bytes as
+// MIP "Consuming": "Some sources drop trailing zero bytes; consumers MUST treat missing trailing bytes as
 // zero, so that every `name` is 32 bytes and every `payload` 256 bytes, before decoding." The codec zero-extends a
 // short name or payload, ignores a longer name (another name) and rejects a longer payload.
 import { describe, expect, it } from 'vitest';

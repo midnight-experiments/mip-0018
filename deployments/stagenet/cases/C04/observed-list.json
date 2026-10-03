@@ -7,13 +7,13 @@
   "contract": "86acf80ff386abb610aadbea0406039e7fe39893f440794c3c2bad86dd48570f",
   "snapshot": {
     "indexerTip": {
-      "height": 714664,
-      "hash": "bd58818e3a4307e78528a85e2c5958124bf6b791cf3892a2c43a72bfc64c2300"
+      "height": 726264,
+      "hash": "a8eb08ecf00054543c534e5332f2b9431a9a785ddd49b6534c2f7e25b810d2af"
     },
-    "toBlock": 714664,
-    "nodeHashAtTip": "0xbd58818e3a4307e78528a85e2c5958124bf6b791cf3892a2c43a72bfc64c2300",
+    "toBlock": 726264,
+    "nodeHashAtTip": "0xa8eb08ecf00054543c534e5332f2b9431a9a785ddd49b6534c2f7e25b810d2af",
     "tipMatchesNode": true,
-    "finalizedHeight": 714664
+    "finalizedHeight": 726264
   },
   "pages": 2,
   "counts": {
@@ -73,7 +73,6 @@
       "contractAddress": "86acf80ff386abb610aadbea0406039e7fe39893f440794c3c2bad86dd48570f",
       "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
       "kind": 1,
-      "visible": true,
       "colored": true,
       "color": "042399246139df031a4780c684df8eaecd48b7e03a195bfe986cf22766bcbc16",
       "fields": [
@@ -130,7 +129,6 @@
       "contractAddress": "86acf80ff386abb610aadbea0406039e7fe39893f440794c3c2bad86dd48570f",
       "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
       "kind": 2,
-      "visible": true,
       "colored": true,
       "color": "042399246139df031a4780c684df8eaecd48b7e03a195bfe986cf22766bcbc16",
       "fields": [
@@ -187,7 +185,6 @@
       "contractAddress": "86acf80ff386abb610aadbea0406039e7fe39893f440794c3c2bad86dd48570f",
       "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
       "kind": 3,
-      "visible": true,
       "colored": false,
       "color": null,
       "fields": [

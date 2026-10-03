@@ -4,13 +4,13 @@
 
 **Demonstrates**: A2a/A2b capacity, A3a–c exact bytes, A4b Uint<128> decimals, A5a–c non-tombstones accepted; R1, R2a, R3a, R3b, R4a, R5a, R5e, R5h, R6b rejected whole; I1a/I1b ([v2]) and I2a/I2b (other names) ignored — each verified with its reason, and the contract's state is exactly what the accepted ones set.
 
-**Expected conclusion** (from the reference reducer, before any transaction): 9 accepted, 9 rejected, 4 ignored events; one identity (0x11…/3) with exactly the accepted records' fields (expected.json lists every field).
+**Expected conclusion** (from the case definition; consumer states are computed with the reference consumer, never from a chain observation): 9 accepted, 9 rejected, 4 ignored events; one identity (0x11…/3) with exactly the accepted records' fields (expected.json lists every field).
 
-- --force: accepted vectors are emitted even when they would not change the state; rejected and ignored ones are never skipped (Q27).
+- --force: accepted vectors are emitted even when they would not change the state (without it, the before-check skips a call whose accepted events leave the contract's state unchanged); rejected and ignored ones are never skipped.
 
 ## Steps (Stagenet)
 
-Values filled in by S5 when it runs: the records (`record.json`), observations (`observed-*.json`, `wallet-status.json`) and the transaction table below. Shell set-up (bash or zsh; S5 plan §S5a; the secret directory is mounted read-only into the signer container only):
+Running the steps writes the run record (`record.json`, rendered as the transaction table below) and the observations (`observed-*.json`, `wallet-status.json`). Shell set-up (bash or zsh; the secret directory is mounted read-only into the signer container only):
 
 ```sh
 signer() {

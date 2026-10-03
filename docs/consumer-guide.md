@@ -1,7 +1,7 @@
 # Consumer guide — read MIP-0018 token metadata (wallets, explorers, indexers)
 
 How to turn a contract's MIP-0018 events into the name, symbol and decimals a wallet or explorer shows, following the
-pinned MIP text ([MIP-0018 @ `78ecbb4b`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/78ecbb4b1ba57371e84fe45f705991ab7b996a61/mips/mip-0018-on-chain-token-metadata.md)).
+pinned MIP text ([MIP-0018 @ `274a84f2`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/274a84f221bcfc17e4b73e2c8b32fd8c028ea092/mips/mip-0018-on-chain-token-metadata.md)).
 The reference implementation of every step is in this repository and passes all normative vectors:
 
 | Step | Reference code | Wallet-free command |
@@ -35,8 +35,7 @@ marks `@beta`:
   (`splitMiscData`). A payload longer than 256 bytes is rejected; a name longer than 32 bytes is another name. The
   A1 event of Stagenet case [C10](../deployments/stagenet/cases/C10/README.md) is 127 bytes in the ledger's raw data
   (32 name + 95 content bytes). Informative vectors: `vectors/informative/zero-extension/`.
-- Order the events of one transaction as the ledger executes them — the MIP's own rule since `78ecbb4` ("Applying
-  records", step 4).
+- Order the events of one transaction as the ledger executes them (MIP "Applying records"; step 4).
 - Completeness (MIP "Consuming"): a verified event does not prove that no later update or tombstone exists. Read every
   event of the contract, not a filtered subset.
 
@@ -89,7 +88,7 @@ for (const e of events) {
   console.log(`event ${e.id}: ${r.result}${'reason' in r ? ` (${r.reason})` : ''}`);
 }
 
-for (const id of state.identities().filter((i) => i.visible)) {
+for (const id of state.identities()) { // only identities that have at least one field
   const color = id.color ? toHex(id.color) : '-';
   const { name, symbol, decimals } = id.common; // usable values only; absent = show nothing
   console.log(`kind ${id.kind} ${name ?? '?'} (${symbol ?? '?'}) decimals ${decimals ?? '-'} color ${color}`);
@@ -99,7 +98,7 @@ for (const g of state.groups()) console.log(`group "${new TextDecoder().decode(g
 ```
 
 Saved as `consumer-example.ts` at the repository root and run with `docker/run.sh exec 'node consumer-example.ts'`
-(2026-10-02):
+(2026-10-03):
 
 ```text
 event 53453: accept
@@ -158,9 +157,9 @@ Stagenet [C08](../deployments/stagenet/cases/C08/README.md)).
 | 0 bytes | anything |
 | 1 UTF-8 string | strict UTF-8 (no overlongs, surrogates or code points above U+10FFFF); may be empty |
 | 2 unsigned integer | 1–31 bytes, little-endian; decode every width to a big integer (`06` and `06` + 15 zero bytes are both 6) |
-| 3 JSON | strict UTF-8, then your platform's JSON parser must accept the text as exactly one value (owner ruling F2) |
-| 4 URI | strict UTF-8, then the RFC 3986 `URI` rule — the MIP's own text since `78ecbb4` ("a scheme is required, a fragment is allowed, and relative references are not. All characters are ASCII"; owner ruling Q20 following ERC-721): `https://acme.example/logo.png#v2` and `ipfs://…` accept; `https://ä.example/`, `https://acme.example/a b.png` and `/relative/path` reject ([26 informative cases](../vectors/informative/uri/README.md)) |
-| 5 Null | `valLen` 0 (a tombstone) |
+| 3 JSON | strict UTF-8, then your platform's JSON parser must accept the text as exactly one value (the MIP's rule is "one complete UTF-8 JSON value", RFC 8259) |
+| 4 URI | strict UTF-8, then the RFC 3986 `URI` rule (MIP Value types: "a scheme is required, a fragment is allowed, and relative references are not. All characters are ASCII" — the URI definition ERC-721 uses): `https://acme.example/logo.png#v2` and `ipfs://…` accept; `https://ä.example/`, `https://acme.example/a b.png` and `/relative/path` reject ([26 informative cases](../vectors/informative/uri/README.md)) |
+| 5 Null | `valLen` 0 (a tombstone: deletes its field) |
 | 6–255 | reserved: reject the event |
 
 Keys are exact bytes: case-sensitive, no trimming or normalisation, zero bytes significant (`symbol` and `symbol\0`
@@ -174,7 +173,7 @@ read the event, `contractAddress` comes from the **event record — never from t
 only its own tokens), `domainSep` and `kind` come from the header. Kinds 1, 2 and 3 of one asset are three identities.
 
 Apply accepted events in chain order — block, transaction within the block, event within the transaction, record
-within the event. Within a transaction, the MIP fixes the event order (since `78ecbb4`): "the guaranteed part of every
+within the event. Within a transaction, the MIP fixes the event order: "the guaranteed part of every
 intent (in ascending segment id), then each successful fallible segment (in ascending segment id); within a part,
 actions and their operations in order". The indexer's event ids follow it; if you decode raw transactions yourself,
 `decodeTransaction` + `applied` in `@mip0018/midnight` produce exactly that order (test
@@ -184,11 +183,18 @@ that the indexer's order equals the ledger's.
 - **A record sets its field's current value**, replacing any earlier one. An event changes only the keys it carries; it
   is not a snapshot. A replaced value is never shown as current and never used as a fallback; you MAY keep it as
   clearly marked history.
-- **A Null record (any key) is a tombstone for the whole identity**: hide it, clear all its fields and its history. A
-  second tombstone changes nothing. The next non-Null record makes the identity visible again with only that field —
-  nothing from before the tombstone returns (vector `S3c`).
+- **A Null record deletes its own field** (MIP "Applying records"): stop serving that field's value
+  and its earlier values (drop its marked history too) and never fall back to an earlier value. The identity's other
+  fields stay (vector `S3a`). A Null record for a field that has no value has no effect (`S3b`).
+- **A token identity exists only while at least one of its fields has a value.** Once its last field is deleted, do
+  not reference the identity at all — not in listings, lookups, groups or metadata history — "as if it had never been
+  described" (`S3c`); Null records alone never create one. A later non-Null record describes it again with only that
+  field; nothing from before returns (`S3d`). The reference consumer deletes the identity with its history:
+  `identities()`, `identity(…)`, `groups()` and `history(…)` do not return it. An issuer withdraws a token by
+  emitting a Null record for each of its keys, in one event (`withdraw` in the Compact module).
 - **Reorganizations**: follow finalized blocks only, or recompute when blocks are removed. With the reference
-  consumer: `state.rollbackTo(network, height)` drops everything above `height` and recomputes (vectors `S4a`, `S4b`).
+  consumer: `state.rollbackTo(network, height)` drops everything above `height` and recomputes (vectors `S4a`, `S4b`: removing
+  the block that deleted an identity's last fields restores them).
 
 `MetadataState.apply` refuses an event whose `(block, tx, event)` is not after the previous one on that network
 (`ChainOrderError`), so an ordering bug fails loudly instead of producing a wrong state.
@@ -211,7 +217,7 @@ the usable values.
 
 If the token also has standard getters (`name()`, `symbol()`, `decimals()` of MIP-0004/0011/0014), the events are what
 this MIP serves: "A later update, such as a rename, is the token's current metadata for consumers of this MIP even
-where the getters cannot change" (Common fields, since `78ecbb4`). A MIP that defines a token standard may
+where the getters cannot change" (Common fields). A MIP that defines a token standard may
 restrict or override that for tokens that declare the standard in `standards`.
 
 ### `standards`
@@ -226,12 +232,13 @@ MUST NOT treat it as proof that the token conforms, and MUST NOT fetch or run co
 
 ### Symbol groups
 
-Group visible identities of the **same `(network, contractAddress)`** that have the same usable `symbol`, compared as
-exact bytes (`ACME` ≠ `acme` ≠ ` ACME`). Groups are presentation only: each member keeps its own fields, and a rename,
-symbol change or tombstone of one member changes no other. `state.groups()` returns them. Never group across contracts
+Group identities of the **same `(network, contractAddress)`** that have the same usable `symbol`, compared as
+exact bytes (`ACME` ≠ `acme` ≠ ` ACME`). Groups are presentation only: each member keeps its own fields, and a rename
+or symbol change of one member changes no other; deleting a member's `symbol` (a Null record at `symbol`) removes it
+from its group (`S9d`), and an identity with no field left is in no group. `state.groups()` returns them. Never group across contracts
 or networks.
 
-Grouping is a SHOULD. The MIP's Testing text (S9, since `78ecbb4`) says "two outcomes are valid: no groups at all, or
+Grouping is a SHOULD. The MIP's Testing text (S9) says "two outcomes are valid: no groups at all, or
 exactly the following groups", so a consumer that does not group passes S9, and the vector runner compares only groups
 of two or more members. Whether an identity alone with its symbol is a "group of one" is not settled by the MIP;
 the reference consumer reports such groups, the runner ignores them.
@@ -240,14 +247,13 @@ the reference consumer reports such groups, the runner ignores them.
 
 `formatAmount(raw, decimals)` divides exactly with big integers: with `decimals = 2`, `123456` shows as `1234.56`
 (vector `S8`, which applies to "a consumer that displays amounts"; an indexer that only serves raw fields omits
-`display` and the runner reports S8 as not applicable). There is no cap on `decimals` (owner ruling F3): large values render exactly, without floating point.
+`display` and the runner reports S8 as not applicable). There is no cap on `decimals` (the MIP sets none): large values render exactly, without floating point.
 
 ### Colors
 
 Kinds 1 (shielded coins) and 2 (unshielded UTXOs) have a color, `tokenType(domainSep, contractAddress)`; kind 3
 (ledger tokens) has none. "A shielded and an unshielded mint with the same `domainSep` have the same color; the kind
-is given by what the user holds (a shielded coin → kind 1, an unshielded UTXO → kind 2), not by the color" (MIP Lookup,
-since `78ecbb4`).
+is given by what the user holds (a shielded coin → kind 1, an unshielded UTXO → kind 2), not by the color" (MIP Lookup).
 
 ## 6. Untrusted input
 
@@ -278,7 +284,7 @@ Considerations"):
   prove its members are interchangeable.
 - **Unauthorized updates**: anyone who can call a contract's emitting circuit can rename or withdraw its token. Showing
   earlier values as marked history (`new MetadataState({ keepHistory: true })`, `mip0018 list --history`) makes hostile
-  renames visible; a tombstone removes that history from metadata views, although the events stay on chain. A
+  renames visible; a Null record removes that field's history from metadata views, although the events stay on chain. A
   contract's maintenance authority can also insert new circuits, so it can change the metadata too
   ([upgrade guide, Limits](upgrade-guide.md#limits)).
 
@@ -290,8 +296,7 @@ A wallet holding a shielded coin or an unshielded UTXO knows only its color. To 
    ledger-v9 `rawTokenType`; `tokenType` in `@mip0018/midnight`). No payload field holds a color.
 2. **Build a table from mints**: for every successful contract call, the `shieldedMints` / `unshieldedMints` effects
    (`domainSep → amount`) of the parts of the transaction that were applied give `color → (contractAddress,
-   domainSep)`. "A mint is a `shieldedMints` or `unshieldedMints` effect of a contract call" (MIP Lookup, since
-   `78ecbb4`): mint events a contract emits and UTXO token types are not sources for this table.
+   domainSep)`. "A mint is a `shieldedMints` or `unshieldedMints` effect of a contract call" (MIP Lookup): mint events a contract emits and UTXO token types are not sources for this table.
 3. **Resolve** a held color through the table to `(contractAddress, domainSep)`, take kind 1 for a coin or 2 for a UTXO,
    and read that identity's events (steps 1–5).
 
@@ -313,8 +318,8 @@ docker/run.sh mip0018 -- lookup --network stagenet --state deployments/stagenet/
 color       8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484
 table       contract a3df52605d8b7210aa3e5cdc82de4bb2911975bc42c1a68be77044723b705f21  domainSep 6d69702d303031383a6578616d706c653a756e736869656c6465640000000000
 minted      unshielded ×1 first at 714617
-metadata    live indexer at block 715963
-  identity  domainSep 6d69702d303031383a6578616d706c653a756e736869656c6465640000000000  kind 2 (native unshielded)  visible  color 8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484
+metadata    live indexer at block 725062
+  identity  domainSep 6d69702d303031383a6578616d706c653a756e736869656c6465640000000000  kind 2 (native unshielded)  color 8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484
     name         "Acme Public"                            type 1  usable
     symbol       "APUB"                                   type 1  usable
     decimals     6                                        type 2  usable
@@ -322,7 +327,8 @@ metadata    live indexer at block 715963
 ```
 
 A color that was never minted in the scanned range is reported as such (exit 3) — a published identity is not proof
-that coins of its color exist (C05's bronze type).
+that coins of its color exist (C05's bronze type). A color whose identity was withdrawn (every field deleted) resolves
+to its contract and `domainSep` but shows no metadata, exactly like a token that was never described.
 
 ## 9. Test your consumer with the vectors
 
@@ -345,7 +351,7 @@ four common keys of every identity; other keys may be left out ("Indexers MAY in
 `groups` if you do not group symbols and `display` if you do not display amounts — the runner then reports S9/S8 as
 not applicable instead of failing them. Passing every
 vector is the MIP's acceptance criterion for a consumer (the MIP asks for two independent ones; this repository
-provides the reference and the runner — a second consumer is left open, question Q7).
+provides the reference and the runner, not a second consumer).
 
 ## Reference
 
@@ -356,4 +362,4 @@ provides the reference and the runner — a second consumer is left open, questi
 | [`@mip0018/midnight`](../packages/midnight/README.md) | indexer and node access, `tokenType`, raw-transaction decoding, `verify`, `list`, the mint scanner |
 | [`mip0018` CLI](../packages/cli/README.md) | `verify`, `list`, `index`, `lookup`, `recheck`, `vectors run` — no wallet |
 | [`examples/verify`](../examples/verify/README.md) | the wallet-free walkthrough on the real Stagenet cases |
-| [`deployments/stagenet`](../deployments/stagenet/README.md) | 12 recorded cases, each re-checkable with one command |
+| [`deployments/stagenet`](../deployments/stagenet/README.md) | 13 recorded cases, each re-checkable with one command |

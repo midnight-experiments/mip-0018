@@ -1,6 +1,6 @@
 {
   "meta": {
-    "measuredAt": "2026-10-02",
+    "measuredAt": "2026-10-03",
     "compiler": "0.35.0 (debb05f94)",
     "language": "0.27.0",
     "zkir": "v3 (--feature-zkir-v3)",
@@ -21,8 +21,8 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "3c6788f63c279f2834b19254ae08587edb4dc1d2b7c16c66b7f7ba71c187afe8",
       "zkirBytes": 3131,
-      "proveMs": [1641, 1258, 1238],
-      "proveMedianMs": 1258
+      "proveMs": [1878, 1389, 1367],
+      "proveMedianMs": 1389
     },
     {
       "example": "fungible-token",
@@ -36,23 +36,23 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "8bbb2b530b02210c89a5aa864c69067898d94ff2e71422482bb1d9ea739da5a1",
       "zkirBytes": 3870,
-      "proveMs": [2766, 2189, 2193],
-      "proveMedianMs": 2193
+      "proveMs": [3006, 2528, 2397],
+      "proveMedianMs": 2528
     },
     {
       "example": "fungible-token",
       "contract": "MyFungibleToken",
       "circuit": "withdrawMetadata",
       "mip0018": true,
-      "note": "MIP-0018: owner + tombstone",
+      "note": "MIP-0018: owner + `withdraw` (four Null records)",
       "k": 13,
       "rows": 2057,
-      "proverKeyBytes": 11277567,
+      "proverKeyBytes": 11277630,
       "verifierKeyBytes": 2121,
-      "verifierKeySha256": "2afc8405891608f0ca518ac8509d376d8673d878cbcd1ed5e1472a56d5561b1c",
-      "zkirBytes": 1007,
-      "proveMs": [1267, 1074, 1077],
-      "proveMedianMs": 1077
+      "verifierKeySha256": "b3d2c890b07979470544d7a29178e7a4014d794a5b7abd4effe460d0c8a599c3",
+      "zkirBytes": 1070,
+      "proveMs": [1470, 1374, 1388],
+      "proveMedianMs": 1388
     },
     {
       "example": "fungible-token",
@@ -66,8 +66,8 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "a0846beaa9e5ff39340ec47d21c1421e7d8041a989d0f082c87b4e4631b7f522",
       "zkirBytes": 3684,
-      "proveMs": [1428, 1133, 1128],
-      "proveMedianMs": 1133
+      "proveMs": [1735, 1614, 1594],
+      "proveMedianMs": 1614
     },
     {
       "example": "fungible-token",
@@ -81,8 +81,8 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "1f323d72002f82ba313e8a3c5c5cef7f918e85de4846d74f81cd3bf18eda7ea8",
       "zkirBytes": 4364,
-      "proveMs": [1422, 1064, 1126],
-      "proveMedianMs": 1126
+      "proveMs": [2115, 1549, 1548],
+      "proveMedianMs": 1549
     },
     {
       "example": "fungible-token",
@@ -96,8 +96,8 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "fd37e5b4c1a4b04cfbae6a4098dc30a9831b3e713db4d5da412e8d0decc28a04",
       "zkirBytes": 3805,
-      "proveMs": [1336, 1138, 1143],
-      "proveMedianMs": 1143
+      "proveMs": [1681, 1284, 1293],
+      "proveMedianMs": 1293
     },
     {
       "example": "fungible-token",
@@ -111,8 +111,8 @@
       "verifierKeyBytes": 1353,
       "verifierKeySha256": "1314444ccfea9eae6918d9b35a3fb9ba23f50b2a30b7171fb3e24a9959b26391",
       "zkirBytes": 892,
-      "proveMs": [1341, 100, 99],
-      "proveMedianMs": 100
+      "proveMs": [1901, 248, 273],
+      "proveMedianMs": 273
     },
     {
       "example": "fungible-token",
@@ -126,8 +126,8 @@
       "verifierKeyBytes": 1353,
       "verifierKeySha256": "57d6b70ed940d572c220d32083e0fd08ca8eea823db81c7632e578176f8b18fa",
       "zkirBytes": 287,
-      "proveMs": [1059, 46, 44],
-      "proveMedianMs": 46
+      "proveMs": [134, 138, 151],
+      "proveMedianMs": 138
     },
     {
       "example": "fungible-token",
@@ -141,8 +141,8 @@
       "verifierKeyBytes": 1353,
       "verifierKeySha256": "da26d654e5ff20109bb45901865f21c81fc0544a51d48cb00eedad3debe80028",
       "zkirBytes": 287,
-      "proveMs": [48, 44, 51],
-      "proveMedianMs": 48
+      "proveMs": [186, 133, 190],
+      "proveMedianMs": 186
     },
     {
       "example": "fungible-token",
@@ -156,8 +156,8 @@
       "verifierKeyBytes": 1353,
       "verifierKeySha256": "3cfdfb97570b6be4895e2c940e2764659649a713cd33c09f599e9284d8ebc289",
       "zkirBytes": 224,
-      "proveMs": [49, 41, 44],
-      "proveMedianMs": 44
+      "proveMs": [183, 76, 71],
+      "proveMedianMs": 76
     },
     {
       "example": "native-shielded",
@@ -171,8 +171,8 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "1eaf633af674b73c4cb8c8238117a2603f091ad02871b6ff3f98799ecedf5575",
       "zkirBytes": 9334,
-      "proveMs": [5197, 4350, 4285],
-      "proveMedianMs": 4350
+      "proveMs": [5751, 4834, 4925],
+      "proveMedianMs": 4925
     },
     {
       "example": "native-shielded",
@@ -186,23 +186,23 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "4ec689fc197a2695fab9d90354ea835c3a153996025ae0db13abfa5fdf59535b",
       "zkirBytes": 9359,
-      "proveMs": [6437, 4322, 4319],
-      "proveMedianMs": 4322
+      "proveMs": [6414, 5317, 5262],
+      "proveMedianMs": 5317
     },
     {
       "example": "native-shielded",
       "contract": "MyShieldedToken",
       "circuit": "withdrawMetadata",
       "mip0018": true,
-      "note": "MIP-0018: owner + tombstone",
+      "note": "MIP-0018: owner + `withdraw` (four Null records)",
       "k": 14,
-      "rows": 15706,
-      "proverKeyBytes": 22555189,
+      "rows": 15908,
+      "proverKeyBytes": 22556033,
       "verifierKeyBytes": 2121,
-      "verifierKeySha256": "05e8e18f881fa05a24026a9eddd898629aa53d9e3fa70bb9cb7c9505d7014ab7",
-      "zkirBytes": 6437,
-      "proveMs": [2759, 2246, 2307],
-      "proveMedianMs": 2307
+      "verifierKeySha256": "9417d6f635d985b681961259ee071ab73adae5104ecc7e6ea889b9881c4b4268",
+      "zkirBytes": 7281,
+      "proveMs": [3791, 2942, 2828],
+      "proveMedianMs": 2942
     },
     {
       "example": "native-shielded",
@@ -216,8 +216,8 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "029f3f8160418655ba30b2bbd5f2f39ca40a179529f5734e38465de15d99f75e",
       "zkirBytes": 2388,
-      "proveMs": [2529, 2089, 2085],
-      "proveMedianMs": 2089
+      "proveMs": [3270, 2599, 2551],
+      "proveMedianMs": 2599
     },
     {
       "example": "native-shielded",
@@ -231,8 +231,8 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "167620c5e93e30a704bbddc54afd289391a5e03f666da0da8aff0a7b87a6149f",
       "zkirBytes": 4948,
-      "proveMs": [14429, 8379, 8321],
-      "proveMedianMs": 8379
+      "proveMs": [13446, 10546, 10306],
+      "proveMedianMs": 10546
     },
     {
       "example": "native-shielded",
@@ -246,8 +246,8 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "af9439d9688fa70d36bbd3566c08e94ee349f63618af7287ac9cab6a92dd31bb",
       "zkirBytes": 575,
-      "proveMs": [1318, 1062, 1082],
-      "proveMedianMs": 1082
+      "proveMs": [1805, 1306, 1216],
+      "proveMedianMs": 1306
     },
     {
       "example": "native-shielded",
@@ -261,8 +261,8 @@
       "verifierKeyBytes": 1353,
       "verifierKeySha256": "75cdc474de9d8a73fadee2f2e8b27f8dd927e8ae5e963a557ba06b2ab02ff633",
       "zkirBytes": 287,
-      "proveMs": [51, 46, 42],
-      "proveMedianMs": 46
+      "proveMs": [91, 74, 74],
+      "proveMedianMs": 74
     },
     {
       "example": "native-shielded",
@@ -276,8 +276,8 @@
       "verifierKeyBytes": 1353,
       "verifierKeySha256": "a4412d7a9033bd1005a9c579e6efd0b65253b3b5a9e0c1b8f32f91aba0ca4fa5",
       "zkirBytes": 287,
-      "proveMs": [47, 45, 42],
-      "proveMedianMs": 45
+      "proveMs": [96, 209, 106],
+      "proveMedianMs": 106
     },
     {
       "example": "native-shielded",
@@ -291,8 +291,8 @@
       "verifierKeyBytes": 1353,
       "verifierKeySha256": "ec5e3622098e0e72a9dc797d71673de7159399ae672799838566d9d1f7f19b12",
       "zkirBytes": 224,
-      "proveMs": [49, 44, 45],
-      "proveMedianMs": 45
+      "proveMs": [179, 74, 114],
+      "proveMedianMs": 114
     },
     {
       "example": "native-unshielded",
@@ -306,8 +306,8 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "5bc24382c5492cf62e2753da39010af8785992e4d8953629ee0e34f53375b310",
       "zkirBytes": 9334,
-      "proveMs": [5090, 4255, 4202],
-      "proveMedianMs": 4255
+      "proveMs": [5335, 4406, 4401],
+      "proveMedianMs": 4406
     },
     {
       "example": "native-unshielded",
@@ -321,23 +321,23 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "925ff6b4943f4364b49dc71fdae2957abddf20b92301a11fe24609ca67037b95",
       "zkirBytes": 9359,
-      "proveMs": [6177, 4247, 4308],
-      "proveMedianMs": 4308
+      "proveMs": [6054, 5121, 4919],
+      "proveMedianMs": 5121
     },
     {
       "example": "native-unshielded",
       "contract": "MyUnshieldedToken",
       "circuit": "withdrawMetadata",
       "mip0018": true,
-      "note": "MIP-0018: owner + tombstone",
+      "note": "MIP-0018: owner + `withdraw` (four Null records)",
       "k": 14,
-      "rows": 15707,
-      "proverKeyBytes": 22555189,
+      "rows": 15909,
+      "proverKeyBytes": 22556033,
       "verifierKeyBytes": 2121,
-      "verifierKeySha256": "39fa2c21f04b881b1d775c1fe997973214c3f74d474fa0652a3547ed69b49946",
-      "zkirBytes": 6437,
-      "proveMs": [2685, 2280, 2298],
-      "proveMedianMs": 2298
+      "verifierKeySha256": "5a971f3353f9ff58e447cf36fbfecc2658fff440b638f046d49c0b5135259ab8",
+      "zkirBytes": 7281,
+      "proveMs": [4236, 3352, 3184],
+      "proveMedianMs": 3352
     },
     {
       "example": "native-unshielded",
@@ -351,8 +351,8 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "8507615ed375717750258fcf5d16047d60d577db02a2d486df00ed3c607cc9b4",
       "zkirBytes": 2193,
-      "proveMs": [1390, 1092, 1120],
-      "proveMedianMs": 1120
+      "proveMs": [2132, 1650, 1663],
+      "proveMedianMs": 1663
     },
     {
       "example": "native-unshielded",
@@ -366,8 +366,8 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "86799647a20f5c1fa1d1dd924516ffa39f728c1c30db740b474e409020a33ea9",
       "zkirBytes": 506,
-      "proveMs": [1293, 1100, 1076],
-      "proveMedianMs": 1100
+      "proveMs": [2216, 1561, 1723],
+      "proveMedianMs": 1723
     },
     {
       "example": "native-unshielded",
@@ -381,8 +381,8 @@
       "verifierKeyBytes": 1353,
       "verifierKeySha256": "739203add92bf9cd18b0f996a9fcbce3860fc92ea25def743deee73d458505eb",
       "zkirBytes": 194,
-      "proveMs": [51, 43, 44],
-      "proveMedianMs": 44
+      "proveMs": [210, 87, 156],
+      "proveMedianMs": 156
     },
     {
       "example": "native-unshielded",
@@ -396,8 +396,8 @@
       "verifierKeyBytes": 1353,
       "verifierKeySha256": "129b249eeffeda61ab3a8a44b0f5e114309e5fd601b936e48ba7957669cc4fa0",
       "zkirBytes": 194,
-      "proveMs": [49, 54, 45],
-      "proveMedianMs": 49
+      "proveMs": [89, 150, 125],
+      "proveMedianMs": 125
     },
     {
       "example": "native-unshielded",
@@ -411,8 +411,8 @@
       "verifierKeyBytes": 1353,
       "verifierKeySha256": "6ea8e1a4cd9dac4c35bde15b66cbfc838d1473ba723f4c24f8561e04de15f367",
       "zkirBytes": 131,
-      "proveMs": [50, 43, 42],
-      "proveMedianMs": 43
+      "proveMs": [159, 123, 140],
+      "proveMedianMs": 140
     },
     {
       "example": "multi-kind",
@@ -426,8 +426,8 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "e3c5653ef926130fd854c59264d5227c8af576eac92cddfcc9f05b8c798ae995",
       "zkirBytes": 27311,
-      "proveMs": [10265, 8444, 8586],
-      "proveMedianMs": 8586
+      "proveMs": [14324, 9386, 10185],
+      "proveMedianMs": 10185
     },
     {
       "example": "multi-kind",
@@ -441,23 +441,23 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "4f65cd88a6b3423c9485fe811bf3279e87e7a5f9bb9338220314ee6dd2112d8c",
       "zkirBytes": 9464,
-      "proveMs": [6159, 4310, 4292],
-      "proveMedianMs": 4310
+      "proveMs": [5634, 5434, 5134],
+      "proveMedianMs": 5434
     },
     {
       "example": "multi-kind",
       "contract": "MyMultiKindToken",
       "circuit": "withdrawMetadata",
       "mip0018": true,
-      "note": "MIP-0018: owner + tombstone, runtime kind",
+      "note": "MIP-0018: owner + `withdraw` (four Null records), runtime kind",
       "k": 14,
-      "rows": 15725,
-      "proverKeyBytes": 22555331,
+      "rows": 15927,
+      "proverKeyBytes": 22556175,
       "verifierKeyBytes": 2121,
-      "verifierKeySha256": "1bc3517bfd2561d1c5f07d16e3f5ba28f46519bc2d00ee79153aa1302e9bf663",
-      "zkirBytes": 6579,
-      "proveMs": [2731, 2293, 2286],
-      "proveMedianMs": 2293
+      "verifierKeySha256": "f2648c2ef315c0f503b951774e56dc51c29492f2f3ecc3d2ca0184c439112fdf",
+      "zkirBytes": 7423,
+      "proveMs": [3307, 2761, 2770],
+      "proveMedianMs": 2770
     },
     {
       "example": "multi-kind",
@@ -471,8 +471,8 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "029f3f8160418655ba30b2bbd5f2f39ca40a179529f5734e38465de15d99f75e",
       "zkirBytes": 2388,
-      "proveMs": [2564, 2132, 2092],
-      "proveMedianMs": 2132
+      "proveMs": [3420, 2576, 2719],
+      "proveMedianMs": 2719
     },
     {
       "example": "multi-kind",
@@ -486,8 +486,8 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "8507615ed375717750258fcf5d16047d60d577db02a2d486df00ed3c607cc9b4",
       "zkirBytes": 2193,
-      "proveMs": [1362, 1129, 1135],
-      "proveMedianMs": 1135
+      "proveMs": [2037, 1482, 1447],
+      "proveMedianMs": 1482
     },
     {
       "example": "multi-kind",
@@ -501,8 +501,8 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "5ac1e9bdfc7a51ae23348043976298473d89f86768ed1701bd3dfca2c6f33e77",
       "zkirBytes": 3684,
-      "proveMs": [1414, 1161, 1108],
-      "proveMedianMs": 1161
+      "proveMs": [1672, 1464, 1636],
+      "proveMedianMs": 1636
     },
     {
       "example": "multi-kind",
@@ -516,8 +516,8 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "6a4b91c6af5d5f0ce759366904060cbc0a11c5dda52880760a0a24ccd8efaf8c",
       "zkirBytes": 4364,
-      "proveMs": [1365, 1149, 1077],
-      "proveMedianMs": 1149
+      "proveMs": [1997, 1505, 1497],
+      "proveMedianMs": 1505
     },
     {
       "example": "multi-kind",
@@ -531,8 +531,8 @@
       "verifierKeyBytes": 1353,
       "verifierKeySha256": "789dfa1defed60213a69fd206f87a83780a6cc6adbe2467b6ce8cb4166832f11",
       "zkirBytes": 892,
-      "proveMs": [142, 113, 108],
-      "proveMedianMs": 113
+      "proveMs": [348, 245, 254],
+      "proveMedianMs": 254
     },
     {
       "example": "token-family",
@@ -546,8 +546,8 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "14bbe27dc9950367198a5d658ac2a52c29ff001941d6d6079a6c22581bd35356",
       "zkirBytes": 9270,
-      "proveMs": [5165, 4313, 4190],
-      "proveMedianMs": 4313
+      "proveMs": [7224, 4743, 4733],
+      "proveMedianMs": 4743
     },
     {
       "example": "token-family",
@@ -561,23 +561,23 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "966e9994c6e6d933a4f37ea85511a62c49b32c64d37d28926bde62e1fca332ba",
       "zkirBytes": 9328,
-      "proveMs": [6154, 4345, 4454],
-      "proveMedianMs": 4454
+      "proveMs": [6026, 4595, 5391],
+      "proveMedianMs": 5391
     },
     {
       "example": "token-family",
       "contract": "MyTokenFamily",
       "circuit": "withdrawMetadata",
       "mip0018": true,
-      "note": "MIP-0018: owner + tombstone, runtime domain",
+      "note": "MIP-0018: owner + `withdraw` (four Null records), runtime domain",
       "k": 14,
-      "rows": 15781,
-      "proverKeyBytes": 22555098,
+      "rows": 15983,
+      "proverKeyBytes": 22555942,
       "verifierKeyBytes": 2121,
-      "verifierKeySha256": "e4f581f5ed79dc04702a0172933020d1e55fd68d3886ee244405febdbc345de6",
-      "zkirBytes": 6346,
-      "proveMs": [2717, 2292, 2219],
-      "proveMedianMs": 2292
+      "verifierKeySha256": "22c83344f33ded62a2d3390c6c976b6139e6eefbccb98b367b1de07a5148eb99",
+      "zkirBytes": 7190,
+      "proveMs": [3571, 3862, 2538],
+      "proveMedianMs": 3571
     },
     {
       "example": "token-family",
@@ -591,8 +591,8 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "c9835f2981ad30d5310bfad01dc9d2b0bf4ead7660c6ed27f60458a179377882",
       "zkirBytes": 2313,
-      "proveMs": [2517, 2099, 2147],
-      "proveMedianMs": 2147
+      "proveMs": [2861, 2299, 2604],
+      "proveMedianMs": 2604
     },
     {
       "example": "token-family",
@@ -606,8 +606,8 @@
       "verifierKeyBytes": 2121,
       "verifierKeySha256": "855f6a8156e3b35936802ef008a0cc020595d9063882f415f5a6ec6cd1148c01",
       "zkirBytes": 504,
-      "proveMs": [1270, 1069, 1075],
-      "proveMedianMs": 1075
+      "proveMs": [2571, 1169, 1954],
+      "proveMedianMs": 1954
     },
     {
       "example": "token-family",
@@ -621,8 +621,8 @@
       "verifierKeyBytes": 1353,
       "verifierKeySha256": "ab25347ff0c4d8c98363804a53a74fd69ccb4837083c13867aced23471e2409a",
       "zkirBytes": 287,
-      "proveMs": [79, 44, 43],
-      "proveMedianMs": 44
+      "proveMs": [367, 342, 115],
+      "proveMedianMs": 342
     },
     {
       "example": "token-family",
@@ -636,8 +636,8 @@
       "verifierKeyBytes": 1353,
       "verifierKeySha256": "fe9f80d7e4dbdaf9a06e592e1b958bb3c7d6bd3156f52769b19a9292f723004d",
       "zkirBytes": 287,
-      "proveMs": [50, 42, 43],
-      "proveMedianMs": 43
+      "proveMs": [87, 74, 98],
+      "proveMedianMs": 87
     },
     {
       "example": "token-family",
@@ -651,8 +651,8 @@
       "verifierKeyBytes": 1353,
       "verifierKeySha256": "55e63424b1d016ac60f73d25b65843984ecb3c96adc9640c7c89b960b5f09d65",
       "zkirBytes": 224,
-      "proveMs": [48, 43, 42],
-      "proveMedianMs": 43
+      "proveMs": [108, 67, 83],
+      "proveMedianMs": 83
     }
   ]
 }

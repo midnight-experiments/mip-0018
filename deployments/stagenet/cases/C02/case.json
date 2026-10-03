@@ -4,9 +4,9 @@
   "id": "C02",
   "title": "OpenZeppelin NativeShieldedToken (kind 1): deploy, mint, publish",
   "demonstrates": "color = tokenType(domainSep, contract) = the color of the shielded coin minted to wallet 1.",
-  "conclusion": "1 visible kind-1 identity (\"Acme Shield\", \"ASHD\", 6) with a color equal to the minted coin color.",
+  "conclusion": "1 kind-1 identity (\"Acme Shield\", \"ASHD\", 6) with a color equal to the minted coin color.",
   "mip": {
-    "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
+    "commit": "274a84f221bcfc17e4b73e2c8b32fd8c028ea092",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {
@@ -150,7 +150,6 @@
         "expectIdentity": {
           "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
           "kind": 1,
-          "visible": true,
           "colored": true,
           "common": {
             "name": "Acme Shield",

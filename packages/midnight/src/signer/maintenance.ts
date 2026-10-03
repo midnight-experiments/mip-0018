@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Maintenance updates for circuits compiled with --feature-zkir-v3 (question Q23).
+// Maintenance updates for circuits compiled with --feature-zkir-v3.
 //
 // midnight-js 5.0.0-rc.2 / compact-js 3.0.0-rc.3 build every maintenance update with ContractOperationVersion 'v3'
 // (the ZKIR v2 key slot), so `circuitMaintenanceTx.<circuit>.removeVerifierKey()` cannot remove a ZKIR v3 key, which

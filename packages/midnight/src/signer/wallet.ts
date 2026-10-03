@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Wallet session: wallet SDK 2.0.0-beta.2 (facade 5.0.0-beta.2) behind midnight-js 5.0.0-rc.2 providers (Q22).
+// Wallet session: wallet SDK 2.0.0-beta.2 (facade 5.0.0-beta.2) behind midnight-js 5.0.0-rc.2 providers (the 2.0.0-rc
+// wallet line cannot sync against indexer 4.4.0-rc.1).
 //
 //   * opened from a protected secret FILE (BIP-39 mnemonic → 64-byte seed, or — local test wallets only — a hex
 //     seed); HD account 0, index 0, roles Zswap / NightExternal / Dust (Lace-compatible); seeds are zeroed after use
@@ -41,9 +42,9 @@ import { readProtectedFile, seedFromHexFile, seedFromMnemonicFile, writeProtecte
 
 export interface SignerEndpoints {
   profile: NetworkProfile;
-  /** Proof server for contract circuits (reads ZKIR v3; official 9.0.0-rc.8 today, Q21). */
+  /** Proof server for contract circuits (reads ZKIR v3; official 9.0.0-rc.8). */
   proofServer: string;
-  /** Proof server for the wallet's DUST spends (official 9.0.0-rc.6 today, Q21). */
+  /** Proof server for the wallet's DUST spends (official 9.0.0-rc.6). */
   walletProofServer: string;
 }
 

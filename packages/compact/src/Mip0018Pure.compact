@@ -3,7 +3,7 @@
 // MIP-0018 On-Chain Token Metadata Emission — Compact module, ALTERNATIVE API:
 // individual pure circuits that return bytes, composed with `Bytes[...]` spreads.
 //
-// Pinned MIP text: midnightntwrk/midnight-improvement-proposals@78ecbb4b1ba57371e84fe45f705991ab7b996a61
+// Pinned MIP text: midnightntwrk/midnight-improvement-proposals@274a84f221bcfc17e4b73e2c8b32fd8c028ea092
 // (mips/mip-0018-on-chain-token-metadata.md, PR #340).
 //
 // Prefer the default module `Mip0018` (typed records serialized by Compact). This module
@@ -124,7 +124,7 @@ module Mip0018Pure {
     return rawRecord<K, V, R>(key, 4, value);
   }
 
-  /** Null (tombstone) record; R = 3 + K. */
+  /** Null (tombstone) record: deletes the field at `key`; R = 3 + K. */
   export pure circuit nullRecord<#K, #R>(key: Bytes<K>): Bytes<R> {
     return rawRecord<K, 0, R>(key, 5, default<Bytes<0>>);
   }
@@ -216,9 +216,19 @@ module Mip0018Pure {
       standardsRecord<T, RT>(standards));
   }
 
-  /** The identity-wide tombstone: one Null record at key `name` (7 bytes) + 216 zero bytes. */
-  export pure circuit tombstone(domainSep: Bytes<32>, kind: Uint<8>): Bytes<256> {
-    return payload1<7, 216>(header(domainSep, kind), nullRecord<4, 7>("name"));
+  /**
+   * Withdraws a token: ONE event with Null records at `name` (7 bytes), `symbol` (9),
+   * `decimals` (11) and `standards` (12) + 184 zero bytes — the same bytes as
+   * `Mip0018.withdraw`. Once every key is deleted, consumers do not reference the identity;
+   * a token with other keys adds a Null record for each of them ("Applying records").
+   */
+  export pure circuit withdraw(domainSep: Bytes<32>, kind: Uint<8>): Bytes<256> {
+    return payload4<7, 9, 11, 12, 184>(
+      header(domainSep, kind),
+      nullRecord<4, 7>("name"),
+      nullRecord<6, 9>("symbol"),
+      nullRecord<8, 11>("decimals"),
+      nullRecord<9, 12>("standards"));
   }
 
   // ---------------------------------------------------------------------------

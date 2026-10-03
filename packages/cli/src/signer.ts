@@ -78,8 +78,8 @@ Signer options (signer container only):
   --mnemonic-file <path>       BIP-39 mnemonic file, mode 0600 (or MIP0018_MNEMONIC_FILE)
   --seed-file <path>           hex seed file, local undeployed chains only (or MIP0018_SEED_FILE)
   --dev-genesis-wallet         the local dev chain's public genesis wallet (undeployed only)
-  --proof-server <url>         contract circuits (or MIP0018_PROOF_SERVER_URL; official 9.0.0-rc.8, Q21)
-  --wallet-proof-server <url>  DUST spends (or MIP0018_WALLET_PROOF_SERVER_URL; official 9.0.0-rc.6, Q21)
+  --proof-server <url>         contract circuits (or MIP0018_PROOF_SERVER_URL; official 9.0.0-rc.8)
+  --wallet-proof-server <url>  DUST spends (or MIP0018_WALLET_PROOF_SERVER_URL; official 9.0.0-rc.6)
   --state-dir <dir>            private state directory outside the repository (or MIP0018_STATE_DIR)
   --private-state <file>       maintenance keys + witness private state (default <state-dir>/mip0018-private-state.json)
   --wallet-cache <file>        optional 0600 wallet sync cache outside the repository (restores the sub-wallets; on a
@@ -427,8 +427,8 @@ export async function cmdPublish(argv: string[]): Promise<number> {
 export const REMOVE_USAGE = `
 mip0018 remove-circuit --network <id> --record <file> --circuit <name> [--slot v4|v3]
 
-Create-and-destroy (Q4): removes the circuit's verifier key with a maintenance VerifierKeyRemove signed by the
-contract's maintenance key (from the private-state file). ZKIR-v3 keys live in the v4 slot (Q23; default).
+Create-and-destroy: removes the circuit's verifier key with a maintenance VerifierKeyRemove signed by the
+contract's maintenance key (from the private-state file). ZKIR-v3 keys live in the v4 slot (default).
 Before: skipped when the key is already gone. After: completed only when the indexer shows the key gone.
 ${SIGNER_HELP}
 Exit: 0 completed · 1 failed or refused · 2 usage · 4 outcome unknown (re-run)
@@ -577,7 +577,7 @@ Steps (each recorded in the run record; re-run the same command to resume):
   1. preflight (reads only; refuses unless --force): <circuit> built with keys; every other provable circuit of the
      upgrade build already on chain with the same key; the compiler's ledger layouts of the deployed build and the
      upgrade build identical; the deployed state decodes identically through both builds' ledger() accessors
-  2. VerifierKeyInsert of keys/<circuit>.verifier (v4 slot for ZKIR-v3 circuits, Q23), signed with the contract's
+  2. VerifierKeyInsert of keys/<circuit>.verifier (v4 slot for ZKIR-v3 circuits), signed with the contract's
      maintenance key (the deploy-time key in the private-state file, or --maintenance-key-file: JSON {tag, value} or
      hex, mode 0600). Skipped when the circuit already has exactly this key; refused when it has another key (the
      ledger never overwrites) or when the key cannot sign for the contract's authority (frozen authority, not in the

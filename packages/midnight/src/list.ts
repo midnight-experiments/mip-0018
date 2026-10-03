@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Wallet-free "all metadata of a contract" (spec FR-042).
+// Wallet-free "all metadata of a contract".
 //
 //  1. identity check (node genesis), then pin the snapshot: the indexer tip {height, hash} (finalized: the indexer
 //     ingests finalized blocks only) cross-checked with the node (`chain_getBlockHash(height)`), `toBlock` =

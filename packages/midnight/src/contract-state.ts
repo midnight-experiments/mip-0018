@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // Wallet-free view of a deployed contract's state (indexer `contractAction.state`, decoded with ledger-v9): which
-// entry points currently have a verifier key — e.g. to confirm a create-and-destroy removal (Q4).
+// entry points currently have a verifier key — e.g. to confirm a create-and-destroy removal.
 
 import { ContractState } from '@midnightntwrk/ledger-v9';
 import { Indexer } from './indexer.ts';

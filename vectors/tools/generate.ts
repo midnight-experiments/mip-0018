@@ -9,7 +9,7 @@
  * expected result by hand. It imports nothing from packages/codec or packages/consumer, and it contains no
  * decoder and no reducer: expected states below are literal tables, so the codec and the consumer are tested
  * against an oracle they did not produce. A1 is additionally checked against a literal transcription of the
- * MIP's Appendix A, and the 26 URI verdicts against the two independent grammars of the F1 investigation.
+ * MIP's Appendix A, and the 26 URI verdicts against the two independent grammars of the URI investigation.
  */
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -81,7 +81,8 @@ const R = {
   /** `decimals` as `Uint<8>` (one byte). */
   decimals: (n: number) => rec('decimals', UINT, [n], String(n)),
   standards: (s: string) => rec('standards', UTF8, s),
-  tombstone: (key: string = 'retire') => rec(key, NULL, EMPTY),
+  /** A Null record (tombstone): deletes the field at `key` (MIP "Applying records"). */
+  tombstone: (key: string) => rec(key, NULL, EMPTY),
 };
 
 interface Built {
@@ -334,14 +335,18 @@ interface IdDef {
   contract?: string;
   domainSep?: Bytes;
   kind: number;
-  /** `null` = hidden (tombstoned): no fields. */
-  fields: FieldDef[] | null;
+  /**
+   * The identity's current fields — at least one: an identity whose last field was deleted is not referenced at all
+   * (MIP "Applying records"), so an expectation simply leaves it out.
+   */
+  fields: FieldDef[];
   colored?: boolean;
 }
 
 function identity(d: IdDef): Record<string, unknown> {
+  check(d.fields.length > 0, 'an expected identity has at least one field (an identity without fields is not referenced)');
   const fields: Record<string, unknown> = {};
-  for (const f of d.fields ?? []) {
+  for (const f of d.fields) {
     const k = toHex(f.key);
     check(!(k in fields), `duplicate expected field ${k}`);
     const o: Record<string, unknown> = {};
@@ -361,7 +366,6 @@ function identity(d: IdDef): Record<string, unknown> {
     contractAddress: d.contract ?? CONTRACT_A,
     domainSep: toHex(d.domainSep ?? D11),
     kind: d.kind,
-    visible: d.fields !== null,
   };
   if (d.colored !== undefined) o.colored = d.colored;
   o.fields = fields;
@@ -787,21 +791,21 @@ stateVector({
 stateVector({
   id: 'A5a-state',
   testId: 'A5',
-  description: 'Non-tombstones (state): after name = "Acme" and an empty string at "note", the identity is visible with both fields.',
+  description: 'Non-tombstones (state): after name = "Acme" and an empty string at "note", the identity has both fields.',
   steps: [apply({ block: 1, recs: A5A_RECS })],
   identities: [identity({ kind: 3, fields: [F.name('Acme', true), field('note', UTF8, EMPTY)] })],
 });
 stateVector({
   id: 'A5b-state',
   testId: 'A5',
-  description: 'Non-tombstones (state): after name = "Acme" and empty bytes at "blob", the identity is visible with both fields.',
+  description: 'Non-tombstones (state): after name = "Acme" and empty bytes at "blob", the identity has both fields.',
   steps: [apply({ block: 1, recs: A5B_RECS })],
   identities: [identity({ kind: 3, fields: [F.name('Acme', true), field('blob', BYTES, EMPTY)] })],
 });
 stateVector({
   id: 'A5c-state',
   testId: 'A5',
-  description: 'Non-tombstones (state): after name = "Acme" and JSON null at "meta", the identity is visible with both fields.',
+  description: 'Non-tombstones (state): after name = "Acme" and JSON null at "meta", the identity has both fields.',
   steps: [apply({ block: 1, recs: A5C_RECS })],
   identities: [identity({ kind: 3, fields: [F.name('Acme', true), field('meta', JSON_T, 'null')] })],
 });
@@ -811,8 +815,8 @@ stateVector({
   id: 'S1a',
   testId: 'S1',
   description:
-    'Order within an event: for kind 1, name = "A" (33), Null at key "retire" (41), name = "B" (50) leave the identity visible with only name = "B".',
-  steps: [apply({ block: 1, kind: 1, recs: [R.name('A'), R.tombstone('retire'), R.name('B')], offsets: [33, 41, 50] })],
+    'Order within an event: for kind 1, name = "A" (33), Null at key "name" (41), name = "B" (48) leave the identity with only name = "B".',
+  steps: [apply({ block: 1, kind: 1, recs: [R.name('A'), R.tombstone('name'), R.name('B')], offsets: [33, 41, 48] })],
   identities: [identity({ kind: 1, fields: [F.name('B', true)] })],
 });
 stateVector({
@@ -850,58 +854,77 @@ stateVector({
   identities: [identity({ kind: 3, fields: S2_FINAL })],
 });
 
-// S3 — tombstone
+// S3 — tombstone (MIP "Applying records": a Null record deletes its field; an identity with no field left is not
+// referenced)
 const S3_K1_RECS = [R.name('Gold'), R.symbol('GLD'), R.decimals(6), R.standards('mip-0011')];
 const S3_K3_RECS = [R.name('Gold'), R.symbol('GLD'), R.decimals(6), R.standards('mip-0004')];
-const S3_K1_FIELDS = [F.name('Gold', true), F.symbol('GLD', true), F.decimals(6, true), F.standards('mip-0011', true)];
 const S3_K3_FIELDS = [F.name('Gold', true), F.symbol('GLD', true), F.decimals(6, true), F.standards('mip-0004', true)];
+/** Kind 1 after the Null at `name`: the other three fields stay. */
+const S3_K1_NO_NAME = [F.symbol('GLD', true), F.decimals(6, true), F.standards('mip-0011', true)];
 const S3_PUBLISH = [apply({ block: 1, event: 0, kind: 1, recs: S3_K1_RECS }), apply({ block: 1, event: 1, kind: 3, recs: S3_K3_RECS })];
-const S3_TOMBSTONE_K1 = (block: number) => apply({ block, kind: 1, recs: [R.tombstone('retire')] });
+/** Block 2: Null at `name` for kind 1. */
+const S3_NULL_NAME = [apply({ block: 2, kind: 1, recs: [R.tombstone('name')] })];
+/** Block 3: a second Null at `name`; block 4: a Null at `retire`, a key that never had a value. */
+const S3_NO_EFFECT = [
+  apply({ block: 3, kind: 1, recs: [R.tombstone('name')] }),
+  apply({ block: 4, kind: 1, recs: [R.tombstone('retire')] }),
+];
+/** Block 5: Null records for kind 1's remaining keys, in one event. */
+const S3_NULL_REST = (block: number) =>
+  apply({
+    block,
+    kind: 1,
+    recs: [R.tombstone('symbol'), R.tombstone('decimals'), R.tombstone('standards')],
+    offsets: [33, 42, 53],
+  });
 stateVector({
   id: 'S3a',
   testId: 'S3',
   description:
-    'Tombstone: name/symbol/decimals/standards for kinds 1 and 3 under one domainSep (block 1), then a Null record for kind 1 (block 2): kind 1 is hidden with all fields cleared; kind 3 is unchanged.',
-  steps: [...S3_PUBLISH, S3_TOMBSTONE_K1(2)],
-  identities: [identity({ kind: 1, fields: null }), identity({ kind: 3, fields: S3_K3_FIELDS })],
+    'Tombstone: name/symbol/decimals/standards for kinds 1 and 3 under one domainSep (block 1), then a Null record at key "name" for kind 1 (block 2): kind 1 keeps symbol, decimals and standards and has no name; kind 3 is unchanged.',
+  steps: [...S3_PUBLISH, ...S3_NULL_NAME],
+  identities: [identity({ kind: 1, fields: S3_K1_NO_NAME }), identity({ kind: 3, fields: S3_K3_FIELDS })],
 });
 stateVector({
   id: 'S3b',
   testId: 'S3',
-  description: 'Tombstone: a second Null record for kind 1 (block 3) changes nothing.',
-  steps: [...S3_PUBLISH, S3_TOMBSTONE_K1(2), S3_TOMBSTONE_K1(3)],
-  identities: [identity({ kind: 1, fields: null }), identity({ kind: 3, fields: S3_K3_FIELDS })],
+  description:
+    'Tombstone: after S3a, a second Null at "name" (block 3) and a Null at "retire", a key with no value (block 4), change nothing.',
+  steps: [...S3_PUBLISH, ...S3_NULL_NAME, ...S3_NO_EFFECT],
+  identities: [identity({ kind: 1, fields: S3_K1_NO_NAME }), identity({ kind: 3, fields: S3_K3_FIELDS })],
 });
 stateVector({
   id: 'S3c',
   testId: 'S3',
   description:
-    'Tombstone: after both Nulls, a kind-1 name = "New" (block 4) makes kind 1 visible with only name; standards reads as empty (no field) and nothing from before the tombstone returns.',
-  steps: [...S3_PUBLISH, S3_TOMBSTONE_K1(2), S3_TOMBSTONE_K1(3), apply({ block: 4, kind: 1, recs: [R.name('New')] })],
-  identities: [identity({ kind: 1, fields: [F.name('New', true)] }), identity({ kind: 3, fields: S3_K3_FIELDS })],
+    "Tombstone: after S3b, Null records for kind 1's remaining keys (symbol, decimals, standards) in one event (block 5) leave kind 1 with no fields, so it is not referenced anywhere (absent from the identities); kind 3 is unchanged.",
+  steps: [...S3_PUBLISH, ...S3_NULL_NAME, ...S3_NO_EFFECT, S3_NULL_REST(5)],
+  identities: [identity({ kind: 3, fields: S3_K3_FIELDS })],
 });
 stateVector({
   id: 'S3d',
   testId: 'S3',
-  description: 'Tombstone: a Null record at key "name" for kind 1 (block 2) withdraws the whole identity, not only name.',
-  steps: [...S3_PUBLISH, apply({ block: 2, kind: 1, recs: [rec('name', NULL, EMPTY)] })],
-  identities: [identity({ kind: 1, fields: null }), identity({ kind: 3, fields: S3_K3_FIELDS })],
+  description:
+    'Tombstone: after S3c, a kind-1 name = "New" (block 6) describes kind 1 again with only name; standards reads as empty (no field) and the earlier list does not return.',
+  steps: [...S3_PUBLISH, ...S3_NULL_NAME, ...S3_NO_EFFECT, S3_NULL_REST(5), apply({ block: 6, kind: 1, recs: [R.name('New')] })],
+  identities: [identity({ kind: 1, fields: [F.name('New', true)] }), identity({ kind: 3, fields: S3_K3_FIELDS })],
 });
 
 // S4 — reorganization
 stateVector({
   id: 'S4a',
   testId: 'S4',
-  description: 'Reorganization: S3a, then block 2 (the tombstone block) is removed: the earlier state of kind 1 is restored.',
-  steps: [...S3_PUBLISH, S3_TOMBSTONE_K1(2), rollback(NET_A, 1)],
-  identities: [identity({ kind: 1, fields: S3_K1_FIELDS }), identity({ kind: 3, fields: S3_K3_FIELDS })],
+  description:
+    "Reorganization: S3c, then block 5 (the block that deleted kind 1's last fields) is removed: those fields (symbol, decimals, standards) are restored; name stays deleted (block 2 is still canonical).",
+  steps: [...S3_PUBLISH, ...S3_NULL_NAME, ...S3_NO_EFFECT, S3_NULL_REST(5), rollback(NET_A, 4)],
+  identities: [identity({ kind: 1, fields: S3_K1_NO_NAME }), identity({ kind: 3, fields: S3_K3_FIELDS })],
 });
 stateVector({
   id: 'S4b',
   testId: 'S4',
-  description: 'Reorganization: S4a, then the tombstone block is added again: kind 1 is withdrawn again.',
-  steps: [...S3_PUBLISH, S3_TOMBSTONE_K1(2), rollback(NET_A, 1), S3_TOMBSTONE_K1(2)],
-  identities: [identity({ kind: 1, fields: null }), identity({ kind: 3, fields: S3_K3_FIELDS })],
+  description: "Reorganization: S4a, then block 5 is added again: kind 1's last fields are deleted again and kind 1 is not referenced.",
+  steps: [...S3_PUBLISH, ...S3_NULL_NAME, ...S3_NO_EFFECT, S3_NULL_REST(5), rollback(NET_A, 4), S3_NULL_REST(5)],
+  identities: [identity({ kind: 3, fields: S3_K3_FIELDS })],
 });
 
 // S5 — unusable fields
@@ -1018,7 +1041,8 @@ const S9_BASE = [
 interface S9Opts {
   ledgerName?: string;
   twoSymbol?: string;
-  ledgerHidden?: boolean;
+  /** The kind-3 member's `symbol` was deleted: it keeps only its name. */
+  ledgerNoSymbol?: boolean;
 }
 function s9Identities(o: S9Opts = {}): Array<Record<string, unknown>> {
   return [
@@ -1026,7 +1050,9 @@ function s9Identities(o: S9Opts = {}): Array<Record<string, unknown>> {
     identity({
       domainSep: D11,
       kind: 3,
-      fields: o.ledgerHidden ? null : [F.name(o.ledgerName ?? 'Acme Ledger', true), F.symbol('ACME', true)],
+      fields: o.ledgerNoSymbol
+        ? [F.name(o.ledgerName ?? 'Acme Ledger', true)]
+        : [F.name(o.ledgerName ?? 'Acme Ledger', true), F.symbol('ACME', true)],
     }),
     identity({ domainSep: D22, kind: 1, fields: [F.name('Acme Two', true), F.symbol(o.twoSymbol ?? 'ACME', true)] }),
     identity({ contract: CONTRACT_B, domainSep: D11, kind: 1, fields: [F.name('Other Contract', true), F.symbol('ACME', true)] }),
@@ -1095,9 +1121,10 @@ stateVector({
 stateVector({
   id: 'S9d',
   testId: 'S9',
-  description: 'Symbol grouping: after S9a, a tombstone for the kind-3 member removes it from the group.',
-  steps: [...S9_BASE, apply({ block: 2, domainSep: D11, kind: 3, recs: [R.tombstone('retire')] })],
-  identities: s9Identities({ ledgerHidden: true }),
+  description:
+    'Symbol grouping: after S9a, a Null record at "symbol" for the kind-3 member removes it from the group; it keeps its name and is ungrouped.',
+  steps: [...S9_BASE, apply({ block: 2, domainSep: D11, kind: 3, recs: [R.tombstone('symbol')] })],
+  identities: s9Identities({ ledgerNoSymbol: true }),
   groups: [
     group(NET_A, CONTRACT_A, 'ACME', [
       [D11, 1],
@@ -1111,8 +1138,8 @@ stateVector({
 // Informative vectors (normative = false)
 // ===============================================================================================================
 
-// ---- URI cases (owner ruling Q20: RFC 3986 `URI` rule as ERC-721 uses it; MIP Value types) ----
-// Verdicts transcribed from the F1 investigation and cross-checked below against both independent grammars.
+// ---- URI cases (MIP Value types: the RFC 3986 `URI` rule, as ERC-721 uses it) ----
+// Verdicts transcribed from the URI investigation and cross-checked below against both independent grammars.
 const URI_ACCEPT = new Set([
   'c01',
   'c02',
@@ -1151,7 +1178,7 @@ for (const [caseId, value] of uriCases) {
   const r = rec('uri', URI, value);
   const description = `URI (valType 4) value ${JSON.stringify(value)}: ${accept ? 'accepted' : 'rejected'} under the RFC 3986 URI rule (scheme required, fragment allowed, ASCII only).`;
   const basis =
-    'Owner ruling Q20 (follow ERC-721: RFC 3986 `URI`), MIP-0018 Value types. Verdict = strict RFC 3986 grammar (investigation/rfc3986.mjs) = Python rfc3987 rule URI (investigation/py.json); they agree on 26/26.';
+    'MIP-0018 Value types (RFC 3986 `URI`, as ERC-721 uses it). Verdict = strict RFC 3986 grammar (investigation/rfc3986.mjs) = Python rfc3987 rule URI (investigation/py.json); they agree on 26/26.';
   if (accept) {
     acceptVector({ id, testId: 'INF-URI', normative: false, description, basis, recs: [r], dir: 'informative/uri' });
   } else {
@@ -1170,7 +1197,7 @@ for (const [caseId, value] of uriCases) {
 }
 emit(
   'informative/uri/verdicts.json',
-  json({ rule: 'RFC 3986 URI (scheme required, fragment allowed, ASCII only)', basis: 'Q20 / MIP-0018 Value types', cases: uriVerdicts }),
+  json({ rule: 'RFC 3986 URI (scheme required, fragment allowed, ASCII only)', basis: 'MIP-0018 Value types', cases: uriVerdicts }),
 );
 
 // ---- standards list format and common-field forms (derived from "Common fields"; not in the MIP Testing list) ----
@@ -1219,12 +1246,12 @@ stateVector({
   dir: 'informative/state',
 });
 
-// ---- zero extension (MIP "Consuming", 78ecbb4: missing trailing bytes are zero; name 32, payload 256) ----
+// ---- zero extension (MIP "Consuming": missing trailing bytes are zero; name 32, payload 256) ----
 // Each vector gives the name and/or payload as a source that drops trailing zero bytes returns it (raw ledger data,
 // the Compact runtime), and expects exactly the decision and records of the full form, built by the same construction
 // as the normative vector it trims. Plus the two longer cases: a 257-byte payload and a 33-byte name.
 const ZEXT_BASIS =
-  'MIP "Consuming" (78ecbb4): "Some sources drop trailing zero bytes; consumers MUST treat missing trailing bytes as zero, so that every `name` is 32 bytes and every `payload` 256 bytes, before decoding." The expected result is the full form\'s.';
+  'MIP "Consuming": "Some sources drop trailing zero bytes; consumers MUST treat missing trailing bytes as zero, so that every `name` is 32 bytes and every `payload` 256 bytes, before decoding." The expected result is the full form\'s.';
 const ZEXT_DIR = 'informative/zero-extension';
 /** The bytes without their trailing zero bytes, as such a source returns them. */
 function trimZeros(b: Bytes): Bytes {
@@ -1329,7 +1356,7 @@ stateVector({
   testId: 'INF-ZEXT',
   normative: false,
   description:
-    'Reducer: A1, then name = "Beta", both observed with the name and payload trimmed: the identity is visible with name "Beta" and A1\'s other three fields, exactly as with the full forms.',
+    'Reducer: A1, then name = "Beta", both observed with the name and payload trimmed: the identity has name "Beta" and A1\'s other three fields, exactly as with the full forms.',
   basis: ZEXT_BASIS,
   steps: [
     apply({ block: 1, name: NAME_V1_TRIMMED, payload: A1_TRIMMED }),

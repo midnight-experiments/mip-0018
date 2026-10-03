@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // SPDX-License-Identifier: Apache-2.0
 //
-// Secret scan of the repository (SC-008): every tracked file, and with
+// Secret scan of the repository: every tracked file, and with
 // --history every blob reachable from any ref. Never prints a match, only where
 // it is and which detector fired.
 //
@@ -72,8 +72,7 @@ if (process.argv.includes('--self-test')) {
   const clean = detect('The transaction hash 0123abcd and sha256 ' + 'ef'.repeat(32) + ' are public.', words);
   console.log(`${clean.length === 0 ? 'OK  ' : 'FAIL'} a plain hash is not flagged`);
   ok &&= clean.length === 0;
-  const named =
-    badName('x/stagenet-wallet.mnemonic') && badName('cache/s0-spike-private-state.json') && !badName('src/lib/private-state.ts');
+  const named = badName('x/stagenet-wallet.mnemonic') && badName('cache/spike-private-state.json') && !badName('src/lib/private-state.ts');
   const devSeed = detect(`const GENESIS_DEV_SEED = Buffer.from('${'0'.repeat(63)}1', 'hex');`, words).length === 0;
   console.log(`${devSeed ? 'OK  ' : 'FAIL'} the public dev genesis seed is allowed`);
   ok &&= devSeed;

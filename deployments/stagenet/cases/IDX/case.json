@@ -3,10 +3,10 @@
   "schema": 1,
   "id": "IDX",
   "title": "Mint scanner over the matrix, then every color looked up (wallet-free)",
-  "demonstrates": "MIP \"Lookup\" / owner decision F8: from a start height, every native mint of C02–C05 is found once with its (contract, domainSep, kind), and each color resolves to its identity and current metadata.",
+  "demonstrates": "MIP \"Lookup\": from a start height, every native mint of C02–C05 is found once with its (contract, domainSep, kind), and each color resolves to its identity and current metadata.",
   "conclusion": "6 minted colors (C02 shielded, C03 unshielded, C04 shielded + unshielded = one color, C05 gold, silver) resolve to their contract, domainSep and kind with the metadata of each case; C05 bronze (never minted) is \"not minted in the scanned range\".",
   "mip": {
-    "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
+    "commit": "274a84f221bcfc17e4b73e2c8b32fd8c028ea092",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {
@@ -19,7 +19,7 @@
     "C05"
   ],
   "notes": [
-    "U1 (S6b, the upgrade case, run after the matrix) scans its own block range and looks up its color in its own folder (cases/U1: steps index and lookup), so this scan stays the matrix's range.",
+    "U1 (the upgrade case, run after the matrix) scans its own block range and looks up its color in its own folder (cases/U1: steps index and lookup), so this scan stays the matrix's range.",
     "The index state lands in {out}/index/index-state.json (deployments/stagenet/cases/IDX/index/ on Stagenet)."
   ],
   "placeholders": {
@@ -49,7 +49,7 @@
       ],
       "expectExit": 0,
       "stdout": "index-summary.json",
-      "note": "{firstHeight} = the lowest inclusion height of the matrix records − 10; {lastHeight} = the highest (S5 fills both)"
+      "note": "{firstHeight} = the lowest inclusion height of the matrix records − 10; {lastHeight} = the highest (both read from the records)"
     },
     {
       "id": "lookup-C02-shielded",
@@ -199,7 +199,6 @@
         "expectIdentity": {
           "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
           "kind": 1,
-          "visible": true,
           "colored": true,
           "common": {
             "name": "Acme Shield",
@@ -217,7 +216,6 @@
         "expectIdentity": {
           "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
           "kind": 2,
-          "visible": true,
           "colored": true,
           "common": {
             "name": "Acme Public",
@@ -235,7 +233,6 @@
         "expectIdentity": {
           "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
           "kind": 1,
-          "visible": true,
           "colored": true,
           "common": {
             "name": "Acme Dollar",
@@ -253,7 +250,6 @@
         "expectIdentity": {
           "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
           "kind": 2,
-          "visible": true,
           "colored": true,
           "common": {
             "name": "Acme Dollar",
@@ -271,7 +267,6 @@
         "expectIdentity": {
           "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
           "kind": 1,
-          "visible": true,
           "colored": true,
           "common": {
             "name": "Acme Medals",
@@ -289,7 +284,6 @@
         "expectIdentity": {
           "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
           "kind": 1,
-          "visible": true,
           "colored": true,
           "common": {
             "name": "Acme Medals",
@@ -307,7 +301,6 @@
         "expectIdentity": {
           "domainSep": "0x6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
           "kind": 1,
-          "visible": true,
           "colored": true,
           "common": {
             "name": "Acme Medals",

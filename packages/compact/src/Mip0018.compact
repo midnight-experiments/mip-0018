@@ -2,7 +2,7 @@
 //
 // MIP-0018 On-Chain Token Metadata Emission — Compact module (default API).
 //
-// Pinned MIP text: midnightntwrk/midnight-improvement-proposals@78ecbb4b1ba57371e84fe45f705991ab7b996a61
+// Pinned MIP text: midnightntwrk/midnight-improvement-proposals@274a84f221bcfc17e4b73e2c8b32fd8c028ea092
 // (mips/mip-0018-on-chain-token-metadata.md, PR #340). Section names below refer to that text.
 //
 // What this module gives a contract:
@@ -16,7 +16,7 @@
 //     than 255 bytes, an empty key, or records that do not fit in 256 bytes are all
 //     compile errors ("Payload", "Limitations");
 //   * convenience builders for the common fields `name`, `symbol`, `decimals` (`Uint<8>`)
-//     and `standards`, and the identity-wide tombstone ("Common fields", "Applying records");
+//     and `standards`, and `withdraw`, which deletes all four ("Common fields", "Applying records");
 //   * `emitPayload`, the only circuit that calls `emit`.
 //
 // Generic arguments are always written explicitly at the call site (Compact requires it):
@@ -102,7 +102,7 @@ module Mip0018 {
     return 4;
   }
 
-  /** valType 5: Null (tombstone), valLen 0. Withdraws the whole token identity. */
+  /** valType 5: Null (tombstone), valLen 0. Deletes its field. */
   export pure circuit VALTYPE_NULL(): Uint<8> {
     return 5;
   }
@@ -179,7 +179,10 @@ module Mip0018 {
     return typedRecord<K, V>(key, 4, value);
   }
 
-  /** valType 5 (Null) record: a tombstone. Whatever its key, it withdraws the whole identity. */
+  /**
+   * valType 5 (Null) record: a tombstone. It deletes the field at `key` ("Applying records"); the token's other fields
+   * stay. Use it to delete a single key, e.g. `payload1<4, 0>(header(domainSep, kind), nullRecord<4>("logo"))`.
+   */
   export pure circuit nullRecord<#K>(key: Bytes<K>): MetadataRecord<K, 0> {
     return typedRecord<K, 0>(key, 5, default<Bytes<0>>);
   }
@@ -280,12 +283,19 @@ module Mip0018 {
   }
 
   /**
-   * The identity-wide tombstone: one Null record at key `name`. Consumers hide the identity
-   * `(network, this contract, domainSep, kind)` and clear all its fields; the next non-Null
-   * record makes it visible again with only that field ("Applying records").
+   * Withdraws a token: ONE event with Null records at `name`, `symbol`, `decimals` and
+   * `standards`, in that order (33-byte header + 39 bytes of records, the rest zero). A Null
+   * record deletes its field, and a token identity exists only while one of its fields has a
+   * value: once every key is deleted, consumers do not reference the identity
+   * `(network, this contract, domainSep, kind)` at all; a later non-Null record describes it
+   * again with only that field ("Applying records"). A token that also published keys beyond
+   * these four must add a Null record for each of them (build that event with `nullRecord`
+   * and `payload<n>`), otherwise those keys keep the identity alive.
    */
-  export pure circuit tombstone(domainSep: Bytes<32>, kind: Uint<8>): Bytes<256> {
-    return payload1<4, 0>(header(domainSep, kind), nullRecord<4>("name"));
+  export pure circuit withdraw(domainSep: Bytes<32>, kind: Uint<8>): Bytes<256> {
+    return payload4<4, 0, 6, 0, 8, 0, 9, 0>(
+      header(domainSep, kind), nullRecord<4>("name"), nullRecord<6>("symbol"), nullRecord<8>("decimals"),
+      nullRecord<9>("standards"));
   }
 
   // ---------------------------------------------------------------------------

@@ -7,13 +7,13 @@
   "contract": "9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3",
   "snapshot": {
     "indexerTip": {
-      "height": 714797,
-      "hash": "df81796e7f4fd369b02e8478f08837cafb9f185412f016a16259aaa623f7867c"
+      "height": 726271,
+      "hash": "14a6a7ba178dae40372f293a0c67cb7da3369c44ecc4d26918acc3a00686259c"
     },
-    "toBlock": 714797,
-    "nodeHashAtTip": "0xdf81796e7f4fd369b02e8478f08837cafb9f185412f016a16259aaa623f7867c",
+    "toBlock": 714796,
+    "nodeHashAtTip": "0x14a6a7ba178dae40372f293a0c67cb7da3369c44ecc4d26918acc3a00686259c",
     "tipMatchesNode": true,
-    "finalizedHeight": 714797
+    "finalizedHeight": 726271
   },
   "pages": 2,
   "counts": {
@@ -45,7 +45,6 @@
       "contractAddress": "9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3",
       "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
       "kind": 3,
-      "visible": true,
       "colored": false,
       "color": null,
       "fields": [

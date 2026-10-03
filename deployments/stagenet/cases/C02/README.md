@@ -4,11 +4,11 @@
 
 **Demonstrates**: color = tokenType(domainSep, contract) = the color of the shielded coin minted to wallet 1.
 
-**Expected conclusion** (from the reference reducer, before any transaction): 1 visible kind-1 identity ("Acme Shield", "ASHD", 6) with a color equal to the minted coin color.
+**Expected conclusion** (from the case definition; consumer states are computed with the reference consumer, never from a chain observation): 1 kind-1 identity ("Acme Shield", "ASHD", 6) with a color equal to the minted coin color.
 
 ## Steps (Stagenet)
 
-Values filled in by S5 when it runs: the records (`record.json`), observations (`observed-*.json`, `wallet-status.json`) and the transaction table below. Shell set-up (bash or zsh; S5 plan §S5a; the secret directory is mounted read-only into the signer container only):
+Running the steps writes the run record (`record.json`, rendered as the transaction table below) and the observations (`observed-*.json`, `wallet-status.json`). Shell set-up (bash or zsh; the secret directory is mounted read-only into the signer container only):
 
 ```sh
 signer() {

@@ -83,8 +83,9 @@ export circuit setMetadata(kind: Uint<8>, newName: Bytes<11>, newSymbol: Bytes<3
     Mip0018_symbolRecord<3>(newSymbol)));
 }
 
-// Withdraw one representation's metadata (kind 1, 2 or 3); the others are unchanged.
+// Withdraw one representation's metadata (kind 1, 2 or 3): a Null record for each of its keys in
+// one event; the other representations are unchanged.
 export circuit withdrawMetadata(kind: Uint<8>): [] {
   Ownable_assertOnlyOwner();
-  Mip0018_emitPayload(Mip0018_tombstone(NativeShieldedToken__domain, kind));
+  Mip0018_emitPayload(Mip0018_withdraw(NativeShieldedToken__domain, kind));
 }

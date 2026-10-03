@@ -4,9 +4,9 @@
   "id": "C01",
   "title": "OpenZeppelin FungibleToken (kind 3): deploy, publish",
   "demonstrates": "The common fields in one event from an OpenZeppelin token; kind 3 has no color.",
-  "conclusion": "1 visible kind-3 identity with 3 usable fields (name \"Acme Gold\", symbol \"AGLD\", decimals 6); no standards (Q25); no color.",
+  "conclusion": "1 kind-3 identity with 3 usable fields (name \"Acme Gold\", symbol \"AGLD\", decimals 6); no standards; no color.",
   "mip": {
-    "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
+    "commit": "274a84f221bcfc17e4b73e2c8b32fd8c028ea092",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {
@@ -14,7 +14,7 @@
     "metadata": "examples/openzeppelin/fungible-token/metadata.json"
   },
   "notes": [
-    "Q25: the OpenZeppelin examples publish no `standards`; the A1 shape (with standards) on Stagenet is C06/C10 (examples/minimal)."
+    "The OpenZeppelin examples publish no `standards`: `standards` is a self-declaration, and OpenZeppelin Compact Contracts claims no MIP. The A1 shape (with standards) on Stagenet is C06, C10 and C11 (examples/minimal)."
   ],
   "placeholders": {
     "{net}": "network options (Stagenet: --network stagenet)",

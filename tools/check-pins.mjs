@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // SPDX-License-Identifier: Apache-2.0
 //
-// Official binaries only (Q18). Checks that:
+// Official binaries only (Midnight releases and midnightntwrk images). Checks that:
 //   1. every container image referenced in docker/, test-contracts/ and .github/
 //      is pinned by digest, comes from `midnightntwrk/*` or the official `node`
 //      image, and is listed in toolchain.json;

@@ -51,6 +51,19 @@ describe('schemas', () => {
     bad.expect.identities[0].fields['6e616d65'].valType = 5;
     expect(state(bad)).toBe(false);
   });
+  it('rejects an expected identity without fields or with an unknown property', () => {
+    const empty = structuredClone(s1a);
+    empty.expect.identities[0].fields = {};
+    expect(state(empty)).toBe(false);
+    const unknown = structuredClone(s1a);
+    unknown.expect.identities[0].hidden = true;
+    expect(state(unknown)).toBe(false);
+  });
+  it('a runner response with an identity without fields is invalid', () => {
+    const id = { network: 'testnet-a', contractAddress: 'aa'.repeat(32), domainSep: '11'.repeat(32), kind: 1 };
+    expect(response({ id: 'S3c', identities: [{ ...id, fields: {} }] })).toBe(false);
+    expect(response({ id: 'S3c', identities: [{ ...id, fields: { '6e616d65': { valType: 1, value_hex: '41' } } }] })).toBe(true);
+  });
   it('accepts runner responses of each shape', () => {
     expect(response({ id: 'A1', result: 'reject', reason: 'x' })).toBe(true);
     expect(response({ id: 'S1a', identities: [] })).toBe(true);

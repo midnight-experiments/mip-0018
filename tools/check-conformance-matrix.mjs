@@ -5,7 +5,7 @@
 // sentence of the MIP has exactly one row with the same ID, section and text,
 // and the matrix has no extra rows. Every row is resolved: status `covered`
 // (with at least one link to the evidence) or `not testable here` (with the
-// reason) — never `planned` or empty (spec SC-007). Link targets inside the
+// reason) — never `planned` or empty. Link targets inside the
 // verbatim text may differ from the MIP's (its in-page anchors do not exist in
 // the matrix); the link text may not.
 //

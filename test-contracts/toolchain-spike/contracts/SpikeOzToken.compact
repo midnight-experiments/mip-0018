@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Toolchain spike (S0): OpenZeppelin Compact Contracts 0.4.0-alpha.5
+// Toolchain spike: OpenZeppelin Compact Contracts 0.4.0-alpha.5
 // NativeShieldedToken + Ownable composed with a MIP-0018 emitter, compiled
 // with Compact 0.35.0 (language 0.27.0) and --feature-zkir-v3.
 //

@@ -3,7 +3,7 @@
 // Payload bytes for an example's metadata.json, from the reference encoder (@mip0018/codec):
 //
 //   node scripts/payload-hex.ts '{"domainSep":"0x…","kind":3,"name":"Acme Gold","symbol":"AGLD","decimals":6}'
-//   node scripts/payload-hex.ts '{"domainSep":"0x…","kind":3,"tombstone":true}'
+//   node scripts/payload-hex.ts '{"domainSep":"0x…","kind":3,"withdraw":true}'   # Null at name, symbol, decimals, standards
 //   node scripts/payload-hex.ts --pad 'mip-0018:example:fungible'      # 0x-hex of pad(32, text)
 //   node scripts/payload-hex.ts --fill fungible-token/metadata.json    # (re)write every event's "payload"
 //

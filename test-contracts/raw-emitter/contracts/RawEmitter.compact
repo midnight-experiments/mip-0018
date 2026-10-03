@@ -10,7 +10,7 @@
 // transaction (MIP test S7). A real issuer never passes a payload through unchecked: use the
 // module in packages/compact, which can only build valid payloads.
 //
-// Owner-gated with OpenZeppelin Compact Contracts 0.4.0-alpha.5 `Ownable` (owner decision Q4).
+// Owner-gated with OpenZeppelin Compact Contracts 0.4.0-alpha.5 `Ownable`.
 // Compile with Compact 0.35.0, --feature-zkir-v3 and --compact-path <repo>/node_modules.
 
 pragma language_version >= 0.26.0;

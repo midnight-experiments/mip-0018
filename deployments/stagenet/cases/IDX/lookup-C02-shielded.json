@@ -34,7 +34,7 @@
       "mintedInRange": true
     }
   ],
-  "metadataSource": "live indexer at block 715198",
+  "metadataSource": "live indexer at block 726332",
   "resolved": [
     {
       "contractAddress": "0ee5f31961f9df197055c49dda8f87275af50c3554ba701ffa1837537735e532",
@@ -47,7 +47,6 @@
         "contractAddress": "0ee5f31961f9df197055c49dda8f87275af50c3554ba701ffa1837537735e532",
         "domainSep": "6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
         "kind": 1,
-        "visible": true,
         "colored": true,
         "color": "be34ef4b78717b031040bf625e04ee033106efae4c766915d3cac2b7fda8f11b",
         "fields": [

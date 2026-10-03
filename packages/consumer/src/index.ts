@@ -1,5 +1,5 @@
 // @mip0018/consumer — reference MIP-0018 consumer (dependency-free apart from @mip0018/codec).
-// Pinned text: midnightntwrk/midnight-improvement-proposals@78ecbb4b1ba57371e84fe45f705991ab7b996a61 (PR #340).
+// Pinned text: midnightntwrk/midnight-improvement-proposals@274a84f221bcfc17e4b73e2c8b32fd8c028ea092 (PR #340).
 export {
   ChainOrderError,
   MetadataState,

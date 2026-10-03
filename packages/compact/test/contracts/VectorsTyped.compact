@@ -70,23 +70,28 @@ export circuit A5c(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<4>, k2:
   M_emitPayload(M_payload2<4, 4, 4, 4>(M_header(ds, kind), M_utf8Record<4, 4>(k1, v1), M_jsonRecord<4, 4>(k2, v2)));
 }
 
-// S1a: name = "A", Null at key "retire", name = "B" (kind 1), offsets 33, 41, 50.
-export circuit S1a(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<1>, k2: Bytes<6>, k3: Bytes<4>, v3: Bytes<1>): [] {
-  M_emitPayload(M_payload3<4, 1, 6, 0, 4, 1>(M_header(ds, kind), M_utf8Record<4, 1>(k1, v1), M_nullRecord<6>(k2),
+// S1a: name = "A", Null at key "name", name = "B" (kind 1), offsets 33, 41, 48.
+export circuit S1a(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<1>, k2: Bytes<4>, k3: Bytes<4>, v3: Bytes<1>): [] {
+  M_emitPayload(M_payload3<4, 1, 4, 0, 4, 1>(M_header(ds, kind), M_utf8Record<4, 1>(k1, v1), M_nullRecord<4>(k2),
     M_utf8Record<4, 1>(k3, v3)));
 }
 
 export circuit S1a_common(ds: Bytes<32>, a: Bytes<1>, b: Bytes<1>): [] {
-  M_emitPayload(M_payload3<4, 1, 6, 0, 4, 1>(M_header(ds, M_KIND_SHIELDED()), M_nameRecord<1>(a),
-    M_nullRecord<6>("retire"), M_nameRecord<1>(b)));
+  M_emitPayload(M_payload3<4, 1, 4, 0, 4, 1>(M_header(ds, M_KIND_SHIELDED()), M_nameRecord<1>(a),
+    M_nullRecord<4>("name"), M_nameRecord<1>(b)));
 }
 
 export circuit S1b(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<1>, k2: Bytes<4>, v2: Bytes<1>): [] {
   M_emitPayload(M_payload2<4, 1, 4, 1>(M_header(ds, kind), M_utf8Record<4, 1>(k1, v1), M_utf8Record<4, 1>(k2, v2)));
 }
 
-export circuit tombstone(ds: Bytes<32>, kind: Uint<8>): [] {
-  M_emitPayload(M_tombstone(ds, kind));
+export circuit withdraw(ds: Bytes<32>, kind: Uint<8>): [] {
+  M_emitPayload(M_withdraw(ds, kind));
+}
+
+// Deleting a single key: one Null record at "name" (the other fields of the token stay).
+export circuit deleteName(ds: Bytes<32>, kind: Uint<8>): [] {
+  M_emitPayload(M_payload1<4, 0>(M_header(ds, kind), M_nullRecord<4>("name")));
 }
 
 export circuit commonFields(ds: Bytes<32>, kind: Uint<8>, name: Bytes<10>, symbol: Bytes<4>, decimals: Uint<8>): [] {

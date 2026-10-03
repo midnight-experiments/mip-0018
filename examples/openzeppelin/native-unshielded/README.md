@@ -4,7 +4,7 @@ A native unshielded token (unshielded UTXOs, MIP-0014 shape) owned with OpenZepp
 gains MIP-0018 metadata.
 
 **OpenZeppelin Compact Contracts 0.4.0-alpha.5 has no native unshielded token module** (none on
-`main`; earlier `NativeUnshieldedToken` drafts exist only on stale experimental branches for an older
+`main`; `NativeUnshieldedToken` drafts exist only on stale experimental branches for an older
 ledger). So the token part of this example uses the **Compact standard library directly**:
 `mintUnshieldedToken(_domain, amount, recipient)`, written in the style of OpenZeppelin's
 `NativeShieldedToken` (one token type; domain separator, name, symbol and decimals fixed at
@@ -30,7 +30,7 @@ construction). Access control is still OpenZeppelin `Ownable`.
 +import "@mip0018/compact/src/Mip0018" prefix Mip0018_;
 
  export { Either, ContractAddress, UserAddress };
-@@ -58,2 +59,28 @@
+@@ -58,2 +59,29 @@
    return mintUnshieldedToken(_domain, disclose(amount), right<ContractAddress, UserAddress>(disclose(recipient)));
  }
 +
@@ -54,10 +54,11 @@ construction). Access control is still OpenZeppelin `Ownable`.
 +    Mip0018_symbolRecord<4>(newSymbol)));
 +}
 +
-+// Withdraw (tombstone): consumers hide the token and clear all its metadata.
++// Withdraw: one event with a Null record for each key (name, symbol, decimals, standards);
++// with no field left, consumers do not reference the token at all.
 +export circuit withdrawMetadata(): [] {
 +  Ownable_assertOnlyOwner();
-+  Mip0018_emitPayload(Mip0018_tombstone(_domain, Mip0018_KIND_UNSHIELDED()));
++  Mip0018_emitPayload(Mip0018_withdraw(_domain, Mip0018_KIND_UNSHIELDED()));
 +}
 ```
 

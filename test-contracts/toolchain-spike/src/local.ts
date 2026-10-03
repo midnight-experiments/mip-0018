@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// S0 spike, step 2: the local undeployed chain (docker/local-stack).
+// Toolchain spike, step 2: the local undeployed chain (docker/local-stack).
 // Signs with the dev chain's genesis wallet, whose seed is public (0x00..01);
 // no secret is involved. Run on the stack's network:
 //

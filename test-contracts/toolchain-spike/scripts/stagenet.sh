@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# S0 spike, step 3: deploy SpikeEmitter on Stagenet, call publishMetadata()
+# Toolchain spike, step 3: deploy SpikeEmitter on Stagenet, call publishMetadata()
 # once, confirm the event on the public indexer, then remove the circuit's
 # verifier key (create and destroy). Spends DUST from the signer wallet.
 #
@@ -10,7 +10,7 @@
 #     test-contracts/toolchain-spike/scripts/stagenet.sh
 #
 # Starts the two official proof servers (contract circuits: 9.0.0-rc.8; DUST
-# spends: 9.0.0-rc.6 — see Q21) on a private Docker network with no published
+# spends: 9.0.0-rc.6) on a private Docker network with no published
 # ports, runs `npm run spike:stagenet` in the signer container (docker/signer.sh)
 # and removes the provers and the network afterwards. bash 3.2 compatible.
 set -euo pipefail

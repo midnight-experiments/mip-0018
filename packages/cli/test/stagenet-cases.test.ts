@@ -17,8 +17,8 @@ const ids = readdirSync(cases, { withFileTypes: true })
   .sort();
 
 describe('Stagenet case folders', () => {
-  it('are up to date with the generator (C01–C10, IDX, U1)', () => {
-    expect(ids).toEqual(['C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'IDX', 'U1']);
+  it('are up to date with the generator (C01–C11, IDX, U1)', () => {
+    expect(ids).toEqual(['C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C11', 'IDX', 'U1']);
     const r = spawnSync(process.execPath, [join(repo, 'deployments', 'stagenet', 'tools', 'prepare-cases.ts'), '--check'], {
       encoding: 'utf8',
     });

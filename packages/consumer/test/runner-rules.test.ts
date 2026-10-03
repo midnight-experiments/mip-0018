@@ -1,6 +1,6 @@
 // The runner's comparison rules (vectors/README.md, "Runner contract") applied to the reference consumer's real
 // responses, changed the way another conforming — or non-conforming — consumer would answer:
-//   - MIP Testing S9 (78ecbb4): "Grouping is a SHOULD, so two outcomes are valid: no groups at all, or exactly the
+//   - MIP Testing S9: "Grouping is a SHOULD, so two outcomes are valid: no groups at all, or exactly the
 //     following groups" — a consumer without groups passes; one that groups wrongly fails;
 //   - MIP Testing S8: "A consumer that displays amounts …" — a consumer without display passes (not applicable);
 //   - MIP Consuming: "Indexers MAY index only some tokens or keys" — keys other than the four common keys are
@@ -105,14 +105,16 @@ describe('runner rules on the reference consumer’s responses', () => {
       }),
     );
     expect(failed(noName).length).toBeGreaterThan(20);
-    expect(noName.results.find((x) => x.id === 'S1a')!.failures.join()).toMatch(/field 6e616d65 \(name\) missing/);
+    expect(noName.results.find((x) => x.id === 'S2a')!.failures.join()).toMatch(/field 6e616d65 \(name\) missing/);
+    // An identity left with no fields at all is a reference the MIP forbids (S1a has only `name`).
+    expect(noName.results.find((x) => x.id === 'S1a')!.failures.join()).toMatch(/reported without fields/);
   });
 
   it('a consumer that reports a key the expectation does not have still fails', async () => {
     const r = await runVectors(
       normative,
       consumer((res) => {
-        const first = (res.identities as Json[]).find((i) => i.visible === true);
+        const first = (res.identities as Json[])[0];
         if (first !== undefined) (first.fields as Json)['78'] = { valType: 0, value_hex: '' };
         return res;
       }),

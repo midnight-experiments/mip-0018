@@ -2,20 +2,22 @@
   "kind": "mip0018-case",
   "schema": 1,
   "id": "C06",
-  "title": "Minimal OwnerKey (kind 3, no OpenZeppelin) lifecycle: deploy, publish, rename, tombstone, tombstone again, revive",
-  "demonstrates": "MIP \"Updates\" on chain: latest value wins (S2), identity-wide tombstone and a repeated one (S3a/S3b), a partial revive brings back nothing from before the tombstone (S3c).",
-  "conclusion": "final: visible with ONLY name \"Acme Again\" and symbol \"ACMA\" (decimals and standards cleared by the tombstone do not return); the A1 publish payload equals MIP Appendix A byte-for-byte.",
+  "title": "Minimal OwnerKey (kind 3, no OpenZeppelin) lifecycle: deploy, publish, rename, withdraw (one Null record at name), withdraw again, revive",
+  "demonstrates": "MIP \"Applying records\" on chain: latest value wins (S2); a Null record at `name` deletes only `name` — the identity keeps symbol, decimals and standards (S3a); a repeated Null at `name` changes nothing (S3b); a later record sets the field again and nothing from before the Null returns (the revive sets name and symbol; decimals and standards were never deleted).",
+  "conclusion": "after withdraw (and withdraw again): no name; symbol \"ACMP\", decimals 6, standards \"mip-0004\", group \"ACMP\"; final: name \"Acme Again\", symbol \"ACMA\", decimals 6, standards \"mip-0004\" (group \"ACMA\"); the A1 publish payload equals MIP Appendix A byte-for-byte.",
   "mip": {
-    "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
+    "commit": "274a84f221bcfc17e4b73e2c8b32fd8c028ea092",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {
     "example": "examples/minimal",
     "contract": "examples/minimal/contracts/OwnerKey.compact",
-    "metadata": "examples/minimal/owner-key.metadata.json"
+    "metadata": "examples/minimal/owner-key.metadata.json",
+    "deployedFrom": "examples/minimal/contracts/OwnerKey.compact at 70b54c674260b13c0cdbf1df72457f77a3dba2fe: its withdrawMetadata() emits one Null record at name (verifier key ba50827a038885613c531250ba02d301c82fe44ed8c555f5c9b36dd3576d1917, record.json)"
   },
   "notes": [
-    "Case-table delta: the S5 table says \"only name = New\"; OwnerKey renames with setMetadata(name, symbol), so the revive sets name and symbol (10- and 4-byte values: \"Acme Again\"/\"ACMA\") — the point of S3c (nothing from before the tombstone returns) is the same.",
+    "This deployment's withdrawMetadata() emits one Null record at `name` (source: examples/minimal/contracts/OwnerKey.compact at 70b54c6), so the case shows a single-key delete: decimals and standards stay, and the revive sets a name and a new symbol next to them. examples/minimal/contracts/OwnerKey.compact in this tree emits a Null record for each of the four keys; case C11 deploys it.",
+    "OwnerKey renames with setMetadata(name, symbol), so the revive sets name and symbol (10- and 4-byte values: \"Acme Again\"/\"ACMA\").",
     "Every intermediate state is re-checkable: `recheck` lists the contract as of each step's block (`list --to-block`)."
   ],
   "placeholders": {
@@ -219,7 +221,7 @@
       ],
       "expectExit": 0,
       "submits": "call",
-      "note": "a repeated tombstone changes nothing, so the before-check would skip it: --force emits it anyway (vector S3b)"
+      "note": "a repeated Null at `name` changes nothing, so the before-check would skip it: --force emits it anyway (vector S3b)"
     },
     {
       "id": "verify-withdraw-again",

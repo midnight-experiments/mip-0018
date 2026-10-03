@@ -1,7 +1,7 @@
 # packages/compact — the MIP-0018 Compact module ("what to add to your contract")
 
 Byte-exact MIP-0018 `TokenMetadata` emission in a few lines of Compact, for the pinned MIP text
-[`midnightntwrk/midnight-improvement-proposals@78ecbb4b`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/78ecbb4b1ba57371e84fe45f705991ab7b996a61/mips/mip-0018-on-chain-token-metadata.md)
+[`midnightntwrk/midnight-improvement-proposals@274a84f2`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/274a84f221bcfc17e4b73e2c8b32fd8c028ea092/mips/mip-0018-on-chain-token-metadata.md)
 (PR #340). Requires Compact ≥ 0.34.0 (MIP-0002 `Misc` events, ledger v9); built and tested with
 **Compact 0.35.0 (language 0.27.0) and `--feature-zkir-v3`**.
 
@@ -11,7 +11,7 @@ Byte-exact MIP-0018 `TokenMetadata` emission in a few lines of Compact, for the 
 | [`src/Mip0018Pure.compact`](src/Mip0018Pure.compact) | **Alternative API** — individual pure circuits returning bytes, composed with `Bytes[...]` spreads; same bytes, no `serialize` |
 | [`src/testing/`](src/testing) | `@mip0018/compact/testing`: compile with the pinned compiler and run circuits in compact-runtime 0.20.0, capturing the emitted MIP-0018 events |
 
-Both APIs were built and tested side by side (owner decision Q3): they emit identical bytes, equal to
+Both APIs are built and tested side by side: they emit identical bytes, equal to
 the repository's vectors and to `@mip0018/codec`.
 
 ## Add it to a contract
@@ -43,13 +43,21 @@ why the MIP names this circuit. Complete contracts: [`examples/minimal`](../../e
 | `header(domainSep, kind)` | `MetadataHeader` (asserts kind ∈ {1, 2, 3}) | Payload |
 | `bytesRecord<K, V>(key, value)` · `utf8Record` · `jsonRecord` · `uriRecord` | `MetadataRecord<K, V>` with valType 0 / 1 / 3 / 4 | Payload, Value types |
 | `uintRecord<K>(key, Uint<8>)` · `uint128Record<K>(key, Uint<128>)` | `MetadataRecord<K, 1>` / `<K, 16>` (little-endian) | Value types |
-| `nullRecord<K>(key)` | `MetadataRecord<K, 0>` with valType 5 (tombstone) | Applying records |
+| `nullRecord<K>(key)` | `MetadataRecord<K, 0>` with valType 5 (tombstone): deletes the field at `key`; the token's other fields stay | Applying records |
 | `nameRecord<N>(name)` · `symbolRecord<S>(symbol)` · `decimalsRecord(Uint<8>)` · `standardsRecord<T>(list)` | the common-field records | Common fields |
 | `payload1<K1, V1>(h, r1)` … `payload4<K1, V1, …, K4, V4>(h, r1, …, r4)` | `Bytes<256>`: header ‖ records ‖ zero padding | Payload |
 | `commonFields<N, S>(domainSep, kind, name, symbol, decimals)` | `Bytes<256>` | Common fields |
 | `commonFieldsWithStandards<N, S, T>(…, standards)` | `Bytes<256>` (Appendix A shape) | Common fields |
-| `tombstone(domainSep, kind)` | `Bytes<256>`: one Null record at key `name` (withdraws the whole identity) | Applying records |
+| `withdraw(domainSep, kind)` | `Bytes<256>`: ONE event with Null records at `name`, `symbol`, `decimals`, `standards` (33-byte header + 39 bytes of records, the rest zero); equals `@mip0018/codec` `withdrawRecords()` | Applying records |
 | `emitPayload(payload)` | emits `Misc { EVENT_NAME(), payload }` — the only `emit` (disclosed) | Event, Publishing |
+
+**Deleting metadata** (MIP "Applying records", per-key tombstones): a Null record deletes its own field, and a token
+identity exists only while at least one of its fields has a value. `withdraw(domainSep, kind)` withdraws a token
+that published the common keys: once all four are deleted, consumers do not reference the identity at all (not
+in listings, lookups, groups or history); a later non-Null record describes it again with only that field. A token
+that also published other keys must add a Null record for each of them (or the identity stays, with those keys).
+To delete a single key, emit one Null record for it, e.g.
+`emitPayload(payload1<4, 0>(header(domainSep, kind), nullRecord<4>("name")))`.
 
 `keyLen` and `valLen` are derived from the generic sizes, so they cannot disagree with the data.
 Compact has no variadics: `payload1`–`payload4` cover one to four records; a contract that needs more
@@ -77,7 +85,7 @@ URI (scheme required, ASCII), or `standards` a well-formed list. String literals
 construction; values passed in at run time must be validated off chain before the call (e.g. with
 `@mip0018/codec`'s `encodePayload`, which rejects anything a consumer would reject).
 
-## Access control (MIP "Publishing", owner decision Q4)
+## Access control (MIP "Publishing")
 
 Anyone who can call a circuit that reaches `emitPayload` can rename or withdraw the token. Pick one:
 
@@ -86,7 +94,7 @@ Anyone who can call a circuit that reaches `emitPayload` can rename or withdraw 
    ([`examples/minimal/contracts/OwnerKey.compact`](../../examples/minimal/contracts/OwnerKey.compact)).
 2. **Create and destroy** — an unguarded `publishMetadata()` with a **constant** payload, called once
    by the deployer, whose verifier key the maintenance authority then removes with a
-   `VerifierKeyRemove` update: the circuit no longer exists
+   `VerifierKeyRemove` update, after which the circuit cannot be called
    ([`examples/minimal/contracts/CreateAndDestroy.compact`](../../examples/minimal/contracts/CreateAndDestroy.compact),
    tested on the local chain and on Stagenet, case [C10](../../deployments/stagenet/cases/C10/README.md)). Caveats: until the key is removed anyone holding the compiled artefacts
    can call the circuit (the deploy does not put the circuit's ZKIR on chain — only its verifier key —
@@ -94,8 +102,8 @@ Anyone who can call a circuit that reaches `emitPayload` can rename or withdraw 
    re-emit the same values. The contract needs a maintenance authority (midnight-js deploys with
    one), and with ZKIR v3 the key lives in the `v4` slot: midnight-js 5.0.0-rc.2's
    `removeVerifierKey()` removes `v3` only, so build the `MaintenanceUpdate` with
-   `VerifierKeyRemove(circuit, ContractOperationVersion('v4'))` (questions Q23; helper
-   `test-contracts/toolchain-spike/src/lib/maintenance.ts`).
+   `VerifierKeyRemove(circuit, ContractOperationVersion('v4'))` (helper
+   [`packages/midnight/src/signer/maintenance.ts`](../midnight/src/signer/maintenance.ts)).
 3. **Publish once** — an unguarded constant `publishMetadata()` that sets its own ledger flag
    ([`examples/minimal/contracts/PublishOnce.compact`](../../examples/minimal/contracts/PublishOnce.compact)).
    Keep the flag in your contract; do not reuse OpenZeppelin `Initializable` for it (modules importing
@@ -133,7 +141,7 @@ docker/run.sh exec 'npx vitest run packages/compact -t equivalence'
 
 | Test | What |
 |---|---|
-| [`test/vectors.test.ts`](test/vectors.test.ts) | Both modules, executed in compact-runtime 0.20.0: payload = fixture bytes for A1, A2a/b, A3a–c, A4a/b, A5a–c, S1a/b (inputs taken from the fixtures); round trip through the codec; literal A1; tombstone / `commonFields` / URI = codec; kind 0, 4, 255 rejected; constants = codec |
+| [`test/vectors.test.ts`](test/vectors.test.ts) | Both modules, executed in compact-runtime 0.20.0: payload = fixture bytes for A1, A2a/b, A3a–c, A4a/b, A5a–c, S1a/b (inputs taken from the fixtures); round trip through the codec; literal A1; `withdraw` = codec `withdrawRecords()` and a single-key `nullRecord` = codec `record.tombstone(key)` for kinds 1/2/3; `commonFields` / URI = codec; kind 0, 4, 255 rejected; constants = codec |
 | [`test/equivalence.test.ts`](test/equivalence.test.ts) | Generated contracts: every value size 1–219 plus random 2–4-record shapes (uint8, uint128, Null), 3 random inputs each: typed = pure = `@mip0018/codec` `encodePayload` |
 | [`test/compile-fail.test.ts`](test/compile-fail.test.ts) | 16 programs the compiler must reject, with the expected message |
 

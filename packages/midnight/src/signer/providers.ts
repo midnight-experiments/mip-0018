@@ -2,7 +2,7 @@
 //
 // midnight-js 5.0.0-rc.2 providers for one compiled contract directory (compactc output: contract/, keys/, zkir/).
 //
-//   * proofs: the official proof server for contract circuits (Q21), through midnight-js's HTTP proving provider,
+//   * proofs: the official proof server for contract circuits, through midnight-js's HTTP proving provider,
 //     wrapped so at most 4 circuit proofs run at once (the server queues 10 jobs, then answers 429) and 408/429/502/504
 //     and dropped connections are retried with backoff (midnight-js retries only 500/503 itself)
 //   * public data: midnight-js's indexer provider (finalization tracking for deployContract / callTx)

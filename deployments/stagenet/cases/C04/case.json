@@ -4,9 +4,9 @@
   "id": "C04",
   "title": "One asset in kinds 1, 2, 3 (OpenZeppelin NativeShieldedToken + FungibleToken, std-lib unshielded): deploy, three mints, publish",
   "demonstrates": "Symbol grouping on chain (vector S9): three identities under one domainSep and symbol form one group; kinds 1 and 2 share one color.",
-  "conclusion": "3 visible identities (\"Acme Dollar\", \"ACD\", 2) in ONE group \"ACD\"; kinds 1 and 2 colored (same color), kind 3 not.",
+  "conclusion": "3 identities (\"Acme Dollar\", \"ACD\", 2) in ONE group \"ACD\"; kinds 1 and 2 colored (same color), kind 3 not.",
   "mip": {
-    "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
+    "commit": "274a84f221bcfc17e4b73e2c8b32fd8c028ea092",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {
@@ -14,7 +14,7 @@
     "metadata": "examples/openzeppelin/multi-kind/metadata.json"
   },
   "notes": [
-    "S3 delta: the three identities are published by ONE publishMetadata() transaction with three events (not \"publish ×3\")."
+    "The three identities are published by ONE publishMetadata() transaction with three events."
   ],
   "placeholders": {
     "{net}": "network options (Stagenet: --network stagenet)",
@@ -193,7 +193,6 @@
         "expectIdentity": {
           "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
           "kind": 1,
-          "visible": true,
           "colored": true,
           "common": {
             "name": "Acme Dollar",
@@ -210,7 +209,6 @@
         "expectIdentity": {
           "domainSep": "0x6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
           "kind": 2,
-          "visible": true,
           "colored": true,
           "common": {
             "name": "Acme Dollar",

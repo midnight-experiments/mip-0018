@@ -1,5 +1,5 @@
 // The reducer's MIP rules as switches. Every switch is ON in the public API; they exist only so the rule-mutation
-// test (SC-001) can disable one rule at a time and show that at least one normative vector then fails.
+// test can disable one rule at a time and show that at least one normative vector then fails.
 // Not part of the public API (exported from `@mip0018/consumer/internal`).
 
 export interface ConsumerRules {
@@ -11,12 +11,19 @@ export interface ConsumerRules {
   exactKeys: boolean;
   /** Empty strings/bytes and JSON null are ordinary values, not tombstones. */
   emptyIsValue: boolean;
-  /** Null record — hides the identity. */
-  tombstoneHides: boolean;
-  /** Null record — clears every field and the history (nothing returns on revival). */
-  tombstoneClears: boolean;
-  /** Null record — withdraws the whole identity whatever its key (no per-key delete). */
-  tombstoneIdentityWide: boolean;
+  /** Null record (tombstone) — deletes its field: no current value, no earlier value, no fallback. */
+  tombstoneDeletes: boolean;
+  /**
+   * Null record — deletes only its own field; the identity's other fields stay. Disabled = the `tombstoneIdentityWide`
+   * mutation: a Null record at any key deletes every field of the identity (a wrong rule the vectors must catch).
+   */
+  tombstonePerKey: boolean;
+  /**
+   * A token identity exists only while at least one of its fields has a value: once its last field is deleted it is
+   * not referenced at all (listings, lookups, groups, history), and Null records alone never create one. Disabled =
+   * the `keepEmptyIdentity` mutation: an identity without fields is still reported.
+   */
+  removeEmptyIdentity: boolean;
   /** Token identity includes `kind`. */
   identityKind: boolean;
   /** Token identity includes `contractAddress` (from the event record). */
@@ -50,9 +57,9 @@ export const ALL_CONSUMER_RULES: Readonly<ConsumerRules> = Object.freeze({
   latestWins: true,
   exactKeys: true,
   emptyIsValue: true,
-  tombstoneHides: true,
-  tombstoneClears: true,
-  tombstoneIdentityWide: true,
+  tombstoneDeletes: true,
+  tombstonePerKey: true,
+  removeEmptyIdentity: true,
   identityKind: true,
   identityContract: true,
   identityNetwork: true,

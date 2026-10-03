@@ -1,4 +1,4 @@
-// SC-001 / FR-014: the reference consumer passes 100 % of the normative vectors (and all informative ones), both
+// The reference consumer passes 100 % of the normative vectors (and all informative ones), both
 // in-process and through the language-neutral runner CLI with bin/vector-adapter.js; every response it produces is
 // valid under the runner protocol schema.
 import { spawnSync } from 'node:child_process';

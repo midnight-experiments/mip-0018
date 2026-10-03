@@ -1,15 +1,15 @@
 {
-  "$comment": "Single source of pins for midnight-experiments/mip-0018. Official Midnight binaries only (Q18). `npm run check:pins` checks every image/binary in docker/ and the package manifests against this file.",
+  "$comment": "Single source of pins for midnight-experiments/mip-0018. Official Midnight binaries only (Midnight's own releases and midnightntwrk images). `npm run check:pins` checks every image/binary in docker/ and the package manifests against this file.",
   "mip": {
     "id": "MIP-0018",
     "title": "On-chain token metadata",
     "pullRequest": "https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340",
     "repository": "midnightntwrk/midnight-improvement-proposals",
-    "commit": "78ecbb4b1ba57371e84fe45f705991ab7b996a61",
+    "commit": "274a84f221bcfc17e4b73e2c8b32fd8c028ea092",
     "path": "mips/mip-0018-on-chain-token-metadata.md",
-    "url": "https://raw.githubusercontent.com/midnightntwrk/midnight-improvement-proposals/78ecbb4b1ba57371e84fe45f705991ab7b996a61/mips/mip-0018-on-chain-token-metadata.md",
-    "sha256": "b9092746ecf5660496535688a2dea152eb23d932b6eeb6b5a182c23426eec1a1",
-    "note": "MIP PR #340 at 78ecbb4 is the final version of the MIP text (owner, 2026-10-02). CI checks the pinned commit's hash. Previous pin b147c627e1bb15b5d15cc73cf30c2a36afd34dbb (the Stagenet cases were prepared under it; payload layout and validation rules unchanged)."
+    "url": "https://raw.githubusercontent.com/midnightntwrk/midnight-improvement-proposals/274a84f221bcfc17e4b73e2c8b32fd8c028ea092/mips/mip-0018-on-chain-token-metadata.md",
+    "sha256": "e64fe1429b9f7589077f1323572cf5c3ffa90c7c96690242a9e76d2658058d8b",
+    "note": "MIP-0018 as proposed in PR #340, at the pinned commit. CI checks the pinned text's SHA-256."
   },
   "compact": {
     "version": "0.35.0",
@@ -44,7 +44,7 @@
     "indexer": "midnightntwrk/indexer-standalone:4.4.0-rc.1@sha256:5d79f3a20da9ed86236c7f7dc9d93b1beeb0b0c47c9c43a791041322eb80b74e",
     "proofServer": "midnightntwrk/proof-server:9.0.0-rc.8@sha256:2666c7bd7b4517f8ad135565387f98d14347a9ac715c6c466d4a8a852b545ecf",
     "walletProofServer": "midnightntwrk/proof-server:9.0.0-rc.6@sha256:38a819eacde273f725551fdf90ca7c31ebf3c0ff145f3ed58ee35f92fb7ce95b",
-    "$comment": "proofServer proves contract circuits (reads zkir 3.1); walletProofServer proves DUST spends accepted by node 2.0.0-rc.4 / Stagenet (Q21)."
+    "$comment": "proofServer proves contract circuits (reads zkir 3.1); walletProofServer proves DUST spends accepted by node 2.0.0-rc.4 / Stagenet (no single official image does both)."
   },
   "npm": {
     "@midnight-ntwrk/compact-runtime": "0.20.0",
@@ -55,7 +55,7 @@
     "@midnightntwrk/wallet-sdk": "2.0.0-beta.2",
     "@midnightntwrk/wallet-sdk-facade": "5.0.0-beta.2",
     "@openzeppelin/compact-contracts": "0.4.0-alpha.5",
-    "$comment": "midnight-js 5.0.0-rc.2 is the line built for compact-runtime 0.20.0; wallet SDK 2.0.0-beta.2 because the 2.0.0-rc.0 line cannot sync against indexer 4.4.0-rc.1 (Q22)."
+    "$comment": "midnight-js 5.0.0-rc.2 is the line built for compact-runtime 0.20.0; wallet SDK 2.0.0-beta.2 because the 2.0.0-rc.0 line cannot sync against indexer 4.4.0-rc.1."
   },
   "networks": {
     "stagenet": {

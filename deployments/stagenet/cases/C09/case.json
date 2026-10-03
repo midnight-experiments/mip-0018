@@ -6,7 +6,7 @@
   "demonstrates": "OpenZeppelin Ownable guards the metadata circuits: a non-owner cannot rename the token; the call fails while the transaction is being built, so nothing is submitted or paid.",
   "conclusion": "the publish command exits 1 (refused before submission: 'Ownable: caller is not the owner'); the record step has no transaction; C01's contract still lists exactly C01's expected state.",
   "mip": {
-    "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
+    "commit": "274a84f221bcfc17e4b73e2c8b32fd8c028ea092",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {

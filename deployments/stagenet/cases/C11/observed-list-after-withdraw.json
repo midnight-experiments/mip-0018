@@ -1,0 +1,61 @@
+{
+  "network": {
+    "id": "stagenet",
+    "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+    "indexer": "https://indexer.stagenet.shielded.tools/api/v4/graphql"
+  },
+  "contract": "b05ee03f0e0f0edb6b3097d68c26a9c198365fe4900df493467d606738db6141",
+  "snapshot": {
+    "indexerTip": {
+      "height": 726321,
+      "hash": "9498a04758d00cfef4046e2067b709d1caf8129d7313a578943223ea866b65b2"
+    },
+    "toBlock": 724916,
+    "nodeHashAtTip": "0x9498a04758d00cfef4046e2067b709d1caf8129d7313a578943223ea866b65b2",
+    "tipMatchesNode": true,
+    "finalizedHeight": 726321
+  },
+  "pages": 2,
+  "counts": {
+    "events": 2,
+    "accepted": 2,
+    "rejected": 0,
+    "ignored": 0
+  },
+  "events": [
+    {
+      "id": 54200,
+      "block": {
+        "height": 724896,
+        "hash": "3c32f9c7237cbe0afe0f65b6ced001b533c7bbfa4aa6181fad129a318eeb5714"
+      },
+      "txHash": "054ecbd532d6a4dc997269f147be7930726e7c434d5fc26f60e53df840563dd6",
+      "txId": 24729,
+      "result": "accept",
+      "identity": "stagenet|b05ee03f0e0f0edb6b3097d68c26a9c198365fe4900df493467d606738db6141|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "records": 4
+    },
+    {
+      "id": 54204,
+      "block": {
+        "height": 724916,
+        "hash": "e73a94296bfd8b4c880146e8c1703fa4c474b75ae3017f55b47a05ef97cb42ff"
+      },
+      "txHash": "5a869bf483d93b4eb8cbdfb06231743e556f050e36bcb1c26e4de07cd1937150",
+      "txId": 24732,
+      "result": "accept",
+      "identity": "stagenet|b05ee03f0e0f0edb6b3097d68c26a9c198365fe4900df493467d606738db6141|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "records": 4
+    }
+  ],
+  "identities": [],
+  "groups": [],
+  "expectation": {
+    "ok": true,
+    "differences": []
+  }
+}

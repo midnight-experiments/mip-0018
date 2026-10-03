@@ -16,7 +16,7 @@ Stagenet cases [C07](../../deployments/stagenet/cases/C07/README.md) (22 vectors
 | `emitTwo(name1, payload1, name2, payload2)` | owner | two `Misc` events, in this order, in one call |
 | `accountId(secretKey)` (pure) | anyone | the OpenZeppelin account id `persistentHash(secretKey)` |
 
-Access control: OpenZeppelin Compact Contracts `0.4.0-alpha.5` `Ownable` (owner decision Q4). The
+Access control: OpenZeppelin Compact Contracts `0.4.0-alpha.5` `Ownable`. The
 constructor takes `initialOwner: Either<Bytes<32>, ContractAddress>` = `left(accountId(secretKey))`;
 the caller proves ownership through the `wit_OwnableSK` witness (private state `{ ownableSecretKey }`,
 see `src/contract.ts`).

@@ -6,7 +6,7 @@
   "demonstrates": "A2a/A2b capacity, A3a–c exact bytes, A4b Uint<128> decimals, A5a–c non-tombstones accepted; R1, R2a, R3a, R3b, R4a, R5a, R5e, R5h, R6b rejected whole; I1a/I1b ([v2]) and I2a/I2b (other names) ignored — each verified with its reason, and the contract's state is exactly what the accepted ones set.",
   "conclusion": "9 accepted, 9 rejected, 4 ignored events; one identity (0x11…/3) with exactly the accepted records' fields (expected.json lists every field).",
   "mip": {
-    "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
+    "commit": "274a84f221bcfc17e4b73e2c8b32fd8c028ea092",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {
@@ -14,7 +14,7 @@
     "vectors": "vectors/payload"
   },
   "notes": [
-    "--force: accepted vectors are emitted even when they would not change the state; rejected and ignored ones are never skipped (Q27)."
+    "--force: accepted vectors are emitted even when they would not change the state (without it, the before-check skips a call whose accepted events leave the contract's state unchanged); rejected and ignored ones are never skipped."
   ],
   "placeholders": {
     "{net}": "network options (Stagenet: --network stagenet)",

@@ -4,11 +4,11 @@
 
 **Demonstrates**: color = wallet 1's UTXO token type; IDX resolves that color back to the identity.
 
-**Expected conclusion** (from the reference reducer, before any transaction): 1 visible kind-2 identity ("Acme Public", "APUB", 6) whose color is the token type of the UTXO wallet 1 received.
+**Expected conclusion** (from the case definition; consumer states are computed with the reference consumer, never from a chain observation): 1 kind-2 identity ("Acme Public", "APUB", 6) whose color is the token type of the UTXO wallet 1 received.
 
 ## Steps (Stagenet)
 
-Values filled in by S5 when it runs: the records (`record.json`), observations (`observed-*.json`, `wallet-status.json`) and the transaction table below. Shell set-up (bash or zsh; S5 plan §S5a; the secret directory is mounted read-only into the signer container only):
+Running the steps writes the run record (`record.json`, rendered as the transaction table below) and the observations (`observed-*.json`, `wallet-status.json`). Shell set-up (bash or zsh; the secret directory is mounted read-only into the signer container only):
 
 ```sh
 signer() {

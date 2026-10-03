@@ -28,7 +28,7 @@ describe('UTF-8 (types 1, 3, 4)', () => {
   });
 });
 
-describe('JSON (type 3) — the platform parser on the decoded text (owner ruling F2)', () => {
+describe('JSON (type 3) — the platform parser on the decoded text', () => {
   it.each(['null', 'true', '0', '-1.5e3', '"x"', '[]', '{"a":[1,{"b":null}]}', ' {} ', '"\\ud800"'])('accepts %s', (s) => {
     expect(checkValue(3, t(s))).toBeUndefined();
   });

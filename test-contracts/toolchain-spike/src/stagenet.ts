@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// S0 spike, step 3: Stagenet. Runs ONLY in the signer container
+// Toolchain spike, step 3: Stagenet. Runs ONLY in the signer container
 // (docker/signer.sh), which mounts the wallet mnemonic file read-only and a
 // private state directory (both outside the repository).
 //
@@ -30,7 +30,7 @@ const recordPath = process.env.SPIKE_RECORD ?? join(import.meta.dirname, '..', '
 if (existsSync(recordPath) && !process.env.SPIKE_ALLOW_NEW_RUN) {
   throw new Error(`${recordPath} exists: a Stagenet spike was already run; reconcile it instead of running again`);
 }
-const privateStatePath = join(need('MIP0018_STATE_DIR'), 's0-spike-private-state.json');
+const privateStatePath = join(need('MIP0018_STATE_DIR'), 'spike-private-state.json');
 
 const session = await openWallet(network, seedFromMnemonicFile(need('MIP0018_MNEMONIC_FILE')));
 try {

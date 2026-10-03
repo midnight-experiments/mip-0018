@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# End-to-end test of the examples and of S5's case folders on a local undeployed chain (docker/local-stack, official
+# End-to-end test of the examples and of the Stagenet case folders on a local undeployed chain (docker/local-stack, official
 # images only). Companion of local-e2e.sh (which covers the CLI's crash/resume, scanner kill/resume, identity guards).
 #
 #   MIP0018_DOCKER_PREFIX=<prefix> MIP0018_E2E_DIR=<empty dir outside the repo> packages/cli/test/e2e/examples-e2e.sh
@@ -16,7 +16,7 @@
 #      (list after each = metadata.json lifecycle); create-and-destroy on the minimal example (remove-circuit, then a
 #      publish refused before submission)
 #   C  every Stagenet case folder (deployments/stagenet/cases/C01…C10, IDX) run on the local chain: each step's
-#      command expanded by case.py (local wallets and paths), its exit code = the case's; outputs saved like S5 will
+#      command expanded by case.py (local wallets and paths), its exit code = the case's; outputs saved as on Stagenet
 #   D  `mip0018 recheck` of every case (wallet-free, one command each) + a secret scan of every log, record and state
 #
 # Wallets: A = the dev chain's public genesis wallet (with a 0600 sync cache); B = a fresh local test wallet funded by
@@ -155,17 +155,17 @@ if part B; then
   rc=0; cli wt-list-rename list --network undeployed --record $FT --to-block "$(at rename)" --expect @/e2e/dap/ft-after-0.json || rc=$?
   expect_rc "B list after rename = metadata.json lifecycle[rename]" 0 "$rc"
   rc=0; signer wt-withdraw publish $A --record $FT --circuit withdrawMetadata --step withdraw || rc=$?
-  expect_rc "B withdraw (tombstone)" 0 "$rc"
+  expect_rc "B withdraw (a Null record for each key, one event)" 0 "$rc"
   rc=0; cli wt-list-withdraw list --network undeployed --record $FT --to-block "$(at withdraw)" --expect @/e2e/dap/ft-after-1.json || rc=$?
-  expect_rc "B list after withdraw (hidden, no fields, no group)" 0 "$rc"
+  expect_rc "B list after withdraw (the identity is not listed, no group)" 0 "$rc"
   rc=0; signer wt-withdraw-skip publish $A --record $FT --circuit withdrawMetadata --step withdraw-again-skipped || rc=$?
   expect_rc "B withdraw again WITHOUT --force" 0 "$rc"
-  check "B the repeated tombstone was skipped by the before-check (no transaction)" py "
+  check "B the repeated withdrawal was skipped by the before-check (no transaction)" py "
 import json; s=[x for x in json.load(open('$DAP/fungible-token.json'))['steps'] if x['id']=='withdraw-again-skipped'][0]; assert 'tx' not in s and s.get('skipped'), s"
   rc=0; signer wt-withdraw-again publish $A --record $FT --circuit withdrawMetadata --step withdraw-again --force || rc=$?
   expect_rc "B withdraw again with --force (emitted)" 0 "$rc"
   rc=0; cli wt-list-withdraw-again list --network undeployed --record $FT --to-block "$(at withdraw-again)" --expect @/e2e/dap/ft-after-2.json || rc=$?
-  expect_rc "B list after the repeated tombstone (unchanged)" 0 "$rc"
+  expect_rc "B list after the repeated withdrawal (unchanged)" 0 "$rc"
   rc=0; signer wt-revive publish $A --record $FT --circuit publishMetadata --step revive || rc=$?
   expect_rc "B revive (publishMetadata again)" 0 "$rc"
   rc=0; cli wt-list-revive list --network undeployed --record $FT --to-block "$(at revive)" --expect @/e2e/dap/ft-after-3.json --history || rc=$?
@@ -185,7 +185,7 @@ import json; s=[x for x in json.load(open('$DAP/minimal.json'))['steps'] if x['i
   expect_rc "B list minimal: still exactly the A1 metadata" 0 "$rc"
 fi
 
-# ------------------------------------------------------------------------------------------- C: S5 case folders, local
+# ------------------------------------------------------------------------------------ C: Stagenet case folders, local
 run_case() { # run_case <ID>
   local id="$1" cj="$repo/deployments/stagenet/cases/$1/case.json" line i sid runner want out msg args a rc
   mkdir -p "$CASES/$id"

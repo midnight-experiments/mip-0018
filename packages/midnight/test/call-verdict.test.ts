@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // A publish whose expected events are missing: an included PARTIAL_SUCCESS transaction is a failure (its logging
-// segment failed and the events will never appear), anything else is waited for (audit finding F-N2).
+// segment failed and the events will never appear), anything else is waited for.
 import { describe, expect, it } from 'vitest';
 import { missingEventsVerdict } from '../src/signer/index.ts';
 

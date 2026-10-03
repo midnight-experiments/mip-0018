@@ -1,4 +1,5 @@
-# CI: everything runs in the pinned toolchain image (docker/Dockerfile); no chain, no secrets.
+# CI: everything runs in the pinned toolchain image (docker/Dockerfile); no chain, no secrets (the mip-pin job reads
+# the GitHub API with the workflow's own read-only token).
 name: ci
 
 on:
@@ -73,5 +74,7 @@ jobs:
           tags: ${{ env.MIP0018_IMAGE }}
           load: true
           cache-from: type=gha,scope=toolchain
-      - name: Check the MIP-0018 text at the pinned commit (toolchain.json) and that README, notes, vectors and schemas cite the same pin
+      - name: Check the MIP-0018 text at the pinned commit (toolchain.json), that README, vectors, schemas and Stagenet cases cite it, and that no tracked file cites another MIP commit
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: docker/run.sh check:mip-pin

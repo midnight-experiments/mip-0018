@@ -1,5 +1,5 @@
 {
-  "$comment": "Stagenet identity during the S5/S6b runs (deployments/stagenet/tools/network-identity.ts). Public data only; re-run the tool to compare.",
+  "$comment": "Stagenet identity during the case runs (deployments/stagenet/tools/network-identity.ts). Public data only; re-run the tool to compare.",
   "network": {
     "id": "stagenet",
     "networkId": "stagenet",
@@ -10,7 +10,7 @@
   },
   "observations": [
     {
-      "label": "S5a preflight (before the first matrix transaction)",
+      "label": "before the first matrix transaction",
       "observedAt": "2026-10-02T07:54:20.785Z",
       "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
       "genesisMatchesPin": true,
@@ -94,7 +94,7 @@
       "requests": 9
     },
     {
-      "label": "after U1 (end of S5/S6b)",
+      "label": "after U1",
       "observedAt": "2026-10-02T09:43:20.314Z",
       "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
       "genesisMatchesPin": true,
@@ -138,6 +138,116 @@
           "health": {
             "status": "ok",
             "timestamp": "2026-10-02 09:43:20.32100202 +00:00:00"
+          },
+          "version": "9.0.0-rc.6",
+          "proofVersions": [
+            "V2",
+            "V3"
+          ]
+        }
+      },
+      "requests": 9
+    },
+    {
+      "label": "before the first C11 transaction",
+      "observedAt": "2026-10-03T01:19:10.911Z",
+      "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+      "genesisMatchesPin": true,
+      "node": {
+        "chain": "Midnight Stagenet",
+        "name": "Midnight Node",
+        "version": "2.0.0-d9729c13",
+        "specName": "midnight",
+        "specVersion": 2000000,
+        "transactionVersion": 4,
+        "stateVersion": 1,
+        "finalizedHead": {
+          "hash": "0x39e325ccc6debf1d0d6192df161d8dde53ae9e2def3ee5e325f1bcba967dc85e",
+          "height": 724845
+        },
+        "bestHeight": 724847
+      },
+      "indexer": {
+        "latestBlock": {
+          "height": 724845,
+          "hash": "39e325ccc6debf1d0d6192df161d8dde53ae9e2def3ee5e325f1bcba967dc85e",
+          "timestamp": 1790990334000,
+          "protocolVersion": 2000000
+        }
+      },
+      "proofServers": {
+        "contract": {
+          "url": "http://mips-00013-s10-proof-158b1a:6300",
+          "health": {
+            "status": "ok",
+            "timestamp": "2026-10-03 01:19:10.916030961 +00:00:00"
+          },
+          "version": "9.0.0-rc.8",
+          "proofVersions": [
+            "V2",
+            "V3"
+          ]
+        },
+        "dust": {
+          "url": "http://mips-00013-s10-wproof-158b1a:6300",
+          "health": {
+            "status": "ok",
+            "timestamp": "2026-10-03 01:19:10.924906146 +00:00:00"
+          },
+          "version": "9.0.0-rc.6",
+          "proofVersions": [
+            "V2",
+            "V3"
+          ]
+        }
+      },
+      "requests": 9
+    },
+    {
+      "label": "after C11",
+      "observedAt": "2026-10-03T01:31:24.555Z",
+      "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+      "genesisMatchesPin": true,
+      "node": {
+        "chain": "Midnight Stagenet",
+        "name": "Midnight Node",
+        "version": "2.0.0-d9729c13",
+        "specName": "midnight",
+        "specVersion": 2000000,
+        "transactionVersion": 4,
+        "stateVersion": 1,
+        "finalizedHead": {
+          "hash": "0x88c08b42dd2ffd51abf3ffadd5bf8c1f00490d6fe33d7987ebb01778413b5c73",
+          "height": 724967
+        },
+        "bestHeight": 724969
+      },
+      "indexer": {
+        "latestBlock": {
+          "height": 724967,
+          "hash": "88c08b42dd2ffd51abf3ffadd5bf8c1f00490d6fe33d7987ebb01778413b5c73",
+          "timestamp": 1790991066000,
+          "protocolVersion": 2000000
+        }
+      },
+      "proofServers": {
+        "contract": {
+          "url": "http://mips-00013-s10-proof-158b1a:6300",
+          "health": {
+            "status": "ok",
+            "timestamp": "2026-10-03 01:31:24.558941959 +00:00:00"
+          },
+          "version": "9.0.0-rc.8",
+          "proofVersions": [
+            "V2",
+            "V3"
+          ]
+        },
+        "dust": {
+          "url": "http://mips-00013-s10-wproof-158b1a:6300",
+          "health": {
+            "status": "ok",
+            "timestamp": "2026-10-03 01:31:24.565743813 +00:00:00"
           },
           "version": "9.0.0-rc.6",
           "proofVersions": [

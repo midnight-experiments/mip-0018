@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Run records (question Q13 (b); spec FR-040): one public JSON file per contract run, rewritten atomically after
+// Run records: one public JSON file per contract run, rewritten atomically after
 // every state change, holding the contract address and, for every step (deploy, each call, each maintenance update):
 //
 //   pending      created, nothing submitted
@@ -25,7 +25,7 @@ export type StepKind = 'deploy' | 'call' | 'verifier-key-remove' | 'verifier-key
 export interface TxRef {
   hash: string;
   identifiers: string[];
-  /** Latest intent TTL (ISO); after it the transaction can no longer be included. */
+  /** Latest intent TTL (ISO); after it the transaction cannot be included. */
   ttl?: string;
   txId?: string;
 }
@@ -67,7 +67,7 @@ export interface RunRecord {
     privateStateId?: string;
     /** Set when this record was attached to a contract it did not deploy (`--attach`): where the address came from. */
     attached?: { from: string; at: string };
-    /** Circuits added later with a VerifierKeyInsert (S6 upgrade template), and the source they were compiled from. */
+    /** Circuits added later with a VerifierKeyInsert (the upgrade template), and the source they were compiled from. */
     upgrades?: UpgradeEntry[];
   };
   signer?: { unshieldedAddress: string };

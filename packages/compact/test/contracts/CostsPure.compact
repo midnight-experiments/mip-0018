@@ -46,10 +46,10 @@ export circuit dsArg4(ds: Bytes<32>): [] {
   P_emitPayload(P_commonFieldsWithStandards<10, 4, 8, 17, 13, 20, 161>(ds, 3, "Acme Token", "ACME", 6, "mip-0004"));
 }
 
-export circuit tombLit(): [] {
-  P_emitPayload(P_tombstone(pad(32, "acme:token"), 3));
+export circuit withdrawLit(): [] {
+  P_emitPayload(P_withdraw(pad(32, "acme:token"), 3));
 }
 
-export circuit tombArg(ds: Bytes<32>, kind: Uint<8>): [] {
-  P_emitPayload(P_tombstone(ds, kind));
+export circuit withdrawArg(ds: Bytes<32>, kind: Uint<8>): [] {
+  P_emitPayload(P_withdraw(ds, kind));
 }

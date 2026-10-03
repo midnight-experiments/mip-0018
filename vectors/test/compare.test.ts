@@ -35,24 +35,36 @@ describe('compareDecode', () => {
 });
 
 describe('compareState', () => {
-  const visible = { ...ID, visible: true, fields: { '6e616d65': { valType: 1, value_hex: '41', usable: true } } };
-  it('a hidden identity without fields equals an absent one (both directions)', () => {
-    expect(compareState({ identities: [{ ...ID, visible: false, fields: {} }] }, { identities: [] }).ok).toBe(true);
-    expect(compareState({ identities: [] }, { identities: [{ ...ID, visible: false, fields: {} }] }).ok).toBe(true);
+  const described = { ...ID, fields: { '6e616d65': { valType: 1, value_hex: '41', usable: true } } };
+  it('an identity whose last field was deleted: a consumer that omits it passes, one that reports it without fields fails', () => {
+    // MIP "Applying records": "Once its last field is deleted, consumers MUST NOT reference the identity at all".
+    expect(compareState({ identities: [] }, { identities: [] }).ok).toBe(true);
+    const empty = compareState({ identities: [] }, { identities: [{ ...ID, fields: {} }] });
+    expect(empty.ok).toBe(false);
+    expect(empty.failures.join()).toMatch(/reported without fields — .*MUST NOT be referenced/);
+    expect(compareState({ identities: [] }, { identities: [{ ...ID }] }).ok).toBe(false);
+    // Next to an identity that exists, an empty one still fails.
+    expect(compareState({ identities: [described] }, { identities: [described, { ...ID, kind: 3, fields: {} }] }).ok).toBe(false);
   });
-  it('a hidden identity that still has fields fails', () => {
-    const got = { identities: [{ ...ID, visible: false, fields: visible.fields }] };
-    expect(compareState({ identities: [{ ...ID, visible: false, fields: {} }] }, got).ok).toBe(false);
+  it('an identity reported with fields where the expectation has none fails (withdrawn = absent, never kept with values)', () => {
+    const c = compareState({ identities: [] }, { identities: [described] });
+    expect(c.ok).toBe(false);
+    expect(c.failures.join()).toMatch(/not expected/);
+  });
+  it('an expected identity that is not reported fails', () => {
+    const c = compareState({ identities: [described] }, { identities: [] });
+    expect(c.ok).toBe(false);
+    expect(c.failures.join()).toMatch(/not reported/);
   });
   it('extra fields and extra identities fail', () => {
-    const extraField = { ...visible, fields: { ...visible.fields, '78': { valType: 0, value_hex: '' } } };
-    expect(compareState({ identities: [visible] }, { identities: [extraField] }).ok).toBe(false);
-    expect(compareState({ identities: [visible] }, { identities: [visible, { ...visible, kind: 2 }] }).ok).toBe(false);
+    const extraField = { ...described, fields: { ...described.fields, '78': { valType: 0, value_hex: '' } } };
+    expect(compareState({ identities: [described] }, { identities: [extraField] }).ok).toBe(false);
+    expect(compareState({ identities: [described] }, { identities: [described, { ...described, kind: 2 }] }).ok).toBe(false);
   });
   it('usable is compared only when expected', () => {
-    const noUsable = { ...visible, fields: { '6e616d65': { valType: 1, value_hex: '41' } } };
-    expect(compareState({ identities: [noUsable] }, { identities: [visible] }).ok).toBe(true);
-    expect(compareState({ identities: [visible] }, { identities: [noUsable] }).ok).toBe(false);
+    const noUsable = { ...described, fields: { '6e616d65': { valType: 1, value_hex: '41' } } };
+    expect(compareState({ identities: [noUsable] }, { identities: [described] }).ok).toBe(true);
+    expect(compareState({ identities: [described] }, { identities: [noUsable] }).ok).toBe(false);
   });
   const g = {
     network: 'n',
@@ -116,22 +128,23 @@ describe('compareState', () => {
 
   it('fields other than the four common keys are optional; when reported they must match', () => {
     const note = { valType: 1, value_hex: '', key_text: 'note' };
-    const exp = { identities: [{ ...visible, fields: { ...visible.fields, '6e6f7465': note } }] };
-    const without = compareState(exp, { identities: [visible] });
+    const exp = { identities: [{ ...described, fields: { ...described.fields, '6e6f7465': note } }] };
+    const without = compareState(exp, { identities: [described] });
     expect(without.ok).toBe(true);
     expect(without.notes.join()).toMatch(/not reported \(allowed: not a common key/);
     expect(
-      compareState(exp, { identities: [{ ...visible, fields: { ...visible.fields, '6e6f7465': { valType: 1, value_hex: '' } } }] }).ok,
+      compareState(exp, { identities: [{ ...described, fields: { ...described.fields, '6e6f7465': { valType: 1, value_hex: '' } } }] }).ok,
     ).toBe(true);
     expect(
-      compareState(exp, { identities: [{ ...visible, fields: { ...visible.fields, '6e6f7465': { valType: 0, value_hex: '' } } }] }).ok,
+      compareState(exp, { identities: [{ ...described, fields: { ...described.fields, '6e6f7465': { valType: 0, value_hex: '' } } }] }).ok,
     ).toBe(false);
   });
 
   it('a missing common key fails (name, symbol, decimals, standards)', () => {
     for (const key of ['6e616d65', '73796d626f6c', '646563696d616c73', '7374616e6461726473']) {
-      const exp = { identities: [{ ...ID, visible: true, fields: { [key]: { valType: 1, value_hex: '41' } } }] };
-      const c = compareState(exp, { identities: [{ ...ID, visible: true, fields: {} }] });
+      const other = { '78': { valType: 0, value_hex: '' } };
+      const exp = { identities: [{ ...ID, fields: { [key]: { valType: 1, value_hex: '41' }, ...other } }] };
+      const c = compareState(exp, { identities: [{ ...ID, fields: other }] });
       expect(c.ok, key).toBe(false);
       expect(c.failures.join()).toMatch(/missing/);
     }

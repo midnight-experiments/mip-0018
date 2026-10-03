@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Wallet-free chain reads used before and after every transaction (Q13 (b)) — the clients were promoted to
-// @mip0018/midnight in S4 (indexer GraphQL v4, node RPC, before/after checks); these spike helpers keep their S0
-// signatures on top of them.
+// Wallet-free chain reads used before and after every transaction. The clients live in @mip0018/midnight (indexer
+// GraphQL v4, node RPC, before/after checks); these spike helpers are thin wrappers with the spike's own signatures.
 
 import { HttpClient, Indexer, NodeRpc, checkIdentity, normHex, type BlockInfo } from '@mip0018/midnight';
 import { contractView as packageContractView, pollFor } from '@mip0018/midnight/signer';

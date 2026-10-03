@@ -11,7 +11,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import * as rt from '@midnight-ntwrk/compact-runtime';
-import { commonRecords, encodePayload, fromHex, record, toHex, type MetadataRecord } from '@mip0018/codec';
+import { commonRecords, encodePayload, fromHex, toHex, withdrawRecords, type MetadataRecord } from '@mip0018/codec';
 import { Simulator, type CallOutcome } from '@mip0018/compact/testing';
 import { MetadataState, type IdentityView } from '@mip0018/consumer';
 import { exampleDir, type ExampleName } from './examples.ts';
@@ -143,11 +143,15 @@ export type IdentityMetadata = {
   standards?: string;
 };
 
-/** One expected event: the identity, its records (common fields, or a tombstone) and the exact payload. */
-export type ExpectedEvent = IdentityMetadata & { tombstone?: true; payload: string };
+/**
+ * One expected event: the identity, its records (common fields, or `withdraw`: Null records at `name`, `symbol`,
+ * `decimals` and `standards`) and the exact payload.
+ */
+export type ExpectedEvent = IdentityMetadata & { withdraw?: true; payload: string };
 
 export type ExpectedState = {
-  identities: { domainSep: string; kind: number; visible: boolean; colored: boolean; common: Record<string, unknown> }[];
+  /** Every identity that has at least one field; a withdrawn one (every field deleted) is not listed. */
+  identities: { domainSep: string; kind: number; colored: boolean; common: Record<string, unknown> }[];
   groups: { symbol: string; members: { domainSep: string; kind: number }[] }[];
 };
 
@@ -176,9 +180,7 @@ export const loadMetadata = (example: ExampleName): ExampleMetadata =>
 
 /** The records an expected event carries, in emission order. */
 export const eventRecords = (e: ExpectedEvent): MetadataRecord[] =>
-  e.tombstone
-    ? [record.tombstone('name')]
-    : commonRecords({ name: e.name, symbol: e.symbol, decimals: e.decimals, standards: e.standards });
+  e.withdraw ? withdrawRecords() : commonRecords({ name: e.name, symbol: e.symbol, decimals: e.decimals, standards: e.standards });
 
 /** The payload the reference encoder (`@mip0018/codec`) produces for an expected event. */
 export const encodeExpected = (e: ExpectedEvent): Uint8Array =>
@@ -235,7 +237,7 @@ export class Chain {
       identities: this.state
         .identities()
         .filter((v) => v.contractAddress === address)
-        .map((v) => ({ domainSep: `0x${v.domainSep}`, kind: v.kind, visible: v.visible, colored: v.colored, common: common(v) })),
+        .map((v) => ({ domainSep: `0x${v.domainSep}`, kind: v.kind, colored: v.colored, common: common(v) })),
       groups: this.state
         .groups()
         .filter((g) => g.contractAddress === address)

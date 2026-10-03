@@ -33,7 +33,7 @@ describe('formatAmount', () => {
   it('keeps trailing zeros on request', () => {
     expect(formatAmount(123400n, 2n, { trimTrailingZeros: false })).toBe('1234.00');
   });
-  it('renders any decimals exactly and quickly (no cap, F3)', () => {
+  it('renders any decimals exactly and quickly (no cap)', () => {
     const huge = 2n ** 248n - 1n;
     const t0 = performance.now();
     expect(formatAmount(123456n, huge)).toBe(`1.23456e-${(huge - 5n).toString()}`);

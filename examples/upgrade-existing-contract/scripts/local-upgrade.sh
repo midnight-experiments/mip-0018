@@ -181,10 +181,10 @@ rc=0; cli verify verify --network undeployed --contract "$ADDR" --tx "$PUB_TX" -
 expect_rc "verify the publish (bound to the original address, kind-1 expectation)" 0 "$rc"
 rc=0; cli list list --network undeployed --contract "$ADDR" --json || rc=$?
 expect_rc "list the contract" 0 "$rc"
-check "list: one visible kind-1 identity (original address, domainSep 0x5e…) with color = the pre-upgrade coin's" py "
+check "list: one kind-1 identity (original address, domainSep 0x5e…) with color = the pre-upgrade coin's" py "
 import json; d=json.load(open('$LOGS/list.out')); i=d['identities']
 assert len(i)==1, i; x=i[0]
-assert x['visible'] and x['kind']==1 and x['contractAddress']=='$ADDR' and x['domainSep']=='${DS#0x}', x
+assert x['kind']==1 and x['contractAddress']=='$ADDR' and x['domainSep']=='${DS#0x}', x
 assert x['color']=='$COLOR', (x['color'], '$COLOR')
 c=x['common']; assert c['name']=='Legacy Token' and c['symbol']=='LGCY' and str(c['decimals'])=='6', c"
 rc=0; signer wallet-a-after wallet status $A --json || rc=$?

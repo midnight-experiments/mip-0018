@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # Host-side helper of examples-e2e.sh: reads a Stagenet case folder (deployments/stagenet/cases/<ID>/case.json) and
-# expands each step's argv for the LOCAL stack, exactly as S5 expands it for Stagenet (only the placeholders differ):
+# expands each step's argv for the LOCAL stack, exactly as the signer expands it for Stagenet (only the placeholders differ):
 #
 #   python3 case.py steps <case.json>                       one line per step: index TAB id TAB runner TAB exit TAB stdout
 #                                                           TAB expected output text (failing steps)
