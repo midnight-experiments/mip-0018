@@ -237,7 +237,7 @@ export async function recheckCase(
         if (!cmp.ok || liveColor !== color) {
           ok = false;
           notes.push(`live identity: ${cmp.differences.join('; ') || ''}${liveColor !== color ? ` color ${liveColor ?? '-'}` : ''}`);
-        } else notes.push(`live identity ${k.expectIdentity.common.symbol ?? ''} visible=${v!.visible}`);
+        } else notes.push(`live identity ${k.expectIdentity.common.symbol ?? ''} as expected`);
       }
       add(id, ok, notes.join('; '));
     });

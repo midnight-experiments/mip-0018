@@ -63,7 +63,6 @@ const snapshot = (s: MetadataState): string =>
       .identities()
       .map((i) => ({
         key: i.key,
-        visible: i.visible,
         fields: i.fields.map((f) => [f.keyHex, f.valType, Buffer.from(f.value).toString('hex')]).sort(),
       }))
       .sort((a, b) => (a.key < b.key ? -1 : 1)),

@@ -4,7 +4,7 @@
 // into the metadata.json `expected` shape, and every kind of difference it must report.
 
 import { describe, expect, it } from 'vitest';
-import { commonRecords, encodePayload, EVENT_NAME, record } from '@mip0018/codec';
+import { commonRecords, encodePayload, EVENT_NAME, record, withdrawRecords } from '@mip0018/codec';
 import { MetadataState } from '@mip0018/consumer';
 import { compareState, expectedStateFrom, projectState, tokenType, type ExpectedState } from '../src/index.ts';
 
@@ -37,7 +37,6 @@ const A1: ExpectedState = {
     {
       domainSep: `0x${DS}`,
       kind: 3,
-      visible: true,
       colored: false,
       common: { name: 'Acme Token', symbol: 'ACME', decimals: 6, standards: 'mip-0004' },
     },
@@ -60,12 +59,12 @@ describe('expected state', () => {
 
   it('reports every difference', () => {
     const wrong: ExpectedState = JSON.parse(JSON.stringify(A1));
-    wrong.identities[0]!.visible = false;
+    wrong.identities[0]!.colored = true;
     wrong.identities[0]!.common.symbol = 'ACMX';
     wrong.groups = [];
     wrong.counts = { rejected: 1 };
     const d = compareState(observed, wrong).differences.join('\n');
-    expect(d).toMatch(/visible true, expected false/);
+    expect(d).toMatch(/colored false, expected true/);
     expect(d).toMatch(/common/);
     expect(d).toMatch(/groups/);
     expect(d).toMatch(/counts.rejected 0, expected 1/);
@@ -87,14 +86,34 @@ describe('expected state', () => {
     expect(compareState(observed, f).differences.join()).toMatch(/observed, not expected/);
   });
 
-  it('tombstone: hidden identity with no fields and no group; colored kinds 1/2', () => {
+  it('a Null record deletes its field only; the identity keeps its other fields and its group (colored kinds 1/2)', () => {
     const t = stateOf([
       p(1, { name: 'A', symbol: 'AA' }),
       encodePayload({ domainSep: Buffer.from(DS, 'hex'), kind: 1 }, [record.tombstone('name')]),
     ]);
     const o = projectState(t.identities(), t.groups());
     expect(
-      compareState(o, { identities: [{ domainSep: `0x${DS}`, kind: 1, visible: false, colored: true, common: {} }], groups: [] }),
+      compareState(o, {
+        identities: [{ domainSep: `0x${DS}`, kind: 1, colored: true, common: { symbol: 'AA' } }],
+        groups: [{ symbol: 'AA', members: [{ domainSep: `0x${DS}`, kind: 1 }] }],
+      }),
     ).toEqual({ ok: true, differences: [] });
+  });
+
+  it('withdraw (a Null record for each key): the identity is not listed at all, no group, as if never described', () => {
+    const t = stateOf([
+      p(1, { name: 'A', symbol: 'AA', decimals: 6n, standards: ['mip-0011'] }),
+      encodePayload({ domainSep: Buffer.from(DS, 'hex'), kind: 1 }, withdrawRecords()),
+    ]);
+    const o = projectState(t.identities(), t.groups());
+    expect(o).toEqual({ identities: [], groups: [] });
+    expect(compareState(o, { identities: [], groups: [] })).toEqual({ ok: true, differences: [] });
+    // an expectation that still lists it (in any form) fails
+    expect(compareState(o, { identities: [{ domainSep: `0x${DS}`, kind: 1, colored: true, common: {} }], groups: [] }).ok).toBe(false);
+  });
+
+  it('refuses an expectation file that still uses the removed `visible` property', () => {
+    const old = { identities: [{ domainSep: `0x${DS}`, kind: 1, visible: false, colored: true, common: {} }], groups: [] };
+    expect(() => expectedStateFrom(old)).toThrow(/"visible": that property was removed with MIP 274a84f/);
   });
 });

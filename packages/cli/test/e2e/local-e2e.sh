@@ -137,7 +137,7 @@ rc=0; cli verify-unknown verify --network undeployed --contract "$EM_ADDR" --tx 
 expect_rc "verify an unknown transaction (not found)" 3 "$rc"
 rc=0; cli list-em list --network undeployed --contract "$EM_ADDR" --json || rc=$?
 expect_rc "list emitter" 0 "$rc"
-check "list: one visible kind-3 identity with the A1 fields" py "import json; d=json.load(open('$LOGS/list-em.out')); i=d['identities']; assert len(i)==1 and i[0]['visible'] and i[0]['kind']==3 and i[0]['common']['name']=='Acme Token' and str(i[0]['common']['decimals'])=='6', i"
+check "list: one kind-3 identity with the A1 fields" py "import json; d=json.load(open('$LOGS/list-em.out')); i=d['identities']; assert len(i)==1 and 'visible' not in i[0] and i[0]['kind']==3 and i[0]['common']['name']=='Acme Token' and str(i[0]['common']['decimals'])=='6', i"
 
 rc=0; signer em-publish-again publish $A --record /e2e/records/emitter.json --circuit publishMetadata --step publish-again || rc=$?
 expect_rc "publish the same metadata again (new step id)" 0 "$rc"

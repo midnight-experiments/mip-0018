@@ -75,7 +75,7 @@ function recordsText(rs: unknown[] | undefined): string {
         x.valType === 2
           ? x.integer
           : x.valType === 5
-            ? '<tombstone>'
+            ? '<Null: deletes the field>'
             : x.valType === 0
               ? `0x${x.value}`
               : JSON.stringify(v.toString('utf8'));
@@ -186,7 +186,7 @@ function fieldText(f: IdentityView['fields'][number]): string {
 
 export function printIdentity(id: IdentityView, indent = ''): void {
   out(
-    `${indent}identity  domainSep ${id.domainSep}  kind ${id.kind} (${KIND_NAME[id.kind] ?? '?'})  ${id.visible ? 'visible' : 'HIDDEN (withdrawn)'}  color ${id.color ? Buffer.from(id.color).toString('hex') : '-'}`,
+    `${indent}identity  domainSep ${id.domainSep}  kind ${id.kind} (${KIND_NAME[id.kind] ?? '?'})  color ${id.color ? Buffer.from(id.color).toString('hex') : '-'}`,
   );
   for (const f of id.fields) {
     const key = Buffer.from(f.key).toString('utf8');
@@ -210,6 +210,7 @@ export function printList(r: ListReport): void {
       `${r.counts.events} (${r.counts.accepted} accepted, ${r.counts.rejected} rejected, ${r.counts.ignored} ignored) in ${r.pages} page(s)`,
     ],
   ]);
+  if (r.identities.length === 0) out('identities  none: no token identity of this contract has a field with a value');
   for (const id of r.identities) printIdentity(id);
   if (r.groups.length) {
     out('groups');

@@ -5,13 +5,16 @@
 // The shape is the `expected` object of the examples' metadata.json (examples/openzeppelin/README.md#metadatajson),
 // which is also what deployments/stagenet/cases/<ID>/expected.json holds:
 //
-//   { "identities": [ { "domainSep": "0x…", "kind": 1|2|3, "visible": bool, "colored": bool,
+//   { "identities": [ { "domainSep": "0x…", "kind": 1|2|3, "colored": bool,
 //                       "common": { "name"?, "symbol"?, "decimals"? (number), "standards"? (space-joined) },
 //                       "fields"?: { "<key hex>": { "key_text", "valType", "value_hex", "usable"? } } } ],
 //     "groups": [ { "symbol": "<text>", "members": [ { "domainSep": "0x…", "kind" } ] } ],
 //     "counts"?: { "events"?, "accepted"?, "rejected"?, "ignored"? } }
 //
-// Identities are matched by (domainSep, kind): the observed set must equal the expected set. `fields` and `counts`
+// Identities are matched by (domainSep, kind): the observed set must equal the expected set. Only identities that have
+// at least one field exist (MIP "Applying records": once its last field is deleted, an identity is not referenced at
+// all), so a withdrawn identity is simply not listed; the `visible` property of earlier expectation files is refused.
+// `fields` and `counts`
 // are compared only when the expectation has them (metadata.json files do not; the raw-emitter cases do). Colors
 // are not part of the expectation (they depend on the deployed address); `colored` says whether one is derived, and
 // `recheck` compares the actual colors with the scanner and the wallet.
@@ -29,7 +32,6 @@ export interface ExpectedField {
 export interface ExpectedIdentity {
   domainSep: string;
   kind: number;
-  visible: boolean;
   colored: boolean;
   common: Record<string, unknown>;
   fields?: Record<string, ExpectedField>;
@@ -64,6 +66,11 @@ export function expectedStateFrom(json: unknown): ExpectedState {
   const s = (inner && typeof inner === 'object' && Array.isArray(inner.identities) ? inner : o) as ExpectedState;
   if (!s || !Array.isArray(s.identities) || !Array.isArray(s.groups))
     throw new ExpectationError('an expected state needs "identities" and "groups" arrays (or an "expected" object holding them)');
+  for (const i of s.identities as unknown as Record<string, unknown>[])
+    if (i && typeof i === 'object' && 'visible' in i)
+      throw new ExpectationError(
+        `expected identity ${String(i.domainSep)}/${String(i.kind)} has "visible": that property was removed with MIP 274a84f (per-key tombstones) — list only identities that have at least one field`,
+      );
   return s;
 }
 
@@ -89,7 +96,6 @@ export function projectState(identities: IdentityView[], groups: SymbolGroup[], 
     identities: identities.map((v) => ({
       domainSep: x0(v.domainSep),
       kind: v.kind,
-      visible: v.visible,
       colored: v.colored,
       common: commonOf(v),
       fields: Object.fromEntries(
@@ -135,7 +141,6 @@ export function compareState(observed: ExpectedState, expected: ExpectedState): 
   for (const [k, e] of exp) {
     const o = obs.get(k);
     if (!o) continue;
-    if (o.visible !== e.visible) d.push(`${k}: visible ${o.visible}, expected ${e.visible}`);
     if (o.colored !== e.colored) d.push(`${k}: colored ${o.colored}, expected ${e.colored}`);
     if (canon(o.common) !== canon(e.common)) d.push(`${k}: common ${canon(o.common)}, expected ${canon(e.common)}`);
     if (e.fields !== undefined) {

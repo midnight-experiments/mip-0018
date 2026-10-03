@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { generateMnemonic } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english.js';
-import { commonRecords, encodePayload, record } from '@mip0018/codec';
+import { commonRecords, encodePayload, record, withdrawRecords } from '@mip0018/codec';
 import {
   ArgsError,
   circuitArgs,
@@ -250,12 +250,22 @@ describe('before-check: would this publish change the metadata?', () => {
     expect(wouldChange('n', CONTRACT, [ev(1, 10, p1)], [{ name: NAME, payload: p2 }])).toBe(true);
     // rename A → B → A: the third publish changes the state again
     expect(wouldChange('n', CONTRACT, [ev(1, 10, p1), ev(2, 11, p2)], [{ name: NAME, payload: p1 }])).toBe(true);
-    // a tombstone after a tombstone changes nothing
-    const tomb = Buffer.from(encodePayload({ domainSep: Buffer.from('11'.repeat(32), 'hex'), kind: 3 }, [record.tombstone()])).toString(
-      'hex',
-    );
+    // a withdrawal after a withdrawal changes nothing (the identity is already gone)
+    const tomb = Buffer.from(encodePayload({ domainSep: Buffer.from('11'.repeat(32), 'hex'), kind: 3 }, withdrawRecords())).toString('hex');
     expect(wouldChange('n', CONTRACT, [ev(1, 10, p1)], [{ name: NAME, payload: tomb }])).toBe(true);
     expect(wouldChange('n', CONTRACT, [ev(1, 10, p1), ev(2, 11, tomb)], [{ name: NAME, payload: tomb }])).toBe(false);
+    // deleting one key changes the state; deleting it again, or a key that has no value, does not
+    const delName = Buffer.from(
+      encodePayload({ domainSep: Buffer.from('11'.repeat(32), 'hex'), kind: 3 }, [record.tombstone('name')]),
+    ).toString('hex');
+    const delRetire = Buffer.from(
+      encodePayload({ domainSep: Buffer.from('11'.repeat(32), 'hex'), kind: 3 }, [record.tombstone('retire')]),
+    ).toString('hex');
+    expect(wouldChange('n', CONTRACT, [ev(1, 10, p1)], [{ name: NAME, payload: delName }])).toBe(true);
+    expect(wouldChange('n', CONTRACT, [ev(1, 10, p1), ev(2, 11, delName)], [{ name: NAME, payload: delName }])).toBe(false);
+    expect(wouldChange('n', CONTRACT, [ev(1, 10, p1)], [{ name: NAME, payload: delRetire }])).toBe(false);
+    // Null records on an identity that was never described create nothing
+    expect(wouldChange('n', CONTRACT, [], [{ name: NAME, payload: tomb }])).toBe(false);
   });
   it('does not apply to events that are not accepted (negative cases are never skipped)', () => {
     const bad = '11'.repeat(32) + '09' + '00'.repeat(223); // kind 9 → reject

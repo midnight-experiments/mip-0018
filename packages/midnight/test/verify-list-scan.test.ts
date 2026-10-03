@@ -9,9 +9,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { HttpClient } from '../src/http.ts';
 import { stagenetProfile } from '../src/network.ts';
 import { verifyEmission, type VerifyReport } from '../src/verify.ts';
-import { listMetadata } from '../src/list.ts';
+import { listMetadata, reduceScannedEvents } from '../src/list.ts';
+import { commonRecords, encodePayload, EVENT_NAME, withdrawRecords } from '@mip0018/codec';
 import { applyBlock, loadState, lookupColor, newState, scan, ScanError, type ScanState } from '../src/scanner.ts';
 import type { ScannedBlock } from '../src/indexer.ts';
+import { toJson } from '../src/hex.ts';
 import { loadTape, replayFetch } from './support/cassette.ts';
 
 const dir = join(import.meta.dirname, 'fixtures', 'stagenet');
@@ -111,10 +113,13 @@ describe('list (recorded Stagenet)', () => {
     expect(r.counts).toEqual({ events: 1, accepted: 1, rejected: 0, ignored: 0 });
     expect(r.identities).toHaveLength(1);
     const id = r.identities[0]!;
-    expect(id).toMatchObject({ contractAddress: SPIKE, domainSep: '11'.repeat(32), kind: 3, visible: true, colored: false, color: null });
+    expect(id).toMatchObject({ contractAddress: SPIKE, domainSep: '11'.repeat(32), kind: 3, colored: false, color: null });
+    expect(id).not.toHaveProperty('visible');
     expect(id.common).toEqual({ name: 'Acme Token', symbol: 'ACME', decimals: 6n, standards: ['mip-0004'] });
     expect(r.groups).toHaveLength(1);
     expect(r.pages).toBe(2); // one page with the event, then the empty page that proves the end
+    // The stored report is exactly what this code produces from the recorded tape.
+    expect(`${toJson(r, 1)}\n`).toBe(readFileSync(join(dir, 'list-spike.result.json'), 'utf8'));
   });
 });
 
@@ -243,5 +248,31 @@ describe('scanner', () => {
     failed.transactions[0]!.transactionResult = { status: 'FAILURE', segments: null };
     applyBlock(f, failed);
     expect(f.colors).toEqual({});
+
+    // Lookup of a withdrawn identity (MIP "Applying records": not referenced at all) resolves exactly like one that
+    // was never described: the color still maps to its mint, but there is no metadata for that kind.
+    const ds = Buffer.from(m.expected.domainSep, 'hex');
+    const ev = (height: number, kind: number, records: Parameters<typeof encodePayload>[1]) => ({
+      block: { height },
+      txIndex: 0,
+      eventIndex: kind,
+      name: Buffer.from(EVENT_NAME).toString('hex'),
+      payload: Buffer.from(encodePayload({ domainSep: ds, kind }, records)).toString('hex'),
+    });
+    const meta = (evs: ReturnType<typeof ev>[]) => {
+      const ids = reduceScannedEvents(profile.id, m.contractAddress, evs).identities();
+      return l.identities.map((i) => ids.find((x) => x.domainSep === i.domainSep && x.kind === i.kind)?.common ?? null);
+    };
+    const published = [
+      ev(508545, 1, commonRecords({ name: 'Shield', symbol: 'SHD' })),
+      ev(508545, 2, commonRecords({ name: 'Open', symbol: 'OPN' })),
+    ];
+    expect(meta(published)).toEqual([
+      { name: 'Shield', symbol: 'SHD' },
+      { name: 'Open', symbol: 'OPN' },
+    ]);
+    const withdrawn = [...published, ev(508546, 1, withdrawRecords())];
+    expect(meta(withdrawn)).toEqual([null, { name: 'Open', symbol: 'OPN' }]);
+    expect(meta(withdrawn)).toEqual(meta([published[1]!])); // = kind 1 never described
   });
 });
