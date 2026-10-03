@@ -1,5 +1,5 @@
 // The reducer's MIP rules as switches. Every switch is ON in the public API; they exist only so the rule-mutation
-// test (SC-001) can disable one rule at a time and show that at least one normative vector then fails.
+// test can disable one rule at a time and show that at least one normative vector then fails.
 // Not part of the public API (exported from `@mip0018/consumer/internal`).
 
 export interface ConsumerRules {
@@ -15,7 +15,7 @@ export interface ConsumerRules {
   tombstoneDeletes: boolean;
   /**
    * Null record — deletes only its own field; the identity's other fields stay. Disabled = the `tombstoneIdentityWide`
-   * mutation: a Null record at any key deletes every field of the identity (the rule of the earlier MIP pin 78ecbb4).
+   * mutation: a Null record at any key deletes every field of the identity (a wrong rule the vectors must catch).
    */
   tombstonePerKey: boolean;
   /**

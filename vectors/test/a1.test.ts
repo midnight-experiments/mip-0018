@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { VECTORS_DIR } from '../tools/common.ts';
 
-// MIP-0018 @ 274a84f (unchanged since b147c62), "Appendix A: Example event (informative)", transcribed line by line.
+// MIP-0018 @ 274a84f, "Appendix A: Example event (informative)", transcribed line by line.
 const APPENDIX_A: Array<{ offset: number; hex: string; meaning: string }> = [
   { offset: 0, hex: '11'.repeat(32), meaning: 'domainSep' },
   { offset: 32, hex: '03', meaning: 'kind = ledger' },

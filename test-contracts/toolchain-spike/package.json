@@ -2,7 +2,7 @@
   "name": "@mip-0018/toolchain-spike",
   "private": true,
   "version": "0.0.0",
-  "description": "S0 toolchain gate: Compact 0.35.0 + ZKIR v3 compile, local-chain deploy/call/VerifierKeyRemove, one Stagenet call",
+  "description": "Toolchain gate: Compact 0.35.0 + ZKIR v3 compile, local-chain deploy/call/VerifierKeyRemove, one Stagenet call",
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {

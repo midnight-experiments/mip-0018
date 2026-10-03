@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// `mip0018 recheck` — re-checks one recorded case without a wallet (spec FR-053, SC-005): every check its case.json
+// `mip0018 recheck` — re-checks one recorded case without a wallet: every check its case.json
 // lists under "recheck", against the public endpoints, from the run records and saved observations of the case.
 //
 //   verify            the recorded transaction of a step: the indexed event(s) = the raw transaction's log ops, the

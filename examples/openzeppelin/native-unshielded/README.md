@@ -55,7 +55,7 @@ construction). Access control is still OpenZeppelin `Ownable`.
 +}
 +
 +// Withdraw: one event with a Null record for each key (name, symbol, decimals, standards);
-+// with no field left, consumers no longer reference the token at all.
++// with no field left, consumers do not reference the token at all.
 +export circuit withdrawMetadata(): [] {
 +  Ownable_assertOnlyOwner();
 +  Mip0018_emitPayload(Mip0018_withdraw(_domain, Mip0018_KIND_UNSHIELDED()));

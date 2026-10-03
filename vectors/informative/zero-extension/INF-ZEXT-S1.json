@@ -6,7 +6,7 @@
   },
   "normative": false,
   "description": "Reducer: A1, then name = \"Beta\", both observed with the name and payload trimmed: the identity has name \"Beta\" and A1's other three fields, exactly as with the full forms.",
-  "basis": "MIP \"Consuming\" (78ecbb4): \"Some sources drop trailing zero bytes; consumers MUST treat missing trailing bytes as zero, so that every `name` is 32 bytes and every `payload` 256 bytes, before decoding.\" The expected result is the full form's.",
+  "basis": "MIP \"Consuming\": \"Some sources drop trailing zero bytes; consumers MUST treat missing trailing bytes as zero, so that every `name` is 32 bytes and every `payload` 256 bytes, before decoding.\" The expected result is the full form's.",
   "steps": [
     {
       "op": "apply",

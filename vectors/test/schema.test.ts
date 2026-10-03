@@ -51,13 +51,13 @@ describe('schemas', () => {
     bad.expect.identities[0].fields['6e616d65'].valType = 5;
     expect(state(bad)).toBe(false);
   });
-  it('rejects an expected identity without fields or with the removed `visible` property (MIP 274a84f)', () => {
+  it('rejects an expected identity without fields or with an unknown property', () => {
     const empty = structuredClone(s1a);
     empty.expect.identities[0].fields = {};
     expect(state(empty)).toBe(false);
-    const withVisible = structuredClone(s1a);
-    withVisible.expect.identities[0].visible = true;
-    expect(state(withVisible)).toBe(false);
+    const unknown = structuredClone(s1a);
+    unknown.expect.identities[0].hidden = true;
+    expect(state(unknown)).toBe(false);
   });
   it('a runner response with an identity without fields is invalid', () => {
     const id = { network: 'testnet-a', contractAddress: 'aa'.repeat(32), domainSep: '11'.repeat(32), kind: 1 };

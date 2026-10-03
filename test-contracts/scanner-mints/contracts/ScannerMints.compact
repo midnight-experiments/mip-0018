@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// TEST-ONLY contract for the mint scanner (S4): mints native tokens so the local end-to-end test can check that
+// TEST-ONLY contract for the mint scanner: mints native tokens so the local end-to-end test can check that
 // `mip0018 index` records every mint with the right (contract, domainSep, kind) and that `mip0018 lookup` resolves
 // the color to the identity's metadata. Unguarded on purpose — never deploy it anywhere but a local test chain.
 // Compile with Compact 0.35.0 and --feature-zkir-v3.

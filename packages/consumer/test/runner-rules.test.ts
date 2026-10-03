@@ -1,6 +1,6 @@
 // The runner's comparison rules (vectors/README.md, "Runner contract") applied to the reference consumer's real
 // responses, changed the way another conforming — or non-conforming — consumer would answer:
-//   - MIP Testing S9 (since 78ecbb4): "Grouping is a SHOULD, so two outcomes are valid: no groups at all, or exactly the
+//   - MIP Testing S9: "Grouping is a SHOULD, so two outcomes are valid: no groups at all, or exactly the
 //     following groups" — a consumer without groups passes; one that groups wrongly fails;
 //   - MIP Testing S8: "A consumer that displays amounts …" — a consumer without display passes (not applicable);
 //   - MIP Consuming: "Indexers MAY index only some tokens or keys" — keys other than the four common keys are

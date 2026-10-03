@@ -139,7 +139,7 @@ the circuit size.
 
 Real receipts of the Stagenet cases ([`deployments/stagenet/`](../deployments/stagenet/README.md), run 2026-10-02 (C11: 2026-10-03),
 node `2.0.0-d9729c13`, ledger 9.1.0.0-rc.3, proof servers rc.8 contract / rc.6 DUST): the indexer's `fee` of every
-included transaction, as recorded in each case's `record.json`. k from the tables above. 1 DUST = 10^15 SPECK.
+included transaction, as each case's `record.json` holds it. k from the tables above. 1 DUST = 10^15 SPECK.
 
 | Case | Transaction (circuit shape) | k | Txs | Fee (SPECK) | ≈ DUST |
 |---|---|---:|---:|---:|---:|

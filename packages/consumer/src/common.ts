@@ -69,7 +69,7 @@ export interface FormatOptions {
 
 /**
  * Displays a raw amount as `amount / 10^decimals` (MIP "Common fields", vector S8), exactly, with `bigint`
- * arithmetic for any `decimals` (no cap; owner ruling F3). Examples: (123456, 2) → "1234.56"; (5, 8) → "0.00000005";
+ * arithmetic for any `decimals` (no cap: the MIP sets none). Examples: (123456, 2) → "1234.56"; (5, 8) → "0.00000005";
  * (123456, 0) → "123456"; (1, 10^30) → "1e-1000000000000000000000000000000".
  */
 export function formatAmount(raw: bigint, decimals: bigint, opts: FormatOptions = {}): string {

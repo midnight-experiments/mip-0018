@@ -9,7 +9,7 @@ the `domainSep` given at deployment.
 | Contract | Who may publish | After publishing |
 |---|---|---|
 | [`CreateAndDestroy`](contracts/CreateAndDestroy.compact) | anyone (constant payload) | the maintenance authority **removes the circuit's verifier key**: it can never be called again |
-| [`OwnerKey`](contracts/OwnerKey.compact) | the owner | the owner can rename (`setMetadata`) and withdraw (`withdrawMetadata`: one event with a Null record at `name`, `symbol`, `decimals` and `standards`; with no field left the token is no longer referenced) |
+| [`OwnerKey`](contracts/OwnerKey.compact) | the owner | the owner can rename (`setMetadata`) and withdraw (`withdrawMetadata`: one event with a Null record at `name`, `symbol`, `decimals` and `standards`; with no field left the token is not referenced) |
 | [`PublishOnce`](contracts/PublishOnce.compact) | anyone, once (constant payload) | a ledger flag refuses every later call |
 
 ## Add these 5 lines

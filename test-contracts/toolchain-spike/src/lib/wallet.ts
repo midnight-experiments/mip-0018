@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Wallet SDK 2.0.0-beta.2 wiring for midnight-js 5.0.0-rc.2 — promoted to @mip0018/midnight/signer (S4); these
-// spike helpers keep their S0 signatures on top of it. Never prints or stores seeds or keys.
+// Wallet SDK 2.0.0-beta.2 wiring for midnight-js 5.0.0-rc.2, from @mip0018/midnight/signer; these spike helpers are
+// thin wrappers with the spike's own signatures. Never prints or stores seeds or keys.
 
 import {
   closeWallet,

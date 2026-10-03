@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// MIP-0018 minimal example 1 — CREATE AND DESTROY (owner decision Q4).
+// MIP-0018 minimal example 1 — CREATE AND DESTROY.
 //
 // `publishMetadata()` is NOT access-controlled. The deployer calls it once right after deployment
 // and then removes its verifier key with a maintenance `VerifierKeyRemove`, so it can never be

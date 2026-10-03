@@ -13,11 +13,10 @@
 //
 // Identities are matched by (domainSep, kind): the observed set must equal the expected set. Only identities that have
 // at least one field exist (MIP "Applying records": once its last field is deleted, an identity is not referenced at
-// all), so a withdrawn identity is simply not listed; the `visible` property of earlier expectation files is refused.
-// `fields` and `counts`
-// are compared only when the expectation has them (metadata.json files do not; the raw-emitter cases do). Colors
-// are not part of the expectation (they depend on the deployed address); `colored` says whether one is derived, and
-// `recheck` compares the actual colors with the scanner and the wallet.
+// all), so a withdrawn identity is simply not listed. `fields` and `counts` are compared only when the expectation has
+// them (metadata.json files do not; the raw-emitter cases do). Colors are not part of the expectation (they depend on
+// the deployed address); `colored` says whether one is derived, and `recheck` compares the actual colors with the
+// scanner and the wallet. A property outside this shape is refused.
 
 import type { IdentityView, SymbolGroup } from '@mip0018/consumer';
 import { bytesToHex, normHex } from './hex.ts';
@@ -66,12 +65,42 @@ export function expectedStateFrom(json: unknown): ExpectedState {
   const s = (inner && typeof inner === 'object' && Array.isArray(inner.identities) ? inner : o) as ExpectedState;
   if (!s || !Array.isArray(s.identities) || !Array.isArray(s.groups))
     throw new ExpectationError('an expected state needs "identities" and "groups" arrays (or an "expected" object holding them)');
-  for (const i of s.identities as unknown as Record<string, unknown>[])
-    if (i && typeof i === 'object' && 'visible' in i)
-      throw new ExpectationError(
-        `expected identity ${String(i.domainSep)}/${String(i.kind)} has "visible": that property was removed with MIP 274a84f (per-key tombstones) — list only identities that have at least one field`,
-      );
+  checkShape(s);
   return s;
+}
+
+const SHAPE = {
+  state: ['identities', 'groups', 'counts'],
+  identity: ['domainSep', 'kind', 'colored', 'common', 'fields'],
+  common: ['name', 'symbol', 'decimals', 'standards'],
+  field: ['key_text', 'valType', 'value_hex', 'usable'],
+  group: ['symbol', 'members'],
+  member: ['domainSep', 'kind'],
+  counts: ['events', 'accepted', 'rejected', 'ignored'],
+} as const;
+
+/** Every object of the expectation holds only the properties of its shape (the header comment above). */
+function checkShape(s: ExpectedState): void {
+  const only = (o: unknown, allowed: readonly string[], where: string) => {
+    if (!o || typeof o !== 'object' || Array.isArray(o)) throw new ExpectationError(`${where} must be an object`);
+    for (const k of Object.keys(o))
+      if (!allowed.includes(k)) throw new ExpectationError(`${where}: unknown property "${k}" (allowed: ${allowed.join(', ')})`);
+  };
+  only(s, SHAPE.state, 'expected state');
+  if (s.counts !== undefined) only(s.counts, SHAPE.counts, 'expected counts');
+  s.identities.forEach((i, n) => {
+    const where = `expected identity #${n}`;
+    only(i, SHAPE.identity, where);
+    only(i.common, SHAPE.common, `${where} common`);
+    if (i.fields !== undefined) {
+      if (!i.fields || typeof i.fields !== 'object') throw new ExpectationError(`${where} fields must be an object`);
+      for (const [k, f] of Object.entries(i.fields)) only(f, SHAPE.field, `${where} field ${k}`);
+    }
+  });
+  s.groups.forEach((g, n) => {
+    only(g, SHAPE.group, `expected group #${n}`);
+    (Array.isArray(g.members) ? g.members : []).forEach((m, j) => only(m, SHAPE.member, `expected group #${n} member #${j}`));
+  });
 }
 
 const dec = new TextDecoder();

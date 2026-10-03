@@ -8,7 +8,7 @@
 // Checks: chain identity (genesis), each recorded transaction is in the indexer
 // with status SUCCESS at the recorded block and the node RPC agrees on the block
 // hash and finality, the contract has exactly one Misc event whose name and
-// payload equal MIP-0018 A1, and publishMetadata no longer has a verifier key.
+// payload equal MIP-0018 A1, and publishMetadata has no verifier key.
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';

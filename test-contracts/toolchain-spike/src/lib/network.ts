@@ -2,7 +2,7 @@
 //
 // Network endpoints. Stagenet values are pinned (toolchain.json); the local
 // stack's come from docker/local-stack/ports.env through the environment.
-// The chain clients themselves live in @mip0018/midnight (S4); `toProfile` /
+// The chain clients themselves live in @mip0018/midnight; `toProfile` /
 // `toEndpoints` map this spike configuration onto them.
 
 import { STAGENET as PINNED, stagenetProfile, undeployedProfile, type NetworkProfile } from '@mip0018/midnight';

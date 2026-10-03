@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Wallet-free verification of one MIP-0018 emission (spec FR-041): network + contract + transaction.
+// Wallet-free verification of one MIP-0018 emission: network + contract + transaction.
 //
 //  1. identity       node genesis = the profile's (Stagenet pinned)
 //  2. indexer        the contract's Misc events in that transaction + the transaction (raw bytes, result, block)

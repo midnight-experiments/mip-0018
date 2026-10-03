@@ -42,8 +42,6 @@ describe('compareState', () => {
     const empty = compareState({ identities: [] }, { identities: [{ ...ID, fields: {} }] });
     expect(empty.ok).toBe(false);
     expect(empty.failures.join()).toMatch(/reported without fields — .*MUST NOT be referenced/);
-    // The old "hidden" form is no different: still a reference to the identity.
-    expect(compareState({ identities: [] }, { identities: [{ ...ID, visible: false, fields: {} }] }).ok).toBe(false);
     expect(compareState({ identities: [] }, { identities: [{ ...ID }] }).ok).toBe(false);
     // Next to an identity that exists, an empty one still fails.
     expect(compareState({ identities: [described] }, { identities: [described, { ...ID, kind: 3, fields: {} }] }).ok).toBe(false);

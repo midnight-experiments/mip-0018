@@ -7,7 +7,7 @@
   },
   "contract": {
     "source": "contracts/CreateAndDestroy.compact",
-    "access": "create-and-destroy (Q4): publishMetadata() is unguarded and constant; the deployer calls it once, then removes its verifier key (mip0018 remove-circuit)",
+    "access": "create-and-destroy: publishMetadata() is unguarded and constant; the deployer calls it once, then removes its verifier key (mip0018 remove-circuit)",
     "constructorArgs": {
       "domainSep": "0x1111111111111111111111111111111111111111111111111111111111111111",
       "supply": "1000000",

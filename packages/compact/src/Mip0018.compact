@@ -286,7 +286,7 @@ module Mip0018 {
    * Withdraws a token: ONE event with Null records at `name`, `symbol`, `decimals` and
    * `standards`, in that order (33-byte header + 39 bytes of records, the rest zero). A Null
    * record deletes its field, and a token identity exists only while one of its fields has a
-   * value: once every key is deleted, consumers no longer reference the identity
+   * value: once every key is deleted, consumers do not reference the identity
    * `(network, this contract, domainSep, kind)` at all; a later non-Null record describes it
    * again with only that field ("Applying records"). A token that also published keys beyond
    * these four must add a Null record for each of them (build that event with `nullRecord`

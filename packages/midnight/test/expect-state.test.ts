@@ -112,8 +112,18 @@ describe('expected state', () => {
     expect(compareState(o, { identities: [{ domainSep: `0x${DS}`, kind: 1, colored: true, common: {} }], groups: [] }).ok).toBe(false);
   });
 
-  it('refuses an expectation file that still uses the removed `visible` property', () => {
-    const old = { identities: [{ domainSep: `0x${DS}`, kind: 1, visible: false, colored: true, common: {} }], groups: [] };
-    expect(() => expectedStateFrom(old)).toThrow(/"visible": that property was removed with MIP 274a84f/);
+  it('refuses a property outside the expected-state shape', () => {
+    const id = { domainSep: `0x${DS}`, kind: 1, colored: true, common: {} };
+    expect(() => expectedStateFrom({ identities: [{ ...id, hidden: false }], groups: [] })).toThrow(
+      /expected identity #0: unknown property "hidden"/,
+    );
+    expect(() => expectedStateFrom({ identities: [{ ...id, common: { title: 'A' } }], groups: [] })).toThrow(
+      /common: unknown property "title"/,
+    );
+    expect(() => expectedStateFrom({ identities: [], groups: [{ symbol: 'A', members: [], size: 1 }] })).toThrow(
+      /group #0: unknown property "size"/,
+    );
+    expect(() => expectedStateFrom({ identities: [], groups: [], extra: 1 })).toThrow(/expected state: unknown property "extra"/);
+    expect(expectedStateFrom({ identities: [id], groups: [], counts: { events: 1 } }).identities).toHaveLength(1);
   });
 });

@@ -6,7 +6,7 @@
   },
   "normative": false,
   "description": "A1 with both the name (27 bytes) and the payload (95 bytes) trimmed: accepted exactly as A1.",
-  "basis": "MIP \"Consuming\" (78ecbb4): \"Some sources drop trailing zero bytes; consumers MUST treat missing trailing bytes as zero, so that every `name` is 32 bytes and every `payload` 256 bytes, before decoding.\" The expected result is the full form's.",
+  "basis": "MIP \"Consuming\": \"Some sources drop trailing zero bytes; consumers MUST treat missing trailing bytes as zero, so that every `name` is 32 bytes and every `payload` 256 bytes, before decoding.\" The expected result is the full form's.",
   "event": {
     "type": "Misc",
     "name_hex": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d",

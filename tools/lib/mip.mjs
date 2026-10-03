@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // The pinned MIP-0018 text: fetched from the pinned commit (never copied into the
-// repository, Q12), cached under .cache/ and checked against toolchain.json.
+// repository), cached under .cache/ and checked against toolchain.json.
 
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';

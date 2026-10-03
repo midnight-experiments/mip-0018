@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// midnight-js 5.0.0-rc.2 providers for a compiled spike contract — promoted to @mip0018/midnight/signer (S4)
+// midnight-js 5.0.0-rc.2 providers for a compiled spike contract, from @mip0018/midnight/signer
 // (bounded, retrying proof provider; file private state; wallet session).
 
 import { join } from 'node:path';

@@ -152,7 +152,7 @@ describe('OwnerKey', () => {
     apply(1, steps[1]!);
     expect(view()?.common).toEqual({ name: 'Beta Token', symbol: 'BETA', decimals: 6n, standards: ['mip-0004'] });
     apply(2, steps[2]!);
-    expect(view()).toBeUndefined(); // every field deleted: the token is no longer referenced
+    expect(view()).toBeUndefined(); // every field deleted: the token is not referenced
     expect(state.identities()).toEqual([]);
     apply(3, await as(sim, ALICE, 'setMetadata', utf8('Acme Again'), utf8('ACMA')));
     expect(view()?.common).toEqual({ name: 'Acme Again', symbol: 'ACMA' }); // nothing from before the withdrawal

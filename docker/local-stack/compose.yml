@@ -9,7 +9,7 @@
 #   proof-server         proof-server 9.0.0-rc.8        contract circuits: reads Compact 0.35.0 ZKIR v3 (zkir 3.1)
 #   wallet-proof-server  proof-server 9.0.0-rc.6        DUST spends the 2.0.0-rc.4 node accepts
 #
-# Two provers because no single official image does both today (questions Q21):
+# Two provers because no single official image does both:
 # rc.7/rc.8 DUST-spend proofs are rejected by node 2.0.0-rc.4 (InvalidDustSpendProof,
 # error 170) and rc.6 cannot read zkir 3.1 circuits.
 

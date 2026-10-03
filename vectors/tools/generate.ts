@@ -9,7 +9,7 @@
  * expected result by hand. It imports nothing from packages/codec or packages/consumer, and it contains no
  * decoder and no reducer: expected states below are literal tables, so the codec and the consumer are tested
  * against an oracle they did not produce. A1 is additionally checked against a literal transcription of the
- * MIP's Appendix A, and the 26 URI verdicts against the two independent grammars of the F1 investigation.
+ * MIP's Appendix A, and the 26 URI verdicts against the two independent grammars of the URI investigation.
  */
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -81,7 +81,7 @@ const R = {
   /** `decimals` as `Uint<8>` (one byte). */
   decimals: (n: number) => rec('decimals', UINT, [n], String(n)),
   standards: (s: string) => rec('standards', UTF8, s),
-  /** A Null record (tombstone): deletes the field at `key` (MIP 274a84f, "Applying records"). */
+  /** A Null record (tombstone): deletes the field at `key` (MIP "Applying records"). */
   tombstone: (key: string) => rec(key, NULL, EMPTY),
 };
 
@@ -854,7 +854,8 @@ stateVector({
   identities: [identity({ kind: 3, fields: S2_FINAL })],
 });
 
-// S3 — tombstone (MIP 274a84f: a Null record deletes its field; an identity with no field left is not referenced)
+// S3 — tombstone (MIP "Applying records": a Null record deletes its field; an identity with no field left is not
+// referenced)
 const S3_K1_RECS = [R.name('Gold'), R.symbol('GLD'), R.decimals(6), R.standards('mip-0011')];
 const S3_K3_RECS = [R.name('Gold'), R.symbol('GLD'), R.decimals(6), R.standards('mip-0004')];
 const S3_K3_FIELDS = [F.name('Gold', true), F.symbol('GLD', true), F.decimals(6, true), F.standards('mip-0004', true)];
@@ -1137,8 +1138,8 @@ stateVector({
 // Informative vectors (normative = false)
 // ===============================================================================================================
 
-// ---- URI cases (owner ruling Q20: RFC 3986 `URI` rule as ERC-721 uses it; MIP Value types) ----
-// Verdicts transcribed from the F1 investigation and cross-checked below against both independent grammars.
+// ---- URI cases (MIP Value types: the RFC 3986 `URI` rule, as ERC-721 uses it) ----
+// Verdicts transcribed from the URI investigation and cross-checked below against both independent grammars.
 const URI_ACCEPT = new Set([
   'c01',
   'c02',
@@ -1177,7 +1178,7 @@ for (const [caseId, value] of uriCases) {
   const r = rec('uri', URI, value);
   const description = `URI (valType 4) value ${JSON.stringify(value)}: ${accept ? 'accepted' : 'rejected'} under the RFC 3986 URI rule (scheme required, fragment allowed, ASCII only).`;
   const basis =
-    'Owner ruling Q20 (follow ERC-721: RFC 3986 `URI`), MIP-0018 Value types. Verdict = strict RFC 3986 grammar (investigation/rfc3986.mjs) = Python rfc3987 rule URI (investigation/py.json); they agree on 26/26.';
+    'MIP-0018 Value types (RFC 3986 `URI`, as ERC-721 uses it). Verdict = strict RFC 3986 grammar (investigation/rfc3986.mjs) = Python rfc3987 rule URI (investigation/py.json); they agree on 26/26.';
   if (accept) {
     acceptVector({ id, testId: 'INF-URI', normative: false, description, basis, recs: [r], dir: 'informative/uri' });
   } else {
@@ -1196,7 +1197,7 @@ for (const [caseId, value] of uriCases) {
 }
 emit(
   'informative/uri/verdicts.json',
-  json({ rule: 'RFC 3986 URI (scheme required, fragment allowed, ASCII only)', basis: 'Q20 / MIP-0018 Value types', cases: uriVerdicts }),
+  json({ rule: 'RFC 3986 URI (scheme required, fragment allowed, ASCII only)', basis: 'MIP-0018 Value types', cases: uriVerdicts }),
 );
 
 // ---- standards list format and common-field forms (derived from "Common fields"; not in the MIP Testing list) ----
@@ -1245,12 +1246,12 @@ stateVector({
   dir: 'informative/state',
 });
 
-// ---- zero extension (MIP "Consuming", 78ecbb4: missing trailing bytes are zero; name 32, payload 256) ----
+// ---- zero extension (MIP "Consuming": missing trailing bytes are zero; name 32, payload 256) ----
 // Each vector gives the name and/or payload as a source that drops trailing zero bytes returns it (raw ledger data,
 // the Compact runtime), and expects exactly the decision and records of the full form, built by the same construction
 // as the normative vector it trims. Plus the two longer cases: a 257-byte payload and a 33-byte name.
 const ZEXT_BASIS =
-  'MIP "Consuming" (78ecbb4): "Some sources drop trailing zero bytes; consumers MUST treat missing trailing bytes as zero, so that every `name` is 32 bytes and every `payload` 256 bytes, before decoding." The expected result is the full form\'s.';
+  'MIP "Consuming": "Some sources drop trailing zero bytes; consumers MUST treat missing trailing bytes as zero, so that every `name` is 32 bytes and every `payload` 256 bytes, before decoding." The expected result is the full form\'s.';
 const ZEXT_DIR = 'informative/zero-extension';
 /** The bytes without their trailing zero bytes, as such a source returns them. */
 function trimZeros(b: Bytes): Bytes {

@@ -95,7 +95,7 @@ export const record = {
 /**
  * Withdraws a token: Null records at `name`, `symbol`, `decimals` and `standards`, in that order (39 bytes; the same
  * records as the Compact module's `withdraw(domainSep, kind)`). A token identity exists only while one of its fields
- * has a value, so once every key it has is deleted consumers no longer reference it. A token with keys beyond these
+ * has a value, so once every key it has is deleted consumers do not reference it. A token with keys beyond these
  * four adds a Null record for each of them (`[...withdrawRecords(), record.tombstone('logo')]`).
  */
 export function withdrawRecords(): MetadataRecord[] {

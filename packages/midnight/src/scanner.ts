@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// The reference mint scanner (owner decision F8; spec FR-043; MIP-0018 "Lookup").
+// The reference mint scanner (MIP-0018 "Lookup").
 //
 // Today's public indexer exposes no mint effects, so the color table is built from the chain itself: from a start
 // height, every block's transactions are read (indexer `blocks` subscription, polling `block(offset:{height})` as the

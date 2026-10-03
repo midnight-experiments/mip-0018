@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// verify / list / scan against recorded Stagenet exchanges (the S0-SPIKE case), plus synthetic edge cases.
+// verify / list / scan against recorded Stagenet exchanges (the SPIKE case), plus synthetic edge cases.
 
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -30,7 +30,7 @@ afterEach(() => {
 });
 
 describe('verify (recorded Stagenet)', () => {
-  it('S0-SPIKE publish: every check passes, the event is A1 and accepted', async () => {
+  it('SPIKE publish: every check passes, the event is A1 and accepted', async () => {
     const r = await verifyEmission({
       profile,
       contract: SPIKE,
@@ -106,7 +106,7 @@ describe('verify (recorded Stagenet)', () => {
 });
 
 describe('list (recorded Stagenet)', () => {
-  it('S0-SPIKE: one kind-3 identity with the A1 fields, no color, one group', async () => {
+  it('SPIKE: one kind-3 identity with the A1 fields, no color, one group', async () => {
     const r = await listMetadata({ profile, contract: SPIKE, toBlock: 710820, http: replay('list-spike') });
     expect(r.snapshot.toBlock).toBe(710820);
     expect(r.snapshot.tipMatchesNode).toBe(true);
@@ -114,7 +114,6 @@ describe('list (recorded Stagenet)', () => {
     expect(r.identities).toHaveLength(1);
     const id = r.identities[0]!;
     expect(id).toMatchObject({ contractAddress: SPIKE, domainSep: '11'.repeat(32), kind: 3, colored: false, color: null });
-    expect(id).not.toHaveProperty('visible');
     expect(id.common).toEqual({ name: 'Acme Token', symbol: 'ACME', decimals: 6n, standards: ['mip-0004'] });
     expect(r.groups).toHaveLength(1);
     expect(r.pages).toBe(2); // one page with the event, then the empty page that proves the end

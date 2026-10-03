@@ -2,7 +2,7 @@
 //
 // The `mip0018` CLI adapters of the minimal example (no OpenZeppelin):
 //
-//   examples/minimal/mip0018.adapter.ts               CreateAndDestroy  (`--example minimal`; create-and-destroy, Q4)
+//   examples/minimal/mip0018.adapter.ts               CreateAndDestroy  (`--example minimal`; create-and-destroy)
 //   examples/minimal/owner-key.mip0018.adapter.ts     OwnerKey          (`--adapter …`; publish, rename, withdraw)
 //   examples/minimal/publish-once.mip0018.adapter.ts  PublishOnce       (`--adapter …`)
 //

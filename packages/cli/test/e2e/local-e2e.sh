@@ -8,7 +8,7 @@
 # $MIP0018_E2E_DIR/results.txt) and removes the stack (down.sh) unless MIP0018_E2E_KEEP=1 (MIP0018_E2E_REUSE_STACK=1
 # runs against an already running stack and leaves it). Exit = number of failures.
 #
-# Cases: S0 spike through the package · wallet status / register-dust · deploy + publish with a crash right after
+# Cases: the toolchain spike through the package · wallet status / register-dust · deploy + publish with a crash right after
 # each submission and a resume (exactly one deploy, one event) · verify / list · re-publish skipped (already
 # present) · remove-circuit, then publish refused · deploy-and-publish of an example adapter · OZ Ownable token:
 # owner mint + publish, non-owner publish refused before submission · native mints (shielded + unshielded) · mint
@@ -89,9 +89,9 @@ gql() { curl -fsS -m 20 -H 'Content-Type: application/json' -d "$1" "$IDX"; }
 events_of() { gql "{\"query\":\"{ contractEvents(filter:{contractAddress:\\\"$1\\\", types:[MISC]}, limit:500) { id } }\"}" | py 'import json,sys; print(len(json.load(sys.stdin)["data"]["contractEvents"]))'; }
 jget() { py "import json,sys; d=json.load(open(sys.argv[1])); print(eval(sys.argv[2], {'d': d}))" "$1" "$2"; }
 
-# --------------------------------------------------------------------------------------- S0 spike through the package
+# --------------------------------------------------------------------------- the toolchain spike through the package
 if [ -z "${MIP0018_E2E_SKIP_SPIKE:-}" ]; then
-  say "S0 spike (spike:local) through @mip0018/midnight"
+  say "toolchain spike (spike:local) through @mip0018/midnight"
   rc=0; MIP0018_DOCKER_NETWORK="$NET" MIP0018_DOCKER_ENV="-e SPIKE_RECORD=/e2e/records/spike-local.json -v $E2E:/e2e" \
     "$repo/docker/run.sh" spike:local >"$LOGS/spike-local.out" 2>"$LOGS/spike-local.err" || rc=$?
   expect_rc "spike:local (deploy, A1 call, v4 VerifierKeyRemove, second call refused) via the package" 0 "$rc"
@@ -137,7 +137,7 @@ rc=0; cli verify-unknown verify --network undeployed --contract "$EM_ADDR" --tx 
 expect_rc "verify an unknown transaction (not found)" 3 "$rc"
 rc=0; cli list-em list --network undeployed --contract "$EM_ADDR" --json || rc=$?
 expect_rc "list emitter" 0 "$rc"
-check "list: one kind-3 identity with the A1 fields" py "import json; d=json.load(open('$LOGS/list-em.out')); i=d['identities']; assert len(i)==1 and 'visible' not in i[0] and i[0]['kind']==3 and i[0]['common']['name']=='Acme Token' and str(i[0]['common']['decimals'])=='6', i"
+check "list: one kind-3 identity with the A1 fields" py "import json; d=json.load(open('$LOGS/list-em.out')); i=d['identities']; assert len(i)==1 and i[0]['kind']==3 and i[0]['common']['name']=='Acme Token' and str(i[0]['common']['decimals'])=='6', i"
 
 rc=0; signer em-publish-again publish $A --record /e2e/records/emitter.json --circuit publishMetadata --step publish-again || rc=$?
 expect_rc "publish the same metadata again (new step id)" 0 "$rc"

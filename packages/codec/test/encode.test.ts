@@ -99,7 +99,7 @@ describe('encodePayload', () => {
     expect(p.subarray(72).every((b) => b === 0)).toBe(true);
   });
 
-  it('refuses a URI with characters outside ASCII; its percent-encoded and ASCII-host forms are emitted (MIP valType 4, 78ecbb4)', () => {
+  it('refuses a URI with characters outside ASCII; its percent-encoded and ASCII-host forms are emitted (MIP valType 4)', () => {
     for (const raw of ['https://ä.example/logo.png', 'https://acme.example/ä.png', 'https://acme.example/?q=ä'])
       expect(() => encodePayload({ domainSep: D11, kind: 3 }, [record.uri('logo', raw)])).toThrow(InvalidRecord);
     for (const ascii of ['https://xn--4ca.example/logo.png', 'https://acme.example/%C3%A4.png', 'https://acme.example/?q=%C3%A4'])

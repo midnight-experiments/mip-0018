@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // Records the Stagenet exchanges the unit tests replay (read-only queries against the public indexer and node RPC,
-// at most 4 requests per second). Subject: the S0 toolchain-spike contract (recorded case S0-SPIKE,
+// at most 4 requests per second). Subject: the toolchain-spike contract (recorded case SPIKE,
 // test-contracts/toolchain-spike/records/stagenet.json): deploy 710806, publishMetadata 710810 (MIP-0018 A1),
 // VerifierKeyRemove 710814.
 //

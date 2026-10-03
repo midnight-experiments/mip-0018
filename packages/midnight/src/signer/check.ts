@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Chain checks run before and after every transaction (question Q13 (b)). They read the indexer only (wallet-free):
+// Chain checks run before and after every transaction. They read the indexer only (wallet-free):
 //
 //   contractView      does the contract exist; which entry points have a verifier key
 //   eventsInTx        the contract's Misc events in one transaction (in order)

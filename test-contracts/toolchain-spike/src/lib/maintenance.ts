@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// VerifierKeyRemove for circuits compiled with --feature-zkir-v3 (Q23) — promoted to @mip0018/midnight/signer (S4).
+// VerifierKeyRemove for circuits compiled with --feature-zkir-v3, from @mip0018/midnight/signer.
 // midnight-js 5.0.0-rc.2 builds maintenance updates for the 'v3' key slot only; ZKIR v3 keys live in 'v4'.
 
 import type { MidnightProviders } from '@midnight-ntwrk/midnight-js-types';

@@ -45,7 +45,7 @@ export circuit setMetadata(name: Bytes<10>, symbol: Bytes<4>): [] {
 
 /**
  * Withdraw: one event with a Null record for each key this token publishes (`name`, `symbol`,
- * `decimals`, `standards`). With no field left, consumers no longer reference the token at all.
+ * `decimals`, `standards`). With no field left, consumers do not reference the token at all.
  */
 export circuit withdrawMetadata(): [] {
   assertOwner();

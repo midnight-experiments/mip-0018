@@ -1,4 +1,4 @@
-// SC-001 rule mutations: disabling any single MIP rule (decoder or reducer) makes at least one normative vector
+// Rule mutations: disabling any single MIP rule (decoder or reducer) makes at least one normative vector
 // fail — or, for a rule the MIP's Testing list has no vector for (zero extension), at least one informative vector.
 // The rule switches are internal test hooks; the public API always runs with every rule on.
 import { loadVectors, runVectors } from '@mip0018/vectors/runner';
@@ -13,7 +13,7 @@ const summary: string[] = [];
 
 /**
  * Rules the MIP's Testing list has no vector for, with the informative vectors that catch them instead.
- * `zeroExtend` (MIP "Consuming", 78ecbb4: missing trailing bytes are zero) is caught by `informative/zero-extension`.
+ * `zeroExtend` (MIP "Consuming": missing trailing bytes are zero) is caught by `informative/zero-extension`.
  */
 const INFORMATIVE_ONLY: Partial<Record<keyof CodecRules, typeof zeroExtension>> = { zeroExtend: zeroExtension };
 
@@ -53,10 +53,9 @@ describe('rule mutations', () => {
     });
   }
 
-  // The two tombstone mutations named by the per-key re-pin (MIP 274a84f, "Applying records"), with the vectors that
-  // must catch them.
-  // S1a cannot catch the identity-wide rule: its event touches one key only (name = "A", Null at name, name = "B").
-  it('mutation tombstoneIdentityWide (the rule of MIP 78ecbb4: a Null record at any key deletes every field) fails S3a, S3b, S4a, S9d', async () => {
+  // Two wrong tombstone rules (MIP "Applying records") and the vectors that must catch them.
+  // S1a cannot catch the first: its event touches one key only (name = "A", Null at name, name = "B").
+  it('mutation tombstoneIdentityWide (a Null record at any key deletes every field of the identity) fails S3a, S3b, S4a, S9d', async () => {
     expect(await failing({ rules: { tombstonePerKey: false } })).toEqual(['S3a', 'S3b', 'S4a', 'S9d']);
   });
   it('mutation keepEmptyIdentity (an identity whose last field was deleted is still reported, without fields) fails S3c, S4b', async () => {

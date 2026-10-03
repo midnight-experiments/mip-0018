@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Toolchain spike (S0): the smallest MIP-0018 emitter.
+// Toolchain spike: the smallest MIP-0018 emitter.
 //
 // One unguarded circuit emits the payload of MIP-0018 test A1 (Appendix A:
 // domainSep = 0x11 x 32, kind 3, name "Acme Token", symbol "ACME",

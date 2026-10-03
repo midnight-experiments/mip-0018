@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# End-to-end test of the examples and of S5's case folders on a local undeployed chain (docker/local-stack, official
+# End-to-end test of the examples and of the Stagenet case folders on a local undeployed chain (docker/local-stack, official
 # images only). Companion of local-e2e.sh (which covers the CLI's crash/resume, scanner kill/resume, identity guards).
 #
 #   MIP0018_DOCKER_PREFIX=<prefix> MIP0018_E2E_DIR=<empty dir outside the repo> packages/cli/test/e2e/examples-e2e.sh
@@ -16,7 +16,7 @@
 #      (list after each = metadata.json lifecycle); create-and-destroy on the minimal example (remove-circuit, then a
 #      publish refused before submission)
 #   C  every Stagenet case folder (deployments/stagenet/cases/C01…C10, IDX) run on the local chain: each step's
-#      command expanded by case.py (local wallets and paths), its exit code = the case's; outputs saved like S5 will
+#      command expanded by case.py (local wallets and paths), its exit code = the case's; outputs saved as on Stagenet
 #   D  `mip0018 recheck` of every case (wallet-free, one command each) + a secret scan of every log, record and state
 #
 # Wallets: A = the dev chain's public genesis wallet (with a 0600 sync cache); B = a fresh local test wallet funded by
@@ -185,7 +185,7 @@ import json; s=[x for x in json.load(open('$DAP/minimal.json'))['steps'] if x['i
   expect_rc "B list minimal: still exactly the A1 metadata" 0 "$rc"
 fi
 
-# ------------------------------------------------------------------------------------------- C: S5 case folders, local
+# ------------------------------------------------------------------------------------ C: Stagenet case folders, local
 run_case() { # run_case <ID>
   local id="$1" cj="$repo/deployments/stagenet/cases/$1/case.json" line i sid runner want out msg args a rc
   mkdir -p "$CASES/$id"

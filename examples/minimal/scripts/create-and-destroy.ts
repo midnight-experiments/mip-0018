@@ -8,11 +8,10 @@
 //   (no verifier key) -> still exactly one Misc event; `transfer` keeps its key.
 //
 // Signs with the local dev chain's genesis wallet, whose seed is public (0x00..01): no secret.
-// The maintenance update uses the `v4` key slot (ZKIR v3), questions Q23: midnight-js 5.0.0-rc.2
+// The maintenance update uses the `v4` key slot (ZKIR v3): midnight-js 5.0.0-rc.2
 // `removeVerifierKey()` only removes the `v3` slot.
 //
-// Chain helpers come from the S0 toolchain spike (test-contracts/toolchain-spike/src/lib, as of
-// b1482e8). Run on the stack network, after a full-key compile:
+// Chain helpers come from the toolchain spike (test-contracts/toolchain-spike/src/lib). Run on the stack network, after a full-key compile:
 //
 //   docker/local-stack/up.sh && . docker/local-stack/ports.env
 //   docker/run.sh exec 'npm run -w examples/minimal compile -- --keys CreateAndDestroy'

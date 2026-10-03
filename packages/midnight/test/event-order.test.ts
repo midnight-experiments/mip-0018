@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Event order within a transaction (MIP-0018 @ 78ecbb4, "Applying records"): "Within a transaction, events are in
+// Event order within a transaction (MIP-0018 "Applying records"): "Within a transaction, events are in
 // the ledger's execution order: the guaranteed part of every intent (in ascending segment id), then each successful
 // fallible segment (in ascending segment id); within a part, actions and their operations in order."
 //

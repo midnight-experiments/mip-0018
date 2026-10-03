@@ -9,7 +9,7 @@
 //      upgrade build is already on chain with the same key (midnight-js refuses to call through a compiled contract
 //      whose circuits are not all on chain); the compiler's ledger layouts of the deployed build and the upgrade build
 //      are identical; the deployed state decodes identically through both builds' ledger() accessors
-//   3. insertVerifierKeyStep (contracts.ts): authority check, VerifierKeyInsert (v4 slot for ZKIR v3, Q23), after-check
+//   3. insertVerifierKeyStep (contracts.ts): authority check, VerifierKeyInsert (v4 slot for ZKIR v3), after-check
 //   4. callStep through the upgrade build (contracts.ts, CallInput.artifacts)
 //
 // Every check result is public (state values, hashes) and is kept in the run record's `contract.upgrades`.

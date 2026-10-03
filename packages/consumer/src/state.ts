@@ -344,11 +344,11 @@ export class MetadataState {
           id.fields.delete(keyHex);
           id.history.delete(keyHex);
         } else {
-          // Mutation only (tombstoneIdentityWide, the rule of MIP 78ecbb4): delete every field of the identity.
+          // Mutation only (tombstoneIdentityWide, a wrong rule): delete every field of the identity.
           id.fields.clear();
           id.history.clear();
         }
-        // The last field is gone: the identity is no longer referenced anywhere, as if it had never been described.
+        // The last field is gone: the identity is not referenced anywhere, as if it had never been described.
         if (id.fields.size === 0 && this.rules.removeEmptyIdentity) this.identitiesByKey.delete(key);
         continue;
       }

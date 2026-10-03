@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Deploy, call and maintenance steps with before/after chain checks and a write-ahead submission journal
-// (question Q13 (b); spec FR-040).
+// Deploy, call and maintenance steps with before/after chain checks and a write-ahead submission journal.
 //
 // The transaction path is midnight-js's own: `deployContract`, `findDeployedContract(...).callTx.<circuit>()` and,
-// for ZKIR-v3 maintenance (Q23), a ledger-level MaintenanceUpdate submitted with midnight-js `submitTx`. Around it:
+// for ZKIR-v3 maintenance (midnight-js writes only the v3 slot), a ledger-level MaintenanceUpdate submitted with
+// midnight-js `submitTx`. Around it:
 //
 //   before   the step is skipped when the chain already shows it done (contract at the recorded address; the
 //            circuit's key already removed; the contract's metadata already holding exactly what this publish
@@ -226,7 +226,10 @@ async function reconcile(run: Run, step: StepRecord): Promise<'included' | 'expi
     return 'included';
   }
   if (Date.now() >= ttlMs + 60_000) {
-    note(step, `${tx.hash} was not included before its TTL ${tx.ttl ?? '(assumed 30 min)'}: it can no longer be; submitting again is safe`);
+    note(
+      step,
+      `${tx.hash} was not included before its TTL ${tx.ttl ?? '(assumed 30 min)'}: it cannot be included any more; submitting again is safe`,
+    );
     delete step.tx;
     step.state = 'pending';
     run.save();
@@ -387,7 +390,7 @@ async function afterCall(run: Run, step: StepRecord): Promise<StepRecord> {
   const expected = step.expectedEvents ?? [];
   if (step.inclusion?.status === 'PARTIAL_SUCCESS' && expected.length > 0) {
     // The indexer stores a transaction's events with the transaction itself: when the segment that logs them failed,
-    // they will never appear, so this is a failure, not an "unknown" to reconcile later (audit F-N2).
+    // they will never appear, so this is a failure, not an "unknown" to reconcile later.
     const now = await eventsInTx(run.o.ep.profile, address, step.tx!.hash);
     if (missingEventsVerdict(step.inclusion.status, expected.length, now.length) === 'failed')
       return finish(
@@ -427,7 +430,7 @@ export interface CallInput {
   args: unknown[];
   stepId?: string;
   /**
-   * Call through another compiled contract than the record's (S6 upgrade: the upgrade-only source whose circuit was
+   * Call through another compiled contract than the record's (an upgrade: the upgrade-only source whose circuit was
    * added with a VerifierKeyInsert); `adapter` gives its witnesses (none when omitted).
    */
   artifacts?: CompiledArtifacts;
@@ -608,7 +611,7 @@ export function describeError(e: unknown, depth = 0, seen = new Set<unknown>()):
 
 /**
  * VerifierKeyInsert (MIP-0018 "Existing contracts", step 2): adds a circuit's verifier key to the deployed contract,
- * signed by its maintenance authority. ZKIR-v3 keys go in the v4 slot (Q23).
+ * signed by its maintenance authority. ZKIR-v3 keys go in the v4 slot.
  *
  * before  skipped when the circuit already has exactly this key (a re-run); REFUSED when it has another key (the
  *         ledger never overwrites: VerifierKeyAlreadyPresent) or when the key cannot sign for the authority (frozen

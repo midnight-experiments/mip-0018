@@ -1,4 +1,4 @@
-// valType 4: RFC 3986 `URI` as ERC-721 uses it (Q20). The 26 F1 investigation cases, extra grammar cases, and a
+// valType 4: RFC 3986 `URI` (MIP Value types; as ERC-721 uses it). The 26 URI investigation cases, extra grammar cases, and a
 // timing guard against pathological backtracking.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -30,7 +30,7 @@ describe('grammar', () => {
     'https://192.168.0.1/',
     'https://[2001:db8::7]/x',
     'https://[v1.fe]/',
-    'http://[V7.abc]/', // ABNF literals are case-insensitive: IPvFuture may start with "V" (audit F-N1)
+    'http://[V7.abc]/', // ABNF literals are case-insensitive: IPvFuture may start with "V"
     'urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66',
     'did:example:123456789abcdefghi',
     'a+b-c.d:x',

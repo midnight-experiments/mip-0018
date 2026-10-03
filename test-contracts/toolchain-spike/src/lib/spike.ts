@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// The S0 toolchain gate, shared by the local stack and Stagenet:
+// The toolchain gate, shared by the local stack and Stagenet:
 //
 //   preflight -> deploy SpikeEmitter (midnight-js deployContract) -> call
 //   publishMetadata (callTx) -> the indexer returns the Misc event with the A1
 //   bytes -> VerifierKeyRemove of publishMetadata (create and destroy) ->
 //   [local only] a second call must fail.
 //
-// Chain state is read before and after every transaction (Q13 (b)); a step is
+// Chain state is read before and after every transaction; a step is
 // marked done only when its effect is observed. The public record is written
 // after every step and never contains a secret.
 
