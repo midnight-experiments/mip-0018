@@ -37,9 +37,10 @@ export function foreignMipCitations(text, pin, known = []) {
 
 /**
  * The other commits of the MIP text, from the GitHub API: the commits of the proposal's pull request and the
- * commits that changed the file on the default branch. Throws when the API cannot be read.
+ * commits that changed the file on the default branch. Throws when the API cannot be read. With a token (CI passes
+ * the workflow's read-only `GITHUB_TOKEN`) the requests are authenticated, so shared-runner rate limits do not apply.
  */
-export async function mipTextCommits(mip, { fetchImpl = fetch } = {}) {
+export async function mipTextCommits(mip, { fetchImpl = fetch, token = process.env.GITHUB_TOKEN } = {}) {
   const pr = /\/pull\/(\d+)$/u.exec(mip.pullRequest)?.[1];
   const api = `https://api.github.com/repos/${mip.repository}`;
   const urls = [
@@ -49,7 +50,11 @@ export async function mipTextCommits(mip, { fetchImpl = fetch } = {}) {
   const shas = new Set();
   for (const url of urls) {
     const res = await fetchImpl(url, {
-      headers: { accept: 'application/vnd.github+json', 'user-agent': 'mip0018-check-mip-pin' },
+      headers: {
+        accept: 'application/vnd.github+json',
+        'user-agent': 'mip0018-check-mip-pin',
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
       signal: AbortSignal.timeout(30_000),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);

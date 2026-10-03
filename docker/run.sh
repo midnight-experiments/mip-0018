@@ -16,6 +16,7 @@
 #   MIP0018_IMAGE           use this image instead of building docker/Dockerfile
 #   MIP0018_DOCKER_NETWORK  network to join (default: bridge), e.g. the local stack's network
 #   MIP0018_DOCKER_ENV      extra "-e NAME=value" style arguments, space separated (no secrets)
+#   GITHUB_TOKEN            passed through by name when set (check:mip-pin reads the GitHub API with it)
 #
 # bash 3.2 compatible (macOS).
 set -euo pipefail
@@ -83,6 +84,7 @@ exec docker run --rm \
   -e NPM_CONFIG_CACHE=/cache/npm \
   -e MIDNIGHT_PP=/cache/zk-params \
   -e CI="${CI:-}" \
+  ${GITHUB_TOKEN:+-e GITHUB_TOKEN} \
   ${MIP0018_DOCKER_ENV:-} \
   -v "$repo:/work" \
   -v "${MIP0018_DOCKER_PREFIX}-node-modules:/work/node_modules" \

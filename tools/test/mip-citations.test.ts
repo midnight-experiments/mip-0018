@@ -49,4 +49,16 @@ describe('MIP citations', () => {
     expect(seen[0]).toContain('/pulls/340/commits');
     expect(seen[1]).toContain('commits?path=mips%2Fx.md');
   });
+
+  it('authenticates the API requests with a token, and sends none without one', async () => {
+    const auth: (string | undefined)[] = [];
+    const fetchImpl = async (_url: string, init?: unknown) => {
+      auth.push((init as { headers?: Record<string, string> } | undefined)?.headers?.authorization);
+      return { ok: true, json: async () => [] };
+    };
+    const mip = { repository: REPO, path: 'mips/x.md', pullRequest: `https://github.com/${REPO}/pull/340` };
+    await mipTextCommits(mip, { fetchImpl, token: 'test-token' });
+    await mipTextCommits(mip, { fetchImpl, token: '' });
+    expect(auth).toEqual(['Bearer test-token', 'Bearer test-token', undefined, undefined]);
+  });
 });
