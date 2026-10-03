@@ -3,19 +3,19 @@
 // Prepares the Stagenet case folders deployments/stagenet/cases/<ID>/ (C01–C11, IDX, U1) BEFORE any transaction:
 //
 //   case.json        what the case demonstrates, one `mip0018` command per step (placeholders below), the exit code
-//                    each must end with, and the "recheck" list behind `mip0018 recheck --case <dir>` (FR-053)
-//   expected.json    the consumer state the case must end in — derived from the example's metadata.json payloads
+//                    each must end with, and the "recheck" list behind `mip0018 recheck --case <dir>`
+//   expected.json    the consumer state the case must end in — computed from the example's metadata.json payloads
 //                    (or the vectors) with the reference reducer `@mip0018/consumer`, and cross-checked against the
 //                    example's own `expected` where it has one; never from an observation
 //   expect/*.json    per transaction: what `verify` must find (result, reason, exact name and payload per event)
 //   args/*.json      circuit arguments too long for a command line (the raw emitter's 288-byte events)
-//   README.md        the commands rendered for Stagenet (S5 runs them; values are filled in by S5's records)
+//   README.md        the commands rendered for Stagenet, and the transactions of the case's run record
 //
 //   node deployments/stagenet/tools/prepare-cases.ts            (re)write every case folder
 //   node deployments/stagenet/tools/prepare-cases.ts --check    exit 1 when a committed file differs (CI)
 //
-// Placeholders in a step's argv (expanded by whoever runs the case — S5 on Stagenet, the local end-to-end test on
-// the local stack): "{net}" / "{signer}" / "{signer2}" are whole arguments that expand to several options; "{case}"
+// Placeholders in a step's argv (expanded by whoever runs the case — the signer on Stagenet, the local end-to-end test
+// on the local stack): "{net}" / "{signer}" / "{signer2}" are whole arguments that expand to several options; "{case}"
 // (this folder), "{out}" (where the records and observations go — this folder on Stagenet) and "{out:<ID>}" (another
 // case's output folder) are replaced inside arguments; "{firstHeight}" / "{lastHeight}" (IDX only) are the lowest
 // inclusion height of the matrix minus 10 and the highest one, read from the records.
@@ -38,14 +38,12 @@ import type { ExampleName } from '../../../examples/openzeppelin/src/examples.ts
 
 const REPO = join(import.meta.dirname, '..', '..', '..');
 const CASES = join(REPO, 'deployments', 'stagenet', 'cases');
-// The MIP text each case was prepared and run under. C01–C10, IDX and U1 (2026-10-02): b147c62 — their case.json keep
-// it as the record of what was done. S9 moved the repository to 78ecbb4 (no byte or expectation of these cases
-// changed). S10 moved it to 274a84f (per-key tombstones): only C06 applied a tombstone, so only C06's expected states
-// were re-derived (see C06_DEPLOYED), and C11 was prepared under 274a84f. Every case is re-checked against the current
-// pin (deployments/stagenet/README.md).
-const MIP_CASES = { commit: 'b147c627e1bb15b5d15cc73cf30c2a36afd34dbb', eventName: 'mip-0018:token-metadata[v1]' };
-const MIP_274A84F = { commit: '274a84f221bcfc17e4b73e2c8b32fd8c028ea092', eventName: 'mip-0018:token-metadata[v1]' };
-const EVENT_NAME_HEX = Buffer.from(MIP_CASES.eventName).toString('hex').padEnd(64, '0');
+// The pinned MIP text (toolchain.json); every case.json cites it (`npm run check:mip-pin`).
+const MIP = {
+  commit: (JSON.parse(readFileSync(join(REPO, 'toolchain.json'), 'utf8')) as { mip: { commit: string } }).mip.commit,
+  eventName: 'mip-0018:token-metadata[v1]',
+};
+const EVENT_NAME_HEX = Buffer.from(MIP.eventName).toString('hex').padEnd(64, '0');
 /** Stand-in contract address for deriving expectations (colors are never part of them: they depend on the address). */
 const PLACEHOLDER_ADDRESS = 'cc'.repeat(32);
 
@@ -90,10 +88,6 @@ type Recheck = {
 };
 type CaseDef = {
   id: string;
-  /** The MIP text the case was prepared under (default: b147c62). */
-  mip?: { commit: string; eventName: string };
-  /** C06: the expected states were re-derived after the transactions because the MIP changed (S10). */
-  rederived?: Record<string, string>;
   title: string;
   demonstrates: string;
   conclusion: string;
@@ -285,10 +279,10 @@ function build(): { cases: CaseDef[] } {
     'fungible-token',
     'OpenZeppelin FungibleToken (kind 3): deploy, publish',
     'The common fields in one event from an OpenZeppelin token; kind 3 has no color.',
-    '1 kind-3 identity with 3 usable fields (name "Acme Gold", symbol "AGLD", decimals 6); no standards (Q25); no color.',
+    '1 kind-3 identity with 3 usable fields (name "Acme Gold", symbol "AGLD", decimals 6); no standards; no color.',
     {
       notes: [
-        'Q25: the OpenZeppelin examples publish no `standards`; the A1 shape (with standards) on Stagenet is C06/C10 (examples/minimal).',
+        'The OpenZeppelin examples publish no `standards`: `standards` is a self-declaration, and OpenZeppelin Compact Contracts claims no MIP. The A1 shape (with standards) on Stagenet is C06, C10 and C11 (examples/minimal).',
       ],
     },
   );
@@ -316,7 +310,7 @@ function build(): { cases: CaseDef[] } {
     '3 identities ("Acme Dollar", "ACD", 2) in ONE group "ACD"; kinds 1 and 2 colored (same color), kind 3 not.',
     {
       wallet: true,
-      notes: ['S3 delta: the three identities are published by ONE publishMetadata() transaction with three events (not "publish ×3").'],
+      notes: ['The three identities are published by ONE publishMetadata() transaction with three events.'],
     },
   );
   const c05 = ozCase(
@@ -327,7 +321,7 @@ function build(): { cases: CaseDef[] } {
     '3 kind-1 identities ("Acme Medals", "MEDAL", 0), one per domain, in one group "MEDAL"; three distinct colors.',
     {
       wallet: true,
-      notes: ['S3 delta: publishMetadata(domain) is called three times (three transactions); bronze is published but never minted.'],
+      notes: ['publishMetadata(domain) is called three times (three transactions); bronze is published but never minted.'],
     },
   );
   for (const c of [c01, c02, c03, c04, c05]) {
@@ -335,12 +329,11 @@ function build(): { cases: CaseDef[] } {
     expectedOf[c.def.id] = c.expected;
   }
 
-  // C06 — minimal OwnerKey lifecycle (run 2026-10-02 with the OwnerKey of that time; states re-derived in S10)
+  // C06 — minimal OwnerKey lifecycle. The deployed contract's withdrawMetadata emits ONE Null record at `name`
+  // (C06_DEPLOYED), so the withdraw steps expect exactly that payload.
   {
     const meta = minimalMeta('OwnerKey');
     const publish = { ...minimalCallOf(meta.steps[0]!) };
-    // The deployed contract's withdrawMetadata emitted ONE Null record at `name` (C06_DEPLOYED): its transactions are on
-    // chain and are not re-sent, so the verify expectations keep those exact payloads.
     const life = minimalLifecycle('OwnerKey').map((c) =>
       c.circuit === 'withdrawMetadata'
         ? { ...c, expect: (c.expect ?? []).map((e) => ({ ...e, payload: C06_DEPLOYED.withdrawPayload(e.domainSep!, e.kind!) })) }
@@ -363,7 +356,7 @@ function build(): { cases: CaseDef[] } {
       );
       evs.push(eventsOf(c));
       const state = reduce(evs);
-      sameState(state, C06_EXPECTED[c.stepId!]!, `C06 after ${c.stepId} (S10 D5)`);
+      sameState(state, C06_EXPECTED[c.stepId!]!, `C06 after ${c.stepId}`);
       files[`expect/${c.stepId}.json`] = expectOf(c);
       files[`expected-after-${c.stepId}.json`] = state;
       steps.push(verify(c.stepId!));
@@ -377,13 +370,8 @@ function build(): { cases: CaseDef[] } {
     expectedOf.C06 = final;
     cases.push({
       id: 'C06',
-      rederived: {
-        mip: MIP_274A84F.commit,
-        date: '2026-10-03',
-        why: 'MIP-0018 changed after these transactions: at 274a84f a Null record deletes only its own field (it withdrew the whole identity at b147c62/78ecbb4). The transactions are not re-sent; the expected states are re-derived from the same payloads with the current reference consumer. The expectations written before the transactions are in git history (commit e7d967a96a2bc32c5a7b00fe401132042b83a4dd).',
-      },
       title:
-        'Minimal OwnerKey (kind 3, no OpenZeppelin) lifecycle: deploy, publish, rename, withdraw (Null at name), withdraw again, revive',
+        'Minimal OwnerKey (kind 3, no OpenZeppelin) lifecycle: deploy, publish, rename, withdraw (one Null record at name), withdraw again, revive',
       demonstrates:
         'MIP "Applying records" on chain: latest value wins (S2); a Null record at `name` deletes only `name` — the identity keeps symbol, decimals and standards (S3a); a repeated Null at `name` changes nothing (S3b); a later record sets the field again and nothing from before the Null returns (the revive sets name and symbol; decimals and standards were never deleted).',
       conclusion:
@@ -392,12 +380,11 @@ function build(): { cases: CaseDef[] } {
         example: 'examples/minimal',
         contract: 'examples/minimal/contracts/OwnerKey.compact',
         metadata: 'examples/minimal/owner-key.metadata.json',
-        deployedFrom: `${C06_DEPLOYED.commit} — examples/minimal/contracts/OwnerKey.compact as deployed on 2026-10-02 (unchanged since ${C06_DEPLOYED.contractCommit}): withdrawMetadata() emits ONE Null record at name; verifier key withdrawMetadata ${C06_DEPLOYED.withdrawVerifierKeySha256} (record.json). The current OwnerKey emits four Null records (withdraw); that version runs as case C11.`,
+        deployedFrom: `examples/minimal/contracts/OwnerKey.compact at ${C06_DEPLOYED.commit}: its withdrawMetadata() emits one Null record at name (verifier key ${C06_DEPLOYED.withdrawVerifierKeySha256}, record.json)`,
       },
       notes: [
-        'S10 (MIP 274a84f, per-key tombstones): the expected states after withdraw, withdraw again and revive changed because the MIP changed after the transactions — the deployed withdrawMetadata deletes `name` only, so decimals and standards stay, and the revive brings back a name and a new symbol next to them. The original pre-written expectations ("hidden, all fields cleared"; final: only name and symbol) are in git history (e7d967a).',
-        'The observations of the 2026-10-02 run (observed-*.json) are kept as recorded; they show the consumer of that time (b147c62 rules, a `visible` flag). `recheck` checks the chain against the re-derived expectations.',
-        'Case-table delta: the S5 table says "only name = New"; OwnerKey renames with setMetadata(name, symbol), so the revive sets name and symbol (10- and 4-byte values: "Acme Again"/"ACMA").',
+        `This deployment's withdrawMetadata() emits one Null record at \`name\` (source: examples/minimal/contracts/OwnerKey.compact at ${C06_DEPLOYED.commit.slice(0, 7)}), so the case shows a single-key delete: decimals and standards stay, and the revive sets a name and a new symbol next to them. examples/minimal/contracts/OwnerKey.compact in this tree emits a Null record for each of the four keys; case C11 deploys it.`,
+        'OwnerKey renames with setMetadata(name, symbol), so the revive sets name and symbol (10- and 4-byte values: "Acme Again"/"ACMA").',
         "Every intermediate state is re-checkable: `recheck` lists the contract as of each step's block (`list --to-block`).",
       ],
       steps,
@@ -406,7 +393,7 @@ function build(): { cases: CaseDef[] } {
     });
   }
 
-  // C11 — full withdrawal with the current OwnerKey (S10 D6; prepared under MIP 274a84f before any transaction)
+  // C11 — full withdrawal with examples/minimal's OwnerKey (withdrawMetadata = Mip0018_withdraw: four Null records)
   {
     const meta = minimalMeta('OwnerKey');
     const publish = { ...minimalCallOf(meta.steps[0]!) };
@@ -430,7 +417,7 @@ function build(): { cases: CaseDef[] } {
       );
       evs.push(eventsOf(c));
       const state = reduce(evs);
-      sameState(state, C11_EXPECTED[c.stepId!]!, `C11 after ${c.stepId} (S10 D6)`);
+      sameState(state, C11_EXPECTED[c.stepId!]!, `C11 after ${c.stepId}`);
       // and the example's own expectation for that step (metadata.json; after a withdrawal it lists no identity)
       const own = c.stepId === 'publish' ? meta.expected : meta.lifecycle.find((l) => l.id === c.stepId)!.expected!;
       sameState(state, own, `C11 after ${c.stepId} (metadata.json)`);
@@ -451,10 +438,9 @@ function build(): { cases: CaseDef[] } {
     expectedOf.C11 = final;
     cases.push({
       id: 'C11',
-      mip: MIP_274A84F,
       title: 'Minimal OwnerKey (kind 3) full withdrawal: deploy, publish, withdraw (four Null records, one event), withdraw again, revive',
       demonstrates:
-        'MIP 274a84f "Applying records" on chain: one event with a Null record for each key (name, symbol, decimals, standards) deletes every field, so the token identity is not referenced at all — not listed, in no group, as if it had never been described (S3c); a repeated withdrawal changes nothing (S3b); a later record describes it again with only that field (the revive: name and symbol; decimals and standards do not return, S3d).',
+        'MIP "Applying records" on chain: one event with a Null record for each key (name, symbol, decimals, standards) deletes every field, so the token identity is not referenced at all — not listed, in no group, as if it had never been described (S3c); a repeated withdrawal changes nothing (S3b); a later record describes it again with only that field (the revive: name and symbol; decimals and standards do not return, S3d).',
       conclusion:
         'after publish: name "Acme Token", symbol "ACME", decimals 6, standards "mip-0004" (group "ACME"); after withdraw and after withdraw again: no identity and no group (`list`: identities none); final: ONLY name "Acme Again" and symbol "ACMA" (group "ACMA"); the withdraw payload = header + the four Null records (codec withdrawRecords()), the publish payload = MIP Appendix A.',
       source: {
@@ -463,9 +449,8 @@ function build(): { cases: CaseDef[] } {
         metadata: 'examples/minimal/owner-key.metadata.json',
       },
       notes: [
-        'Prepared under MIP 274a84f (S10 plan, decision D6); expected.json, expected-after-*.json and expect/*.json were committed before the first transaction.',
         'Kind 3 has no color, so there is no color lookup: per the MIP "Lookup" section a ledger token is found by querying the contract\'s kind-3 events, which is `list` — after the withdrawal it must show no identity for (0x11…, 3) and no group.',
-        'The same OwnerKey source as examples/minimal at this commit (withdrawMetadata = Mip0018_withdraw); C06 ran the earlier version (one Null at name).',
+        'The contract is examples/minimal/contracts/OwnerKey.compact: its withdrawMetadata() calls Mip0018_withdraw, one event with a Null record at name, symbol, decimals and standards (verifier key = docs/costs.json).',
       ],
       steps,
       recheck: { verify: verifies, list: lists },
@@ -543,7 +528,7 @@ function build(): { cases: CaseDef[] } {
       conclusion: `${ids.filter((i) => i.startsWith('A')).length} accepted, ${ids.filter((i) => i.startsWith('R')).length} rejected, ${ids.filter((i) => i.startsWith('I')).length} ignored events; one identity (0x11…/3) with exactly the accepted records' fields (expected.json lists every field).`,
       source: { contract: 'test-contracts/raw-emitter', vectors: 'vectors/payload' },
       notes: [
-        '--force: accepted vectors are emitted even when they would not change the state; rejected and ignored ones are never skipped (Q27).',
+        "--force: accepted vectors are emitted even when they would not change the state (without it, the before-check skips a call whose accepted events leave the contract's state unchanged); rejected and ignored ones are never skipped.",
       ],
       steps,
       recheck: { verify: verifies, list: [{ record: 'record.json', expect: 'expected.json' }] },
@@ -664,7 +649,7 @@ function build(): { cases: CaseDef[] } {
     expectedOf.C10 = expected;
     cases.push({
       id: 'C10',
-      title: 'Minimal create-and-destroy (kind 3, Q4): deploy, publish, VerifierKeyRemove of publishMetadata, publish again',
+      title: 'Minimal create-and-destroy (kind 3): deploy, publish, VerifierKeyRemove of publishMetadata, publish again',
       demonstrates:
         'The unguarded constant publishMetadata() exists only until its verifier key is removed by the deployer (maintenance authority); afterwards it cannot be called at all.',
       conclusion:
@@ -685,7 +670,7 @@ function build(): { cases: CaseDef[] } {
           argv: ['remove-circuit', NET, S1, '--record', REC, '--circuit', 'publishMetadata'],
           expectExit: 0,
           submits: 'verifier-key-remove',
-          note: 'maintenance VerifierKeyRemove in the v4 slot (ZKIR v3 keys, Q23), signed with the maintenance key kept in the 0600 private-state file',
+          note: 'maintenance VerifierKeyRemove in the v4 slot (where ZKIR v3 keys live), signed with the maintenance key kept in the 0600 private-state file',
         },
         {
           ...call({ ...publish, stepId: 'publish-again' }, { force: true, expectExit: 1 }),
@@ -714,7 +699,7 @@ function build(): { cases: CaseDef[] } {
         argv: ['index', NET, '--from-height', '{firstHeight}', '--to-height', '{lastHeight}', '--state', '{out}/index', '--json'],
         expectExit: 0,
         stdout: 'index-summary.json',
-        note: '{firstHeight} = the lowest inclusion height of the matrix records − 10; {lastHeight} = the highest (S5 fills both)',
+        note: '{firstHeight} = the lowest inclusion height of the matrix records − 10; {lastHeight} = the highest (both read from the records)',
       },
     ];
     const add = (caseId: string, domainSep: string, kind: 1 | 2, minted: boolean, label: string) => {
@@ -754,13 +739,13 @@ function build(): { cases: CaseDef[] } {
       id: 'IDX',
       title: 'Mint scanner over the matrix, then every color looked up (wallet-free)',
       demonstrates:
-        'MIP "Lookup" / owner decision F8: from a start height, every native mint of C02–C05 is found once with its (contract, domainSep, kind), and each color resolves to its identity and current metadata.',
+        'MIP "Lookup": from a start height, every native mint of C02–C05 is found once with its (contract, domainSep, kind), and each color resolves to its identity and current metadata.',
       conclusion:
         '6 minted colors (C02 shielded, C03 unshielded, C04 shielded + unshielded = one color, C05 gold, silver) resolve to their contract, domainSep and kind with the metadata of each case; C05 bronze (never minted) is "not minted in the scanned range".',
       source: { tool: 'mip0018 index / lookup' },
       dependsOn: ['C02', 'C03', 'C04', 'C05'],
       notes: [
-        "U1 (S6b, the upgrade case, run after the matrix) scans its own block range and looks up its color in its own folder (cases/U1: steps index and lookup), so this scan stays the matrix's range.",
+        "U1 (the upgrade case, run after the matrix) scans its own block range and looks up its color in its own folder (cases/U1: steps index and lookup), so this scan stays the matrix's range.",
         'The index state lands in {out}/index/index-state.json (deployments/stagenet/cases/IDX/index/ on Stagenet).',
       ],
       steps,
@@ -779,7 +764,7 @@ function build(): { cases: CaseDef[] } {
     });
   }
 
-  // U1 — existing-contract upgrade (S6b): LegacyToken deployed WITHOUT an emitting circuit, a mint, then
+  // U1 — existing-contract upgrade: LegacyToken deployed WITHOUT an emitting circuit, a mint, then
   // VerifierKeyInsert(publishMetadata) by the maintenance authority and the call (examples/upgrade-existing-contract)
   {
     const ds = `0x${Buffer.from(U1_DOMAIN).toString('hex').padEnd(64, '0')}`;
@@ -814,8 +799,7 @@ function build(): { cases: CaseDef[] } {
     });
     cases.push({
       id: 'U1',
-      title:
-        'Existing-contract upgrade (S6): deploy a token without an emitting circuit, mint, VerifierKeyInsert(publishMetadata), publish',
+      title: 'Existing-contract upgrade: deploy a token without an emitting circuit, mint, VerifierKeyInsert(publishMetadata), publish',
       demonstrates:
         'MIP "Existing contracts": a maintenance VerifierKeyInsert adds publishMetadata() to a deployed kind-1 token; the event is bound to the ORIGINAL address, so the color of the coins minted before the upgrade is the identity\'s color; address, domainSep, coins and the other circuit stay as they were. A key outside the maintenance committee is refused.',
       conclusion:
@@ -829,7 +813,7 @@ function build(): { cases: CaseDef[] } {
       notes: [
         `domainSep = pad(32, "${U1_DOMAIN}") (a LegacyToken constructor argument; publishMetadata() reads it from the ledger).`,
         "The wrong-signer key is a throwaway ledger sampleSigningKey() in the signer state directory (0600) — never wallet material; it is not in the contract's one-key committee.",
-        'On Stagenet only the free negatives run (owner plan S6b): the refused insert (no transaction) and the forced one the node rejects (no fee). The paid overwrite attempts (≈ 0.6 DUST each) are proven on the local chain (examples/upgrade-existing-contract/README.md).',
+        'On Stagenet only the free negatives run: the refused insert (no transaction) and the forced one the node rejects (no fee). The paid overwrite attempts (≈ 0.6 DUST each) are proven on the local chain (examples/upgrade-existing-contract/README.md).',
         "{firstHeight} = the deploy height − 1 and {lastHeight} = the highest inclusion height of this case's record: the scan covers the mint before the upgrade and the publish after it.",
       ],
       steps: [
@@ -954,11 +938,10 @@ function build(): { cases: CaseDef[] } {
   return { cases };
 }
 
-// C06 ran with OwnerKey.compact as it was on 2026-10-02 (HEAD 70b54c6 at the deploy, 08:33Z; the file unchanged since
-// 2a93be0): its withdrawMetadata emitted ONE Null record at `name`. Deployed verifier key from C06/record.json.
+// C06's contract: examples/minimal/contracts/OwnerKey.compact at 70b54c6, whose withdrawMetadata emits ONE Null record
+// at `name`. Deployed verifier key from C06/record.json.
 const C06_DEPLOYED = {
   commit: '70b54c674260b13c0cdbf1df72457f77a3dba2fe',
-  contractCommit: '2a93be07163979657e0538fb077ac66c24b916b2',
   withdrawVerifierKeySha256: 'ba50827a038885613c531250ba02d301c82fe44ed8c555f5c9b36dd3576d1917',
   withdrawPayload: (domainSep: string, kind: number) =>
     toHex(encodePayload({ domainSep: fromHex(domainSep), kind }, [record.tombstone('name')])),
@@ -968,7 +951,7 @@ const DS11 = `0x${'11'.repeat(32)}`;
 const kind3 = (common: Record<string, unknown>): ExpectedIdentity => ({ domainSep: DS11, kind: 3, colored: false, common });
 const groupOf = (symbol: string) => [{ symbol, members: [{ domainSep: DS11, kind: 3 }] }];
 const A1_COMMON = { name: 'Acme Token', symbol: 'ACME', decimals: 6, standards: 'mip-0004' };
-/** C06 under MIP 274a84f, written by hand from the S10 plan (decision D5); the generator checks the reducer agrees. */
+/** C06's states, written by hand from the MIP's "Applying records" text; the generator checks the reducer agrees. */
 const C06_EXPECTED: Record<string, ExpectedState> = {
   publish: { identities: [kind3(A1_COMMON)], groups: groupOf('ACME') },
   rename: { identities: [kind3({ ...A1_COMMON, name: 'Acme Prime', symbol: 'ACMP' })], groups: groupOf('ACMP') },
@@ -976,7 +959,7 @@ const C06_EXPECTED: Record<string, ExpectedState> = {
   'withdraw-again': { identities: [kind3({ symbol: 'ACMP', decimals: 6, standards: 'mip-0004' })], groups: groupOf('ACMP') },
   revive: { identities: [kind3({ name: 'Acme Again', symbol: 'ACMA', decimals: 6, standards: 'mip-0004' })], groups: groupOf('ACMA') },
 };
-/** C11 under MIP 274a84f, written by hand from the S10 plan (decision D6). */
+/** C11's states, written by hand from the MIP's "Applying records" text; the generator checks the reducer agrees. */
 const C11_EXPECTED: Record<string, ExpectedState> = {
   publish: { identities: [kind3(A1_COMMON)], groups: groupOf('ACME') },
   withdraw: { identities: [], groups: [] },
@@ -1023,18 +1006,13 @@ function readme(c: CaseDef): string {
     '',
     `**Demonstrates**: ${c.demonstrates}`,
     '',
-    c.rederived
-      ? `**Expected conclusion** (re-derived ${c.rederived.date} with the reference reducer under MIP \`${c.rederived.mip!.slice(0, 7)}\`, after the transactions): ${c.conclusion}`
-      : `**Expected conclusion** (from the reference reducer, before any transaction): ${c.conclusion}`,
-    '',
-    ...(c.rederived ? [`**Why re-derived**: ${c.rederived.why}`, ''] : []),
-    `**MIP text**: prepared under \`${(c.mip ?? MIP_CASES).commit.slice(0, 7)}\`${c.rederived ? `; expectations re-derived under \`${c.rederived.mip!.slice(0, 7)}\`` : ''}.`,
+    `**Expected conclusion** (from the case definition; consumer states are computed with the reference consumer, never from a chain observation): ${c.conclusion}`,
     '',
     ...(c.dependsOn ? [`**Runs after**: ${c.dependsOn.join(', ')}`, ''] : []),
     ...(c.notes ? [...c.notes.map((n) => `- ${n}`), ''] : []),
     '## Steps (Stagenet)',
     '',
-    'Values filled in by S5 when it runs: the records (`record.json`), observations (`observed-*.json`, `wallet-status.json`) and the transaction table below. Shell set-up (bash or zsh; S5 plan §S5a; the secret directory is mounted read-only into the signer container only):',
+    'Running the steps writes the run record (`record.json`, rendered as the transaction table below) and the observations (`observed-*.json`, `wallet-status.json`). Shell set-up (bash or zsh; the secret directory is mounted read-only into the signer container only):',
     '',
     '```sh',
     'signer() {',
@@ -1070,15 +1048,15 @@ const speck = (v: string) => BigInt(v).toLocaleString('en-US');
 const dust = (v: string) => (Number(BigInt(v)) / 1e15).toFixed(3);
 
 /**
- * The README's record section: from the case's run record(s) when S5 has written them (public data only), else the
- * placeholder table. Rendering only reads the records, so `--check` stays exact once they are committed.
+ * The README's record section: from the case's run record(s) when they exist (public data only), else a placeholder
+ * table. Rendering only reads the records, so `--check` stays exact once they are committed.
  */
 function recorded(c: CaseDef): string[] {
   const dir = join(CASES, c.id);
   const p = join(dir, 'record.json');
   if (c.id === 'IDX') {
     const st = join(dir, 'index', 'index-state.json');
-    if (!existsSync(st)) return ['## Scan (filled in by S5)', '', '_S5_: the scanned range and the colors found.', ''];
+    if (!existsSync(st)) return ['## Scan', '', 'Not run: no index state yet.', ''];
     const s = JSON.parse(readFileSync(st, 'utf8')) as {
       fromHeight: number;
       nextHeight: number;
@@ -1118,11 +1096,11 @@ function recorded(c: CaseDef): string[] {
   }
   if (!existsSync(p))
     return [
-      '## Transactions (filled in by S5)',
+      '## Transactions',
       '',
       '| Step | Transaction hash | Block | Fee (SPECK) |',
       '|---|---|---|---|',
-      ...c.steps.filter((s) => s.submits).map((s) => `| \`${s.id}\` | _S5_ | _S5_ | _S5_ |`),
+      ...c.steps.filter((s) => s.submits).map((s) => `| \`${s.id}\` | — | — | — |`),
       '',
     ];
   const r = JSON.parse(readFileSync(p, 'utf8')) as {
@@ -1174,7 +1152,7 @@ function indexReadme(cases: CaseDef[]): string {
     '',
     '<!-- Generated by deployments/stagenet/tools/prepare-cases.ts; do not edit. -->',
     '',
-    "Prepared before any transaction: each folder holds `case.json` (one `mip0018` command per step, the exit code each must end with, the re-check list), `expected.json` (what the reference consumer must conclude, derived from the examples' metadata.json / the vectors) and `expect/*.json` (what `verify` must find per transaction). S5 runs the steps on Stagenet and adds the records and observations; `mip0018 recheck --network stagenet --case <folder>` re-checks a case wallet-free.",
+    "Each folder holds `case.json` (one `mip0018` command per step, the exit code each must end with, the re-check list), `expected.json` (what the reference consumer must conclude, computed from the examples' metadata.json / the vectors) and `expect/*.json` (what `verify` must find per transaction), plus the run record and the observations; `mip0018 recheck --network stagenet --case <folder>` re-checks a case wallet-free.",
     '',
     '| Case | What | Expected conclusion | Steps | Transactions |',
     '|---|---|---|---:|---:|',
@@ -1204,8 +1182,7 @@ function outputs(): Map<string, string> {
         title: c.title,
         demonstrates: c.demonstrates,
         conclusion: c.conclusion,
-        mip: c.mip ?? MIP_CASES,
-        ...(c.rederived ? { rederived: c.rederived } : {}),
+        mip: MIP,
         source: c.source,
         ...(c.dependsOn ? { dependsOn: c.dependsOn } : {}),
         ...(c.notes ? { notes: c.notes } : {}),
@@ -1232,7 +1209,7 @@ function outputs(): Map<string, string> {
   return out;
 }
 
-/** Generated files in a case folder (records and observations written by S5 are never touched). */
+/** Generated files in a case folder (run records and observations are never touched). */
 const generated = (rel: string) =>
   /^(case\.json|expected(-after-[\w-]+)?\.json|README\.md|expect\/[\w-]+\.json|args\/[\w-]+\.json)$/u.test(rel);
 
@@ -1261,7 +1238,7 @@ for (const e of existsSync(CASES) ? readdirSync(CASES, { withFileTypes: true }) 
   for (const rel of walk(join(CASES, id))) {
     const p = join(CASES, id, rel);
     if (generated(rel) && !want.has(p)) {
-      if (check) stale.push(`${relative(REPO, p)} (no longer generated)`);
+      if (check) stale.push(`${relative(REPO, p)} (not produced by the generator)`);
       else rmSync(p);
     }
   }

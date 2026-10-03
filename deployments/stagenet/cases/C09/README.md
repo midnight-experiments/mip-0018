@@ -4,9 +4,7 @@
 
 **Demonstrates**: OpenZeppelin Ownable guards the metadata circuits: a non-owner cannot rename the token; the call fails while the transaction is being built, so nothing is submitted or paid.
 
-**Expected conclusion** (from the reference reducer, before any transaction): the publish command exits 1 (refused before submission: 'Ownable: caller is not the owner'); the record step has no transaction; C01's contract still lists exactly C01's expected state.
-
-**MIP text**: prepared under `b147c62`.
+**Expected conclusion** (from the case definition; consumer states are computed with the reference consumer, never from a chain observation): the publish command exits 1 (refused before submission: 'Ownable: caller is not the owner'); the record step has no transaction; C01's contract still lists exactly C01's expected state.
 
 **Runs after**: C01
 
@@ -15,7 +13,7 @@
 
 ## Steps (Stagenet)
 
-Values filled in by S5 when it runs: the records (`record.json`), observations (`observed-*.json`, `wallet-status.json`) and the transaction table below. Shell set-up (bash or zsh; S5 plan §S5a; the secret directory is mounted read-only into the signer container only):
+Running the steps writes the run record (`record.json`, rendered as the transaction table below) and the observations (`observed-*.json`, `wallet-status.json`). Shell set-up (bash or zsh; the secret directory is mounted read-only into the signer container only):
 
 ```sh
 signer() {

@@ -4,15 +4,13 @@
 
 **Demonstrates**: Independent events (vector S7b): event 0 sets name = "Good" and applies; event 1 is malformed (valType 6) and is rejected whole without undoing event 0.
 
-**Expected conclusion** (from the reference reducer, before any transaction): One identity (0x11…/3) with only name = "Good"; 2 events: 1 accepted, 1 rejected (reserved-valtype).
-
-**MIP text**: prepared under `b147c62`.
+**Expected conclusion** (from the case definition; consumer states are computed with the reference consumer, never from a chain observation): One identity (0x11…/3) with only name = "Good"; 2 events: 1 accepted, 1 rejected (reserved-valtype).
 
 - A fresh raw-emitter deployment, so the state is S7b alone (independent of C07).
 
 ## Steps (Stagenet)
 
-Values filled in by S5 when it runs: the records (`record.json`), observations (`observed-*.json`, `wallet-status.json`) and the transaction table below. Shell set-up (bash or zsh; S5 plan §S5a; the secret directory is mounted read-only into the signer container only):
+Running the steps writes the run record (`record.json`, rendered as the transaction table below) and the observations (`observed-*.json`, `wallet-status.json`). Shell set-up (bash or zsh; the secret directory is mounted read-only into the signer container only):
 
 ```sh
 signer() {

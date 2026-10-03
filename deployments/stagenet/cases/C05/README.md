@@ -4,15 +4,13 @@
 
 **Demonstrates**: Separate identities per domainSep (vector S6) in one contract.
 
-**Expected conclusion** (from the reference reducer, before any transaction): 3 kind-1 identities ("Acme Medals", "MEDAL", 0), one per domain, in one group "MEDAL"; three distinct colors.
+**Expected conclusion** (from the case definition; consumer states are computed with the reference consumer, never from a chain observation): 3 kind-1 identities ("Acme Medals", "MEDAL", 0), one per domain, in one group "MEDAL"; three distinct colors.
 
-**MIP text**: prepared under `b147c62`.
-
-- S3 delta: publishMetadata(domain) is called three times (three transactions); bronze is published but never minted.
+- publishMetadata(domain) is called three times (three transactions); bronze is published but never minted.
 
 ## Steps (Stagenet)
 
-Values filled in by S5 when it runs: the records (`record.json`), observations (`observed-*.json`, `wallet-status.json`) and the transaction table below. Shell set-up (bash or zsh; S5 plan §S5a; the secret directory is mounted read-only into the signer container only):
+Running the steps writes the run record (`record.json`, rendered as the transaction table below) and the observations (`observed-*.json`, `wallet-status.json`). Shell set-up (bash or zsh; the secret directory is mounted read-only into the signer container only):
 
 ```sh
 signer() {

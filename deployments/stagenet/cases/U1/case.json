@@ -2,11 +2,11 @@
   "kind": "mip0018-case",
   "schema": 1,
   "id": "U1",
-  "title": "Existing-contract upgrade (S6): deploy a token without an emitting circuit, mint, VerifierKeyInsert(publishMetadata), publish",
+  "title": "Existing-contract upgrade: deploy a token without an emitting circuit, mint, VerifierKeyInsert(publishMetadata), publish",
   "demonstrates": "MIP \"Existing contracts\": a maintenance VerifierKeyInsert adds publishMetadata() to a deployed kind-1 token; the event is bound to the ORIGINAL address, so the color of the coins minted before the upgrade is the identity's color; address, domainSep, coins and the other circuit stay as they were. A key outside the maintenance committee is refused.",
   "conclusion": "same contract address before/after; entry points {mint} → {mint, publishMetadata} with the mint key unchanged; ledger data unchanged; 1 kind-1 identity (\"Legacy Token\", \"LGCY\", 6) whose color = the color of the coins wallet 1 received from the pre-upgrade mint; the scanner finds that mint before the insert and lookup resolves the color to the new metadata; the insert signed by another key is refused before submission and, forced, rejected by the node.",
   "mip": {
-    "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
+    "commit": "274a84f221bcfc17e4b73e2c8b32fd8c028ea092",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {
@@ -18,7 +18,7 @@
   "notes": [
     "domainSep = pad(32, \"mip-0018:example:upgrade\") (a LegacyToken constructor argument; publishMetadata() reads it from the ledger).",
     "The wrong-signer key is a throwaway ledger sampleSigningKey() in the signer state directory (0600) — never wallet material; it is not in the contract's one-key committee.",
-    "On Stagenet only the free negatives run (owner plan S6b): the refused insert (no transaction) and the forced one the node rejects (no fee). The paid overwrite attempts (≈ 0.6 DUST each) are proven on the local chain (examples/upgrade-existing-contract/README.md).",
+    "On Stagenet only the free negatives run: the refused insert (no transaction) and the forced one the node rejects (no fee). The paid overwrite attempts (≈ 0.6 DUST each) are proven on the local chain (examples/upgrade-existing-contract/README.md).",
     "{firstHeight} = the deploy height − 1 and {lastHeight} = the highest inclusion height of this case's record: the scan covers the mint before the upgrade and the publish after it."
   ],
   "placeholders": {

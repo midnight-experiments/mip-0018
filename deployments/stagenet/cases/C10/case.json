@@ -2,11 +2,11 @@
   "kind": "mip0018-case",
   "schema": 1,
   "id": "C10",
-  "title": "Minimal create-and-destroy (kind 3, Q4): deploy, publish, VerifierKeyRemove of publishMetadata, publish again",
+  "title": "Minimal create-and-destroy (kind 3): deploy, publish, VerifierKeyRemove of publishMetadata, publish again",
   "demonstrates": "The unguarded constant publishMetadata() exists only until its verifier key is removed by the deployer (maintenance authority); afterwards it cannot be called at all.",
   "conclusion": "one event (= MIP Appendix A, A1, byte-for-byte); the key is gone; the second publish is refused before submission; list shows the A1 metadata.",
   "mip": {
-    "commit": "b147c627e1bb15b5d15cc73cf30c2a36afd34dbb",
+    "commit": "274a84f221bcfc17e4b73e2c8b32fd8c028ea092",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {
@@ -91,7 +91,7 @@
       ],
       "expectExit": 0,
       "submits": "verifier-key-remove",
-      "note": "maintenance VerifierKeyRemove in the v4 slot (ZKIR v3 keys, Q23), signed with the maintenance key kept in the 0600 private-state file"
+      "note": "maintenance VerifierKeyRemove in the v4 slot (where ZKIR v3 keys live), signed with the maintenance key kept in the 0600 private-state file"
     },
     {
       "id": "publish-again",

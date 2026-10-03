@@ -4,15 +4,13 @@
 
 **Demonstrates**: The common fields in one event from an OpenZeppelin token; kind 3 has no color.
 
-**Expected conclusion** (from the reference reducer, before any transaction): 1 kind-3 identity with 3 usable fields (name "Acme Gold", symbol "AGLD", decimals 6); no standards (Q25); no color.
+**Expected conclusion** (from the case definition; consumer states are computed with the reference consumer, never from a chain observation): 1 kind-3 identity with 3 usable fields (name "Acme Gold", symbol "AGLD", decimals 6); no standards; no color.
 
-**MIP text**: prepared under `b147c62`.
-
-- Q25: the OpenZeppelin examples publish no `standards`; the A1 shape (with standards) on Stagenet is C06/C10 (examples/minimal).
+- The OpenZeppelin examples publish no `standards`: `standards` is a self-declaration, and OpenZeppelin Compact Contracts claims no MIP. The A1 shape (with standards) on Stagenet is C06, C10 and C11 (examples/minimal).
 
 ## Steps (Stagenet)
 
-Values filled in by S5 when it runs: the records (`record.json`), observations (`observed-*.json`, `wallet-status.json`) and the transaction table below. Shell set-up (bash or zsh; S5 plan §S5a; the secret directory is mounted read-only into the signer container only):
+Running the steps writes the run record (`record.json`, rendered as the transaction table below) and the observations (`observed-*.json`, `wallet-status.json`). Shell set-up (bash or zsh; the secret directory is mounted read-only into the signer container only):
 
 ```sh
 signer() {

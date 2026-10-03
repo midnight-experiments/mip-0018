@@ -1,5 +1,5 @@
 {
-  "$comment": "Stagenet identity during the S5/S6b runs (deployments/stagenet/tools/network-identity.ts). Public data only; re-run the tool to compare.",
+  "$comment": "Stagenet identity during the case runs (deployments/stagenet/tools/network-identity.ts). Public data only; re-run the tool to compare.",
   "network": {
     "id": "stagenet",
     "networkId": "stagenet",
@@ -10,7 +10,7 @@
   },
   "observations": [
     {
-      "label": "S5a preflight (before the first matrix transaction)",
+      "label": "before the first matrix transaction",
       "observedAt": "2026-10-02T07:54:20.785Z",
       "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
       "genesisMatchesPin": true,
@@ -94,7 +94,7 @@
       "requests": 9
     },
     {
-      "label": "after U1 (end of S5/S6b)",
+      "label": "after U1",
       "observedAt": "2026-10-02T09:43:20.314Z",
       "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
       "genesisMatchesPin": true,
@@ -149,7 +149,7 @@
       "requests": 9
     },
     {
-      "label": "S10 C11 preflight (before the first C11 transaction)",
+      "label": "before the first C11 transaction",
       "observedAt": "2026-10-03T01:19:10.911Z",
       "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
       "genesisMatchesPin": true,
@@ -204,7 +204,7 @@
       "requests": 9
     },
     {
-      "label": "S10 after C11",
+      "label": "after C11",
       "observedAt": "2026-10-03T01:31:24.555Z",
       "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
       "genesisMatchesPin": true,

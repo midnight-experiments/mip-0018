@@ -3,7 +3,7 @@
   "schema": 1,
   "id": "C11",
   "title": "Minimal OwnerKey (kind 3) full withdrawal: deploy, publish, withdraw (four Null records, one event), withdraw again, revive",
-  "demonstrates": "MIP 274a84f \"Applying records\" on chain: one event with a Null record for each key (name, symbol, decimals, standards) deletes every field, so the token identity is not referenced at all — not listed, in no group, as if it had never been described (S3c); a repeated withdrawal changes nothing (S3b); a later record describes it again with only that field (the revive: name and symbol; decimals and standards do not return, S3d).",
+  "demonstrates": "MIP \"Applying records\" on chain: one event with a Null record for each key (name, symbol, decimals, standards) deletes every field, so the token identity is not referenced at all — not listed, in no group, as if it had never been described (S3c); a repeated withdrawal changes nothing (S3b); a later record describes it again with only that field (the revive: name and symbol; decimals and standards do not return, S3d).",
   "conclusion": "after publish: name \"Acme Token\", symbol \"ACME\", decimals 6, standards \"mip-0004\" (group \"ACME\"); after withdraw and after withdraw again: no identity and no group (`list`: identities none); final: ONLY name \"Acme Again\" and symbol \"ACMA\" (group \"ACMA\"); the withdraw payload = header + the four Null records (codec withdrawRecords()), the publish payload = MIP Appendix A.",
   "mip": {
     "commit": "274a84f221bcfc17e4b73e2c8b32fd8c028ea092",
@@ -15,9 +15,8 @@
     "metadata": "examples/minimal/owner-key.metadata.json"
   },
   "notes": [
-    "Prepared under MIP 274a84f (S10 plan, decision D6); expected.json, expected-after-*.json and expect/*.json were committed before the first transaction.",
     "Kind 3 has no color, so there is no color lookup: per the MIP \"Lookup\" section a ledger token is found by querying the contract's kind-3 events, which is `list` — after the withdrawal it must show no identity for (0x11…, 3) and no group.",
-    "The same OwnerKey source as examples/minimal at this commit (withdrawMetadata = Mip0018_withdraw); C06 ran the earlier version (one Null at name)."
+    "The contract is examples/minimal/contracts/OwnerKey.compact: its withdrawMetadata() calls Mip0018_withdraw, one event with a Null record at name, symbol, decimals and standards (verifier key = docs/costs.json)."
   ],
   "placeholders": {
     "{net}": "network options (Stagenet: --network stagenet)",

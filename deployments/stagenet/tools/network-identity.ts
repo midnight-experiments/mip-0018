@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Records the identity of the Stagenet network the cases ran on (spec FR-052): genesis hash, chain name, node build,
+// Records the identity of the Stagenet network the cases ran on: genesis hash, chain name, node build,
 // runtime version, finalized head, the indexer's latest block, and (optional) the proof servers' versions. Wallet-free,
 // read-only, a handful of requests at the public-endpoint politeness interval.
 //
@@ -87,7 +87,7 @@ if (v.append) {
     ? (JSON.parse(readFileSync(v.append, 'utf8')) as { observations: unknown[] })
     : {
         $comment:
-          'Stagenet identity during the S5/S6b runs (deployments/stagenet/tools/network-identity.ts). Public data only; re-run the tool to compare.',
+          'Stagenet identity during the case runs (deployments/stagenet/tools/network-identity.ts). Public data only; re-run the tool to compare.',
         network: {
           id: 'stagenet',
           networkId: STAGENET.networkId,
