@@ -30,7 +30,7 @@ together because they share the contract and the `symbol` ("Symbol grouping").
 +import "@mip0018/compact/src/Mip0018" prefix Mip0018_;
 
  export { Either, ContractAddress, ZswapCoinPublicKey, ShieldedCoinInfo, UserAddress };
-@@ -56,2 +57,34 @@
+@@ -56,2 +57,35 @@
    return FungibleToken_balanceOf(account);
  }
 +
@@ -60,10 +60,11 @@ together because they share the contract and the `symbol` ("Symbol grouping").
 +    Mip0018_symbolRecord<3>(newSymbol)));
 +}
 +
-+// Withdraw one representation's metadata (kind 1, 2 or 3); the others are unchanged.
++// Withdraw one representation's metadata (kind 1, 2 or 3): a Null record for each of its keys in
++// one event; the other representations are unchanged.
 +export circuit withdrawMetadata(kind: Uint<8>): [] {
 +  Ownable_assertOnlyOwner();
-+  Mip0018_emitPayload(Mip0018_tombstone(NativeShieldedToken__domain, kind));
++  Mip0018_emitPayload(Mip0018_withdraw(NativeShieldedToken__domain, kind));
 +}
 ```
 
@@ -102,7 +103,7 @@ reference consumer (`@mip0018/consumer`, MIP vectors S6 and S9 on a real contrac
 | exact values | every emitted event of every step, decoded with `@mip0018/codec`: header and each key and value equal `metadata.json` exactly (no zero padding, `decimals` 1 byte) |
 | publish | one call, three events (kinds 1, 2, 3), one `domainSep`, payloads = `metadata.json` |
 | **colors** | the shielded coin and the unshielded UTXO have the same color = `rawTokenType(domainSep, contractAddress)` = the color the consumer derives for kinds 1 and 2; kind 3 has none and its mint has no native effect |
-| **grouping and independence** | after the steps: three identities, one `ACD` group. Then: renaming kind 3 to symbol `ACL` moves only kind 3 out of the group; renaming kind 1 changes only kind 1; withdrawing kind 2 hides only kind 2 (twice: no further change); republishing restores one group of three — the untouched identities keep the same fields at the same chain positions after every step, and the state equals `metadata.json` |
+| **grouping and independence** | after the steps: three identities, one `ACD` group. Then: renaming kind 3 to symbol `ACL` moves only kind 3 out of the group; renaming kind 1 changes only kind 1; withdrawing kind 2 removes only kind 2 (twice: no further change); republishing restores one group of three — the untouched identities keep the same fields at the same chain positions after every step, and the state equals `metadata.json` |
 | two contracts | a second deployment with the same `domainSep` and symbol gives three more identities in a separate group, with a different color (groups never span contracts) |
 | normal operation | the three mints and `transfer` emit no event, with and without metadata |
 | bad kind | `setMetadata` / `withdrawMetadata` with kind 0, 4 or 255 fail (`MIP-0018: kind must be 1, 2 or 3`) |

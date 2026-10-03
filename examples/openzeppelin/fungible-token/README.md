@@ -25,7 +25,7 @@ and can rename or withdraw them later.
 +import "@mip0018/compact/src/Mip0018" prefix Mip0018_;
 
  export { Either, ContractAddress };
-@@ -54,2 +55,32 @@
+@@ -54,2 +55,33 @@
    FungibleToken__burn(account, value);
  }
 +
@@ -53,10 +53,11 @@ and can rename or withdraw them later.
 +    Mip0018_symbolRecord<4>(newSymbol)));
 +}
 +
-+// Withdraw (tombstone): consumers hide the token and clear all its metadata.
++// Withdraw: one event with a Null record for each key (name, symbol, decimals, standards);
++// with no field left, consumers no longer reference the token at all.
 +export circuit withdrawMetadata(): [] {
 +  Ownable_assertOnlyOwner();
-+  Mip0018_emitPayload(Mip0018_tombstone(metadataDomain(), Mip0018_KIND_LEDGER()));
++  Mip0018_emitPayload(Mip0018_withdraw(metadataDomain(), Mip0018_KIND_LEDGER()));
 +}
 ```
 
@@ -105,7 +106,7 @@ docker/run.sh exec 'npx vitest run examples/openzeppelin/fungible-token'
 | metadata.json payloads | every expected payload equals the reference encoder (`@mip0018/codec`) |
 | exact values | every emitted event of every step, decoded with `@mip0018/codec`: header and each key and value equal `metadata.json` exactly (no zero padding, `decimals` 1 byte) |
 | publish | one `Misc` event, name `mip-0018:token-metadata[v1]`, payload = `metadata.json`, decoded values = the constructor literals, `decimals` from state |
-| lifecycle | publish → rename → withdraw → withdraw again → revive: payload bytes and the reference consumer's state equal `metadata.json` after every step (the repeated tombstone changes nothing; revive starts from empty fields) |
+| lifecycle | publish → rename → withdraw → withdraw again → revive: payload bytes and the reference consumer's state equal `metadata.json` after every step (after the withdrawal the token is no longer listed; the repeated withdrawal changes nothing; the revive lists it again with only the revived name and symbol) |
 | no color | the consumer derives no color for kind 3; minting creates no native mint effect |
 | normal operation | `mint`, `transfer`, `burn` emit no event (with and without metadata) and move balances as expected |
 | access control | a non-owner `publishMetadata`, `setMetadata`, `withdrawMetadata`, `mint`, `burn` fails (`Ownable: caller is not the owner`), nothing emitted |

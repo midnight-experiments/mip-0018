@@ -69,8 +69,9 @@ export circuit setMetadata(domain: Bytes<32>, newName: Bytes<11>, newSymbol: Byt
     Mip0018_symbolRecord<5>(newSymbol)));
 }
 
-// Withdraw one token type's metadata (tombstone for `domain`); the other types are unchanged.
+// Withdraw one token type's metadata (a Null record for each key of `domain`, one event); the
+// other types are unchanged.
 export circuit withdrawMetadata(domain: Bytes<32>): [] {
   Ownable_assertOnlyOwner();
-  Mip0018_emitPayload(Mip0018_tombstone(domain, Mip0018_KIND_SHIELDED()));
+  Mip0018_emitPayload(Mip0018_withdraw(domain, Mip0018_KIND_SHIELDED()));
 }

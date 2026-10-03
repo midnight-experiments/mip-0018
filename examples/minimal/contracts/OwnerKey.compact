@@ -43,10 +43,13 @@ export circuit setMetadata(name: Bytes<10>, symbol: Bytes<4>): [] {
     Mip0018_header(domain, Mip0018_KIND_LEDGER()), Mip0018_nameRecord<10>(name), Mip0018_symbolRecord<4>(symbol)));
 }
 
-/** Withdraw: the identity-wide tombstone (consumers hide the token and clear all its fields). */
+/**
+ * Withdraw: one event with a Null record for each key this token publishes (`name`, `symbol`,
+ * `decimals`, `standards`). With no field left, consumers no longer reference the token at all.
+ */
 export circuit withdrawMetadata(): [] {
   assertOwner();
-  Mip0018_emitPayload(Mip0018_tombstone(domain, Mip0018_KIND_LEDGER()));
+  Mip0018_emitPayload(Mip0018_withdraw(domain, Mip0018_KIND_LEDGER()));
 }
 
 export circuit mint(to: Bytes<32>, amount: Uint<64>): [] {

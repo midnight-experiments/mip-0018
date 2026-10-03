@@ -3,7 +3,7 @@
 // examples/openzeppelin/fungible-token in compact-runtime 0.20.0 (no chain):
 //   * publishMetadata() emits exactly the metadata.json payload (kind 3, constant domainSep, decimals
 //     from the token's state) — the same literals the constructor passed to FungibleToken.initialize;
-//   * rename, withdraw (tombstone), repeated withdraw and revive: bytes and reference-consumer state
+//   * rename, withdraw (a Null record for each key), repeated withdraw and revive: bytes and reference-consumer state
 //     equal metadata.json after every step; no color for kind 3;
 //   * mint, transfer and burn emit nothing (MIP "Publishing: no events in normal operation");
 //   * Ownable: a non-owner cannot publish, rename, withdraw, mint or burn (nothing emitted).

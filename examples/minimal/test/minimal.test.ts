@@ -11,7 +11,7 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { classifyEvent, commonRecords, encodePayload, EVENT_NAME, Kind, record, toHex } from '@mip0018/codec';
+import { classifyEvent, commonRecords, encodePayload, EVENT_NAME, Kind, toHex, withdrawRecords } from '@mip0018/codec';
 import { Simulator, type CallOutcome } from '@mip0018/compact/testing';
 import { MetadataState } from '@mip0018/consumer';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -95,16 +95,14 @@ describe('OwnerKey', () => {
     expectA1(await as(sim, ALICE, 'publishMetadata'), sim.address);
   });
 
-  it('setMetadata (rename) and withdrawMetadata (tombstone) equal the codec bytes', async () => {
+  it('setMetadata (rename) and withdrawMetadata (four Null records) equal the codec bytes', async () => {
     const sim = await deployOK();
     const renamed = await as(sim, ALICE, 'setMetadata', utf8('Beta Token'), utf8('BETA'));
     expect(toHex(renamed.misc[0]!.payload)).toBe(
       toHex(encodePayload({ domainSep: DOMAIN, kind: Kind.Ledger }, commonRecords({ name: 'Beta Token', symbol: 'BETA' }))),
     );
     const withdrawn = await as(sim, ALICE, 'withdrawMetadata');
-    expect(toHex(withdrawn.misc[0]!.payload)).toBe(
-      toHex(encodePayload({ domainSep: DOMAIN, kind: Kind.Ledger }, [record.tombstone('name')])),
-    );
+    expect(toHex(withdrawn.misc[0]!.payload)).toBe(toHex(encodePayload({ domainSep: DOMAIN, kind: Kind.Ledger }, withdrawRecords())));
     for (const out of [renamed, withdrawn]) {
       expect(out.misc).toHaveLength(1);
       expect(toHex(out.misc[0]!.name)).toBe(toHex(EVENT_NAME));
@@ -138,7 +136,7 @@ describe('OwnerKey', () => {
     expect(ok.misc.length).toBe(circuit === 'mint' ? 0 : 1);
   });
 
-  it('publish -> rename -> withdraw -> republish, applied by the reference consumer', async () => {
+  it('publish -> rename -> withdraw -> revive -> republish, applied by the reference consumer', async () => {
     const sim = await deployOK();
     const steps = [
       await as(sim, ALICE, 'publishMetadata'),
@@ -154,9 +152,11 @@ describe('OwnerKey', () => {
     apply(1, steps[1]!);
     expect(view()?.common).toEqual({ name: 'Beta Token', symbol: 'BETA', decimals: 6n, standards: ['mip-0004'] });
     apply(2, steps[2]!);
-    expect(view()?.visible).toBe(false);
-    apply(3, await as(sim, ALICE, 'publishMetadata'));
-    expect(view()?.visible).toBe(true);
+    expect(view()).toBeUndefined(); // every field deleted: the token is no longer referenced
+    expect(state.identities()).toEqual([]);
+    apply(3, await as(sim, ALICE, 'setMetadata', utf8('Acme Again'), utf8('ACMA')));
+    expect(view()?.common).toEqual({ name: 'Acme Again', symbol: 'ACMA' }); // nothing from before the withdrawal
+    apply(4, await as(sim, ALICE, 'publishMetadata'));
     expect(view()?.common).toEqual({ name: 'Acme Token', symbol: 'ACME', decimals: 6n, standards: ['mip-0004'] });
   });
 });

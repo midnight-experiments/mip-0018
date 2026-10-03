@@ -3,4 +3,4 @@
 pragma language_version >= 0.26.0;
 import CompactStandardLibrary;
 import "../../src/Mip0018" prefix M_;
-constructor() { M_emitPayload(M_tombstone(pad(32, "acme"), 3)); }
+constructor() { M_emitPayload(M_withdraw(pad(32, "acme"), 3)); }

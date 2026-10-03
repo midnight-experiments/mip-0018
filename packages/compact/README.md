@@ -43,13 +43,21 @@ why the MIP names this circuit. Complete contracts: [`examples/minimal`](../../e
 | `header(domainSep, kind)` | `MetadataHeader` (asserts kind ∈ {1, 2, 3}) | Payload |
 | `bytesRecord<K, V>(key, value)` · `utf8Record` · `jsonRecord` · `uriRecord` | `MetadataRecord<K, V>` with valType 0 / 1 / 3 / 4 | Payload, Value types |
 | `uintRecord<K>(key, Uint<8>)` · `uint128Record<K>(key, Uint<128>)` | `MetadataRecord<K, 1>` / `<K, 16>` (little-endian) | Value types |
-| `nullRecord<K>(key)` | `MetadataRecord<K, 0>` with valType 5 (tombstone) | Applying records |
+| `nullRecord<K>(key)` | `MetadataRecord<K, 0>` with valType 5 (tombstone): deletes the field at `key`; the token's other fields stay | Applying records |
 | `nameRecord<N>(name)` · `symbolRecord<S>(symbol)` · `decimalsRecord(Uint<8>)` · `standardsRecord<T>(list)` | the common-field records | Common fields |
 | `payload1<K1, V1>(h, r1)` … `payload4<K1, V1, …, K4, V4>(h, r1, …, r4)` | `Bytes<256>`: header ‖ records ‖ zero padding | Payload |
 | `commonFields<N, S>(domainSep, kind, name, symbol, decimals)` | `Bytes<256>` | Common fields |
 | `commonFieldsWithStandards<N, S, T>(…, standards)` | `Bytes<256>` (Appendix A shape) | Common fields |
-| `tombstone(domainSep, kind)` | `Bytes<256>`: one Null record at key `name` (withdraws the whole identity) | Applying records |
+| `withdraw(domainSep, kind)` | `Bytes<256>`: ONE event with Null records at `name`, `symbol`, `decimals`, `standards` (33-byte header + 39 bytes of records, the rest zero); equals `@mip0018/codec` `withdrawRecords()` | Applying records |
 | `emitPayload(payload)` | emits `Misc { EVENT_NAME(), payload }` — the only `emit` (disclosed) | Event, Publishing |
+
+**Deleting metadata** (MIP "Applying records", per-key tombstones): a Null record deletes its own field, and a token
+identity exists only while at least one of its fields has a value. `withdraw(domainSep, kind)` withdraws a token
+that published the common keys: once all four are deleted, consumers no longer reference the identity at all (not
+in listings, lookups, groups or history); a later non-Null record describes it again with only that field. A token
+that also published other keys must add a Null record for each of them (or the identity stays, with those keys).
+To delete a single key, emit one Null record for it, e.g.
+`emitPayload(payload1<4, 0>(header(domainSep, kind), nullRecord<4>("name")))`.
 
 `keyLen` and `valLen` are derived from the generic sizes, so they cannot disagree with the data.
 Compact has no variadics: `payload1`–`payload4` cover one to four records; a contract that needs more
@@ -133,7 +141,7 @@ docker/run.sh exec 'npx vitest run packages/compact -t equivalence'
 
 | Test | What |
 |---|---|
-| [`test/vectors.test.ts`](test/vectors.test.ts) | Both modules, executed in compact-runtime 0.20.0: payload = fixture bytes for A1, A2a/b, A3a–c, A4a/b, A5a–c, S1a/b (inputs taken from the fixtures); round trip through the codec; literal A1; tombstone / `commonFields` / URI = codec; kind 0, 4, 255 rejected; constants = codec |
+| [`test/vectors.test.ts`](test/vectors.test.ts) | Both modules, executed in compact-runtime 0.20.0: payload = fixture bytes for A1, A2a/b, A3a–c, A4a/b, A5a–c, S1a/b (inputs taken from the fixtures); round trip through the codec; literal A1; `withdraw` = codec `withdrawRecords()` and a single-key `nullRecord` = codec `record.tombstone(key)` for kinds 1/2/3; `commonFields` / URI = codec; kind 0, 4, 255 rejected; constants = codec |
 | [`test/equivalence.test.ts`](test/equivalence.test.ts) | Generated contracts: every value size 1–219 plus random 2–4-record shapes (uint8, uint128, Null), 3 random inputs each: typed = pure = `@mip0018/codec` `encodePayload` |
 | [`test/compile-fail.test.ts`](test/compile-fail.test.ts) | 16 programs the compiler must reject, with the expected message |
 

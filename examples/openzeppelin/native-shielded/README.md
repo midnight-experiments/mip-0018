@@ -26,7 +26,7 @@ that holds a coin can find the token's name, symbol and decimals.
 +import "@mip0018/compact/src/Mip0018" prefix Mip0018_;
 
  export { Either, ContractAddress, ZswapCoinPublicKey, ShieldedCoinInfo, Maybe };
-@@ -52,2 +53,29 @@
+@@ -52,2 +53,30 @@
    return NativeShieldedToken__burn(coin, amount, refundTo);
  }
 +
@@ -51,10 +51,11 @@ that holds a coin can find the token's name, symbol and decimals.
 +    Mip0018_symbolRecord<4>(newSymbol)));
 +}
 +
-+// Withdraw (tombstone): consumers hide the token and clear all its metadata.
++// Withdraw: one event with a Null record for each key (name, symbol, decimals, standards);
++// with no field left, consumers no longer reference the token at all.
 +export circuit withdrawMetadata(): [] {
 +  Ownable_assertOnlyOwner();
-+  Mip0018_emitPayload(Mip0018_tombstone(NativeShieldedToken__domain, Mip0018_KIND_SHIELDED()));
++  Mip0018_emitPayload(Mip0018_withdraw(NativeShieldedToken__domain, Mip0018_KIND_SHIELDED()));
 +}
 ```
 

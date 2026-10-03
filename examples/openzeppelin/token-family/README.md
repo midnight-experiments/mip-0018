@@ -27,7 +27,7 @@ own event(s): here three types, `gold`, `silver` and `bronze`.
 +import "@mip0018/compact/src/Mip0018" prefix Mip0018_;
 
  export { Either, ContractAddress, ZswapCoinPublicKey, ShieldedCoinInfo };
-@@ -47,2 +48,29 @@
+@@ -47,2 +48,30 @@
    return NativeShieldedTokenFamily__mint(domain, recipient, amount, nonce);
  }
 +
@@ -52,10 +52,11 @@ own event(s): here three types, `gold`, `silver` and `bronze`.
 +    Mip0018_symbolRecord<5>(newSymbol)));
 +}
 +
-+// Withdraw one token type's metadata (tombstone for `domain`); the other types are unchanged.
++// Withdraw one token type's metadata (a Null record for each key of `domain`, one event); the
++// other types are unchanged.
 +export circuit withdrawMetadata(domain: Bytes<32>): [] {
 +  Ownable_assertOnlyOwner();
-+  Mip0018_emitPayload(Mip0018_tombstone(domain, Mip0018_KIND_SHIELDED()));
++  Mip0018_emitPayload(Mip0018_withdraw(domain, Mip0018_KIND_SHIELDED()));
 +}
 ```
 
@@ -68,7 +69,7 @@ own event(s): here three types, `gold`, `silver` and `bronze`.
   consumers then group the types under one symbol (MIP "Symbol grouping": presentation only — a group
   never says its members are interchangeable). MIP-0018 can describe more than the getters do:
   `setMetadata(domain, …)` gives one type its own name and symbol (the getters stay family-wide).
-- **Independent lifecycles** — `withdrawMetadata(domain)` is a tombstone for that type only.
+- **Independent lifecycles** — `withdrawMetadata(domain)` deletes every key of that type only (one event, four Null records).
 
 ## Deploy and publish
 
@@ -94,7 +95,7 @@ reference consumer (`@mip0018/consumer`):
 | exact values | every emitted event of every step, decoded with `@mip0018/codec`: header and each key and value equal `metadata.json` exactly (no zero padding, `decimals` 1 byte) |
 | publish | `publishMetadata(domain)` emits one event under that `domain`, kind 1, payload = `metadata.json` |
 | **colors** | for each type: minted coin color = Zswap output color = `tokenColor(domain)` = `rawTokenType(domain, contractAddress)` = the consumer's color for that identity; three distinct colors; each mint effect keyed by its `domain` |
-| **independence** | after minting gold and silver and publishing all three: three identities, one `MEDAL` group. Withdrawing silver hides only silver (again: no change); renaming gold to "Gold Medals" / `GOLDM` moves only gold to its own group; republishing silver revives it with the family values — untouched types keep the same fields at the same chain positions after every step, and the state equals `metadata.json` |
+| **independence** | after minting gold and silver and publishing all three: three identities, one `MEDAL` group. Withdrawing silver removes only silver (again: no change); renaming gold to "Gold Medals" / `GOLDM` moves only gold to its own group; republishing silver revives it with the family values — untouched types keep the same fields at the same chain positions after every step, and the state equals `metadata.json` |
 | normal operation | `mint` emits no event, with and without metadata |
 | access control | a non-owner cannot publish, rename, withdraw or mint (`Ownable: caller is not the owner`) |
 | the diff | three more circuits, nothing else |

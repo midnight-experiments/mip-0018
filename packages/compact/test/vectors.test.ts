@@ -19,6 +19,7 @@ import {
   splitMiscData,
   toHex,
   ValType,
+  withdrawRecords,
 } from '@mip0018/codec';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { Simulator, type ObservedMisc } from '../src/testing/index.ts';
@@ -161,12 +162,30 @@ describe.each(CONSTRUCTIONS)('$label', ({ contract }) => {
     roundTrip(single(out.misc, sim.address, f.event.payload_hex), f);
   });
 
-  it.each([1n, 2n, 3n])('tombstone(kind %s) equals the codec tombstone at key "name"', async (kind) => {
+  it.each([1n, 2n, 3n])(
+    'withdraw(kind %s) equals the codec withdrawRecords() byte for byte (four Nulls, 72 bytes of content)',
+    async (kind) => {
+      const sim = await deploy();
+      const ds = new Uint8Array(32).map((_, i) => i);
+      const out = await sim.call('withdraw', ds, kind);
+      const want = encodePayload({ domainSep: ds, kind: Number(kind) }, withdrawRecords());
+      const ev = single(out.misc, sim.address, toHex(want));
+      const d = decodePayload(ev.payload);
+      expect(d.ok && d.contentEnd).toBe(72); // 33-byte header + 39 bytes of records, the rest zero
+      expect(d.ok && d.records.map((r) => [new TextDecoder().decode(r.key), r.valType, r.value.length])).toEqual([
+        ['name', ValType.Null, 0],
+        ['symbol', ValType.Null, 0],
+        ['decimals', ValType.Null, 0],
+        ['standards', ValType.Null, 0],
+      ]);
+    },
+  );
+
+  it.each([1n, 2n, 3n])('nullRecord deletes a single key: Null at "name" (kind %s) equals the codec tombstone("name")', async (kind) => {
     const sim = await deploy();
-    const ds = new Uint8Array(32).map((_, i) => i);
-    const out = await sim.call('tombstone', ds, kind);
-    const want = encodePayload({ domainSep: ds, kind: Number(kind) }, [record.tombstone('name')]);
-    single(out.misc, sim.address, toHex(want));
+    const ds = new Uint8Array(32).map((_, i) => 255 - i);
+    const out = await sim.call('deleteName', ds, kind);
+    single(out.misc, sim.address, toHex(encodePayload({ domainSep: ds, kind: Number(kind) }, [record.tombstone('name')])));
   });
 
   it('commonFields (no standards) equals the codec', async () => {
@@ -190,7 +209,7 @@ describe.each(CONSTRUCTIONS)('$label', ({ contract }) => {
 
   it.each([0n, 4n, 255n])('header rejects kind %s (assertion; nothing emitted)', async (kind) => {
     const sim = await deploy();
-    await expect(sim.call('tombstone', DS11, kind)).rejects.toThrow(/MIP-0018: kind must be 1, 2 or 3/u);
+    await expect(sim.call('withdraw', DS11, kind)).rejects.toThrow(/MIP-0018: kind must be 1, 2 or 3/u);
   });
 
   it('constants equal the codec constants', async () => {

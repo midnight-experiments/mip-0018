@@ -9,7 +9,7 @@ the `domainSep` given at deployment.
 | Contract | Who may publish | After publishing |
 |---|---|---|
 | [`CreateAndDestroy`](contracts/CreateAndDestroy.compact) | anyone (constant payload) | the maintenance authority **removes the circuit's verifier key**: it can never be called again |
-| [`OwnerKey`](contracts/OwnerKey.compact) | the owner | the owner can rename (`setMetadata`) and withdraw (`withdrawMetadata`, tombstone) |
+| [`OwnerKey`](contracts/OwnerKey.compact) | the owner | the owner can rename (`setMetadata`) and withdraw (`withdrawMetadata`: one event with a Null record at `name`, `symbol`, `decimals` and `standards`; with no field left the token is no longer referenced) |
 | [`PublishOnce`](contracts/PublishOnce.compact) | anyone, once (constant payload) | a ledger flag refuses every later call |
 
 ## Add these 5 lines
@@ -64,7 +64,9 @@ Local run, 2026-10-01: deploy 1.221 DUST, `publishMetadata` 0.146 DUST, `transfe
 `VerifierKeyRemove` 0.039 DUST; second call refused (`Operation 'publishMetadata' is undefined`);
 exactly one `Misc` event. Circuit sizes and proving times: [`docs/costs.md`](../../docs/costs.md).
 
-On Stagenet (2026-10-02): `OwnerKey`'s publish → rename → tombstone ×2 → revive is case
-[C06](../../deployments/stagenet/cases/C06/README.md), `CreateAndDestroy` is case
-[C10](../../deployments/stagenet/cases/C10/README.md); both re-check wallet-free with
+On Stagenet: `OwnerKey`'s publish → rename → withdraw ×2 → revive is case
+[C06](../../deployments/stagenet/cases/C06/README.md) (2026-10-02, deployed from the earlier `OwnerKey`, whose
+`withdrawMetadata` emitted a single Null at `name`), and the full withdrawal of the current `OwnerKey` (four Null
+records in one event) is case [C11](../../deployments/stagenet/cases/C11/README.md); `CreateAndDestroy` is case
+[C10](../../deployments/stagenet/cases/C10/README.md). All re-check wallet-free with
 `docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/<ID>`.

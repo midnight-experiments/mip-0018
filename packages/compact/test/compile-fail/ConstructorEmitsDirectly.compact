@@ -3,4 +3,4 @@
 pragma language_version >= 0.26.0;
 import CompactStandardLibrary;
 import "../../src/Mip0018" prefix M_;
-constructor() { emit(Misc { name: M_EVENT_NAME(), payload: M_tombstone(pad(32, "acme"), 3) }); }
+constructor() { emit(Misc { name: M_EVENT_NAME(), payload: M_withdraw(pad(32, "acme"), 3) }); }

@@ -12,7 +12,9 @@ import {
   InvalidRecord,
   PayloadTooLarge,
   record,
+  recordsSize,
   toHex,
+  withdrawRecords,
 } from '../src/index.ts';
 
 const D11 = new Uint8Array(32).fill(0x11);
@@ -83,6 +85,20 @@ describe('encodePayload', () => {
     expect(() => encodePayload({ domainSep: D11, kind: 3 }, [])).toThrow(InvalidRecord);
   });
 
+  it('withdrawRecords() is the four Null records name, symbol, decimals, standards (39 bytes; MIP "Applying records")', () => {
+    const recs = withdrawRecords();
+    expect(recs.map((r) => [new TextDecoder().decode(r.key), r.valType, r.value.length])).toEqual([
+      ['name', 5, 0],
+      ['symbol', 5, 0],
+      ['decimals', 5, 0],
+      ['standards', 5, 0],
+    ]);
+    expect(recordsSize(recs)).toBe(39);
+    const p = encodePayload({ domainSep: D11, kind: 1 }, recs);
+    expect(toHex(p.subarray(33, 72))).toBe('046e616d6505000673796d626f6c050008646563696d616c73050009' + '7374616e64617264730500');
+    expect(p.subarray(72).every((b) => b === 0)).toBe(true);
+  });
+
   it('refuses a URI with characters outside ASCII; its percent-encoded and ASCII-host forms are emitted (MIP valType 4, 78ecbb4)', () => {
     for (const raw of ['https://ä.example/logo.png', 'https://acme.example/ä.png', 'https://acme.example/?q=ä'])
       expect(() => encodePayload({ domainSep: D11, kind: 3 }, [record.uri('logo', raw)])).toThrow(InvalidRecord);
@@ -91,7 +107,8 @@ describe('encodePayload', () => {
   });
 
   it('record constructors produce the MIP value types', () => {
-    expect(record.tombstone().valType).toBe(5);
+    expect(record.tombstone('name').valType).toBe(5);
+    expect(record.tombstone('name').value).toHaveLength(0);
     expect(record.json('meta', 'null').valType).toBe(3);
     expect(record.uri('logo', 'https://acme.example/logo.png').valType).toBe(4);
     expect([...record.uint('decimals', 18).value]).toEqual([18]);

@@ -29,7 +29,7 @@ type MetaStep = {
   id: string;
   circuit: string;
   args: Record<string, unknown>;
-  events: (MetadataInput & { tombstone?: true; payload: string })[];
+  events: (MetadataInput & { withdraw?: true; payload: string })[];
   expected?: ExpectedState;
 };
 type MetaJson = {

@@ -72,22 +72,27 @@ export circuit A5c(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<4>, k2:
   P_emitPayload(P_payload2<11, 11, 201>(P_header(ds, kind), P_utf8Record<4, 4, 11>(k1, v1), P_jsonRecord<4, 4, 11>(k2, v2)));
 }
 
-export circuit S1a(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<1>, k2: Bytes<6>, k3: Bytes<4>, v3: Bytes<1>): [] {
-  P_emitPayload(P_payload3<8, 9, 8, 198>(P_header(ds, kind), P_utf8Record<4, 1, 8>(k1, v1), P_nullRecord<6, 9>(k2),
+export circuit S1a(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<1>, k2: Bytes<4>, k3: Bytes<4>, v3: Bytes<1>): [] {
+  P_emitPayload(P_payload3<8, 7, 8, 200>(P_header(ds, kind), P_utf8Record<4, 1, 8>(k1, v1), P_nullRecord<4, 7>(k2),
     P_utf8Record<4, 1, 8>(k3, v3)));
 }
 
 export circuit S1a_common(ds: Bytes<32>, a: Bytes<1>, b: Bytes<1>): [] {
-  P_emitPayload(P_payload3<8, 9, 8, 198>(P_header(ds, P_KIND_SHIELDED()), P_nameRecord<1, 8>(a),
-    P_nullRecord<6, 9>("retire"), P_nameRecord<1, 8>(b)));
+  P_emitPayload(P_payload3<8, 7, 8, 200>(P_header(ds, P_KIND_SHIELDED()), P_nameRecord<1, 8>(a),
+    P_nullRecord<4, 7>("name"), P_nameRecord<1, 8>(b)));
 }
 
 export circuit S1b(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<1>, k2: Bytes<4>, v2: Bytes<1>): [] {
   P_emitPayload(P_payload2<8, 8, 207>(P_header(ds, kind), P_utf8Record<4, 1, 8>(k1, v1), P_utf8Record<4, 1, 8>(k2, v2)));
 }
 
-export circuit tombstone(ds: Bytes<32>, kind: Uint<8>): [] {
-  P_emitPayload(P_tombstone(ds, kind));
+export circuit withdraw(ds: Bytes<32>, kind: Uint<8>): [] {
+  P_emitPayload(P_withdraw(ds, kind));
+}
+
+// Deleting a single key: one Null record at "name" (7 bytes) + 216 zero bytes.
+export circuit deleteName(ds: Bytes<32>, kind: Uint<8>): [] {
+  P_emitPayload(P_payload1<7, 216>(P_header(ds, kind), P_nullRecord<4, 7>("name")));
 }
 
 export circuit commonFields(ds: Bytes<32>, kind: Uint<8>, name: Bytes<10>, symbol: Bytes<4>, decimals: Uint<8>): [] {

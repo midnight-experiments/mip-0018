@@ -8,7 +8,8 @@ import type { CallOutcome, ExpectedEvent, ExpectedState, Step } from './testing.
  * The emitted payload, decoded with @mip0018/codec, carries exactly the metadata.json values: the
  * header, the keys in order, and each value byte for byte — a UTF-8 value decodes to the very same
  * string (no zero padding: a `Bytes<K>` wider than its value would append 0x00 bytes, which the MIP
- * treats as a different value), `decimals` is a 1-byte `Uint<8>`, a tombstone is Null at `name`.
+ * treats as a different value), `decimals` is a 1-byte `Uint<8>`, a withdrawal is one Null record at each of
+ * `name`, `symbol`, `decimals` and `standards`, in that order.
  */
 export const expectExactRecords = (payload: Uint8Array, e: ExpectedEvent, label: string): void => {
   const d = decodePayload(payload);
@@ -16,8 +17,13 @@ export const expectExactRecords = (payload: Uint8Array, e: ExpectedEvent, label:
   expect(toHex(d.header.domainSep), `${label}: domainSep`).toBe(e.domainSep.replace(/^0x/u, ''));
   expect(d.header.kind, `${label}: kind`).toBe(e.kind);
   const text = (k: string) => (e as Record<string, unknown>)[k];
-  const want: [string, number, unknown][] = e.tombstone
-    ? [['name', 5, '']]
+  const want: [string, number, unknown][] = e.withdraw
+    ? [
+        ['name', 5, ''],
+        ['symbol', 5, ''],
+        ['decimals', 5, ''],
+        ['standards', 5, ''],
+      ]
     : (['name', 'symbol', 'decimals', 'standards'] as const)
         .filter((k) => text(k) !== undefined)
         .map((k) => [k, k === 'decimals' ? 2 : 1, text(k)]);
