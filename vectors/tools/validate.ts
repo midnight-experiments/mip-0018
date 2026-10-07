@@ -60,7 +60,7 @@ export function validateAll(dir: string = VECTORS_DIR): { errors: string[]; chec
       if (toHex(bin) !== ev.payload_hex) errors.push(`${v.entry.bin}: bytes differ from payload_hex in ${v.entry.file}`);
     }
   }
-  const vectorFiles = ['payload', 'state', 'informative/state', 'informative/uri', 'informative/zero-extension']
+  const vectorFiles = ['payload', 'state', 'informative/payload', 'informative/state', 'informative/uri', 'informative/zero-extension']
     .flatMap((d) => listFiles(d, dir))
     .filter((f) => /\/[^/]+\.(json|bin)$/.test(f) && !f.includes('/investigation/') && !f.endsWith('/verdicts.json'));
   for (const f of vectorFiles) if (!listed.has(f)) errors.push(`${f}: not listed in ${MANIFEST_FILE}`);

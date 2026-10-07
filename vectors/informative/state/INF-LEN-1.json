@@ -1,0 +1,42 @@
+{
+  "id": "INF-LEN-1",
+  "mip": {
+    "commit": "6a0a59de6adf6633410b4331b2c72183cdc1a439",
+    "testId": "INF-LEN"
+  },
+  "normative": false,
+  "description": "A name of 70 code points in 200 bytes (30 × \"é\", 2 bytes; 20 × \"名\", 3 bytes; 20 × \"😀\", 4 bytes) is served as its first 64 code points (30 × \"é\", 20 × \"名\", 14 × \"😀\"; 176 bytes).",
+  "basis": "MIP \"Common fields\": name 1–64 characters, symbol 1–12; an over-length name or symbol is still usable and consumers SHOULD discard any extra characters. This repository counts a character as a Unicode code point, serves the first 64 / 12 code points and keeps the stored bytes for grouping.",
+  "steps": [
+    {
+      "op": "apply",
+      "network": "testnet-a",
+      "block": 1,
+      "tx": 0,
+      "event": 0,
+      "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "type": "Misc",
+      "name_hex": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+      "payload_hex": "111111111111111111111111111111111111111111111111111111111111111103046e616d6501c8c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9e5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908df09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f988000000000000000000000000000000000"
+    }
+  ],
+  "expect": {
+    "identities": [
+      {
+        "network": "testnet-a",
+        "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+        "kind": 3,
+        "fields": {
+          "6e616d65": {
+            "key_text": "name",
+            "valType": 1,
+            "value_hex": "c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9e5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908de5908df09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880",
+            "value_text": "éééééééééééééééééééééééééééééé名名名名名名名名名名名名名名名名名名名名😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+            "usable": true
+          }
+        }
+      }
+    ]
+  }
+}

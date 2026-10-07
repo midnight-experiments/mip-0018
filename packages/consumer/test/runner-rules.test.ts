@@ -3,14 +3,16 @@
 //   - MIP Testing S9: "Grouping is a SHOULD, so two outcomes are valid: no groups at all, or exactly the
 //     following groups" — a consumer without groups passes; one that groups wrongly fails;
 //   - MIP Testing S8: "A consumer that displays amounts …" — a consumer without display passes (not applicable);
-//   - MIP Consuming: "Indexers MAY index only some tokens or keys" — keys other than the four common keys are
-//     optional; a missing common key fails.
+//   - MIP Testing S12: a consumer that does not display images passes (not applicable); one that displays content
+//     whose SHA-256 differs from `image_sha256` fails;
+//   - MIP Keys: a served key the expectation does not have fails (it MUST NOT be served); a missing common key, or a
+//     missing key of the vector's `definedKeys` (the test standard the consumer loaded), fails.
 import { loadVectors, runVectors, type Json } from '@mip0018/vectors/runner';
 import { describe, expect, it } from 'vitest';
 import { handleRequest } from '../src/adapter.ts';
 
 const normative = loadVectors({ informative: false });
-const COMMON = new Set(['6e616d65', '73796d626f6c', '646563696d616c73', '7374616e6461726473']);
+const COMMON = new Set(['6e616d65', '73796d626f6c', '646563696d616c73', '7374616e6461726473', '696d616765', '696d6167655f736861323536']);
 
 /** The reference consumer with its state responses rewritten by `edit`. */
 const consumer = (edit: (res: Json, req: Json) => Json) => async (req: Json) => {
@@ -26,7 +28,7 @@ describe('runner rules on the reference consumer’s responses', () => {
     const sizes = (res.groups as Json[]).map((g) => (g.members as unknown[]).length).sort();
     expect(sizes).toEqual([1, 1, 1, 1, 3]); // ACME (3) + bbbb, testnet-b, acme, " ACME"
     const r = await runVectors(normative, async (req) => handleRequest(req));
-    expect(r.normative).toEqual({ passed: 67, total: 67 });
+    expect(r.normative).toEqual({ passed: 78, total: 78 });
     expect(r.notApplicable).toEqual({});
   });
 
@@ -84,7 +86,38 @@ describe('runner rules on the reference consumer’s responses', () => {
     expect(r.notApplicable.S8![0]).toMatch(/does not display amounts/);
   });
 
-  it('a consumer that indexes only the common keys passes; one that drops `name` fails', async () => {
+  it('a consumer that does not display images passes S12a, the image check not applicable; one that ignores image_sha256 fails', async () => {
+    const r = await runVectors(
+      normative,
+      consumer((res) => {
+        delete res.images;
+        return res;
+      }),
+    );
+    expect(failed(r)).toEqual([]);
+    expect(Object.keys(r.notApplicable)).toEqual(['S12a']);
+    expect(r.notApplicable.S12a![0]).toMatch(/does not display images/);
+    const ignoring = await runVectors(
+      normative,
+      consumer((res) => {
+        for (const i of (res.images ?? []) as Json[]) i.displayable = true;
+        return res;
+      }),
+    );
+    expect(failed(ignoring)).toEqual(['S12a']);
+    // Refusing the matching content too is allowed (a note): the MIP forbids only displaying mismatching content.
+    const refusing = await runVectors(
+      normative,
+      consumer((res) => {
+        for (const i of (res.images ?? []) as Json[]) i.displayable = false;
+        return res;
+      }),
+    );
+    expect(failed(refusing)).toEqual([]);
+    expect(refusing.results.find((x) => x.id === 'S12a')!.notes.join()).toMatch(/refused although it matches/);
+  });
+
+  it('every expected field is a served key: dropping a common key or a key of the loaded definedKeys fails', async () => {
     const onlyCommon = await runVectors(
       normative,
       consumer((res) => {
@@ -93,9 +126,8 @@ describe('runner rules on the reference consumer’s responses', () => {
         return res;
       }),
     );
-    expect(failed(onlyCommon)).toEqual([]);
-    const noted = onlyCommon.results.filter((x) => x.notes.length > 0).map((x) => x.id);
-    expect(noted).toEqual(['A3a-state', 'A5a-state', 'A5b-state', 'A5c-state', 'S9a', 'S9b', 'S9c', 'S9d']);
+    expect(failed(onlyCommon)).toEqual(['S10c', 'S10e']); // k (test-s10) is served while test-s10 is declared
+    expect(onlyCommon.results.find((x) => x.id === 'S10c')!.failures.join()).toMatch(/field 6b \(k\) missing/);
 
     const noName = await runVectors(
       normative,

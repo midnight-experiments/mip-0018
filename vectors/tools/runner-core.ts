@@ -50,7 +50,9 @@ export function requestFor(v: LoadedVector): Json {
     const ev = v.data.event as Json;
     return { id: v.entry.id, op: 'decode', type: ev.type, name_hex: ev.name_hex, payload_hex: ev.payload_hex };
   }
-  const req: Json = { id: v.entry.id, op: 'state', steps: v.data.steps };
+  const req: Json = { id: v.entry.id, op: 'state' };
+  if (v.data.definedKeys !== undefined) req.definedKeys = v.data.definedKeys;
+  req.steps = v.data.steps;
   const expect = v.data.expect as Json;
   if (Array.isArray(expect.display)) {
     req.display = (expect.display as Json[]).map((d) => ({
@@ -59,6 +61,15 @@ export function requestFor(v: LoadedVector): Json {
       domainSep: d.domainSep,
       kind: d.kind,
       raw: d.raw,
+    }));
+  }
+  if (Array.isArray(expect.images)) {
+    req.images = (expect.images as Json[]).map((d) => ({
+      network: d.network,
+      contractAddress: d.contractAddress,
+      domainSep: d.domainSep,
+      kind: d.kind,
+      content_hex: d.content_hex,
     }));
   }
   return req;
@@ -77,7 +88,7 @@ export interface Report {
   results: VectorResult[];
   normative: { passed: number; total: number };
   informative: { passed: number; total: number };
-  /** Passed vectors with a check that did not apply to the consumer (no groups, no display), by vector id. */
+  /** Passed vectors with a check that did not apply to the consumer (no groups, no display, no images), by vector id. */
   notApplicable: Record<string, string[]>;
 }
 
@@ -91,7 +102,9 @@ export function check(v: LoadedVector, response: Json): Comparison {
     };
   }
   const expect = v.data.expect as Json;
-  return v.entry.kind === 'payload' ? compareDecode(expect, response) : compareState(expect, response);
+  return v.entry.kind === 'payload'
+    ? compareDecode(expect, response)
+    : compareState(expect, response, (v.data.definedKeys ?? {}) as Record<string, Array<{ key: string }>>);
 }
 
 export async function runVectors(vectors: LoadedVector[], consumer: Consumer): Promise<Report> {

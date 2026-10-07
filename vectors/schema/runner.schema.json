@@ -19,15 +19,17 @@
       }
     },
     "stateRequest": {
-      "description": "Start from an empty state, apply the steps in order, then report the state (and display the requested amounts).",
+      "description": "Start from an empty state, load `definedKeys` (keys that test standards define), apply the steps in order, then report the served state (and display the requested amounts, and check the requested image contents).",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "op", "steps"],
       "properties": {
         "id": { "$ref": "payload.schema.json#/$defs/vectorId" },
         "op": { "const": "state" },
+        "definedKeys": { "$ref": "state.schema.json#/$defs/definedKeys" },
         "steps": { "type": "array", "minItems": 1, "items": { "$ref": "state.schema.json#/$defs/step" } },
-        "display": { "type": "array", "items": { "$ref": "state.schema.json#/$defs/displayQuery" } }
+        "display": { "type": "array", "items": { "$ref": "state.schema.json#/$defs/displayQuery" } },
+        "images": { "type": "array", "items": { "$ref": "state.schema.json#/$defs/imageQuery" } }
       }
     },
     "request": { "oneOf": [{ "$ref": "#/$defs/decodeRequest" }, { "$ref": "#/$defs/stateRequest" }] },
@@ -66,7 +68,7 @@
       "properties": {
         "id": { "$ref": "payload.schema.json#/$defs/vectorId" },
         "identities": {
-          "description": "Every token identity that exists (has at least one field), with at least its common keys (other keys may be left out). An identity whose last field was deleted MUST NOT be reported (MIP \"Applying records\").",
+          "description": "Every referenced token identity (it has at least one served field), with its served keys: the common keys and the keys of standards it currently declares (`definedKeys`). Keys that are not served MUST NOT be reported (MIP \"Keys\"); an identity whose last field was deleted, or whose fields are all unserved keys, MUST NOT be reported (MIP \"Applying records\").",
           "type": "array",
           "items": {
             "type": "object",
@@ -102,6 +104,11 @@
           "description": "Optional: omit (or send null) when the consumer does not display amounts (MIP Testing S8).",
           "type": ["array", "null"],
           "items": { "$ref": "state.schema.json#/$defs/display" }
+        },
+        "images": {
+          "description": "Optional: omit (or send null) when the consumer does not display images (MIP Testing S12).",
+          "type": ["array", "null"],
+          "items": { "$ref": "state.schema.json#/$defs/image" }
         }
       }
     },

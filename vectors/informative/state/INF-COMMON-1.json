@@ -6,7 +6,7 @@
   },
   "normative": false,
   "description": "Common fields with the wrong type or form: name as bytes (type 0), symbol empty, decimals as bytes (type 0) — all unusable; the event is accepted.",
-  "basis": "MIP \"Common fields\": name/symbol = UTF-8 string, not empty; decimals = unsigned integer; a field without that type or form is unusable.",
+  "basis": "MIP \"Common fields\": name = UTF-8 string of 1–64 characters, symbol 1–12 (an empty one is unusable); decimals = unsigned integer; a field without that type or form is unusable.",
   "steps": [
     {
       "op": "apply",

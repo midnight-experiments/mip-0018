@@ -1,0 +1,41 @@
+{
+  "id": "S11b",
+  "mip": {
+    "commit": "6a0a59de6adf6633410b4331b2c72183cdc1a439",
+    "testId": "S11"
+  },
+  "normative": true,
+  "description": "Symbol length: a 15-character symbol \"ACMETOKENSYMBOL\" (ASCII) is usable and served as its first 12 characters, \"ACMETOKENSYM\".",
+  "steps": [
+    {
+      "op": "apply",
+      "network": "testnet-a",
+      "block": 1,
+      "tx": 0,
+      "event": 0,
+      "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "type": "Misc",
+      "name_hex": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+      "payload_hex": "1111111111111111111111111111111111111111111111111111111111111111030673796d626f6c010f41434d45544f4b454e53594d424f4c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "expect": {
+    "identities": [
+      {
+        "network": "testnet-a",
+        "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+        "kind": 3,
+        "fields": {
+          "73796d626f6c": {
+            "key_text": "symbol",
+            "valType": 1,
+            "value_hex": "41434d45544f4b454e53594d",
+            "value_text": "ACMETOKENSYM",
+            "usable": true
+          }
+        }
+      }
+    ]
+  }
+}

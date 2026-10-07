@@ -7,7 +7,7 @@ extras, a JSON Schema for each format, an independent generator and a runner any
 |---|---|
 | MIP text | [`midnightntwrk/midnight-improvement-proposals@6a0a59de6adf6633410b4331b2c72183cdc1a439` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/6a0a59de6adf6633410b4331b2c72183cdc1a439/mips/mip-0018-on-chain-token-metadata.md), SHA-256 `dc91aec4ae4da42af6a16875ba9fa50f8228153de1566fcb29f2811b17b28696` (proposal: [PR #372](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/372)) |
 | Event name | `pad(32, "mip-0018:token-metadata[v1]")` = `6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000` |
-| Vectors | **67 normative** (40 payload, 27 state) and **43 informative** (34 payload, 9 state) — `manifest.json` lists every one |
+| Vectors | **78 normative** (41 payload, 37 state) and **49 informative** (35 payload, 14 state) — `manifest.json` lists every one |
 | Integrity | `SHA256SUMS` covers every fixture, schema and the manifest (`cd vectors && sha256sum -c SHA256SUMS`) |
 
 The MIP text is the authority. Where this folder had to choose something the MIP does not determine, the choice is
@@ -18,9 +18,10 @@ labelled informative.
 | Path | Content |
 |---|---|
 | `payload/<id>.json` + `<id>.bin` | Normative payload vectors (A1–A5, R1–R6, the ignore rule): one observed event and the expected classify/decode result. `.bin` holds the same 256 payload bytes (the informative zero-extension vectors' `.bin` holds the bytes as observed) |
-| `state/<id>.json` | Normative state vectors (S1–S9, plus state companions of A3–A5): a sequence of observed events in chain order and the state that must result |
+| `state/<id>.json` | Normative state vectors (S1–S12, plus state companions of A3–A6): a sequence of observed events in chain order and the served state that must result |
 | `informative/uri/` | The 26 URI cases with the RFC 3986 `URI` verdict (the MIP's Value types rule) and the investigation data; see its README |
-| `informative/state/` | `standards` list format and common-field forms derived from the MIP text but not in its Testing list (`INF-STD-6/7`: the byte rule for identifiers) |
+| `informative/payload/` | `INF-KEY-1`: a multi-byte UTF-8 key is accepted (keys MUST be valid UTF-8) |
+| `informative/state/` | `standards` list format and common-field forms derived from the MIP text but not in its Testing list (`INF-STD-6/7`: the byte rule for identifiers); `name`/`symbol` length counted in Unicode code points and grouping on the stored symbol (`INF-LEN-*`); the image check without `image_sha256` and with an unusable one (`INF-IMG-*`) |
 | `informative/zero-extension/` | The MIP's Consuming rule: a `name` or `payload` with its trailing zero bytes dropped, as some sources return it, gives exactly the full form's result; a 257-byte payload is rejected and a 33-byte name is another name |
 | `schema/` | JSON Schemas (2020-12): `payload.schema.json`, `state.schema.json`, `runner.schema.json` (protocol), `manifest.schema.json` |
 | `manifest.json` | MIP pin, event name, counts, and every vector with its MIP test id and normative flag |
@@ -34,14 +35,15 @@ labelled informative.
 |---|---|
 | A1 Common fields and `standards` (= Appendix A) | `payload/A1` |
 | A2 Capacity | `payload/A2a` (220-byte key, empty value), `A2b` (1-byte key, 219-byte value) |
-| A3 Exact bytes | `payload/A3a` (`symbol` vs `symbol\0`), `A3b` (`01 00 00` keeps trailing zeros), `A3c` (non-UTF-8 key); `state/A3a-state` (two fields) |
+| A3 Exact bytes | `payload/A3a` (`symbol` vs `symbol\0`), `A3b` (`01 00 00` keeps trailing zeros); `state/A3a-state` (`symbol` keeps "ACME"; `symbol\0` is a different key and is not served) |
 | A4 Integer widths | `payload/A4a` (`Uint<8>`), `A4b` (`Uint<128>`); `state/A4b-state` |
-| A5 Non-tombstones | `payload/A5a` (empty string), `A5b` (empty bytes), `A5c` (JSON `null`); `state/A5a-state`, `A5b-state`, `A5c-state` |
+| A5 Non-tombstones | `payload/A5a` (empty string), `A5b` (empty bytes), `A5c` (JSON `null`); `state/A5a-state` (an empty `symbol`), `A5b-state` (an empty `image_sha256`), `A5c-state` (`standards` as JSON `null`): each replaces the field's value and leaves it unusable, never deleted |
+| A6 Image | `payload/A6` (`image` type 4 + 32-byte `image_sha256` type 0 in one event); `state/A6-state` (both usable) |
 | R1 Header only | `payload/R1` |
 | R2 Past byte 256 | `payload/R2a` (221-byte key: length byte past the end), `R2b` (1-byte key + 220-byte value), `R2c` (key ends at 256: no type byte), `R2d` (after a valid record: no length byte), `R2e` (`keyLen` at byte 255), `R2f` (`keyLen` 255) |
 | R3 Non-zero after a zero `keyLen` | `payload/R3a` (next byte), `R3b` (last byte) |
 | R4 `kind` / `valType` | `payload/R4a` (kind 0), `R4b` (4), `R4c` (255), `R4d` (valType 6), `R4e` (255) |
-| R5 Value rules | `payload/R5a` (invalid UTF-8, type 1), `R5b` (type 3), `R5c` (type 4), `R5d` (invalid JSON), `R5e` (relative URI), `R5f` (0-byte integer), `R5g` (32-byte integer), `R5h` (Null with `valLen` 1) |
+| R5 Value rules | `payload/R5a` (invalid UTF-8, type 1), `R5b` (type 3), `R5c` (type 4), `R5d` (invalid JSON), `R5e` (relative URI), `R5f` (0-byte integer), `R5g` (32-byte integer), `R5h` (Null with `valLen` 1), `R5i` (invalid UTF-8 in a key: `ff 6b 65 79`) |
 | R6 Valid then invalid | `payload/R6a` (valid record, then invalid), `R6b` (tombstone at `retire`, then invalid) |
 | Must ignore | `payload/I1a` (`[v2]` name, valid payload), `I1b` (`[v2]` name, payload invalid under v1), `I2a` (other name), `I2b` (v1 text, non-zero padding byte), `I3` (other event type) |
 | S1 Order within an event | `state/S1a` (`name = "A"`, Null at `name`, `name = "B"` at offsets 33/41/48), `S1b` (without the Null) |
@@ -53,9 +55,13 @@ labelled informative.
 | S7 Independent events | `state/S7a` (malformed event first), `S7b` (malformed event second) |
 | S8 Display | `state/S8` |
 | S9 Symbol grouping | `state/S9a` (membership), `S9b` (rename), `S9c` (symbol change moves one member), `S9d` (a Null at `symbol` removes a member; it keeps its `name`) |
+| S10 Served keys | `state/S10a` (`foo = "x"` accepted, not served; an identity with only `foo` is not referenced), `S10b`–`S10e` (test standard `test-s10` defines `k`, carried in `definedKeys`: `k` sent before the standard is declared is not served → served once `standards` lists it → not served after `standards = ""` → served again, with its latest value, when re-declared) |
+| S11 Name and symbol length | `state/S11a` (a 70-character `name` is served as its first 64), `S11b` (a 15-character `symbol` as its first 12) |
+| S12 Image hash | `state/S12a` (content whose SHA-256 differs from `image_sha256` is not displayed), `S12b` (a 31-byte `image_sha256` is unusable) |
 
-Sub-cases beyond the MIP's literal examples (R2c–R2f, R3b, I1b, I2b, S7b, the state companions) apply the same MIP
-sentence to another position or order; none adds a rule.
+Sub-cases beyond the MIP's literal examples (R2c–R2f, R3b, I1b, I2b, S7b, S10b–S10e, the state companions) apply the
+same MIP sentence to another position or order; none adds a rule. S11a/S11b use ASCII text, where characters, code
+points and bytes agree.
 
 Unless a vector says otherwise: `domainSep = 0x11 × 32`, `kind = 3`, network `testnet-a`, contract
 `aa…aa` (32 bytes); a second contract is `bb…bb` and a second network `testnet-b`.
@@ -86,10 +92,15 @@ repository-defined and informative:
 | `nonzero-padding` | a non-zero byte after a zero `keyLen` (`offset` = that byte) |
 | `key-out-of-bounds`, `valtype-out-of-bounds`, `vallen-out-of-bounds`, `value-out-of-bounds` | that part of the record would extend past byte 256 (`offset` = the record) |
 | `reserved-valtype` | `valType` 6–255 |
+| `invalid-utf8-key` | the key is not valid UTF-8 (`offset` = the record) |
 | `invalid-utf8`, `invalid-json`, `invalid-uri`, `bad-integer-length`, `bad-null-length` | the value breaks its type's rule (`offset` = the record) |
 | `not-misc`, `other-name` | ignore reasons |
 
-**State vector** — `{id, mip, normative, description, steps, expect}`:
+**State vector** — `{id, mip, normative, description, definedKeys?, steps, expect}`:
+
+- `definedKeys` (S10b–S10e) is `{<standard identifier>: [{key, valType}]}`: keys that a test standard defines. The
+  consumer loads it before the steps; such a key is served only while a token's current, usable `standards` lists that
+  identifier. Without `definedKeys`, no standard defines keys and only the common keys are served.
 
 - `steps[]` is `{op:"apply", network, block, tx, event, contractAddress, type, name_hex, payload_hex}` — one observed
   event; `contractAddress` is the address the event is bound to (from the event record, never from the payload) — or
@@ -97,15 +108,24 @@ repository-defined and informative:
   Steps are in chain order per network: `(block, tx, event)` strictly increasing; after a rollback the next event is
   above `toBlock`.
 - `expect.identities[]` is `{network, contractAddress, domainSep, kind, colored?, fields:{<key_hex>:{valType, value_hex, usable?}}}`,
-  every token identity that exists, i.e. that has at least one field (`fields` is never empty). An identity whose
-  last field was deleted is not listed: the MIP says consumers "MUST NOT reference the identity at all". `usable` is given for the four common keys (`name`, `symbol`, `decimals`, `standards`); `colored` says whether a
-  color `tokenType(domainSep, contractAddress)` is derived (kinds 1 and 2 only).
+  every token identity that is referenced, with its **served** fields only (`fields` is never empty). Served keys are
+  the six common keys (`name`, `symbol`, `decimals`, `standards`, `image`, `image_sha256`) and the keys of the
+  standards the token currently declares (MIP "Keys": consumers "MUST NOT serve a key that is neither defined in
+  Common fields nor defined by a standard the token currently declares"). An identity whose last field was deleted is
+  not listed (the MIP says consumers "MUST NOT reference the identity at all"), and neither is one whose fields are
+  all unserved keys. `value_hex` is the served value: a usable `name`/`symbol` longer than 64 / 12 characters is
+  served as its first 64 / 12 Unicode code points (the stored bytes are unchanged). `usable` is given for the common
+  keys and the keys of a declared standard; `colored` says whether a color `tokenType(domainSep, contractAddress)` is
+  derived (kinds 1 and 2 only).
 - `expect.groups[]` (S9 only) is `{network, contractAddress, symbol_hex, members:[{domainSep, kind}]}`, written the way
   the reference consumer reports groups: every identity with a usable `symbol` is in exactly one group of its
-  `(network, contractAddress)` and exact symbol bytes, single-member groups included. Only the groups of two or more
+  `(network, contractAddress)` and exact stored symbol bytes (`symbol_hex`), single-member groups included. Only the groups of two or more
   members are compared (see the runner contract): they are the groups the MIP's S9 names.
 - `expect.display[]` is `{network, contractAddress, domainSep, kind, raw, decimals, text}`: `raw` displayed with that
   identity's current usable `decimals`.
+- `expect.images[]` (S12a) is `{network, contractAddress, domainSep, kind, content_hex, displayable}`: whether content
+  with these bytes, fetched from that identity's `image`, may be displayed (`false` when its SHA-256 differs from a
+  set `image_sha256`).
 
 ## Runner contract
 
@@ -116,12 +136,13 @@ A consumer in any language is tested by a small adapter program:
 2. Requests (`schema/runner.schema.json#/$defs/request`):
    - `{"id", "op":"decode", "type", "name_hex", "payload_hex"}` → classify and decode one event; respond
      `{"id", "result", "reason"?, "offset"?, "header"?, "records"?, "contentEnd"?}` with the payload-vector `expect` shape.
-   - `{"id", "op":"state", "steps":[…], "display"?:[{network, contractAddress, domainSep, kind, raw}]}` → start from an
-     empty state, apply the steps, and respond `{"id", "identities":[…], "groups"?:[…], "display"?:[…]}` with the
-     state-vector `expect` shape. Report every identity that has at least one field, never one whose last field was
-     deleted (no empty `fields`), with at least its common keys (`name`, `symbol`, `decimals`, `standards`); other keys may be left out.
-     Omit `groups` (or send `[]`) if the consumer does not group symbols, and omit `display` if it does not display
-     amounts.
+   - `{"id", "op":"state", "definedKeys"?:{…}, "steps":[…], "display"?:[{network, contractAddress, domainSep, kind, raw}], "images"?:[{network, contractAddress, domainSep, kind, content_hex}]}`
+     → start from an empty state, load `definedKeys`, apply the steps, and respond
+     `{"id", "identities":[…], "groups"?:[…], "display"?:[…], "images"?:[…]}` with the state-vector `expect` shape.
+     Report every referenced identity with its served keys only — the common keys and the keys of the `definedKeys`
+     standards it currently declares — never an identity without a served field (no empty `fields`). Omit `groups`
+     (or send `[]`) if the consumer does not group symbols, `display` if it does not display amounts, and `images` if it
+     does not display images.
    - A `name_hex`/`payload_hex` may be shorter than 32/256 bytes (informative zero-extension vectors): zero-extend it,
      as the MIP's Consuming section requires.
    - Respond `{"id", "error":"…"}` if a request cannot be processed (the vector fails).
@@ -129,9 +150,11 @@ A consumer in any language is tested by a small adapter program:
    `offset` differences are notes (`--notes`), never failures; a missing or extra identity fails, and so does an
    identity reported without fields ("Once its last field is deleted, consumers MUST NOT reference the identity at
    all", MIP "Applying records"); `usable` is compared where expected.
-   - **Fields**: a missing common key (`name`, `symbol`, `decimals`, `standards`) fails; any other key is optional —
-     not reporting it is a note, because "Indexers MAY index only some tokens or keys" (MIP, Consuming) — and a reported
-     key must equal the expectation; a reported key the expectation does not have fails.
+   - **Fields**: a missing common key (`name`, `symbol`, `decimals`, `standards`, `image`, `image_sha256`) fails, and
+     so does a missing key of the vector's `definedKeys` (the consumer loaded that standard); any other expected key
+     would be optional — not reporting it is a note, because "Indexers MAY index only some tokens or keys" (MIP,
+     Consuming) — and a reported key must equal the expectation. A reported key the expectation does not have fails:
+     it is not served (MIP "Keys").
    - **Groups (S9)**: only groups of two or more members are compared, on both sides. The MIP's S9 says "Grouping is a
      SHOULD, so two outcomes are valid: no groups at all, or exactly the following groups": a consumer that reports
      no such group passes and the group check is reported as not applicable; otherwise its multi-member groups must
@@ -139,6 +162,10 @@ A consumer in any language is tested by a small adapter program:
    - **Display (S8)**: the MIP's S8 applies to "a consumer that displays amounts": a consumer that omits `display`
      passes and the display check is reported as not applicable; a consumer that sends `display` must give every
      expected entry.
+   - **Images (S12a)**: a consumer that omits `images` does not display images and passes, with the image check
+     reported as not applicable; a consumer that sends `images` must give every expected entry, and an entry expected
+     `displayable: false` (the content's SHA-256 differs from `image_sha256`) must be `false`. Refusing content that
+     matches is a note: the MIP forbids only displaying content that differs.
 4. The runner prints PASS/FAIL per vector (with an `n/a:` line for each check that did not apply) and a per-test-id
    summary, and exits **0** when every normative vector passes, **1** when any normative vector fails, **2** on usage,
    integrity (`SHA256SUMS`) or harness errors. Informative failures are reported but do not change the exit status.
@@ -188,5 +215,14 @@ node vectors/tools/validate.ts
   in 0x00–0x20 or 0x7f"), which the reference applies exactly as written.
 - **JSON (`valType` 3)** — no informative vectors: each consumer uses its platform's JSON parser on the strictly decoded
   UTF-8 text (the MIP's rule: "one complete UTF-8 JSON value", RFC 8259).
+- **Keys** — `informative/payload/INF-KEY-1`: a key with multi-byte UTF-8 characters is valid ("Keys MUST be valid
+  UTF-8") and the event is accepted.
+- **`name`/`symbol` length** — `INF-LEN-1/2`: the MIP counts "characters" without defining them; this repository
+  counts Unicode code points (a 70-code-point name in 200 bytes is served as its first 64 code points; 15 emoji as
+  12). `INF-LEN-3`: grouping compares the stored `symbol` bytes, so two 15-character symbols that share their first
+  12 characters display alike but form two groups.
+- **Image content** — `INF-IMG-1`: a set `image_sha256` that is not 32 bytes is unusable and matches no SHA-256, so no
+  content from `image` is displayed; `INF-IMG-2`: without `image_sha256` the content cannot be checked and the
+  reference consumer allows it.
 - **Display formatting** beyond S8 (trailing zeros, very large `decimals`) is a presentation choice of each consumer
   and is not part of the vectors.

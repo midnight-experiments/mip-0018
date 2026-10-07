@@ -126,7 +126,7 @@ describe('compareState', () => {
     expect(compareState({ identities: [], display: [d] }, { identities: [], display: [] }).ok).toBe(false);
   });
 
-  it('fields other than the four common keys are optional; when reported they must match', () => {
+  it('an expected field outside the common keys and the definedKeys is optional; when reported it must match', () => {
     const note = { valType: 1, value_hex: '', key_text: 'note' };
     const exp = { identities: [{ ...described, fields: { ...described.fields, '6e6f7465': note } }] };
     const without = compareState(exp, { identities: [described] });
@@ -140,13 +140,42 @@ describe('compareState', () => {
     ).toBe(false);
   });
 
-  it('a missing common key fails (name, symbol, decimals, standards)', () => {
-    for (const key of ['6e616d65', '73796d626f6c', '646563696d616c73', '7374616e6461726473']) {
+  it('a missing common key fails (name, symbol, decimals, standards, image, image_sha256)', () => {
+    for (const key of ['6e616d65', '73796d626f6c', '646563696d616c73', '7374616e6461726473', '696d616765', '696d6167655f736861323536']) {
       const other = { '78': { valType: 0, value_hex: '' } };
       const exp = { identities: [{ ...ID, fields: { [key]: { valType: 1, value_hex: '41' }, ...other } }] };
       const c = compareState(exp, { identities: [{ ...ID, fields: other }] });
       expect(c.ok, key).toBe(false);
       expect(c.failures.join()).toMatch(/missing/);
     }
+  });
+
+  it("a missing key of the vector's definedKeys fails; a reported key the expectation does not have fails (not served)", () => {
+    const k = { '6b': { valType: 1, value_hex: '76', usable: true } };
+    const exp = { identities: [{ ...described, fields: { ...described.fields, ...k } }] };
+    const defined = { 'test-s10': [{ key: 'k' }] };
+    const missing = compareState(exp, { identities: [described] }, defined);
+    expect(missing.ok).toBe(false);
+    expect(missing.failures.join()).toMatch(/field 6b missing/);
+    expect(compareState(exp, { identities: [{ ...described, fields: { ...described.fields, ...k } }] }, defined).ok).toBe(true);
+    const extra = compareState({ identities: [described] }, { identities: [{ ...described, fields: { ...described.fields, ...k } }] });
+    expect(extra.ok).toBe(false);
+    expect(extra.failures.join()).toMatch(/unexpected field 6b .*MUST NOT be served/);
+  });
+
+  it('S12: images omitted = not applicable; mismatching content reported displayable fails; matching content refused is a note', () => {
+    const img = (displayable: boolean) => ({ ...ID, content_hex: 'aa', displayable });
+    const exp = { identities: [], images: [img(false), { ...img(true), content_hex: 'bb' }] };
+    const na = compareState(exp, { identities: [] });
+    expect(na.ok).toBe(true);
+    expect(na.notApplicable.join()).toMatch(/does not display images/);
+    expect(compareState(exp, { identities: [], images: [img(false), { ...img(true), content_hex: 'BB' }] }).ok).toBe(true);
+    const shown = compareState(exp, { identities: [], images: [img(true), { ...img(true), content_hex: 'bb' }] });
+    expect(shown.ok).toBe(false);
+    expect(shown.failures.join()).toMatch(/displayable expected false/);
+    const refused = compareState(exp, { identities: [], images: [img(false), { ...img(false), content_hex: 'bb' }] });
+    expect(refused.ok).toBe(true);
+    expect(refused.notes.join()).toMatch(/refused although it matches/);
+    expect(compareState(exp, { identities: [], images: [img(false)] }).failures.join()).toMatch(/missing/);
   });
 });

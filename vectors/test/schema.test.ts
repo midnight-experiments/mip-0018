@@ -69,4 +69,18 @@ describe('schemas', () => {
     expect(response({ id: 'S1a', identities: [] })).toBe(true);
     expect(response({ id: null, error: 'bad request' })).toBe(true);
   });
+  it('state vectors carry definedKeys (identifier → key definitions) and image expectations of the documented shape', () => {
+    const withKeys = { ...structuredClone(s1a), definedKeys: { 'test-s10': [{ key: 'k', valType: 1 }] } };
+    expect(state(withKeys)).toBe(true);
+    expect(state({ ...withKeys, definedKeys: { 'test s10': [{ key: 'k', valType: 1 }] } })).toBe(false); // a space in an identifier
+    expect(state({ ...withKeys, definedKeys: { 'test-s10': [{ key: 'k', valType: 5 }] } })).toBe(false); // Null is not a value type
+    const img = { network: 'testnet-a', contractAddress: 'aa'.repeat(32), domainSep: '11'.repeat(32), kind: 3, content_hex: 'aa' };
+    const withImages = structuredClone(s1a);
+    withImages.expect.images = [{ ...img, displayable: false }];
+    expect(state(withImages)).toBe(true);
+    withImages.expect.images = [img];
+    expect(state(withImages)).toBe(false); // displayable is required
+    expect(response({ id: 'S12a', identities: [], images: [{ ...img, displayable: true }] })).toBe(true);
+    expect(response({ id: 'S12a', identities: [], images: null })).toBe(true);
+  });
 });

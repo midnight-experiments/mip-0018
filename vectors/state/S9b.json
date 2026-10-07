@@ -296,12 +296,6 @@
             "value_hex": "5570706572204b6579",
             "value_text": "Upper Key",
             "usable": true
-          },
-          "53594d424f4c": {
-            "key_text": "SYMBOL",
-            "valType": 1,
-            "value_hex": "41434d45",
-            "value_text": "ACME"
           }
         }
       },

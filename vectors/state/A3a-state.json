@@ -5,7 +5,7 @@
     "testId": "A3"
   },
   "normative": true,
-  "description": "Exact bytes (state): the A3a event gives one identity two fields, \"symbol\" = \"ACME\" and \"symbol\\0\" = \"ZZZ\".",
+  "description": "Exact bytes (state): the A3a event sets \"symbol\" = \"ACME\" and \"symbol\\0\" = \"ZZZ\", two different keys: symbol stays \"ACME\". \"symbol\\0\" is neither a common key nor defined by a declared standard, so it is not served.",
   "steps": [
     {
       "op": "apply",
@@ -33,11 +33,6 @@
             "value_hex": "41434d45",
             "value_text": "ACME",
             "usable": true
-          },
-          "73796d626f6c00": {
-            "valType": 1,
-            "value_hex": "5a5a5a",
-            "value_text": "ZZZ"
           }
         }
       }

@@ -1,0 +1,47 @@
+{
+  "id": "A6-state",
+  "mip": {
+    "commit": "6a0a59de6adf6633410b4331b2c72183cdc1a439",
+    "testId": "A6"
+  },
+  "normative": true,
+  "description": "Image (state): the A6 event gives the identity a usable image (\"https://example.org/acme.png\", type 4) and a usable 32-byte image_sha256 (type 0).",
+  "steps": [
+    {
+      "op": "apply",
+      "network": "testnet-a",
+      "block": 1,
+      "tx": 0,
+      "event": 0,
+      "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "type": "Misc",
+      "name_hex": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+      "payload_hex": "11111111111111111111111111111111111111111111111111111111111111110305696d616765041c68747470733a2f2f6578616d706c652e6f72672f61636d652e706e670c696d6167655f7368613235360020df0e7f2208098c42ba231bd6ed5eacce4c7a7b21e4eb5ea1a79bccb0fa2374640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "expect": {
+    "identities": [
+      {
+        "network": "testnet-a",
+        "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+        "kind": 3,
+        "fields": {
+          "696d616765": {
+            "key_text": "image",
+            "valType": 4,
+            "value_hex": "68747470733a2f2f6578616d706c652e6f72672f61636d652e706e67",
+            "value_text": "https://example.org/acme.png",
+            "usable": true
+          },
+          "696d6167655f736861323536": {
+            "key_text": "image_sha256",
+            "valType": 0,
+            "value_hex": "df0e7f2208098c42ba231bd6ed5eacce4c7a7b21e4eb5ea1a79bccb0fa237464",
+            "usable": true
+          }
+        }
+      }
+    ]
+  }
+}
