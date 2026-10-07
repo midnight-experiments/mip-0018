@@ -1,5 +1,5 @@
 // @mip0018/codec — dependency-free MIP-0018 TokenMetadata codec.
-// Pinned text: midnightntwrk/midnight-improvement-proposals@274a84f221bcfc17e4b73e2c8b32fd8c028ea092 (PR #340).
+// Pinned text: midnightntwrk/midnight-improvement-proposals@6a0a59de6adf6633410b4331b2c72183cdc1a439 (PR #372).
 export {
   DOMAIN_SEP_SIZE,
   EVENT_NAME,

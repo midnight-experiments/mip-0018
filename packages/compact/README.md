@@ -1,8 +1,8 @@
 # packages/compact — the MIP-0018 Compact module ("what to add to your contract")
 
 Byte-exact MIP-0018 `TokenMetadata` emission in a few lines of Compact, for the pinned MIP text
-[`midnightntwrk/midnight-improvement-proposals@274a84f2`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/274a84f221bcfc17e4b73e2c8b32fd8c028ea092/mips/mip-0018-on-chain-token-metadata.md)
-(PR #340). Requires Compact ≥ 0.34.0 (MIP-0002 `Misc` events, ledger v9); built and tested with
+[`midnightntwrk/midnight-improvement-proposals@6a0a59de`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/6a0a59de6adf6633410b4331b2c72183cdc1a439/mips/mip-0018-on-chain-token-metadata.md)
+(PR #372). Requires Compact ≥ 0.34.0 (MIP-0002 `Misc` events, ledger v9); built and tested with
 **Compact 0.35.0 (language 0.27.0) and `--feature-zkir-v3`**.
 
 | File | What |
