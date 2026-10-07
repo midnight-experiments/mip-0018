@@ -24,7 +24,7 @@
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
-import { classifyEvent, commonRecords, encodePayload, fromHex, record, toHex } from '@mip0018/codec';
+import { classifyEvent, commonRecords, decodePayload, encodePayload, fromHex, record, toHex } from '@mip0018/codec';
 import { MetadataState } from '@mip0018/consumer';
 import { compareState, projectState, tokenType, type ExpectedIdentity, type ExpectedState } from '@mip0018/midnight';
 import type { PublishCall } from '@mip0018/midnight/signer';
@@ -273,6 +273,8 @@ const vector = (id: string) =>
 function build(): { cases: CaseDef[] } {
   const cases: CaseDef[] = [];
   const expectedOf: Record<string, ExpectedState> = {};
+  /** C07's events in order (C12 runs on the same contract afterwards). */
+  const c07Events: { name: string; payload: string }[][] = [];
 
   const c01 = ozCase(
     'C01',
@@ -530,6 +532,7 @@ function build(): { cases: CaseDef[] } {
     const expected = reduce(evs, { fields: true, counts: true });
     files['expected.json'] = expected;
     expectedOf.C07 = expected;
+    c07Events.push(...evs);
     const result = (id: string) => vector(vectorOf(id)).expect.result;
     cases.push({
       id: 'C07',
@@ -542,9 +545,98 @@ function build(): { cases: CaseDef[] } {
       notes: [
         "--force: accepted vectors are emitted even when they would not change the state (without it, the before-check skips a call whose accepted events leave the contract's state unchanged); rejected and ignored ones are never skipped.",
         'Step ids are the vector ids, except step A3c, which emits the event of vector R5i (key ff 6b 65 79): rejected, because keys MUST be valid UTF-8.',
+        "The contract also carries case C12's events (another domainSep, later blocks): the list check reads the state as of step I2b's block (`list --to-block`).",
       ],
       steps,
       recheck: { checkEvent: checks, list: [{ record: 'record.json', expect: 'expected.json', atStep: 'I2b' }] },
+      files,
+    });
+  }
+
+  // C12 — MIP-0018 PR #372 rules on chain through C07's raw emitter (no deployment): image and image_sha256 (A6), a key
+  // that is not served (S10a), name and symbol over their lengths (S11), a 31-byte image_sha256 (S12b). One identity
+  // under its own domainSep; the contract also holds C07's identity, so every state lists both.
+  {
+    const domainSep = `0x${Buffer.from(C12_DOMAIN).toString('hex').padEnd(64, '0')}`;
+    const header = { domainSep: fromHex(domainSep), kind: 3 };
+    const files: Record<string, unknown> = {};
+    const steps: Step[] = [];
+    const checks: Recheck['checkEvent'] = [];
+    const lists: Recheck['list'] = [];
+    const evs: { name: string; payload: string }[][] = [...c07Events];
+    for (const c of C12_STEPS) {
+      const payload = toHex(encodePayload(header, c.records()));
+      const cl = classifyEvent({ type: 'Misc', name: fromHex(EVENT_NAME_HEX), payload: fromHex(payload) });
+      if (cl.result !== 'accept') throw new Error(`C12 ${c.id}: the codec does not accept the event`);
+      files[`args/${c.id}.json`] = [EVENT_NAME_HEX, payload];
+      files[`expect/${c.id}.json`] = [{ result: 'accept', name: EVENT_NAME_HEX, payload, domainSep, kind: 3 }];
+      steps.push({
+        id: c.id,
+        runner: 'signer',
+        wallet: 'wallet1',
+        argv: [
+          'publish',
+          NET,
+          S1,
+          '--example',
+          'raw-emitter',
+          ...(steps.length === 0 ? ['--attach', '@{out:C07}/record.json'] : []),
+          '--record',
+          REC,
+          '--circuit',
+          'emitRaw',
+          '--args',
+          `@{case}/args/${c.id}.json`,
+          '--step',
+          c.id,
+          '--force',
+        ],
+        expectExit: 0,
+        submits: 'call',
+        note: c.note,
+      });
+      evs.push([{ name: EVENT_NAME_HEX, payload }]);
+      const state = reduce(evs, { fields: true, counts: true });
+      const mine = state.identities.find((i) => i.domainSep === domainSep)!;
+      sameState(
+        { identities: [mine], groups: state.groups.filter((g) => g.members.some((m) => m.domainSep === domainSep)) },
+        { identities: [C12_EXPECTED[c.id]!], groups: C12_GROUPS[c.id]! },
+        `C12 after ${c.id}`,
+      );
+      files[`expected-after-${c.id}.json`] = state;
+      checks.push({ record: 'record.json', step: c.id, expect: `expect/${c.id}.json` });
+      lists.push({ record: 'record.json', expect: `expected-after-${c.id}.json`, atStep: c.id });
+    }
+    for (const c of C12_STEPS) {
+      steps.push(checkEvent(c.id));
+      steps.push(list(`expected-after-${c.id}.json`, `list-after-${c.id}`));
+    }
+    const final = reduce(evs, { fields: true, counts: true });
+    files['expected.json'] = final;
+    lists.push({ record: 'record.json', expect: 'expected.json' });
+    expectedOf.C12 = final;
+    cases.push({
+      id: 'C12',
+      title:
+        "Raw emitter (test-only), C07's contract: image and image_sha256, a key that is not served, name and symbol over their lengths, a 31-byte image_sha256",
+      demonstrates:
+        'MIP-0018 PR #372 on chain, one identity (kind 3, its own domainSep) through C07\'s owner-gated raw emitter: A6 image (type 4) and a 32-byte image_sha256 (type 0) in one event, both served and usable; S10a a record foo = "x" is accepted and not served; S11 a 70-character name and a 15-character symbol (grapheme clusters: combining marks, flags, Hangul L+V+T jamo) are usable and served as their first 64 / 12 characters; S12b a 31-byte image_sha256 is unusable.',
+      conclusion:
+        "after a6: image and image_sha256 usable; after s10a: unchanged (foo is not served); after s11: name and symbol served truncated (the stored bytes are unchanged); after s12b: image_sha256 unusable, the other fields unchanged. C07's identity (0x11…/3) is listed unchanged next to it.",
+      source: {
+        contract: 'test-contracts/raw-emitter',
+        contractOf: 'C07',
+        vectors: 'vectors/payload/A6.json, vectors/state/S10a.json, S11a.json, S11b.json, S12b.json',
+      },
+      dependsOn: ['C07'],
+      notes: [
+        `domainSep = pad(32, "${C12_DOMAIN}"); every event carries the records of the named vector under this header.`,
+        "`--attach @{out:C07}/record.json` starts this case's own record for C07's contract (C07's record is not touched); wallet 1 is the raw emitter's owner.",
+        '--force: s10a leaves the served state unchanged, so the before-check would skip it; --force emits every step.',
+        "C07's identity (0x11…/3) is on the same contract: each expected state lists it as C07 left it, and the counts include C07's 22 events.",
+      ],
+      steps,
+      recheck: { checkEvent: checks, list: lists },
       files,
     });
   }
@@ -993,6 +1085,56 @@ const C11_EXPECTED: Record<string, ExpectedState> = {
   'withdraw-again': { identities: [], groups: [] },
   revive: { identities: [kind3({ name: 'Acme Again', symbol: 'ACMA' })], groups: groupOf('ACMA') },
 };
+
+/** The records of a vector's event: a payload vector, or one step of a state vector (decoded with the codec). */
+function vectorRecords(file: string, step = 0, keys?: string[]) {
+  const v = JSON.parse(readFileSync(join(REPO, 'vectors', file), 'utf8')) as {
+    event?: { payload_hex: string };
+    steps?: { payload_hex: string }[];
+  };
+  const d = decodePayload(fromHex(v.event?.payload_hex ?? v.steps![step]!.payload_hex));
+  if (!d.ok) throw new Error(`${file}: the event is not accepted`);
+  return d.records
+    .filter((r) => keys === undefined || keys.includes(new TextDecoder().decode(r.key)))
+    .map((r) => ({ key: r.key, valType: r.valType, value: r.value }));
+}
+
+const C12_DOMAIN = 'mip-0018:stagenet:C12';
+const C12_STEPS: { id: string; note: string; records: () => ReturnType<typeof vectorRecords> }[] = [
+  { id: 'a6', note: 'vector A6: image (type 4) + 32-byte image_sha256 (type 0): accept', records: () => vectorRecords('payload/A6.json') },
+  { id: 's10a', note: 'vector S10a: foo = "x": accept, not served', records: () => vectorRecords('state/S10a.json', 0) },
+  {
+    id: 's11',
+    note: 'vectors S11a + S11b: a 70-character name and a 15-character symbol in one event: accept, served as their first 64 / 12 characters',
+    records: () => [...vectorRecords('state/S11a.json', 0), ...vectorRecords('state/S11b.json', 0)],
+  },
+  {
+    id: 's12b',
+    note: 'vector S12b: a 31-byte image_sha256: accept, unusable',
+    records: () => vectorRecords('state/S12b.json', 0, ['image_sha256']),
+  },
+];
+const C12_DS = `0x${Buffer.from(C12_DOMAIN).toString('hex').padEnd(64, '0')}`;
+const C12_IMAGE = {
+  image: 'https://example.org/acme.png',
+  imageSha256: 'df0e7f2208098c42ba231bd6ed5eacce4c7a7b21e4eb5ea1a79bccb0fa237464',
+};
+const c12 = (common: Record<string, unknown>): ExpectedIdentity => ({ domainSep: C12_DS, kind: 3, colored: false, common });
+/** S11a's name truncated to 64 characters and S11b's symbol to 12 (grapheme clusters, written out by hand). */
+const C12_NAME_64 =
+  'Acme Cafe\u0301 token \u{1F1FA}\u{1F1FE} \u1112\u1161\u11AB\u1100\u1161\u11A8 A\u030Angstro\u0308\u0304m, seventy characters for test S11a\u{1F1EF}\u{1F1F5}';
+const C12_SYMBOL_12 = 'A\u030ACMe\u0301\u{1F1FA}\u{1F1FE}\u1112\u1161\u11ABXYZo\u0308\u030412';
+/** The stored 15-character symbol: groups compare the stored bytes. */
+const C12_SYMBOL_15 = `${C12_SYMBOL_12}3\u{1F1EF}\u{1F1F5}\u1100\u1161\u11A8`;
+/** C12's identity after each step, written by hand from the MIP text (served values only). */
+const C12_EXPECTED: Record<string, ExpectedIdentity> = {
+  a6: c12({ ...C12_IMAGE }),
+  s10a: c12({ ...C12_IMAGE }),
+  s11: c12({ ...C12_IMAGE, name: C12_NAME_64, symbol: C12_SYMBOL_12 }),
+  s12b: c12({ image: C12_IMAGE.image, name: C12_NAME_64, symbol: C12_SYMBOL_12 }),
+};
+const C12_GROUP = [{ symbol: C12_SYMBOL_15, members: [{ domainSep: C12_DS, kind: 3 }] }];
+const C12_GROUPS: Record<string, ExpectedState['groups']> = { a6: [], s10a: [], s11: C12_GROUP, s12b: C12_GROUP };
 
 const U1_DOMAIN = 'mip-0018:example:upgrade';
 /** Throwaway signing key (not wallet material) in the signer's state directory, written before the case runs. */

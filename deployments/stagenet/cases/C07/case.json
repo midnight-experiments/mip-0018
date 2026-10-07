@@ -15,7 +15,8 @@
   },
   "notes": [
     "--force: accepted vectors are emitted even when they would not change the state (without it, the before-check skips a call whose accepted events leave the contract's state unchanged); rejected and ignored ones are never skipped.",
-    "Step ids are the vector ids, except step A3c, which emits the event of vector R5i (key ff 6b 65 79): rejected, because keys MUST be valid UTF-8."
+    "Step ids are the vector ids, except step A3c, which emits the event of vector R5i (key ff 6b 65 79): rejected, because keys MUST be valid UTF-8.",
+    "The contract also carries case C12's events (another domainSep, later blocks): the list check reads the state as of step I2b's block (`list --to-block`)."
   ],
   "placeholders": {
     "{net}": "network options (Stagenet: --network stagenet)",
