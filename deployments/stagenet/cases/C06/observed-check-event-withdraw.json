@@ -27,7 +27,8 @@
             "key": "6e616d65",
             "keyText": "name",
             "valType": 5,
-            "value": ""
+            "value": "",
+            "served": true
           }
         ]
       },
@@ -102,13 +103,13 @@
     {
       "id": "finalized",
       "ok": true,
-      "message": "block 714813 ≤ finalized 726274"
+      "message": "block 714813 ≤ finalized 794002"
     }
   ],
   "notes": [],
   "indexerTip": {
-    "height": 726273,
-    "hash": "dd794bf462afd69e9bc1096aa268142fe12a93b13e2eb7a3467e08b388f212eb"
+    "height": 794002,
+    "hash": "aa65cc48580273381725db818f5308f6fb84d9758c678595d918abc15f48a156"
   },
   "inclusion": {
     "height": 714813,
@@ -116,7 +117,7 @@
     "status": "SUCCESS",
     "segments": null,
     "nodeBlockHash": "0xab2e8a0400a3610a2f36dbbe221507bd661e09724d13a96af569f41dc4f3637b",
-    "finalizedHeight": 726274,
+    "finalizedHeight": 794002,
     "finalized": true,
     "extrinsicIndex": 3
   },

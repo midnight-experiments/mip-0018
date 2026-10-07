@@ -27,7 +27,8 @@
             "key": "6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b",
             "keyText": "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk",
             "valType": 0,
-            "value": ""
+            "value": "",
+            "served": false
           }
         ]
       },
@@ -102,13 +103,13 @@
     {
       "id": "finalized",
       "ok": true,
-      "message": "block 714891 ≤ finalized 726279"
+      "message": "block 714891 ≤ finalized 794009"
     }
   ],
   "notes": [],
   "indexerTip": {
-    "height": 726279,
-    "hash": "c0ea55b9931661300eed2830094dc6bd9436ec7faa575133401d5eba9f4c5914"
+    "height": 794009,
+    "hash": "6ae628a4a1d6dd74af4a04a06b1ffbb9bf4ae0584409193399522c9a81e0300d"
   },
   "inclusion": {
     "height": 714891,
@@ -116,7 +117,7 @@
     "status": "SUCCESS",
     "segments": null,
     "nodeBlockHash": "0x8db36f87a9af8a891b0e34b62ba09d2d30f92c66969cc2fc2aac6edb9e4c7598",
-    "finalizedHeight": 726279,
+    "finalizedHeight": 794009,
     "finalized": true,
     "extrinsicIndex": 3
   },

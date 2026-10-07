@@ -27,20 +27,23 @@
             "key": "6e616d65",
             "keyText": "name",
             "valType": 1,
-            "value": "4c656761637920546f6b656e"
+            "value": "4c656761637920546f6b656e",
+            "served": true
           },
           {
             "key": "73796d626f6c",
             "keyText": "symbol",
             "valType": 1,
-            "value": "4c474359"
+            "value": "4c474359",
+            "served": true
           },
           {
             "key": "646563696d616c73",
             "keyText": "decimals",
             "valType": 2,
             "value": "06",
-            "integer": "6"
+            "integer": "6",
+            "served": true
           }
         ]
       },
@@ -115,13 +118,13 @@
     {
       "id": "finalized",
       "ok": true,
-      "message": "block 715433 ≤ finalized 726339"
+      "message": "block 715433 ≤ finalized 794056"
     }
   ],
   "notes": [],
   "indexerTip": {
-    "height": 726339,
-    "hash": "6dc428e9e7e93b794200f10ac6365f3bdcf45638afbe5eb25c87af78a2579c7f"
+    "height": 794056,
+    "hash": "a68dfc10bd3e2bf671e468454aa64ba68cd5dad47f53e4f09356ec8795886443"
   },
   "inclusion": {
     "height": 715433,
@@ -129,7 +132,7 @@
     "status": "SUCCESS",
     "segments": null,
     "nodeBlockHash": "0x6f367590a54a633d59cd1280e39dbc5b5db26933e5b015097227ba722f722fce",
-    "finalizedHeight": 726339,
+    "finalizedHeight": 794056,
     "finalized": true,
     "extrinsicIndex": 3
   },

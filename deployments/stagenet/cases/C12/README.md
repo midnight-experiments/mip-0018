@@ -49,12 +49,15 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/C12
 ```
 
-## Transactions
+## Transactions (Stagenet, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
-| `a6` | — | — | — |
-| `s10a` | — | — | — |
-| `s11` | — | — | — |
-| `s12b` | — | — | — |
+Contract `RawEmitter` at `23aa27cbc948fb6df9072750b879e9b7f78206f77c638674a8e01b418ee3355b` (attached from deployments/stagenet/cases/C07/record.json); signer mn_addr_stagenet1vw57646su9y5z6myarm93m6kcn62j97z0yma94lfkhmta6pz5h5q6utr3k.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `a6` | call `emitRaw` | `0db0a504a707c7010bdaa6ec66e57dd4aaac9fa486abbf9eef68ccfce6043f54` | 793926 (`297231017958b740…`) | SUCCESS | 191,896,568,352,584 | 0.192 |
+| `s10a` | call `emitRaw` | `7c23bed858d4f89b30f10e2781cb3013c99b30f921ea7290ea97ae44cbafb592` | 793935 (`45c9c16c1a761288…`) | SUCCESS | 191,448,731,211,198 | 0.191 |
+| `s11` | call `emitRaw` | `66ceb3f2dd525dd6f087672f5711d7aabbac01902856ac75ad8d22d00c7b6abe` | 793967 (`1938b9c93423564c…`) | SUCCESS | 192,497,557,487,295 | 0.192 |
+| `s12b` | call `emitRaw` | `e58241a4fc8b1d0aa5f7c0a78288dddfb16f0c8ffd758366939e292578f77c26` | 793977 (`e31b35eddbd5bc47…`) | SUCCESS | 191,678,669,910,355 | 0.192 |
+| **total** | | | | | **767,521,526,961,432** | **0.768** |
 

@@ -27,20 +27,23 @@
             "key": "6e616d65",
             "keyText": "name",
             "valType": 1,
-            "value": "41636d6520446f6c6c6172"
+            "value": "41636d6520446f6c6c6172",
+            "served": true
           },
           {
             "key": "73796d626f6c",
             "keyText": "symbol",
             "valType": 1,
-            "value": "414344"
+            "value": "414344",
+            "served": true
           },
           {
             "key": "646563696d616c73",
             "keyText": "decimals",
             "valType": 2,
             "value": "02",
-            "integer": "2"
+            "integer": "2",
+            "served": true
           }
         ]
       },
@@ -72,20 +75,23 @@
             "key": "6e616d65",
             "keyText": "name",
             "valType": 1,
-            "value": "41636d6520446f6c6c6172"
+            "value": "41636d6520446f6c6c6172",
+            "served": true
           },
           {
             "key": "73796d626f6c",
             "keyText": "symbol",
             "valType": 1,
-            "value": "414344"
+            "value": "414344",
+            "served": true
           },
           {
             "key": "646563696d616c73",
             "keyText": "decimals",
             "valType": 2,
             "value": "02",
-            "integer": "2"
+            "integer": "2",
+            "served": true
           }
         ]
       },
@@ -117,20 +123,23 @@
             "key": "6e616d65",
             "keyText": "name",
             "valType": 1,
-            "value": "41636d6520446f6c6c6172"
+            "value": "41636d6520446f6c6c6172",
+            "served": true
           },
           {
             "key": "73796d626f6c",
             "keyText": "symbol",
             "valType": 1,
-            "value": "414344"
+            "value": "414344",
+            "served": true
           },
           {
             "key": "646563696d616c73",
             "keyText": "decimals",
             "valType": 2,
             "value": "02",
-            "integer": "2"
+            "integer": "2",
+            "served": true
           }
         ]
       },
@@ -245,13 +254,13 @@
     {
       "id": "finalized",
       "ok": true,
-      "message": "block 714663 ≤ finalized 726263"
+      "message": "block 714663 ≤ finalized 793993"
     }
   ],
   "notes": [],
   "indexerTip": {
-    "height": 726263,
-    "hash": "bc3d88222b0976f6c8fa33fcac7234b4fe211c1e661d2beeb73d9ba0d7cba62d"
+    "height": 793993,
+    "hash": "3de1ed6083dac45e3249af0369581ea73e7a12719014ec1535a0f1fbff9ba909"
   },
   "inclusion": {
     "height": 714663,
@@ -259,7 +268,7 @@
     "status": "SUCCESS",
     "segments": null,
     "nodeBlockHash": "0x867c741cca1501648a027299c56a282acdb2f42e53885a2e67512e2b1cd2ebe1",
-    "finalizedHeight": 726263,
+    "finalizedHeight": 793993,
     "finalized": true,
     "extrinsicIndex": 3
   },

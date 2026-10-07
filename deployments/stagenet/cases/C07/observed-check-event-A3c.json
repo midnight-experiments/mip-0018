@@ -19,17 +19,9 @@
       "inRawTransaction": true,
       "segmentApplied": true,
       "classification": {
-        "result": "accept",
-        "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
-        "kind": 3,
-        "records": [
-          {
-            "key": "ff6b6579",
-            "keyText": "�key",
-            "valType": 1,
-            "value": "6f6b"
-          }
-        ]
+        "result": "reject",
+        "reason": "invalid-utf8-key",
+        "offset": 33
       },
       "source": {
         "transactionHash": "ea3e64f05d57dab178dc65b420857036fcf75809b4123a2525a0312c77a3a142",
@@ -102,13 +94,13 @@
     {
       "id": "finalized",
       "ok": true,
-      "message": "block 714956 ≤ finalized 726286"
+      "message": "block 714956 ≤ finalized 794017"
     }
   ],
   "notes": [],
   "indexerTip": {
-    "height": 726286,
-    "hash": "11b4bc257ae56fb17e532e72d38dc850c1598256cd9b1ab1c8d18f89c6d60fd7"
+    "height": 794017,
+    "hash": "cdf32e072932eb3ecfda65325b2a3397be68d3509b77041f93bab56552d862bd"
   },
   "inclusion": {
     "height": 714956,
@@ -116,7 +108,7 @@
     "status": "SUCCESS",
     "segments": null,
     "nodeBlockHash": "0xc9b4e60926477cc5b257111cd7442de42fbc157f515600dfaa9f2fe281623e3d",
-    "finalizedHeight": 726286,
+    "finalizedHeight": 794017,
     "finalized": true,
     "extrinsicIndex": 3
   },

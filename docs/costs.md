@@ -137,7 +137,7 @@ the circuit size.
 
 ## Fees on Stagenet
 
-Real receipts of the Stagenet cases ([`deployments/stagenet/`](../deployments/stagenet/README.md), run 2026-10-02 (C11: 2026-10-03),
+Real receipts of the Stagenet cases ([`deployments/stagenet/`](../deployments/stagenet/README.md), run 2026-10-02 (C11: 2026-10-03; C12: 2026-10-07),
 node `2.0.0-d9729c13`, ledger 9.1.0.0-rc.3, proof servers rc.8 contract / rc.6 DUST): the indexer's `fee` of every
 included transaction, as each case's `record.json` holds it. k from the tables above. 1 DUST = 10^15 SPECK.
 
@@ -178,6 +178,7 @@ included transaction, as each case's `record.json` holds it. k from the tables a
 | C11 | `OwnerKey.publishMetadata` | 15 | 1 | 177,637,726,570,864 | 0.178 |
 | C11 | `OwnerKey.withdrawMetadata` (four Null records in one event) | 15 | 2 | 177,262,764,778,656 – 177,305,324,270,339 | 0.177 |
 | C11 | `OwnerKey.setMetadata` (revive) | 15 | 1 | 177,069,017,822,064 | 0.177 |
+| C12 | `RawEmitter.emitRaw` (C07's contract, four events) | 16 | 4 | 191,448,731,211,198 – 192,497,557,487,295 | 0.191–0.192 |
 
 What the receipts show:
 
