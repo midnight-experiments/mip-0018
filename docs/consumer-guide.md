@@ -1,7 +1,7 @@
 # Consumer guide — read MIP-0018 token metadata (wallets, explorers, indexers)
 
 How to turn a contract's MIP-0018 events into the name, symbol and decimals a wallet or explorer shows, following the
-pinned MIP text ([MIP-0018 @ `6a0a59de`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/6a0a59de6adf6633410b4331b2c72183cdc1a439/mips/mip-0018-on-chain-token-metadata.md)).
+pinned MIP text ([MIP-0018 @ `338ea194`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/338ea194bbe7c4e5d1829234a503b7c1b11ebf0f/mips/mip-0018-on-chain-token-metadata.md)).
 The reference implementation of every step is in this repository and passes all normative vectors:
 
 | Step | Reference code | Wallet-free command |
@@ -158,7 +158,7 @@ Stagenet [C08](../deployments/stagenet/cases/C08/README.md)).
 | 1 UTF-8 string | strict UTF-8 (no overlongs, surrogates or code points above U+10FFFF); may be empty |
 | 2 unsigned integer | 1–31 bytes, little-endian; decode every width to a big integer (`06` and `06` + 15 zero bytes are both 6) |
 | 3 JSON | strict UTF-8, then your platform's JSON parser must accept the text as exactly one value (the MIP's rule is "one complete UTF-8 JSON value", RFC 8259) |
-| 4 URI | strict UTF-8, then the RFC 3986 `URI` rule (MIP Value types: "a scheme is required, a fragment is allowed, and relative references are not. All characters are ASCII" — the URI definition ERC-721 uses): `https://acme.example/logo.png#v2` and `ipfs://…` accept; `https://ä.example/`, `https://acme.example/a b.png` and `/relative/path` reject ([26 informative cases](../vectors/informative/uri/README.md)) |
+| 4 URI | strict UTF-8, then the RFC 3986 `URI` rule (MIP Value types: "a scheme is required, a fragment is allowed, and relative references are not. The value is ASCII only" — the URI definition ERC-721 uses): `https://acme.example/logo.png#v2` and `ipfs://…` accept; `https://ä.example/`, `https://acme.example/a b.png` and `/relative/path` reject ([26 informative cases](../vectors/informative/uri/README.md)) |
 | 5 Null | `valLen` 0 (a tombstone: deletes its field) |
 | 6–255 | reserved: reject the event |
 

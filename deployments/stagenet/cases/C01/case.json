@@ -6,7 +6,7 @@
   "demonstrates": "The common fields in one event from an OpenZeppelin token; kind 3 has no color.",
   "conclusion": "1 kind-3 identity with 3 usable fields (name \"Acme Gold\", symbol \"AGLD\", decimals 6); no standards; no color.",
   "mip": {
-    "commit": "6a0a59de6adf6633410b4331b2c72183cdc1a439",
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {

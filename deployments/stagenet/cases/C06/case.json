@@ -6,7 +6,7 @@
   "demonstrates": "MIP \"Applying records\" on chain: latest value wins (S2); a Null record at `name` deletes only `name` — the identity keeps symbol, decimals and standards (S3a); a repeated Null at `name` changes nothing (S3b); a later record sets the field again and nothing from before the Null returns (the revive sets name and symbol; decimals and standards were never deleted).",
   "conclusion": "after withdraw (and withdraw again): no name; symbol \"ACMP\", decimals 6, standards \"mip-0004\", group \"ACMP\"; final: name \"Acme Again\", symbol \"ACMA\", decimals 6, standards \"mip-0004\" (group \"ACMA\"); the A1 publish payload equals MIP Appendix A byte-for-byte.",
   "mip": {
-    "commit": "6a0a59de6adf6633410b4331b2c72183cdc1a439",
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {

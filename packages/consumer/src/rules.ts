@@ -51,10 +51,15 @@ export interface ConsumerRules {
   /** Common fields — `name`/`symbol` must not be empty. */
   nonEmptyText: boolean;
   /**
-   * Common fields — a `name`/`symbol` over 64 / 12 characters is served as its first 64 / 12 Unicode code points.
-   * Disabled = the `noTruncation` mutation.
+   * Common fields — a `name`/`symbol` over 64 / 12 characters is served as its first 64 / 12 characters. Disabled =
+   * the `noTruncation` mutation.
    */
   truncateLength: boolean;
+  /**
+   * Terminology — a character is a grapheme cluster (Unicode UAX #29). Disabled = the `truncateByCodePoints` mutation:
+   * lengths count Unicode code points.
+   */
+  truncateGraphemes: boolean;
   /** Common fields — `image` must be a URI (type 4) and `image_sha256` exactly 32 bytes (type 0). */
   imageForm: boolean;
   /**
@@ -97,6 +102,7 @@ export const ALL_CONSUMER_RULES: Readonly<ConsumerRules> = Object.freeze({
   hideUnservedIdentity: true,
   nonEmptyText: true,
   truncateLength: true,
+  truncateGraphemes: true,
   imageForm: true,
   imageHash: true,
   decimalsType: true,

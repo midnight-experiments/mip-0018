@@ -6,7 +6,7 @@
   "demonstrates": "Symbol grouping on chain (vector S9): three identities under one domainSep and symbol form one group; kinds 1 and 2 share one color.",
   "conclusion": "3 identities (\"Acme Dollar\", \"ACD\", 2) in ONE group \"ACD\"; kinds 1 and 2 colored (same color), kind 3 not.",
   "mip": {
-    "commit": "6a0a59de6adf6633410b4331b2c72183cdc1a439",
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {

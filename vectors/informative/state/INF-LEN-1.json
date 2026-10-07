@@ -1,12 +1,12 @@
 {
   "id": "INF-LEN-1",
   "mip": {
-    "commit": "6a0a59de6adf6633410b4331b2c72183cdc1a439",
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
     "testId": "INF-LEN"
   },
   "normative": false,
-  "description": "A name of 70 code points in 200 bytes (30 × \"é\", 2 bytes; 20 × \"名\", 3 bytes; 20 × \"😀\", 4 bytes) is served as its first 64 code points (30 × \"é\", 20 × \"名\", 14 × \"😀\"; 176 bytes).",
-  "basis": "MIP \"Common fields\": name 1–64 characters, symbol 1–12; an over-length name or symbol is still usable and consumers SHOULD discard any extra characters. This repository counts a character as a Unicode code point, serves the first 64 / 12 code points and keeps the stored bytes for grouping.",
+  "description": "A name of 70 characters in 200 bytes (30 × \"é\" U+00E9, 2 bytes; 20 × \"名\", 3 bytes; 20 × \"😀\", 4 bytes; one code point each) is truncated to its first 64 characters (30 × \"é\", 20 × \"名\", 14 × \"😀\"; 176 bytes), not to 64 bytes.",
+  "basis": "MIP \"Common fields\": name 1–64 characters, symbol 1–12; an over-length name or symbol is still usable and is truncated; MIP \"Terminology\": a character is a grapheme cluster (Unicode UAX #29). Lengths count characters, never bytes. Grouping compares the stored symbol bytes (a choice of this repository: the MIP compares a usable symbol \"as exact bytes\").",
   "steps": [
     {
       "op": "apply",

@@ -5,7 +5,7 @@ extras, a JSON Schema for each format, an independent generator and a runner any
 
 | | |
 |---|---|
-| MIP text | [`midnightntwrk/midnight-improvement-proposals@6a0a59de6adf6633410b4331b2c72183cdc1a439` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/6a0a59de6adf6633410b4331b2c72183cdc1a439/mips/mip-0018-on-chain-token-metadata.md), SHA-256 `dc91aec4ae4da42af6a16875ba9fa50f8228153de1566fcb29f2811b17b28696` (proposal: [PR #372](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/372)) |
+| MIP text | [`midnightntwrk/midnight-improvement-proposals@338ea194bbe7c4e5d1829234a503b7c1b11ebf0f` `mips/mip-0018-on-chain-token-metadata.md`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/338ea194bbe7c4e5d1829234a503b7c1b11ebf0f/mips/mip-0018-on-chain-token-metadata.md), SHA-256 `8d4204e7aa24428faa44740ba99612f5556f628347c50e38903e4bea83f17245` (proposal: [PR #372](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/372)) |
 | Event name | `pad(32, "mip-0018:token-metadata[v1]")` = `6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000` |
 | Vectors | **78 normative** (41 payload, 37 state) and **49 informative** (35 payload, 14 state) — `manifest.json` lists every one |
 | Integrity | `SHA256SUMS` covers every fixture, schema and the manifest (`cd vectors && sha256sum -c SHA256SUMS`) |
@@ -21,7 +21,7 @@ labelled informative.
 | `state/<id>.json` | Normative state vectors (S1–S12, plus state companions of A3–A6): a sequence of observed events in chain order and the served state that must result |
 | `informative/uri/` | The 26 URI cases with the RFC 3986 `URI` verdict (the MIP's Value types rule) and the investigation data; see its README |
 | `informative/payload/` | `INF-KEY-1`: a multi-byte UTF-8 key is accepted (keys MUST be valid UTF-8) |
-| `informative/state/` | `standards` list format and common-field forms derived from the MIP text but not in its Testing list (`INF-STD-6/7`: the byte rule for identifiers); `name`/`symbol` length counted in Unicode code points and grouping on the stored symbol (`INF-LEN-*`); the image check without `image_sha256` and with an unusable one (`INF-IMG-*`) |
+| `informative/state/` | `standards` list format and common-field forms derived from the MIP text but not in its Testing list (`INF-STD-6/7`: the byte rule for identifiers); `name`/`symbol` length in characters, not bytes, and grouping on the stored symbol (`INF-LEN-*`); the image check without `image_sha256` and with an unusable one (`INF-IMG-*`) |
 | `informative/zero-extension/` | The MIP's Consuming rule: a `name` or `payload` with its trailing zero bytes dropped, as some sources return it, gives exactly the full form's result; a 257-byte payload is rejected and a 33-byte name is another name |
 | `schema/` | JSON Schemas (2020-12): `payload.schema.json`, `state.schema.json`, `runner.schema.json` (protocol), `manifest.schema.json` |
 | `manifest.json` | MIP pin, event name, counts, and every vector with its MIP test id and normative flag |
@@ -56,12 +56,11 @@ labelled informative.
 | S8 Display | `state/S8` |
 | S9 Symbol grouping | `state/S9a` (membership), `S9b` (rename), `S9c` (symbol change moves one member), `S9d` (a Null at `symbol` removes a member; it keeps its `name`) |
 | S10 Served keys | `state/S10a` (`foo = "x"` accepted, not served; an identity with only `foo` is not referenced), `S10b`–`S10e` (test standard `test-s10` defines `k`, carried in `definedKeys`: `k` sent before the standard is declared is not served → served once `standards` lists it → not served after `standards = ""` → served again, with its latest value, when re-declared) |
-| S11 Name and symbol length | `state/S11a` (a 70-character `name` is served as its first 64), `S11b` (a 15-character `symbol` as its first 12) |
+| S11 Name and symbol length | `state/S11a` (a 70-character `name` is truncated to its first 64), `S11b` (a 15-character `symbol` to its first 12); characters are grapheme clusters, and both values mix ASCII with combining marks, flags and Hangul L+V+T jamo, so counting code points or bytes fails them |
 | S12 Image hash | `state/S12a` (content whose SHA-256 differs from `image_sha256` is not displayed), `S12b` (a 31-byte `image_sha256` is unusable) |
 
 Sub-cases beyond the MIP's literal examples (R2c–R2f, R3b, I1b, I2b, S7b, S10b–S10e, the state companions) apply the
-same MIP sentence to another position or order; none adds a rule. S11a/S11b use ASCII text, where characters, code
-points and bytes agree.
+same MIP sentence to another position or order; none adds a rule.
 
 Unless a vector says otherwise: `domainSep = 0x11 × 32`, `kind = 3`, network `testnet-a`, contract
 `aa…aa` (32 bytes); a second contract is `bb…bb` and a second network `testnet-b`.
@@ -114,7 +113,7 @@ repository-defined and informative:
   Common fields nor defined by a standard the token currently declares"). An identity whose last field was deleted is
   not listed (the MIP says consumers "MUST NOT reference the identity at all"), and neither is one whose fields are
   all unserved keys. `value_hex` is the served value: a usable `name`/`symbol` longer than 64 / 12 characters is
-  served as its first 64 / 12 Unicode code points (the stored bytes are unchanged). `usable` is given for the common
+  truncated to its first 64 / 12 characters — grapheme clusters, Unicode UAX #29 (the stored bytes are unchanged). `usable` is given for the common
   keys and the keys of a declared standard; `colored` says whether a color `tokenType(domainSep, contractAddress)` is
   derived (kinds 1 and 2 only).
 - `expect.groups[]` (S9 only) is `{network, contractAddress, symbol_hex, members:[{domainSep, kind}]}`, written the way
@@ -217,10 +216,10 @@ node vectors/tools/validate.ts
   UTF-8 text (the MIP's rule: "one complete UTF-8 JSON value", RFC 8259).
 - **Keys** — `informative/payload/INF-KEY-1`: a key with multi-byte UTF-8 characters is valid ("Keys MUST be valid
   UTF-8") and the event is accepted.
-- **`name`/`symbol` length** — `INF-LEN-1/2`: the MIP counts "characters" without defining them; this repository
-  counts Unicode code points (a 70-code-point name in 200 bytes is served as its first 64 code points; 15 emoji as
-  12). `INF-LEN-3`: grouping compares the stored `symbol` bytes, so two 15-character symbols that share their first
-  12 characters display alike but form two groups.
+- **`name`/`symbol` length** — `INF-LEN-1/2`: lengths count characters, not bytes (a 70-character name in 200 bytes
+  is truncated to its first 64 characters; 15 emoji to 12). `INF-LEN-3`: grouping compares the stored `symbol` bytes
+  (this repository's reading of "compared as exact bytes"), so two 15-character symbols that share their first 12
+  characters display alike but form two groups.
 - **Image content** — `INF-IMG-1`: a set `image_sha256` that is not 32 bytes is unusable and matches no SHA-256, so no
   content from `image` is displayed; `INF-IMG-2`: without `image_sha256` the content cannot be checked and the
   reference consumer allows it.

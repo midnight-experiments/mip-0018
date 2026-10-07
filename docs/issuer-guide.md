@@ -1,7 +1,7 @@
 # Issuer guide — publish MIP-0018 metadata for your token
 
 How a token contract publishes its name, symbol and decimals as MIP-0018 events
-([MIP-0018 @ `6a0a59de`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/6a0a59de6adf6633410b4331b2c72183cdc1a439/mips/mip-0018-on-chain-token-metadata.md)):
+([MIP-0018 @ `338ea194`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/338ea194bbe7c4e5d1829234a503b7c1b11ebf0f/mips/mip-0018-on-chain-token-metadata.md)):
 what to emit, the Compact lines to add, who may call them, and how to deploy, publish, rename and withdraw with the
 `mip0018` CLI. Everything shown was run on a local chain and on Stagenet; the commands are copied from the
 walkthroughs [`examples/publish-and-emit`](../examples/publish-and-emit/README.md) and

@@ -2,7 +2,7 @@
   "$comment": "MIP-0018 metadata of examples/openzeppelin/fungible-token: what to deploy and publish, the exact payload of every event, and what a conforming consumer concludes. Format: examples/openzeppelin/README.md#metadatajson. Checked against the contract by test/fungible-token.test.ts.",
   "example": "fungible-token",
   "mip": {
-    "commit": "6a0a59de6adf6633410b4331b2c72183cdc1a439",
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "contract": {

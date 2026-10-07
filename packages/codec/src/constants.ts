@@ -1,4 +1,4 @@
-// MIP-0018 constants (pinned text: midnightntwrk/midnight-improvement-proposals@6a0a59de, "Event", "Payload",
+// MIP-0018 constants (pinned text: midnightntwrk/midnight-improvement-proposals@338ea194, "Event", "Payload",
 // "Value types", "Token identity and authority").
 
 /** The event name text; the 32-byte name is this text followed by zero bytes. */
@@ -45,7 +45,10 @@ export type Kind = (typeof Kind)[keyof typeof Kind];
 export const UINT_MIN_BYTES = 1;
 export const UINT_MAX_BYTES = 31;
 
-/** Common fields: `name` is 1–64 characters, `symbol` 1–12 (Unicode code points; a longer value is truncated). */
+/**
+ * Common fields: `name` is 1–64 characters, `symbol` 1–12; a character is a grapheme cluster (Unicode UAX #29); a
+ * longer value is truncated.
+ */
 export const NAME_MAX_CHARS = 64;
 export const SYMBOL_MAX_CHARS = 12;
 /** Common fields: `image_sha256` is exactly 32 bytes (the SHA-256 of the file at `image`). */

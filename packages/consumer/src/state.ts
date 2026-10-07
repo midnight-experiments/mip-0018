@@ -12,7 +12,7 @@
 //   in a usable `standards` are served (MIP "Keys"). The served keys are computed from the stored fields and the
 //   current `standards` every time a view is built, so a change of `standards` serves (or stops serving) keys whose
 //   records arrived earlier. An identity with no served field is not referenced, as if it had no fields.
-// - A `name`/`symbol` longer than 64 / 12 characters is served as its first 64 / 12 Unicode code points; the stored
+// - A `name`/`symbol` longer than 64 / 12 characters (grapheme clusters) is served as its first 64 / 12; the stored
 //   bytes are unchanged and grouping compares them (MIP "Common fields").
 // - The color of kinds 1 and 2 comes from an injected `tokenType(domainSep, contractAddress)` (ledger-specific; this
 //   package stays dependency-free); kind 3 never gets a color and the hook is never called for it.
@@ -78,7 +78,7 @@ export interface FieldView extends FieldValue {
   keyHex: string;
   /**
    * The served value: the stored value, except a `name`/`symbol` over its maximum length, which is served as its first
-   * 64 / 12 Unicode code points.
+   * 64 / 12 characters (grapheme clusters, Unicode UAX #29).
    */
   value: Uint8Array;
   /** Only when `value` was truncated: the stored bytes (what the record carried; grouping compares these). */
@@ -91,9 +91,9 @@ export interface FieldView extends FieldValue {
 }
 
 export interface CommonFields {
-  /** Served (truncated to 64 code points) when usable. */
+  /** Served (truncated to 64 characters) when usable. */
   name?: string;
-  /** Served (truncated to 12 code points) when usable. */
+  /** Served (truncated to 12 characters) when usable. */
   symbol?: string;
   decimals?: bigint;
   /** Claimed standard identifiers; `[]` when `standards` is empty. Absent when unset or unusable. */

@@ -6,7 +6,7 @@
   "demonstrates": "color = tokenType(domainSep, contract) = the color of the shielded coin minted to wallet 1.",
   "conclusion": "1 kind-1 identity (\"Acme Shield\", \"ASHD\", 6) with a color equal to the minted coin color.",
   "mip": {
-    "commit": "6a0a59de6adf6633410b4331b2c72183cdc1a439",
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {

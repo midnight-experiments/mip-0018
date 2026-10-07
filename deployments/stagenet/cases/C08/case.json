@@ -6,7 +6,7 @@
   "demonstrates": "Independent events (vector S7b): event 0 sets name = \"Good\" and applies; event 1 is malformed (valType 6) and is rejected whole without undoing event 0.",
   "conclusion": "One identity (0x11…/3) with only name = \"Good\"; 2 events: 1 accepted, 1 rejected (reserved-valtype).",
   "mip": {
-    "commit": "6a0a59de6adf6633410b4331b2c72183cdc1a439",
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {

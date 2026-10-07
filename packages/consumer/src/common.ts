@@ -48,25 +48,45 @@ export function servedKeys(declared: readonly string[], definedKeys: DefinedKeys
   return out;
 }
 
-/** The first `max` Unicode code points of a UTF-8 value, and whether anything was cut. Invalid UTF-8 is returned as is. */
-export function truncateCodePoints(value: Uint8Array, max: number): { value: Uint8Array; truncated: boolean } {
+const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+
+/** The characters of a text: its extended grapheme clusters (Unicode Standard Annex #29), e.g. "e" + U+0301 is one. */
+export function characters(text: string): string[] {
+  return Array.from(graphemes.segment(text), (s) => s.segment);
+}
+
+/**
+ * The first `max` characters (extended grapheme clusters, MIP "Terminology": "a visible character, that is, a grapheme
+ * cluster as defined by Unicode Standard Annex #29") of a UTF-8 value, and whether anything was cut. Invalid UTF-8 is
+ * returned as is.
+ */
+export function truncateCharacters(value: Uint8Array, max: number): { value: Uint8Array; truncated: boolean } {
+  return truncateWith(value, max, characters);
+}
+
+/** Mutation only (`truncateGraphemes: false`): counts Unicode code points instead of characters. */
+function truncateCodePoints(value: Uint8Array, max: number): { value: Uint8Array; truncated: boolean } {
+  return truncateWith(value, max, (t) => Array.from(t));
+}
+
+function truncateWith(value: Uint8Array, max: number, split: (text: string) => string[]): { value: Uint8Array; truncated: boolean } {
   const text = decodeUtf8(value);
   if (text === undefined) return { value, truncated: false };
-  const cps = Array.from(text);
-  if (cps.length <= max) return { value, truncated: false };
-  return { value: enc.encode(cps.slice(0, max).join('')), truncated: true };
+  const parts = split(text);
+  if (parts.length <= max) return { value, truncated: false };
+  return { value: enc.encode(parts.slice(0, max).join('')), truncated: true };
 }
 
 /**
  * The value a consumer serves and displays for a field: a usable `name` or `symbol` longer than 64 / 12 characters is
- * truncated to its first 64 / 12 Unicode code points (MIP "Common fields": "consumers SHOULD discard any extra
- * characters"); every other value is served as stored. The stored bytes never change, and grouping compares them.
+ * truncated to its first 64 / 12 characters (grapheme clusters; MIP "Common fields": "consumers SHOULD discard any
+ * extra characters"); every other value is served as stored. The stored bytes never change, and grouping compares them.
  */
 export function servedValue(keyHex: string, valType: number, value: Uint8Array, rules: ConsumerRules = ALL_CONSUMER_RULES): Uint8Array {
   if (!rules.truncateLength || valType !== ValType.Utf8) return value;
-  if (keyHex === KEY_NAME) return truncateCodePoints(value, NAME_MAX_CHARS).value;
-  if (keyHex === KEY_SYMBOL) return truncateCodePoints(value, SYMBOL_MAX_CHARS).value;
-  return value;
+  const max = keyHex === KEY_NAME ? NAME_MAX_CHARS : keyHex === KEY_SYMBOL ? SYMBOL_MAX_CHARS : undefined;
+  if (max === undefined) return value;
+  return (rules.truncateGraphemes ? truncateCharacters : truncateCodePoints)(value, max).value;
 }
 
 /**

@@ -78,6 +78,9 @@ describe('rule mutations', () => {
   it('mutation noTruncation (a name/symbol over 64/12 characters is served whole) fails S11a, S11b', async () => {
     expect(await failing({ rules: { truncateLength: false } })).toEqual(['S11a', 'S11b']);
   });
+  it('mutation truncateByCodePoints (lengths count code points, not grapheme clusters) fails S11a, S11b', async () => {
+    expect(await failing({ rules: { truncateGraphemes: false } })).toEqual(['S11a', 'S11b']);
+  });
   it('mutation ignoreImageHash (content from image is displayed whatever image_sha256 says) fails S12a', async () => {
     expect(await failing({ rules: { imageHash: false } })).toEqual(['S12a']);
   });

@@ -54,7 +54,7 @@
       "additionalProperties": false,
       "required": ["commit", "testId"],
       "properties": {
-        "commit": { "const": "6a0a59de6adf6633410b4331b2c72183cdc1a439" },
+        "commit": { "const": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f" },
         "testId": {
           "description": "The MIP Testing item (A1…A6, R1…R6, IGNORE, S1…S12) or `INF-…` for an informative vector.",
           "type": "string",

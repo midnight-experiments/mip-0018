@@ -1,7 +1,7 @@
 # `@mip0018/codec`
 
 Dependency-free TypeScript codec for MIP-0018 `TokenMetadata` events
-([MIP-0018 @ `6a0a59de`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/6a0a59de6adf6633410b4331b2c72183cdc1a439/mips/mip-0018-on-chain-token-metadata.md), [PR #372](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/372)).
+([MIP-0018 @ `338ea194`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/338ea194bbe7c4e5d1829234a503b7c1b11ebf0f/mips/mip-0018-on-chain-token-metadata.md), [PR #372](https://github.com/midnightntwrk/midnight-improvement-proposals/pull/372)).
 It passes every payload vector in `vectors/` (normative and informative). Node ≥ 24 runs the TypeScript sources directly.
 
 ```ts
@@ -22,7 +22,7 @@ const c = classifyEvent({ type: 'Misc', name: EVENT_NAME, payload });
 | `encodePayload(header, records)` | Exact bytes (header ‖ records ‖ zero padding); throws `InvalidHeader`, `InvalidRecord` (also for a key that is not valid UTF-8) or `PayloadTooLarge` rather than produce a payload a consumer would reject |
 | `record.*`, `commonRecords(…)` | Record constructors (`utf8`, `bytes`, `uint` (LE, minimal or explicit width), `json`, `uri`, `image(uri)` (type 4), `imageSha256(hash)` (type 0, exactly 32 bytes), `tombstone(key)` — a Null record that deletes the field at `key`); `commonRecords({name, symbol, decimals, standards, image, imageSha256})` in that order |
 | `withdrawRecords()` | Withdraws a token: Null records at the six common keys `name`, `symbol`, `decimals`, `standards`, `image`, `image_sha256` (62 bytes, content ends at 95; the Compact module's `withdraw(domainSep, kind)` emits the same). A token identity with no field left is not referenced at all; a Null record for a field without a value has no effect; a token with keys of a declared standard adds a Null record for each (`record.tombstone(key)`) |
-| `NAME_MAX_CHARS`, `SYMBOL_MAX_CHARS`, `IMAGE_SHA256_SIZE`, `COMMON_KEY_TEXTS` | 64, 12 (Unicode code points), 32 (bytes); the six common keys |
+| `NAME_MAX_CHARS`, `SYMBOL_MAX_CHARS`, `IMAGE_SHA256_SIZE`, `COMMON_KEY_TEXTS` | 64, 12 (characters: grapheme clusters, Unicode UAX #29), 32 (bytes); the six common keys |
 | `Kind` | `ShieldedUtxo` 1, `UnshieldedUtxo` 2, `ContractToken` 3 |
 | `checkValue`, `decodeUtf8`, `decodeUint`, `encodeUint`, `isRfc3986Uri` | The value-type rules on their own |
 | `splitMiscData(data)` | Splits raw `name ‖ payload` log data, zero-extending it to 288 bytes first (sources that drop trailing zeros: raw ledger data, the Compact runtime; MIP "Consuming") |

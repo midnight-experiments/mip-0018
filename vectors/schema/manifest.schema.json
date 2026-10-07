@@ -14,9 +14,9 @@
       "properties": {
         "id": { "const": "MIP-0018" },
         "repository": { "const": "midnightntwrk/midnight-improvement-proposals" },
-        "commit": { "const": "6a0a59de6adf6633410b4331b2c72183cdc1a439" },
+        "commit": { "const": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f" },
         "path": { "const": "mips/mip-0018-on-chain-token-metadata.md" },
-        "sha256": { "const": "dc91aec4ae4da42af6a16875ba9fa50f8228153de1566fcb29f2811b17b28696" },
+        "sha256": { "const": "8d4204e7aa24428faa44740ba99612f5556f628347c50e38903e4bea83f17245" },
         "url": { "type": "string", "pattern": "^https://github\\.com/" },
         "pr": { "type": "string", "pattern": "^https://github\\.com/" }
       }

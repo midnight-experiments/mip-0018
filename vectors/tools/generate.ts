@@ -1262,25 +1262,79 @@ stateVector({
   identities: [identity({ kind: 3, fields: [F.name('Acme', true), F.standards('test-s10', true), S10_K('w')] })],
 });
 
-// S11 — name and symbol length (MIP "Common fields": `name` 1–64 characters, `symbol` 1–12; consumers SHOULD discard
-// any extra characters; an over-length value is still usable). ASCII here, so characters, code points and bytes agree.
-const NAME_70_FULL = 'Acme Token with a name of exactly seventy characters for MIP test S11a';
-check(NAME_70_FULL.length === 70 && utf8(NAME_70_FULL).length === 70, 'the S11a name has 70 ASCII characters');
-const SYMBOL_15 = 'ACMETOKENSYMBOL';
-check(SYMBOL_15.length === 15, 'the S11b symbol has 15 ASCII characters');
+// S11 — name and symbol length (MIP "Common fields": `name` 1–64 characters, `symbol` 1–12; an over-length value is
+// still usable and is truncated; MIP "Terminology": a character is a grapheme cluster, Unicode UAX #29). The values
+// mix ASCII with multi-code-point clusters whose segmentation has been the same in every Unicode version since 6.2:
+// base letters with combining marks (GB9), regional-indicator flag pairs (GB12/GB13) and Hangul L+V+T jamo (GB6/GB7).
+// The clusters are listed by hand (the oracle); truncating by code points or bytes gives other results.
+const GC = {
+  eAcute: 'e\u0301', // e + COMBINING ACUTE ACCENT
+  aRing: 'A\u030A', // A + COMBINING RING ABOVE
+  oDiaMacron: 'o\u0308\u0304', // o + COMBINING DIAERESIS + COMBINING MACRON
+  flagUY: '\u{1F1FA}\u{1F1FE}', // REGIONAL INDICATOR U + Y
+  flagJP: '\u{1F1EF}\u{1F1F5}', // REGIONAL INDICATOR J + P
+  hangulHan: '\u1112\u1161\u11AB', // HIEUH + A + NIEUN (conjoining jamo L V T)
+  hangulGag: '\u1100\u1161\u11A8', // KIYEOK + A + KIYEOK (conjoining jamo L V T)
+};
+const NAME_HEAD = [
+  ...'Acme Caf',
+  GC.eAcute,
+  ...' token ',
+  GC.flagUY,
+  ' ',
+  GC.hangulHan,
+  GC.hangulGag,
+  ' ',
+  GC.aRing,
+  ...'ngstr',
+  GC.oDiaMacron,
+  ...'m, seventy characters for test S11a',
+  GC.flagJP,
+];
+const NAME_CLUSTERS = [...NAME_HEAD, GC.hangulHan, ...' tail'];
+const SYMBOL_CLUSTERS = [
+  GC.aRing,
+  'C',
+  'M',
+  GC.eAcute,
+  GC.flagUY,
+  GC.hangulHan,
+  'X',
+  'Y',
+  'Z',
+  GC.oDiaMacron,
+  '1',
+  '2',
+  '3',
+  GC.flagJP,
+  GC.hangulGag,
+];
+check(NAME_HEAD.length === 64 && NAME_CLUSTERS.length === 70, 'the S11a name has 70 characters, 64 kept');
+check(SYMBOL_CLUSTERS.length === 15, 'the S11b symbol has 15 characters');
+{
+  // Authoring check only (the lists above are the oracle): each listed cluster is one grapheme cluster here too.
+  const seg = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+  for (const list of [NAME_CLUSTERS, SYMBOL_CLUSTERS])
+    check(Array.from(seg.segment(list.join('')), (x) => x.segment).join('|') === list.join('|'), 'grapheme clusters as listed');
+}
+const NAME_70 = NAME_CLUSTERS.join('');
+const NAME_64 = NAME_HEAD.join('');
+const SYMBOL_15 = SYMBOL_CLUSTERS.join('');
+const SYMBOL_12 = SYMBOL_CLUSTERS.slice(0, 12).join('');
+check(Array.from(NAME_70).length > 70 && Array.from(NAME_64).length > 64, 'S11a: code points are more than characters');
 stateVector({
   id: 'S11a',
   testId: 'S11',
-  description: `Name length: a 70-character name (ASCII) is usable and served as its first 64 characters: "${NAME_70_FULL.slice(0, 64)}".`,
-  steps: [apply({ block: 1, recs: [R.name(NAME_70_FULL)] })],
-  identities: [identity({ kind: 3, fields: [F.name(NAME_70_FULL.slice(0, 64), true)] })],
+  description: `Name length: a 70-character name (${Array.from(NAME_70).length} code points, ${utf8(NAME_70).length} bytes; combining marks, flags, Hangul L+V+T) is usable and truncated to its first 64 characters (grapheme clusters; ${utf8(NAME_64).length} bytes, ending with a flag).`,
+  steps: [apply({ block: 1, recs: [R.name(NAME_70)] })],
+  identities: [identity({ kind: 3, fields: [F.name(NAME_64, true)] })],
 });
 stateVector({
   id: 'S11b',
   testId: 'S11',
-  description: `Symbol length: a 15-character symbol "${SYMBOL_15}" (ASCII) is usable and served as its first 12 characters, "${SYMBOL_15.slice(0, 12)}".`,
+  description: `Symbol length: a 15-character symbol (${Array.from(SYMBOL_15).length} code points, ${utf8(SYMBOL_15).length} bytes) is usable and truncated to its first 12 characters (grapheme clusters; ${utf8(SYMBOL_12).length} bytes).`,
   steps: [apply({ block: 1, recs: [R.symbol(SYMBOL_15)] })],
-  identities: [identity({ kind: 3, fields: [F.symbol(SYMBOL_15.slice(0, 12), true)] })],
+  identities: [identity({ kind: 3, fields: [F.symbol(SYMBOL_12, true)] })],
 });
 
 // S12 — image hash (MIP "Common fields": with image_sha256 set, content from image whose SHA-256 differs is not
@@ -1437,19 +1491,19 @@ acceptVector({
 });
 
 // ---- name/symbol length with multi-byte characters, and grouping on the stored symbol (MIP "Common fields") ----
-// The MIP counts "characters" without defining them; this repository counts Unicode code points and groups by the
-// stored bytes (informative).
+// Characters are grapheme clusters (MIP "Terminology"), not bytes; grouping compares the stored symbol bytes, a choice
+// of this repository (informative).
 const LEN_BASIS =
-  'MIP "Common fields": name 1–64 characters, symbol 1–12; an over-length name or symbol is still usable and consumers SHOULD discard any extra characters. This repository counts a character as a Unicode code point, serves the first 64 / 12 code points and keeps the stored bytes for grouping.';
+  'MIP "Common fields": name 1–64 characters, symbol 1–12; an over-length name or symbol is still usable and is truncated; MIP "Terminology": a character is a grapheme cluster (Unicode UAX #29). Lengths count characters, never bytes. Grouping compares the stored symbol bytes (a choice of this repository: the MIP compares a usable symbol "as exact bytes").';
 const NAME_70_MB = 'é'.repeat(30) + '名'.repeat(20) + '😀'.repeat(20);
-check(Array.from(NAME_70_MB).length === 70 && utf8(NAME_70_MB).length === 200, 'INF-LEN-1 name: 70 code points, 200 bytes');
+check(Array.from(NAME_70_MB).length === 70 && utf8(NAME_70_MB).length === 200, 'INF-LEN-1 name: 70 characters, 200 bytes');
 const NAME_64_MB = 'é'.repeat(30) + '名'.repeat(20) + '😀'.repeat(14);
 stateVector({
   id: 'INF-LEN-1',
   testId: 'INF-LEN',
   normative: false,
   description:
-    'A name of 70 code points in 200 bytes (30 × "é", 2 bytes; 20 × "名", 3 bytes; 20 × "😀", 4 bytes) is served as its first 64 code points (30 × "é", 20 × "名", 14 × "😀"; 176 bytes).',
+    'A name of 70 characters in 200 bytes (30 × "é" U+00E9, 2 bytes; 20 × "名", 3 bytes; 20 × "😀", 4 bytes; one code point each) is truncated to its first 64 characters (30 × "é", 20 × "名", 14 × "😀"; 176 bytes), not to 64 bytes.',
   basis: LEN_BASIS,
   steps: [apply({ block: 1, recs: [R.name(NAME_70_MB)] })],
   identities: [identity({ kind: 3, fields: [F.name(NAME_64_MB, true)] })],
@@ -1459,7 +1513,7 @@ stateVector({
   id: 'INF-LEN-2',
   testId: 'INF-LEN',
   normative: false,
-  description: 'A symbol of 15 × "😀" (15 code points, 60 bytes) is served as its first 12 code points (48 bytes).',
+  description: 'A symbol of 15 × "😀" (15 characters, 60 bytes) is truncated to its first 12 characters (48 bytes).',
   basis: LEN_BASIS,
   steps: [apply({ block: 1, recs: [R.symbol('😀'.repeat(15))] })],
   identities: [identity({ kind: 3, fields: [F.symbol('😀'.repeat(12), true)] })],

@@ -2,7 +2,7 @@
 //
 // MIP-0018 On-Chain Token Metadata Emission — Compact module (default API).
 //
-// Pinned MIP text: midnightntwrk/midnight-improvement-proposals@6a0a59de6adf6633410b4331b2c72183cdc1a439
+// Pinned MIP text: midnightntwrk/midnight-improvement-proposals@338ea194bbe7c4e5d1829234a503b7c1b11ebf0f
 // (mips/mip-0018-on-chain-token-metadata.md, PR #372). Section names below refer to that text.
 //
 // What this module gives a contract:

@@ -6,7 +6,7 @@
   "demonstrates": "The unguarded constant publishMetadata() exists only until its verifier key is removed by the deployer (maintenance authority); afterwards it cannot be called at all.",
   "conclusion": "one event (= MIP Appendix A, A1, byte-for-byte); the key is gone; the second publish is refused before submission; list shows the A1 metadata.",
   "mip": {
-    "commit": "6a0a59de6adf6633410b4331b2c72183cdc1a439",
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {

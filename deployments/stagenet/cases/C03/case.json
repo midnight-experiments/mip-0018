@@ -6,7 +6,7 @@
   "demonstrates": "color = wallet 1's UTXO token type; IDX resolves that color back to the identity.",
   "conclusion": "1 kind-2 identity (\"Acme Public\", \"APUB\", 6) whose color is the token type of the UTXO wallet 1 received.",
   "mip": {
-    "commit": "6a0a59de6adf6633410b4331b2c72183cdc1a439",
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {
