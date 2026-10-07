@@ -7,7 +7,7 @@
 //                                                                                     pad(32, "midnight:derive_token"))
 //
 // computed here with ledger-v9's `rawTokenType` (the same Rust code the ledger runs). The same 32 bytes are the color
-// of the shielded (kind 1) and the unshielded (kind 2) representation; kind 3 (ledger tokens) never has a color.
+// of the shielded (kind 1) and the unshielded (kind 2) representation; kind 3 (contract tokens) never has a color.
 // A color MUST always be computed, never read from a value.
 //
 // `tokenTypeSha256` is an independent implementation (SHA-256 over opening ‖ domainSep ‖ address, per

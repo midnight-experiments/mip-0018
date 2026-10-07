@@ -15,7 +15,7 @@ Two entry points:
 | `network.ts` | Profiles: `stagenet` (endpoints + genesis pinned, `toolchain.json`) and `undeployed` (every URL required, never a default; public hosts and the Stagenet genesis refused). `checkIdentity` = `chain_getBlockHash(0)` against the profile |
 | `http.ts` | JSON over HTTP: timeout, bounded retries (408/425/429/5xx, `Retry-After`), minimum interval between requests (public endpoints: 250 ms) |
 | `rpc.ts` | Node RPC: block hash, finalized head, header, block extrinsics (raw-transaction presence), versions |
-| `indexer.ts` | GraphQL v4 — the only module that knows the `@beta` contract-event surfaces: tip, transaction by hash, a contract's Misc events paged until an **empty** page (no silent truncation), the verify bundle (events + transaction + tip in one request), contract state, block / `blocks` subscription for the scanner |
+| `indexer.ts` | GraphQL v4 — the only module that knows the `@beta` contract-event surfaces: tip, transaction by hash, a contract's Misc events paged until an **empty** page (no silent truncation), the check-event bundle (events + transaction + tip in one request), contract state, block / `blocks` subscription for the scanner |
 | `ws.ts` | Minimal `graphql-transport-ws` client (Node's global WebSocket) |
 | `raw.ts` | ledger-v9 decoding of a raw transaction: hash, identifiers, deploys, maintenance updates, every `log` op (Misc data zero-extended to 288 bytes) and mint effect in ledger order; which parts were applied (guaranteed unless FAILURE; fallible only in a successful segment); event envelopes (`midnight:event[v14]`) |
 | `color.ts` | `tokenType(domainSep, contractAddress)` with ledger-v9 `rawTokenType` (+ an independent SHA-256 derivation used in tests) |

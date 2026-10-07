@@ -133,7 +133,7 @@ export const mintsOf = (out: CallOutcome): ObservedMints => {
 
 // ------------------------------------------------------------------------------------- metadata.json
 
-/** One identity's metadata, in the shape `mip0018 deploy-and-publish --metadata` and `verify --expect` use. */
+/** One identity's metadata, in the shape `mip0018 deploy-and-publish --metadata` and `check-event --expect` use. */
 export type IdentityMetadata = {
   domainSep: string;
   kind: 1 | 2 | 3;

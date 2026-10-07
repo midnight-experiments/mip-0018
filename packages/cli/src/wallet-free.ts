@@ -21,7 +21,7 @@ import {
   type ListReport,
   type CheckEventReport,
 } from '@mip0018/midnight';
-import { formatAmount, type IdentityView } from '@mip0018/consumer';
+import { characters, formatAmount, type IdentityView } from '@mip0018/consumer';
 import {
   EXIT,
   KIND_NAME,
@@ -195,7 +195,7 @@ export function printIdentity(id: IdentityView, indent = ''): void {
   for (const f of id.fields) {
     const key = Buffer.from(f.key).toString('utf8');
     out(
-      `${indent}  ${key.padEnd(12)} ${fieldText(f).padEnd(40)} type ${f.valType}${f.usable === undefined ? '' : f.usable ? '  usable' : '  UNUSABLE'}${f.storedValue ? `  (first ${key === 'name' ? 64 : 12} characters of ${Array.from(Buffer.from(f.storedValue).toString('utf8')).length})` : ''}`,
+      `${indent}  ${key.padEnd(12)} ${fieldText(f).padEnd(40)} type ${f.valType}${f.usable === undefined ? '' : f.usable ? '  usable' : '  UNUSABLE'}${f.storedValue ? `  (first ${key === 'name' ? 64 : 12} characters of ${characters(Buffer.from(f.storedValue).toString('utf8')).length})` : ''}`,
     );
   }
   if (id.common.decimals !== undefined)

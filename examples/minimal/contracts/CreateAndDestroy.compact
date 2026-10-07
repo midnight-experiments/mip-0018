@@ -8,7 +8,7 @@
 // removed the worst anyone else can do is re-emit exactly the same metadata at their own cost.
 // Never give an unguarded circuit runtime parameters: whoever calls it could publish anything.
 //
-// Token: a tiny ledger token (kind 3) whose whole supply is credited to `holder` at deployment.
+// Token: a tiny contract token (kind 3) whose whole supply is credited to `holder` at deployment.
 
 pragma language_version >= 0.26.0;
 

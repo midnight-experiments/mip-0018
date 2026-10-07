@@ -273,7 +273,7 @@ rc=0; cli lookup-unknown lookup --color "$(printf 'ab%.0s' $(seq 1 32))" --state
 expect_rc "lookup an unknown color" 3 "$rc"
 check "unknown color reports the scanned range" grep -q "not minted in the scanned range \[$FROM, $TO\]" "$LOGS/lookup-unknown.out"
 rc=0; cli lookup-k3 lookup --color "$C1" --kind 3 --state /e2e/index/full || rc=$?
-expect_rc "lookup --kind 3 (no color for ledger tokens)" 2 "$rc"
+expect_rc "lookup --kind 3 (no color for contract tokens)" 2 "$rc"
 
 # ------------------------------------------------------------------------------------------------- identity guards
 say "identity guards"

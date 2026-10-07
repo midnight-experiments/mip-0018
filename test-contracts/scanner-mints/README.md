@@ -1,6 +1,7 @@
 # test-contracts/scanner-mints — TEST ONLY
 
-`ScannerMints.compact` mints native tokens on a **local** chain so the S4 end-to-end test can check the mint scanner
+`ScannerMints.compact` mints contract-issued UTXO tokens (shielded and unshielded) on a **local** chain so the local
+end-to-end test can check the mint scanner
 (`mip0018 index`) and color lookup (`mip0018 lookup`):
 
 | Circuit | What it does |

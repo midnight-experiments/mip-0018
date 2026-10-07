@@ -56,7 +56,7 @@ docker/local-stack/down.sh
    measured with the same method by `examples/openzeppelin/scripts/costs.ts`; raw numbers and
    verifier-key SHA-256s in [`examples/openzeppelin/costs.json`](../examples/openzeppelin/costs.json)).
    With `Ownable`: `publishMetadata()` of the fungible token (literal `domainSep`, `decimals` read from
-   state) k = 13, 6,716 rows, 1.3 s; of the native tokens (`domainSep` and `decimals` read from state)
+   state) k = 13, 6,716 rows, 1.3 s; of the native-shielded and native-unshielded examples (`domainSep` and `decimals` read from state)
    k = 15, ≈ 20,400 rows, 4.3 s; three events in one call (one asset as kinds 1, 2 and 3) k = 16,
    56,945 rows, 8.8 s; renames k = 14–15, withdrawals (six Null records) k = 13–14 — the same order as the tokens' own
    `mint` (k = 13–14) and below OpenZeppelin's shielded `burn` (k = 16).

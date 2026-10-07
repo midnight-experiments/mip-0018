@@ -10,7 +10,7 @@ own event(s): here three types, `gold`, `silver` and `bronze`.
 |---|---|
 | Start from | [`contracts/without-metadata/MyTokenFamily.compact`](contracts/without-metadata/MyTokenFamily.compact) |
 | Result | [`contracts/MyTokenFamily.compact`](contracts/MyTokenFamily.compact) |
-| MIP `kind` | 1 for every type (native shielded) |
+| MIP `kind` | 1 for every type (shielded UTXO: OpenZeppelin's native shielded token family) |
 | `domainSep` | the `domain` of the type, a circuit argument as in the family's own `mint(domain, …)`: `pad(32, "mip-0018:example:family:gold")`, `…:silver`, `…:bronze` |
 | Published | per type: `name` "Acme Medals", `symbol` "MEDAL" (the family's constructor literals — OpenZeppelin's family metadata is family-wide), `decimals` read from `NativeShieldedTokenFamily__decimals` (0) |
 | Colors | one per type: `tokenType(domain, contractAddress)` |

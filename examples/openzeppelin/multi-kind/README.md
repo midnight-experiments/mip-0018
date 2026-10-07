@@ -2,7 +2,7 @@
 
 One contract represents one asset, "Acme Dollar", three ways at once: shielded coins
 (OpenZeppelin `NativeShieldedToken`), unshielded UTXOs (the standard library's `mintUnshieldedToken`;
-OpenZeppelin 0.4.0-alpha.5 has no unshielded module) and ledger balances (OpenZeppelin
+OpenZeppelin 0.4.0-alpha.5 has no unshielded module) and balances in contract state (OpenZeppelin
 `FungibleToken`), all under **one `domainSep`**, owned with `Ownable`. A user can hold all three.
 
 MIP-0018 treats each representation as its **own token identity** — `(network, contractAddress,
@@ -13,8 +13,8 @@ together because they share the contract and the `symbol` ("Symbol grouping").
 |---|---|
 | Start from | [`contracts/without-metadata/MyMultiKindToken.compact`](contracts/without-metadata/MyMultiKindToken.compact) |
 | Result | [`contracts/MyMultiKindToken.compact`](contracts/MyMultiKindToken.compact) |
-| MIP `kind` | 1 (shielded coins), 2 (unshielded UTXOs), 3 (ledger balances) |
-| `domainSep` | `NativeShieldedToken__domain` for all three (the unshielded mint uses it too; the ledger token reuses it) |
+| MIP `kind` | 1 (shielded UTXO), 2 (unshielded UTXO), 3 (contract token: balances in contract state) |
+| `domainSep` | `NativeShieldedToken__domain` for all three (the unshielded mint uses it too; the contract token reuses it) |
 | Published | three events in one `publishMetadata()` call, each `name` "Acme Dollar", `symbol` "ACD", `decimals` 2 |
 | Colors | kinds 1 and 2: the **same** color `tokenType(domainSep, contractAddress)`; kind 3: none |
 | Access control | `Ownable_assertOnlyOwner()` on every emitting and minting circuit |

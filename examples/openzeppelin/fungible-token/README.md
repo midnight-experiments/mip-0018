@@ -1,4 +1,4 @@
-# examples/openzeppelin/fungible-token — a ledger token (kind 3)
+# examples/openzeppelin/fungible-token — a contract token (kind 3)
 
 An OpenZeppelin `FungibleToken` (public balances, ERC-20 shape) owned with `Ownable`, from
 [OpenZeppelin Compact Contracts 0.4.0-alpha.5](https://github.com/OpenZeppelin/compact-contracts/tree/v0.4.0-alpha.5),
@@ -9,7 +9,7 @@ and can rename or withdraw them later.
 |---|---|
 | Start from | [`contracts/without-metadata/MyFungibleToken.compact`](contracts/without-metadata/MyFungibleToken.compact) |
 | Result | [`contracts/MyFungibleToken.compact`](contracts/MyFungibleToken.compact) |
-| MIP `kind` | 3 (ledger token: no color, no mint effect) |
+| MIP `kind` | 3 (contract token: no color, no mint effect) |
 | `domainSep` | a constant you choose once: `pad(32, "mip-0018:example:fungible")` — `FungibleToken` has no domain of its own |
 | Published | `name` "Acme Gold", `symbol` "AGLD" (the same literals the deployer passes to `initialize`), `decimals` read from `FungibleToken__decimals` |
 | Access control | `Ownable_assertOnlyOwner()` on every emitting circuit |
@@ -29,7 +29,7 @@ and can rename or withdraw them later.
    FungibleToken__burn(account, value);
  }
 +
-+// MIP-0018 metadata. A ledger token (kind 3) has no domain separator of its own: this constant
++// MIP-0018 metadata. A contract token (kind 3) has no domain separator of its own: this constant
 +// is its `domainSep`. Choose it once; changing it later describes a different token.
 +pure circuit metadataDomain(): Bytes<32> {
 +  return pad(32, "mip-0018:example:fungible");
@@ -65,7 +65,7 @@ and can rename or withdraw them later.
 That is the whole change: one import and three circuits. `mint`, `transfer` and `burn` are untouched
 and emit nothing ("Normal token operation … MUST NOT emit metadata events").
 
-- **`metadataDomain()`** — a ledger token's `domainSep` is any stable 32 bytes the contract chooses
+- **`metadataDomain()`** — a contract token's `domainSep` is any stable 32 bytes the contract chooses
   (MIP "Token identity and authority"). Keep it a constant: changing it describes a different token.
   Because it is a literal, `publishMetadata()` stays small (k = 13 with the owner check).
 - **The same literals as `initialize`** — OpenZeppelin stores `name` and `symbol` as

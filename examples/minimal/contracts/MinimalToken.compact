@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// A deliberately tiny ledger token (kind 3) used only to give the MIP-0018 examples normal token
+// A deliberately tiny contract token (kind 3) used only to give the MIP-0018 examples normal token
 // operations (mint, transfer) that must NOT emit metadata. Not a token standard: public balances
 // keyed by an account id, no allowances, no supply tracking.
 //

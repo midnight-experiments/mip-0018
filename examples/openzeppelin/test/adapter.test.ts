@@ -3,7 +3,7 @@
 // The mip0018 CLI adapters of the OpenZeppelin examples, without a chain: the constructor arguments, witnesses,
 // private state and call arguments the CLI derives from each adapter (placeholders resolved as a signer would, typed
 // conversion from contract-info.json) deploy the example in compact-runtime and emit exactly the payloads the adapter
-// tells `verify` to expect; the lifecycle calls reach metadata.json's expected consumer states; another signer's
+// tells `check-event` to expect; the lifecycle calls reach metadata.json's expected consumer states; another signer's
 // private state is not the owner; --metadata that the contract cannot emit is refused.
 
 import { randomBytes } from 'node:crypto';
@@ -45,7 +45,7 @@ async function setUp(example: ExampleName) {
 const payloadsOf = (c: PublishCall) => (c.expect ?? []).map((e) => (e.payload !== undefined ? e.payload : expectedPayload(e.metadata!)));
 
 describe.each(EXAMPLE_NAMES)('mip0018 adapter: %s', (example) => {
-  it('deploys with the adapter and its calls emit exactly what deploy-and-publish will verify', async () => {
+  it('deploys with the adapter and its calls emit exactly what deploy-and-publish will check', async () => {
     const { adapter, call, address } = await setUp(example);
     const chain = new Chain();
     const calls = adapter.publish!(undefined, { coinPublicKey: rnd() });

@@ -12,10 +12,10 @@ example compiles with no compiler message. Access control is OpenZeppelin `Ownab
 
 | Example | Token | OpenZeppelin modules | MIP `kind` | `domainSep` | Color |
 |---|---|---|---|---|---|
-| [`fungible-token`](fungible-token) | ledger token, ERC-20 shape | `FungibleToken` + `Ownable` | 3 | a constant the contract chooses | none |
+| [`fungible-token`](fungible-token) | contract token, ERC-20 shape | `FungibleToken` + `Ownable` | 3 | a constant the contract chooses | none |
 | [`native-shielded`](native-shielded) | shielded coins, one type | `NativeShieldedToken` + `Ownable` | 1 | `NativeShieldedToken__domain` | `tokenType(domainSep, contract)` |
 | [`native-unshielded`](native-unshielded) | unshielded UTXOs, one type | `Ownable` only — **OpenZeppelin has no unshielded module**; the standard library's `mintUnshieldedToken` | 2 | the contract's `_domain` | `tokenType(domainSep, contract)` |
-| [`multi-kind`](multi-kind) | one asset as shielded coins, unshielded UTXOs and ledger balances | `NativeShieldedToken` + `FungibleToken` + `Ownable` (+ `mintUnshieldedToken`) | 1, 2, 3 | one, `NativeShieldedToken__domain` | kinds 1 and 2: the same color |
+| [`multi-kind`](multi-kind) | one asset as shielded coins, unshielded UTXOs and balances in contract state (a contract token) | `NativeShieldedToken` + `FungibleToken` + `Ownable` (+ `mintUnshieldedToken`) | 1, 2, 3 | one, `NativeShieldedToken__domain` | kinds 1 and 2: the same color |
 | [`token-family`](token-family) | many shielded token types | `NativeShieldedTokenFamily` + `Ownable` | 1 per type | the type's `domain` | one per type |
 
 Each example has the OpenZeppelin token you start from (`contracts/without-metadata/`), the same
@@ -57,7 +57,7 @@ export circuit withdrawMetadata(): [] {
 2. **Add `publishMetadata()`** — the owner check first, then one `Mip0018_emitPayload(...)` per token
    identity, built with the typed constructor (`commonFields<N, S>`; the generic arguments are the byte
    lengths of the name and symbol, checked by the compiler):
-   - `domainSep` and `kind` as in the table above: for a native token the **same** `domainSep` its
+   - `domainSep` and `kind` as in the table above: for a contract-issued UTXO token (kinds 1, 2) the **same** `domainSep` its
      mints use (read it from the module's state), so the color a consumer derives,
      `tokenType(domainSep, contractAddress)`, is the color of the coins;
    - `name` and `symbol`: **the same literals the deployer passes to `initialize`**. OpenZeppelin
@@ -105,7 +105,7 @@ metadata events" (every example tests that these emit nothing).
   tests decode every emitted event and compare each value with `metadata.json`;
   [`test/exact-values.test.ts`](test/exact-values.test.ts) shows the padded case).
 - **Sizes and costs.** A literal `domainSep` keeps `publishMetadata()` at k = 13; reading it from state
-  (native tokens) costs k = 15; three events in one circuit k = 16 (table below).
+  (the native-shielded and native-unshielded examples) costs k = 15; three events in one circuit k = 16 (table below).
 
 ## Build and test
 

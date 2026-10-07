@@ -1,7 +1,7 @@
 # examples/minimal — the smallest MIP-0018 emitters (no OpenZeppelin)
 
 Three ways to publish a token's metadata with [`packages/compact`](../../packages/compact), on a
-deliberately tiny ledger token ([`contracts/MinimalToken.compact`](contracts/MinimalToken.compact):
+deliberately tiny contract token ([`contracts/MinimalToken.compact`](contracts/MinimalToken.compact):
 public balances, `mint`, `transfer` — not a token standard). All three publish MIP test **A1**
 (Appendix A: `name` "Acme Token", `symbol` "ACME", `decimals` 6, `standards` "mip-0004", kind 3) for
 the `domainSep` given at deployment.

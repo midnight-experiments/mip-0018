@@ -88,7 +88,7 @@ for (const e of events) {
   console.log(`event ${e.id}: ${r.result}${'reason' in r ? ` (${r.reason})` : ''}`);
 }
 
-for (const id of state.identities()) { // only identities that have at least one field
+for (const id of state.identities()) { // only identities that have at least one served field
   const color = id.color ? toHex(id.color) : '-';
   const { name, symbol, decimals } = id.common; // usable values only; absent = show nothing
   console.log(`kind ${id.kind} ${name ?? '?'} (${symbol ?? '?'}) decimals ${decimals ?? '-'} color ${color}`);
@@ -98,7 +98,7 @@ for (const g of state.groups()) console.log(`group "${new TextDecoder().decode(g
 ```
 
 Saved as `consumer-example.ts` at the repository root and run with `docker/run.sh exec 'node consumer-example.ts'`
-(2026-10-03):
+(2026-10-07):
 
 ```text
 event 53453: accept
@@ -113,7 +113,7 @@ kind 3 Acme Dollar (ACD) decimals 2 color -
 group "ACD": 3 identities
 ```
 
-The same with the CLI, which also cross-checks the indexer's tip against the node and prints every field, the groups
+The same with the CLI, which also cross-checks the indexer's tip against the node and prints every served field, the groups
 and the source events ([`examples/verify`](../examples/verify/README.md#2-everything-a-contract-published-list)):
 
 ```sh
@@ -139,7 +139,8 @@ Vectors: `I1a`, `I1b`, `I2a`, `I2b`, `I3`. On Stagenet: [C07](../deployments/sta
 
 ## 3. Decode and validate
 
-The 256-byte payload is a header — `domainSep` (32 bytes) and `kind` (1 byte: 1 shielded, 2 unshielded, 3 ledger) —
+The 256-byte payload is a header — `domainSep` (32 bytes) and `kind` (1 byte: 1 shielded UTXO, 2 unshielded UTXO,
+3 contract token) —
 then records `keyLen | key | valType | valLen | value` back to back from byte 33, then zero padding. Check it as the
 MIP says:
 
@@ -163,7 +164,8 @@ Stagenet [C08](../deployments/stagenet/cases/C08/README.md)).
 | 6–255 | reserved: reject the event |
 
 Keys are exact bytes: case-sensitive, no trimming or normalisation, zero bytes significant (`symbol` and `symbol\0`
-are different keys). A key that is not UTF-8 is accepted. Empty strings, empty bytes, zero bytes and JSON `null` are
+are different keys). **Keys MUST be valid UTF-8**: a key that is not rejects the whole event (vector `R5i`; Stagenet
+[C07](../deployments/stagenet/cases/C07/README.md) step `A3c`). Empty strings, empty bytes, zero bytes and JSON `null` are
 ordinary values, not tombstones. `decodePayload(bytes)` in `@mip0018/codec` applies all of this and never throws.
 
 ## 4. Apply in chain order
@@ -189,7 +191,8 @@ that the indexer's order equals the ledger's.
 - **A token identity exists only while at least one of its fields has a value.** Once its last field is deleted, do
   not reference the identity at all — not in listings, lookups, groups or metadata history — "as if it had never been
   described" (`S3c`); Null records alone never create one. A later non-Null record describes it again with only that
-  field; nothing from before returns (`S3d`). The reference consumer deletes the identity with its history:
+  field; nothing from before returns (`S3d`). An identity whose only fields are keys you do not serve (below) is not
+  referenced either. The reference consumer deletes the identity with its history:
   `identities()`, `identity(…)`, `groups()` and `history(…)` do not return it. An issuer withdraws a token by
   emitting a Null record for each of its keys, in one event (`withdraw` in the Compact module).
 - **Reorganizations**: follow finalized blocks only, or recompute when blocks are removed. With the reference
@@ -201,14 +204,36 @@ that the indexer's order equals the ledger's.
 
 ## 5. Present
 
+### Served keys
+
+**Serve only the common keys and the keys of standards the token currently declares** (MIP "Keys": consumers "MUST
+NOT serve a key that is neither defined in Common fields nor defined by a standard the token currently declares in
+`standards`. What they store is up to them."). Any other accepted record — `foo = "x"`, a key `SYMBOL`, `symbol\0` — is
+valid but not shown, listed or returned by an API (vectors `S10a`, `A3a-state`, `S9a`). The served keys follow the
+token's current `standards`: a key that a standard defines is served while `standards` lists that standard, whenever
+its record arrived — sent before the standard was declared, it is served once it is declared, not served after the
+standard is removed, and served again after it is declared again (`S10b`–`S10e`). Keep every accepted record (or
+re-read the events) so that a change of `standards` can be applied. The reference consumer stores every record and
+takes key definitions as `new MetadataState({ definedKeys: { 'mip-00xx': [{ key: 'k', valType: 1 }] } })`; no MIP
+defines keys yet, so by default only the common keys are served. `mip0018 check-event` prints every record of one
+event and marks a key that is not a common key "not served"; `list` and `lookup` show what is served.
+
 ### Common fields
 
 | Key | Usable when | Use |
 |---|---|---|
-| `name` | type 1 (UTF-8), not empty | display name |
-| `symbol` | type 1 (UTF-8), not empty | ticker |
+| `name` | type 1 (UTF-8), not empty | display name: its first 64 characters |
+| `symbol` | type 1 (UTF-8), not empty | ticker: its first 12 characters |
 | `decimals` | type 2 (unsigned integer) | `amount / 10^decimals` |
 | `standards` | type 1, valid list (below) | standards the token *claims* |
+| `image` | type 4 (URI) | image or logo of the token (below) |
+| `image_sha256` | type 0, exactly 32 bytes | SHA-256 of the file at `image` (below) |
+
+A character is a grapheme cluster (MIP "Terminology", Unicode UAX #29), not a byte or a code point: `e` + U+0301, a
+flag (two regional indicators) and a Hangul syllable written as L+V+T jamo are one character each. A longer `name` or
+`symbol` stays usable and is truncated to its first 64 / 12 characters for display (vectors `S11a`, `S11b`;
+`Intl.Segmenter` with `granularity: 'grapheme'` in JavaScript); the stored bytes do not change, and grouping compares
+them (below).
 
 A field whose current value has the wrong type or form is **unusable**: show no value, and never fall back to an
 earlier one (vectors `S5a`–`S5c`). A field that was never set has no value: **never assume a default** such as 0 or 18
@@ -219,6 +244,15 @@ If the token also has standard getters (`name()`, `symbol()`, `decimals()` of MI
 this MIP serves: "A later update, such as a rename, is the token's current metadata for consumers of this MIP even
 where the getters cannot change" (Common fields). A MIP that defines a token standard may
 restrict or override that for tokens that declare the standard in `standards`.
+
+### `image` and `image_sha256`
+
+`image` is a URI; this repository never fetches it. If you display the image, fetch it with the precautions you apply
+to any remote content and **check it against `image_sha256` when that field is set**: content whose SHA-256 differs
+MUST NOT be displayed (vector `S12a`). An `image_sha256` that is not 32 bytes is unusable (`S12b`); no content's
+SHA-256 equals it, so the reference check (`imageContentAllowed`) refuses every content for it (informative
+`INF-IMG-1`). Without `image_sha256` the content cannot be checked (`INF-IMG-2`). Images are untrusted content: render
+them in a way that cannot run scripts — not as inline SVG (MIP "Security Considerations").
 
 ### `standards`
 
@@ -233,7 +267,8 @@ MUST NOT treat it as proof that the token conforms, and MUST NOT fetch or run co
 ### Symbol groups
 
 Group identities of the **same `(network, contractAddress)`** that have the same usable `symbol`, compared as
-exact bytes (`ACME` ≠ `acme` ≠ ` ACME`). Groups are presentation only: each member keeps its own fields, and a rename
+exact bytes (`ACME` ≠ `acme` ≠ ` ACME`) — the stored bytes, not the truncated display form (two 15-character symbols
+that share their first 12 characters look alike but are two groups, informative `INF-LEN-3`). Groups are presentation only: each member keeps its own fields, and a rename
 or symbol change of one member changes no other; deleting a member's `symbol` (a Null record at `symbol`) removes it
 from its group (`S9d`), and an identity with no field left is in no group. `state.groups()` returns them. Never group across contracts
 or networks.
@@ -251,8 +286,8 @@ the reference consumer reports such groups, the runner ignores them.
 
 ### Colors
 
-Kinds 1 (shielded coins) and 2 (unshielded UTXOs) have a color, `tokenType(domainSep, contractAddress)`; kind 3
-(ledger tokens) has none. "A shielded and an unshielded mint with the same `domainSep` have the same color; the kind
+Kinds 1 (shielded UTXO) and 2 (unshielded UTXO) — contract-issued UTXO tokens — have a color,
+`tokenType(domainSep, contractAddress)`; kind 3 (contract tokens) has none. "A shielded and an unshielded mint with the same `domainSep` have the same color; the kind
 is given by what the user holds (a shielded coin → kind 1, an unshielded UTXO → kind 2), not by the color" (MIP Lookup).
 
 ## 6. Untrusted input
@@ -265,7 +300,8 @@ Every payload byte is attacker-controlled (MIP "Consuming"):
   so use a parser that copes; use a URI check with linear running time (the reference grammar decides 219-character
   inputs in under 20 ms).
 - **Never fetch a URI from a value** without the precautions you apply to any remote content. A valid URI is not a safe
-  one: `javascript:alert(1)` passes the RFC 3986 rule. The reference code validates URIs and never fetches them.
+  one: `javascript:alert(1)` passes the RFC 3986 rule. The reference code validates URIs and never fetches them;
+  `image` content is checked against `image_sha256` and rendered without scripts (above).
 - **Escape every value** where you render it (HTML, terminal, logs). Names and symbols can carry control characters
   or look-alike characters.
 - **`standards` never selects code** (above).
@@ -318,8 +354,8 @@ docker/run.sh mip0018 -- lookup --network stagenet --state deployments/stagenet/
 color       8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484
 table       contract a3df52605d8b7210aa3e5cdc82de4bb2911975bc42c1a68be77044723b705f21  domainSep 6d69702d303031383a6578616d706c653a756e736869656c6465640000000000
 minted      unshielded ×1 first at 714617
-metadata    live indexer at block 725062
-  identity  domainSep 6d69702d303031383a6578616d706c653a756e736869656c6465640000000000  kind 2 (native unshielded)  color 8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484
+metadata    live indexer at block 793992
+  identity  domainSep 6d69702d303031383a6578616d706c653a756e736869656c6465640000000000  kind 2 (unshielded UTXO)  color 8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484
     name         "Acme Public"                            type 1  usable
     symbol       "APUB"                                   type 1  usable
     decimals     6                                        type 2  usable
@@ -332,24 +368,25 @@ to its contract and `domainSep` but shows no metadata, exactly like a token that
 
 ## 9. Test your consumer with the vectors
 
-The [vectors](../vectors/README.md) are language-neutral JSON and binary fixtures for every normative MIP test (67)
-plus informative extras (43). To run them against your consumer, write a small adapter program in any language that
+The [vectors](../vectors/README.md) are language-neutral JSON and binary fixtures for every normative MIP test (78)
+plus informative extras (49). To run them against your consumer, write a small adapter program in any language that
 follows the [runner contract](../vectors/README.md#runner-contract): it reads one JSON request per line on stdin
 (`decode` one event, or `state` for a sequence of events in chain order) and writes one JSON response per line.
 [`packages/consumer/bin/vector-adapter.js`](../packages/consumer/bin/vector-adapter.js) (about 100 lines) is the
 template.
 
 ```sh
-docker/run.sh mip0018 -- vectors run                     # the reference consumer: normative 67/67 passed
+docker/run.sh mip0018 -- vectors run                     # the reference consumer: normative 78/78 passed
 docker/run.sh exec 'node vectors/tools/run.ts --consumer "node packages/consumer/bin/vector-adapter.js" --only S3,S4a'
 ```
 
 The runner needs only Node ≥ 24, so it also runs outside Docker against your own adapter:
 `node vectors/tools/run.ts --consumer "./my-wallet-adapter" --normative-only --notes --json report.json`. Exit 0 means
-every normative vector passed; `reason` and `offset` differences are informative notes, never failures. Report the
-four common keys of every identity; other keys may be left out ("Indexers MAY index only some tokens or keys"); omit
-`groups` if you do not group symbols and `display` if you do not display amounts — the runner then reports S9/S8 as
-not applicable instead of failing them. Passing every
+every normative vector passed; `reason` and `offset` differences are informative notes, never failures. Load the
+request's `definedKeys` (S10b–S10e define a test standard) and report the served keys of every identity — the six
+common keys and the keys of the declared standards — and no other key; omit `groups` if you do not group symbols,
+`display` if you do not display amounts and `images` if you do not display images — the runner then reports
+S9/S8/S12a as not applicable instead of failing them. Passing every
 vector is the MIP's acceptance criterion for a consumer (the MIP asks for two independent ones; this repository
 provides the reference and the runner, not a second consumer).
 
@@ -358,8 +395,8 @@ provides the reference and the runner, not a second consumer).
 | Package / command | What |
 |---|---|
 | [`@mip0018/codec`](../packages/codec/README.md) | `classifyEvent`, `decodePayload`, `encodePayload`, `checkValue`, `isRfc3986Uri`, `splitMiscData` — dependency-free |
-| [`@mip0018/consumer`](../packages/consumer/README.md) | `MetadataState` (`apply`, `rollbackTo`, `identities`, `groups`, `display`, `history`), `formatAmount`, `parseStandards` |
+| [`@mip0018/consumer`](../packages/consumer/README.md) | `MetadataState` (`apply`, `rollbackTo`, `identities`, `groups`, `display`, `history`, `imageContentAllowed`; `definedKeys`), `formatAmount`, `parseStandards`, `characters` |
 | [`@mip0018/midnight`](../packages/midnight/README.md) | indexer and node access, `tokenType`, raw-transaction decoding, `checkEvent`, `list`, the mint scanner |
 | [`mip0018` CLI](../packages/cli/README.md) | `check-event`, `list`, `index`, `lookup`, `recheck`, `vectors run` — no wallet |
 | [`examples/verify`](../examples/verify/README.md) | the wallet-free walkthrough on the real Stagenet cases |
-| [`deployments/stagenet`](../deployments/stagenet/README.md) | 13 recorded cases, each re-checkable with one command |
+| [`deployments/stagenet`](../deployments/stagenet/README.md) | 14 recorded cases, each re-checkable with one command |
