@@ -18,13 +18,18 @@ const c = classifyEvent({ type: 'Misc', name: EVENT_NAME, payload });
 |---|---|
 | `EVENT_NAME`, `EVENT_NAME_TEXT` | `pad(32, "mip-0018:token-metadata[v1]")` |
 | `classifyEvent({type, name, payload})` | `ignore` unless a `Misc` event with exactly the v1 name; otherwise decode → `accept` or `reject` (whole event). A `name` shorter than 32 bytes and a `payload` shorter than 256 bytes are zero-extended first (MIP "Consuming": "consumers MUST treat missing trailing bytes as zero"); a longer name is another name, a longer payload is rejected |
-| `decodePayload(bytes)` | The MIP's three checks and the value-type rules, after zero-extending a short payload to 256 bytes (`bad-payload-length` only for a longer one); `{ok:true, header, records, contentEnd}` or `{ok:false, reason, offset}`; never throws for a `Uint8Array` |
-| `encodePayload(header, records)` | Exact bytes (header ‖ records ‖ zero padding); throws `InvalidHeader`, `InvalidRecord` or `PayloadTooLarge` rather than produce a payload a consumer would reject |
-| `record.*`, `commonRecords(…)` | Record constructors (`utf8`, `bytes`, `uint` (LE, minimal or explicit width), `json`, `uri`, `tombstone(key)` — a Null record that deletes the field at `key`) |
-| `withdrawRecords()` | Withdraws a token: Null records at `name`, `symbol`, `decimals`, `standards` (39 bytes; the Compact module's `withdraw(domainSep, kind)` emits the same). A token identity with no field left is not referenced at all; a token with other keys adds a Null record for each (`record.tombstone(key)`) |
+| `decodePayload(bytes)` | The MIP's three checks, the value-type rules and valid UTF-8 keys (MIP "Keys"), after zero-extending a short payload to 256 bytes (`bad-payload-length` only for a longer one); `{ok:true, header, records, contentEnd}` or `{ok:false, reason, offset}`; never throws for a `Uint8Array` |
+| `encodePayload(header, records)` | Exact bytes (header ‖ records ‖ zero padding); throws `InvalidHeader`, `InvalidRecord` (also for a key that is not valid UTF-8) or `PayloadTooLarge` rather than produce a payload a consumer would reject |
+| `record.*`, `commonRecords(…)` | Record constructors (`utf8`, `bytes`, `uint` (LE, minimal or explicit width), `json`, `uri`, `image(uri)` (type 4), `imageSha256(hash)` (type 0, exactly 32 bytes), `tombstone(key)` — a Null record that deletes the field at `key`); `commonRecords({name, symbol, decimals, standards, image, imageSha256})` in that order |
+| `withdrawRecords()` | Withdraws a token: Null records at the six common keys `name`, `symbol`, `decimals`, `standards`, `image`, `image_sha256` (62 bytes, content ends at 95; the Compact module's `withdraw(domainSep, kind)` emits the same). A token identity with no field left is not referenced at all; a Null record for a field without a value has no effect; a token with keys of a declared standard adds a Null record for each (`record.tombstone(key)`) |
+| `NAME_MAX_CHARS`, `SYMBOL_MAX_CHARS`, `IMAGE_SHA256_SIZE`, `COMMON_KEY_TEXTS` | 64, 12 (Unicode code points), 32 (bytes); the six common keys |
+| `Kind` | `ShieldedUtxo` 1, `UnshieldedUtxo` 2, `ContractToken` 3 |
 | `checkValue`, `decodeUtf8`, `decodeUint`, `encodeUint`, `isRfc3986Uri` | The value-type rules on their own |
 | `splitMiscData(data)` | Splits raw `name ‖ payload` log data, zero-extending it to 288 bytes first (sources that drop trailing zeros: raw ledger data, the Compact runtime; MIP "Consuming") |
 | `zeroExtend(bytes, size)` | The zero extension on its own: a copy extended to `size`, the input when it already has `size` bytes, `undefined` when it is longer |
+
+Keys are exact bytes and must be valid UTF-8 (strict, as for type-1 values); a key that is not rejects the whole event
+(`invalid-utf8-key`, vector `R5i`).
 
 Value types, as implemented:
 
@@ -40,7 +45,8 @@ Value types, as implemented:
 
 Hardening: every length is checked before any byte is read; every read goes through a bounds-checked accessor; the
 fuzz test (`npm test -w packages/codec -- fuzz`, 2 × 100 000 payloads, fixed + logged random seed) asserts that no
-input throws, that every accepted payload is internally consistent, that `encode(decode(p)) == p`, and that the
+input throws, that every accepted payload is internally consistent and has only valid UTF-8 keys, that
+`encode(decode(p)) == p`, and that the
 payload with its trailing zero bytes dropped decodes exactly like `p` (zero extension; also
 [`zero-extension.test.ts`](test/zero-extension.test.ts) and the informative vectors `INF-ZEXT-*`).
 

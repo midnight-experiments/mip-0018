@@ -192,7 +192,7 @@ describe.each(CONSTRUCTIONS)('$label', ({ contract }) => {
     const sim = await deploy();
     const out = await sim.call('commonFields', DS11, 1n, utf8('Acme Token'), utf8('ACME'), 18n);
     const want = encodePayload(
-      { domainSep: DS11, kind: Kind.NativeShielded },
+      { domainSep: DS11, kind: Kind.ShieldedUtxo },
       commonRecords({ name: 'Acme Token', symbol: 'ACME', decimals: 18 }),
     );
     single(out.misc, sim.address, toHex(want));
@@ -203,7 +203,7 @@ describe.each(CONSTRUCTIONS)('$label', ({ contract }) => {
     const uri = 'https://acme.example/img.png';
     expect(utf8(uri)).toHaveLength(28);
     const out = await sim.call('uriRecord', DS11, 2n, utf8('uri'), utf8(uri));
-    const want = encodePayload({ domainSep: DS11, kind: Kind.NativeUnshielded }, [record.uri('uri', uri)]);
+    const want = encodePayload({ domainSep: DS11, kind: Kind.UnshieldedUtxo }, [record.uri('uri', uri)]);
     single(out.misc, sim.address, toHex(want));
   });
 
@@ -217,9 +217,9 @@ describe.each(CONSTRUCTIONS)('$label', ({ contract }) => {
     const pure = sim.module.pureCircuits;
     expect(toHex(pure.eventName!() as Uint8Array)).toBe(toHex(EVENT_NAME));
     expect((pure.constants!() as bigint[]).map(Number)).toEqual([
-      Kind.NativeShielded,
-      Kind.NativeUnshielded,
-      Kind.Ledger,
+      Kind.ShieldedUtxo,
+      Kind.UnshieldedUtxo,
+      Kind.ContractToken,
       ValType.Bytes,
       ValType.Utf8,
       ValType.UInt,

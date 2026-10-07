@@ -33,16 +33,23 @@ export const ValType = {
 } as const;
 export type ValType = (typeof ValType)[keyof typeof ValType];
 
+/** `kind` (MIP "Token identity and authority"): 1 shielded UTXO, 2 unshielded UTXO (contract-issued UTXO tokens), 3 contract token. */
 export const Kind = {
-  NativeShielded: 1,
-  NativeUnshielded: 2,
-  Ledger: 3,
+  ShieldedUtxo: 1,
+  UnshieldedUtxo: 2,
+  ContractToken: 3,
 } as const;
 export type Kind = (typeof Kind)[keyof typeof Kind];
 
 /** Unsigned integers (valType 2) are 1–31 bytes, little-endian. */
 export const UINT_MIN_BYTES = 1;
 export const UINT_MAX_BYTES = 31;
+
+/** Common fields: `name` is 1–64 characters, `symbol` 1–12 (Unicode code points; a longer value is truncated). */
+export const NAME_MAX_CHARS = 64;
+export const SYMBOL_MAX_CHARS = 12;
+/** Common fields: `image_sha256` is exactly 32 bytes (the SHA-256 of the file at `image`). */
+export const IMAGE_SHA256_SIZE = 32;
 
 /** Reasons a payload is rejected (repository-defined, informative; the MIP only says "reject"). */
 export type RejectReason =
@@ -56,6 +63,8 @@ export type RejectReason =
   | 'vallen-out-of-bounds'
   | 'value-out-of-bounds'
   | 'reserved-valtype'
+  /** A key that is not valid UTF-8 (MIP "Keys": keys MUST be valid UTF-8). */
+  | 'invalid-utf8-key'
   | 'invalid-utf8'
   | 'invalid-json'
   | 'invalid-uri'

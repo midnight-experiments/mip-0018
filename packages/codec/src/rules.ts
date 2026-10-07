@@ -19,6 +19,8 @@ export interface CodecRules {
   minOneRecord: boolean;
   /** valType 6–255 reject the event. */
   reservedTypes: boolean;
+  /** Keys must be valid UTF-8 (MIP "Keys"). Disabled = the `acceptNonUtf8Key` mutation. */
+  keyUtf8: boolean;
   /** Types 1, 3, 4 must be valid UTF-8. */
   utf8: boolean;
   /** Type 3 must be one complete JSON value. */
@@ -44,6 +46,7 @@ export const ALL_CODEC_RULES: Readonly<CodecRules> = Object.freeze({
   bounds: true,
   minOneRecord: true,
   reservedTypes: true,
+  keyUtf8: true,
   utf8: true,
   json: true,
   uri: true,

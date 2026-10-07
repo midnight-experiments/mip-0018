@@ -1,4 +1,5 @@
-// Payload decoding (MIP "Payload": the three checks, value types, whole-event rejection).
+// Payload decoding (MIP "Payload": the three checks; "Value types"; "Keys": keys are valid UTF-8; whole-event
+// rejection).
 //
 // Hardening: every length is bounds-checked before any byte is read or sliced; every byte read goes through
 // `byteAt`, which throws on an out-of-bounds index — an invariant the fuzz tests assert is never violated. Returned
@@ -6,12 +7,12 @@
 import { DOMAIN_SEP_SIZE, KIND_OFFSET, PAYLOAD_SIZE, RECORDS_OFFSET, type RejectReason, ValType } from './constants.ts';
 import { zeroExtend } from './hex.ts';
 import { ALL_CODEC_RULES, type CodecRules } from './rules.ts';
-import { checkValue, decodeUintWith } from './values.ts';
+import { checkValue, decodeUintWith, decodeUtf8 } from './values.ts';
 
 export interface Header {
   /** 32 bytes identifying the token within its contract. */
   domainSep: Uint8Array;
-  /** 1 = native shielded, 2 = native unshielded, 3 = ledger. */
+  /** 1 = shielded UTXO, 2 = unshielded UTXO, 3 = contract token. */
   kind: number;
 }
 
@@ -115,6 +116,8 @@ export function decodePayloadWith(input: Uint8Array, rules: CodecRules): DecodeR
     const valStart = valLenAt + 1;
     const valEnd = valStart + valLen;
     const key = copy(payload, keyStart, Math.min(keyEnd, PAYLOAD_SIZE));
+    // Keys MUST be valid UTF-8 (MIP "Keys"); an invalid key rejects the whole event like an invalid value.
+    if (rules.keyUtf8 && decodeUtf8(key) === undefined) return failOrStop('invalid-utf8-key');
     const value = copy(payload, Math.min(valStart, PAYLOAD_SIZE), Math.min(valEnd, PAYLOAD_SIZE));
     const bad = checkValue(valType, value, rules);
     if (bad !== undefined) return failOrStop(bad);

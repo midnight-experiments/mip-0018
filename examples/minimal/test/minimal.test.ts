@@ -99,10 +99,10 @@ describe('OwnerKey', () => {
     const sim = await deployOK();
     const renamed = await as(sim, ALICE, 'setMetadata', utf8('Beta Token'), utf8('BETA'));
     expect(toHex(renamed.misc[0]!.payload)).toBe(
-      toHex(encodePayload({ domainSep: DOMAIN, kind: Kind.Ledger }, commonRecords({ name: 'Beta Token', symbol: 'BETA' }))),
+      toHex(encodePayload({ domainSep: DOMAIN, kind: Kind.ContractToken }, commonRecords({ name: 'Beta Token', symbol: 'BETA' }))),
     );
     const withdrawn = await as(sim, ALICE, 'withdrawMetadata');
-    expect(toHex(withdrawn.misc[0]!.payload)).toBe(toHex(encodePayload({ domainSep: DOMAIN, kind: Kind.Ledger }, withdrawRecords())));
+    expect(toHex(withdrawn.misc[0]!.payload)).toBe(toHex(encodePayload({ domainSep: DOMAIN, kind: Kind.ContractToken }, withdrawRecords())));
     for (const out of [renamed, withdrawn]) {
       expect(out.misc).toHaveLength(1);
       expect(toHex(out.misc[0]!.name)).toBe(toHex(EVENT_NAME));
@@ -144,7 +144,7 @@ describe('OwnerKey', () => {
       await as(sim, ALICE, 'withdrawMetadata'),
     ];
     const state = new MetadataState();
-    const view = () => state.identity('local', sim.address, DOMAIN, Kind.Ledger);
+    const view = () => state.identity('local', sim.address, DOMAIN, Kind.ContractToken);
     const apply = (i: number, out: CallOutcome) =>
       state.apply({ network: 'local', contractAddress: sim.address, block: i + 1, tx: 0, event: 0, type: 'Misc', ...out.misc[0]! });
     expect(apply(0, steps[0]!).result).toBe('accept');

@@ -5,11 +5,14 @@ export {
   EVENT_NAME,
   EVENT_NAME_TEXT,
   HEADER_SIZE,
+  IMAGE_SHA256_SIZE,
   Kind,
   MAX_VALUE_SIZE,
   MISC_EVENT_TYPE,
+  NAME_MAX_CHARS,
   NAME_SIZE,
   PAYLOAD_SIZE,
+  SYMBOL_MAX_CHARS,
   UINT_MAX_BYTES,
   UINT_MIN_BYTES,
   ValType,
@@ -26,6 +29,7 @@ export {
   type MetadataRecord,
 } from './decode.ts';
 export {
+  COMMON_KEY_TEXTS,
   commonRecords,
   encodePayload,
   InvalidHeader,

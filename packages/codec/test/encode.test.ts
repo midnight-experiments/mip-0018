@@ -4,7 +4,9 @@ import { join } from 'node:path';
 import { VECTORS_DIR } from '@mip0018/vectors/common';
 import { describe, expect, it } from 'vitest';
 import {
+  COMMON_KEY_TEXTS,
   commonRecords,
+  decodePayload,
   encodePayload,
   EVENT_NAME,
   EVENT_NAME_TEXT,
@@ -80,23 +82,52 @@ describe('encodePayload', () => {
       { key: Uint8Array.of(0x6b), valType: 3, value: new TextEncoder().encode('{') },
       { key: Uint8Array.of(0x6b), valType: 4, value: new TextEncoder().encode('/relative') },
       { key: Uint8Array.of(0x6b), valType: 5, value: Uint8Array.of(0) },
+      // Keys MUST be valid UTF-8 (MIP "Keys"; vector R5i).
+      { key: Uint8Array.of(0xff, 0x6b, 0x65, 0x79), valType: 1, value: new TextEncoder().encode('ok') },
+      { key: Uint8Array.of(0xc0, 0xaf), valType: 0, value: new Uint8Array(0) },
     ];
     for (const r of bad) expect(() => encodePayload({ domainSep: D11, kind: 3 }, [r])).toThrow(InvalidRecord);
     expect(() => encodePayload({ domainSep: D11, kind: 3 }, [])).toThrow(InvalidRecord);
   });
 
-  it('withdrawRecords() is the four Null records name, symbol, decimals, standards (39 bytes; MIP "Applying records")', () => {
+  it('withdrawRecords() is the six Null records name, symbol, decimals, standards, image, image_sha256 (62 bytes; MIP "Applying records")', () => {
     const recs = withdrawRecords();
     expect(recs.map((r) => [new TextDecoder().decode(r.key), r.valType, r.value.length])).toEqual([
       ['name', 5, 0],
       ['symbol', 5, 0],
       ['decimals', 5, 0],
       ['standards', 5, 0],
+      ['image', 5, 0],
+      ['image_sha256', 5, 0],
     ]);
-    expect(recordsSize(recs)).toBe(39);
+    expect(recs.map((r) => new TextDecoder().decode(r.key))).toEqual([...COMMON_KEY_TEXTS]);
+    expect(recordsSize(recs)).toBe(62);
     const p = encodePayload({ domainSep: D11, kind: 1 }, recs);
-    expect(toHex(p.subarray(33, 72))).toBe('046e616d6505000673796d626f6c050008646563696d616c73050009' + '7374616e64617264730500');
-    expect(p.subarray(72).every((b) => b === 0)).toBe(true);
+    expect(toHex(p.subarray(33, 95))).toBe(
+      '046e616d650500' +
+        '0673796d626f6c0500' +
+        '08646563696d616c730500' +
+        '097374616e64617264730500' +
+        '05696d6167650500' +
+        '0c696d6167655f7368613235360500',
+    );
+    expect(p.subarray(95).every((b) => b === 0)).toBe(true);
+    const d = decodePayload(p);
+    expect(d.ok && d.contentEnd).toBe(95);
+  });
+
+  it('image and image_sha256 builders: a URI (type 4) and exactly 32 bytes (type 0); A6 from the builders equals the fixture', () => {
+    const hash = Uint8Array.from({ length: 32 }, (_, i) => 0xa0 + (i % 16));
+    expect(record.image('https://example.org/acme.png')).toEqual({
+      key: new TextEncoder().encode('image'),
+      valType: 4,
+      value: new TextEncoder().encode('https://example.org/acme.png'),
+    });
+    expect(record.imageSha256(hash).valType).toBe(0);
+    expect(record.imageSha256(hash).value).toEqual(hash);
+    for (const n of [0, 31, 33]) expect(() => record.imageSha256(new Uint8Array(n))).toThrow(RangeError);
+    const viaCommon = commonRecords({ name: 'Acme', image: 'https://example.org/acme.png', imageSha256: hash });
+    expect(viaCommon.map((r) => new TextDecoder().decode(r.key))).toEqual(['name', 'image', 'image_sha256']);
   });
 
   it('refuses a URI with characters outside ASCII; its percent-encoded and ASCII-host forms are emitted (MIP valType 4)', () => {
@@ -104,6 +135,22 @@ describe('encodePayload', () => {
       expect(() => encodePayload({ domainSep: D11, kind: 3 }, [record.uri('logo', raw)])).toThrow(InvalidRecord);
     for (const ascii of ['https://xn--4ca.example/logo.png', 'https://acme.example/%C3%A4.png', 'https://acme.example/?q=%C3%A4'])
       expect(encodePayload({ domainSep: D11, kind: 3 }, [record.uri('logo', ascii)])).toHaveLength(256);
+  });
+
+  it('decodePayload rejects the whole event for a key that is not valid UTF-8 (R5i) and accepts multi-byte UTF-8 keys', () => {
+    const bad = new Uint8Array(256);
+    bad.set(D11, 0);
+    bad[32] = 3;
+    bad.set([0x04, 0xff, 0x6b, 0x65, 0x79, 0x01, 0x02, 0x6f, 0x6b], 33);
+    expect(decodePayload(bad)).toEqual({ ok: false, reason: 'invalid-utf8-key', offset: 33 });
+    // After a valid record, the invalid key still rejects the whole event (R6).
+    const after = encodePayload({ domainSep: D11, kind: 3 }, [record.utf8('name', 'Acme')]);
+    after.set([0x02, 0xc3, 0x28, 0x00, 0x00], 44);
+    expect(decodePayload(after)).toEqual({ ok: false, reason: 'invalid-utf8-key', offset: 44 });
+    for (const key of ['é', '名前', '😀', 'a\u0000b']) {
+      const d = decodePayload(encodePayload({ domainSep: D11, kind: 3 }, [record.utf8(key, 'x')]));
+      expect(d.ok && new TextDecoder().decode(d.records[0]!.key)).toBe(key);
+    }
   });
 
   it('record constructors produce the MIP value types', () => {

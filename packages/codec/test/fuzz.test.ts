@@ -1,5 +1,6 @@
 // Fuzz: random 256-byte payloads never make the decoder throw or read out of bounds (every read goes through a
-// bounds-checked accessor that throws BoundsInvariantError), every accepted payload is internally consistent,
+// bounds-checked accessor that throws BoundsInvariantError), every accepted payload is internally consistent and has
+// only valid UTF-8 keys,
 // encode(decode(p)) == p for every accepted payload, and the payload with its trailing zero bytes dropped (as some
 // sources return it) decodes exactly like p (MIP "Consuming": zero extension). Fixed seed + one random seed (logged;
 // FUZZ_SEED reproduces it).
@@ -32,6 +33,7 @@ const REASONS = new Set<RejectReason>([
   'vallen-out-of-bounds',
   'value-out-of-bounds',
   'reserved-valtype',
+  'invalid-utf8-key',
   'invalid-utf8',
   'invalid-json',
   'invalid-uri',
@@ -45,6 +47,16 @@ const seeds = loadVectors()
   .filter((p) => p.length === 256); // the informative zero-extension vectors are not 256 bytes
 
 const NAME_TRIMMED = EVENT_NAME.subarray(0, 27);
+
+const fatal = new TextDecoder('utf-8', { fatal: true });
+/** Independent UTF-8 check for the invariant "every accepted key is valid UTF-8" (not the codec's own decoder). */
+function strictUtf8(b: Uint8Array): string | undefined {
+  try {
+    return fatal.decode(b);
+  } catch {
+    return undefined;
+  }
+}
 
 /** The payload as a source that drops trailing zero bytes returns it. */
 function trimZeros(p: Uint8Array): Uint8Array {
@@ -96,6 +108,7 @@ function checkOne(p: Uint8Array, s: Stats): void {
     for (const r of d.records) {
       if (r.offset !== at) fail('records not contiguous');
       if (r.key.length < 1) fail('empty key');
+      if (strictUtf8(r.key) === undefined) fail('accepted a key that is not valid UTF-8');
       at += 3 + r.key.length + r.value.length;
       if (at > 256) fail('record past 256');
     }
