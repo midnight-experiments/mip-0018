@@ -40,7 +40,7 @@ export interface AdapterContext<PS> {
   contractAddress?: string;
 }
 
-/** What `verify` should find for one event of a publish call (the `verify --expect` shape). */
+/** What `check-event` should find for one event of a publish call (the `check-event --expect` shape). */
 export interface PublishExpectation {
   result?: 'accept' | 'reject' | 'ignore';
   reason?: string;
@@ -59,8 +59,8 @@ export interface PublishCall {
   /** Step id in the run record (default: circuit + hash of the arguments). */
   stepId?: string;
   /**
-   * The events the call must emit, in order, checked with `verify` after inclusion. `[]` = none (e.g. a mint: only
-   * the after-check runs). Omitted: derived from `--metadata` when given, else no verification.
+   * The events the call must emit, in order, checked with `check-event` after inclusion. `[]` = none (e.g. a mint:
+   * only the after-check runs). Omitted: derived from `--metadata` when given, else no event check.
    */
   expect?: PublishExpectation[];
 }

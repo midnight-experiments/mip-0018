@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Wallet-free verification of one MIP-0018 emission: network + contract + transaction.
+// `mip0018 check-event`: a wallet-free check of one MIP-0018 event emission (network + contract + transaction).
 //
 //  1. identity       node genesis = the profile's (Stagenet pinned)
 //  2. indexer        the contract's Misc events in that transaction + the transaction (raw bytes, result, block)
@@ -9,7 +9,9 @@
 //                    same order) and every applied Misc log of the contract is indexed (nothing missing)
 //  4. event record   the contract address comes from the event record (indexer field and the decoded raw event,
 //                    `contractLog.address`), never from the payload
-//  5. classify       MIP-0018 name check → ignore; decode → accept | reject (whole event) with the reason
+//  5. classify       MIP-0018 name check → ignore; decode → accept | reject (whole event) with the reason; every
+//                    record of an accepted event is reported, each marked `served` (a common key) or not served
+//                    (any other key: a consumer serves it only for a token that declares a standard defining it)
 //  6. node           `chain_getBlockHash(height)` = the indexer's block hash; height ≤ finalized height; the raw
 //                    transaction bytes are inside one of the block's extrinsics
 //  7. expectation    optional, per event (payload bytes, decoded header/records, or result/reason)
@@ -19,6 +21,7 @@
 
 import {
   classifyEvent,
+  COMMON_KEY_TEXTS,
   encodePayload,
   commonRecords,
   record as rec,
@@ -54,11 +57,23 @@ export interface EventExpectation {
   kind?: number;
   /** Exact record list, in order. `value` is text for valType 1/3/4, a decimal or number for 2, hex for 0, "" for 5. */
   records?: { key: string; valType: number; value: string | number }[];
-  /** Shorthand: the payload `encodePayload({domainSep, kind}, commonRecords({name, symbol, decimals, standards}) ++ records)`. */
-  metadata?: { domainSep: string; kind: number; name?: string; symbol?: string; decimals?: number | string; standards?: string | string[] };
+  /**
+   * Shorthand: the payload `encodePayload({domainSep, kind}, commonRecords({name, symbol, decimals, standards, image,
+   * imageSha256}) ++ records)` (`imageSha256` in hex).
+   */
+  metadata?: {
+    domainSep: string;
+    kind: number;
+    name?: string;
+    symbol?: string;
+    decimals?: number | string;
+    standards?: string | string[];
+    image?: string;
+    imageSha256?: string;
+  };
 }
 
-export interface VerifiedEvent {
+export interface CheckedEvent {
   /** Position of the event among the contract's Misc events in this transaction (0-based). */
   index: number;
   id: number;
@@ -79,7 +94,7 @@ export interface VerifiedEvent {
   expectation?: { ok: boolean; differences: string[] };
 }
 
-export interface VerifyReport {
+export interface CheckEventReport {
   network: { id: string; genesisHash: string; indexer: string; rpc: string };
   contract: string;
   transaction: string;
@@ -97,12 +112,12 @@ export interface VerifyReport {
     extrinsicIndex?: number;
   };
   rawTransaction?: { hashRecomputed: string; identifiersMatch: boolean; miscLogsOfContract: number; appliedMiscLogsOfContract: number };
-  events: VerifiedEvent[];
+  events: CheckedEvent[];
   checks: Check[];
   notes: string[];
 }
 
-export interface VerifyOptions {
+export interface CheckEventOptions {
   profile: NetworkProfile;
   contract: string;
   tx: string;
@@ -138,11 +153,13 @@ export function expectedPayload(m: NonNullable<EventExpectation['metadata']>, ex
   if (m.symbol !== undefined) fields.symbol = m.symbol;
   if (m.decimals !== undefined) fields.decimals = BigInt(m.decimals);
   if (m.standards !== undefined) fields.standards = m.standards;
+  if (m.image !== undefined) fields.image = m.image;
+  if (m.imageSha256 !== undefined) fields.imageSha256 = hexToBytes(m.imageSha256);
   const records = [...commonRecords(fields), ...recordsFromExpectation(extra ?? [])];
   return bytesToHex(encodePayload({ domainSep: hexToBytes(m.domainSep), kind: m.kind }, records));
 }
 
-export function compareExpectation(ev: VerifiedEvent, e: EventExpectation): { ok: boolean; differences: string[] } {
+export function compareExpectation(ev: CheckedEvent, e: EventExpectation): { ok: boolean; differences: string[] } {
   const d: string[] = [];
   const c = ev.classification;
   if (e.result !== undefined && c.result !== e.result) d.push(`result ${c.result}, expected ${e.result}`);
@@ -164,11 +181,15 @@ export function compareExpectation(ev: VerifiedEvent, e: EventExpectation): { ok
   return { ok: d.length === 0, differences: d };
 }
 
+const COMMON_KEYS_HEX: ReadonlySet<string> = new Set(COMMON_KEY_TEXTS.map((k) => bytesToHex(new TextEncoder().encode(k))));
+
 /**
  * Classifies a `Misc` event given as hex. A short name or payload is zero-extended first (MIP "Consuming": some sources
- * drop trailing zero bytes); a longer name is another name (ignore) and a longer payload is rejected.
+ * drop trailing zero bytes); a longer name is another name (ignore) and a longer payload is rejected. Every record of an
+ * accepted event is listed; `served` is true for the common keys (MIP "Common fields") and false for any other key,
+ * which consumers serve only for a token whose current `standards` declares a standard that defines it (MIP "Keys").
  */
-export function classify(nameHex: string, payloadHex: string): VerifiedEvent['classification'] {
+export function classify(nameHex: string, payloadHex: string): CheckedEvent['classification'] {
   const c = classifyEvent({ type: 'Misc', name: hexToBytes(nameHex), payload: hexToBytes(payloadHex) });
   if (c.result === 'ignore') return { result: 'ignore', reason: c.reason };
   if (c.result === 'reject') return { result: 'reject', reason: c.reason, offset: c.offset };
@@ -182,6 +203,7 @@ export function classify(nameHex: string, payloadHex: string): VerifiedEvent['cl
       valType: r.valType,
       value: bytesToHex(r.value),
       ...(r.integer !== undefined ? { integer: r.integer.toString() } : {}),
+      served: COMMON_KEYS_HEX.has(bytesToHex(r.key)),
     })),
   };
 }
@@ -197,7 +219,7 @@ async function findPending(rpc: NodeRpc, txHash: string, finalizedHeight: number
   return undefined;
 }
 
-export async function verifyEmission(o: VerifyOptions): Promise<VerifyReport> {
+export async function checkEvent(o: CheckEventOptions): Promise<CheckEventReport> {
   const contract = normAddress(o.contract);
   const txHash = normTxHash(o.tx);
   const http = o.http ?? new HttpClient({ minIntervalMs: o.profile.minIntervalMs });
@@ -210,7 +232,7 @@ export async function verifyEmission(o: VerifyOptions): Promise<VerifyReport> {
 
   const genesis = await checkIdentity(o.profile, http);
   check('identity', true, `node genesis ${genesis} (${o.profile.id})`);
-  const report: VerifyReport = {
+  const report: CheckEventReport = {
     network: { id: o.profile.id, genesisHash: genesis, indexer: o.profile.indexer, rpc: o.profile.rpc },
     contract,
     transaction: txHash,
@@ -220,7 +242,7 @@ export async function verifyEmission(o: VerifyOptions): Promise<VerifyReport> {
     checks,
     notes,
   };
-  const finish = (outcome: Outcome): VerifyReport => {
+  const finish = (outcome: Outcome): CheckEventReport => {
     report.outcome = outcome;
     report.exitCode = EXIT[outcome];
     return report;
@@ -230,7 +252,7 @@ export async function verifyEmission(o: VerifyOptions): Promise<VerifyReport> {
   const until = Date.now() + (o.waitMs ?? 0);
   let bundle: { tip: BlockInfo; events: IndexedMiscEvent[]; transaction: IndexedTransaction | null };
   for (;;) {
-    bundle = await indexer.verifyBundle(contract, txHash);
+    bundle = await indexer.checkEventBundle(contract, txHash);
     if (bundle.transaction !== null || Date.now() >= until) break;
     await sleep(2_000);
   }
@@ -305,7 +327,7 @@ export async function verifyEmission(o: VerifyOptions): Promise<VerifyReport> {
     // MIP "Consuming": treat missing trailing bytes as zero (name 32, payload 256) before comparing or decoding.
     const name = zeroExtendHex(e.name ?? '', 32, 'event name');
     const payload = zeroExtendHex(e.payload ?? '', 256, 'event payload');
-    const v: VerifiedEvent = {
+    const v: CheckedEvent = {
       index,
       id: e.id,
       contractAddress: normHex(e.contractAddress),

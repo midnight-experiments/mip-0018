@@ -16,7 +16,7 @@
     "deployedFrom": "examples/minimal/contracts/OwnerKey.compact at 70b54c674260b13c0cdbf1df72457f77a3dba2fe: its withdrawMetadata() emits one Null record at name (verifier key ba50827a038885613c531250ba02d301c82fe44ed8c555f5c9b36dd3576d1917, record.json)"
   },
   "notes": [
-    "This deployment's withdrawMetadata() emits one Null record at `name` (source: examples/minimal/contracts/OwnerKey.compact at 70b54c6), so the case shows a single-key delete: decimals and standards stay, and the revive sets a name and a new symbol next to them. examples/minimal/contracts/OwnerKey.compact in this tree emits a Null record for each of the four keys; case C11 deploys it.",
+    "This deployment's withdrawMetadata() emits one Null record at `name` (source: examples/minimal/contracts/OwnerKey.compact at 70b54c6), so the case shows a single-key delete: decimals and standards stay, and the revive sets a name and a new symbol next to them. examples/minimal/contracts/OwnerKey.compact in this tree emits a Null record for each of the six common keys.",
     "OwnerKey renames with setMetadata(name, symbol), so the revive sets name and symbol (10- and 4-byte values: \"Acme Again\"/\"ACMA\").",
     "Every intermediate state is re-checkable: `recheck` lists the contract as of each step's block (`list --to-block`)."
   ],
@@ -64,10 +64,10 @@
       "submits": "call"
     },
     {
-      "id": "verify-publish",
+      "id": "check-event-publish",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -80,7 +80,7 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-publish.json"
+      "stdout": "observed-check-event-publish.json"
     },
     {
       "id": "list-after-publish",
@@ -118,10 +118,10 @@
       "submits": "call"
     },
     {
-      "id": "verify-rename",
+      "id": "check-event-rename",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -134,7 +134,7 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-rename.json"
+      "stdout": "observed-check-event-rename.json"
     },
     {
       "id": "list-after-rename",
@@ -170,10 +170,10 @@
       "submits": "call"
     },
     {
-      "id": "verify-withdraw",
+      "id": "check-event-withdraw",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -186,7 +186,7 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-withdraw.json"
+      "stdout": "observed-check-event-withdraw.json"
     },
     {
       "id": "list-after-withdraw",
@@ -224,10 +224,10 @@
       "note": "a repeated Null at `name` changes nothing, so the before-check would skip it: --force emits it anyway (vector S3b)"
     },
     {
-      "id": "verify-withdraw-again",
+      "id": "check-event-withdraw-again",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -240,7 +240,7 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-withdraw-again.json"
+      "stdout": "observed-check-event-withdraw-again.json"
     },
     {
       "id": "list-after-withdraw-again",
@@ -278,10 +278,10 @@
       "submits": "call"
     },
     {
-      "id": "verify-revive",
+      "id": "check-event-revive",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -294,7 +294,7 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-revive.json"
+      "stdout": "observed-check-event-revive.json"
     },
     {
       "id": "list-after-revive",
@@ -314,7 +314,7 @@
   ],
   "expected": "expected.json",
   "recheck": {
-    "verify": [
+    "checkEvent": [
       {
         "record": "record.json",
         "step": "publish",

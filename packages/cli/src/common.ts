@@ -14,12 +14,12 @@ export class UsageError extends Error {
 /** Exit codes shared by every command. */
 export const EXIT = {
   ok: 0,
-  /** verify: mismatch · signer commands: failed or refused · lookup: — */
+  /** check-event: mismatch · signer commands: failed or refused · lookup: — */
   failed: 1,
   usage: 2,
-  /** verify: not found · lookup: color not in the scanned range */
+  /** check-event: not found · lookup: color not in the scanned range */
   notFound: 3,
-  /** verify: not yet indexed / final · signer commands: outcome unknown, re-run to reconcile */
+  /** check-event: not yet indexed / final · signer commands: outcome unknown, re-run to reconcile */
   pending: 4,
 } as const;
 
@@ -156,7 +156,7 @@ export function fromPortable(p: string): string {
   return isAbsolute(p) ? p : resolve(repoRoot(), p);
 }
 
-export const KIND_NAME: Record<number, string> = { 1: 'native shielded', 2: 'native unshielded', 3: 'ledger' };
+export const KIND_NAME: Record<number, string> = { 1: 'shielded UTXO', 2: 'unshielded UTXO', 3: 'contract token' };
 
 /** The public facts of a run record the wallet-free commands use (read as plain JSON: no signer code). */
 export interface RecordInfo {
@@ -192,7 +192,7 @@ export function recordContract(r: RecordInfo, profile: NetworkProfile): string {
   return r.contract.address;
 }
 
-/** The step of a record whose transaction to verify: `--step`, or the only call step with logged events. */
+/** The step of a record whose transaction to check: `--step`, or the only call step with logged events. */
 export function recordStep(r: RecordInfo, stepId?: string): { id: string; tx: string } {
   if (stepId !== undefined) {
     const s = r.steps.find((x) => x.id === stepId);

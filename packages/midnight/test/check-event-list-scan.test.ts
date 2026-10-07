@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// verify / list / scan against recorded Stagenet exchanges (the SPIKE case), plus synthetic edge cases.
+// check-event / list / scan against recorded Stagenet exchanges (the SPIKE case), plus synthetic edge cases.
 
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { HttpClient } from '../src/http.ts';
 import { stagenetProfile } from '../src/network.ts';
-import { verifyEmission, type VerifyReport } from '../src/verify.ts';
+import { checkEvent, type CheckEventReport } from '../src/check-event.ts';
 import { listMetadata, reduceScannedEvents } from '../src/list.ts';
 import { commonRecords, encodePayload, EVENT_NAME, withdrawRecords } from '@mip0018/codec';
 import { applyBlock, loadState, lookupColor, newState, scan, ScanError, type ScanState } from '../src/scanner.ts';
@@ -29,13 +29,13 @@ afterEach(() => {
   for (const t of temps.splice(0)) rmSync(t, { recursive: true, force: true });
 });
 
-describe('verify (recorded Stagenet)', () => {
+describe('check-event (recorded Stagenet)', () => {
   it('SPIKE publish: every check passes, the event is A1 and accepted', async () => {
-    const r = await verifyEmission({
+    const r = await checkEvent({
       profile,
       contract: SPIKE,
       tx: PUBLISH,
-      http: replay('verify-spike-publish'),
+      http: replay('check-event-spike-publish'),
       expect: { metadata: A1_META },
     });
     expect(r.outcome).toBe('ok');
@@ -49,33 +49,33 @@ describe('verify (recorded Stagenet)', () => {
       classification: { result: 'accept', kind: 3 },
     });
     expect(r.inclusion).toMatchObject({ height: 710810, finalized: true, extrinsicIndex: 3 });
-    const recorded = JSON.parse(readFileSync(join(dir, 'verify-spike-publish.result.json'), 'utf8')) as VerifyReport;
+    const recorded = JSON.parse(readFileSync(join(dir, 'check-event-spike-publish.result.json'), 'utf8')) as CheckEventReport;
     expect(r.events[0]!.payload).toBe(recorded.events[0]!.payload);
   });
 
   it('a wrong expectation is a mismatch (exit 1)', async () => {
-    const r = await verifyEmission({
+    const r = await checkEvent({
       profile,
       contract: SPIKE,
       tx: PUBLISH,
-      http: replay('verify-spike-publish'),
+      http: replay('check-event-spike-publish'),
       expect: { metadata: { ...A1_META, name: 'Other Token' } },
     });
     expect(r.outcome).toBe('mismatch');
     expect(r.exitCode).toBe(1);
     expect(r.events[0]!.expectation!.ok).toBe(false);
-    const r2 = await verifyEmission({
+    const r2 = await checkEvent({
       profile,
       contract: SPIKE,
       tx: PUBLISH,
-      http: replay('verify-spike-publish'),
+      http: replay('check-event-spike-publish'),
       expect: { result: 'reject' },
     });
     expect(r2.exitCode).toBe(1);
   });
 
   it('the deploy transaction holds no event: not-found (exit 3)', async () => {
-    const r = await verifyEmission({ profile, contract: SPIKE, tx: DEPLOY, http: replay('verify-spike-deploy') });
+    const r = await checkEvent({ profile, contract: SPIKE, tx: DEPLOY, http: replay('check-event-spike-deploy') });
     expect(r.outcome).toBe('not-found');
     expect(r.exitCode).toBe(3);
   });
@@ -100,8 +100,8 @@ describe('verify (recorded Stagenet)', () => {
       }) as typeof fetch;
       return new HttpClient({ fetch: f, attempts: 1 });
     };
-    expect((await verifyEmission({ profile, contract: SPIKE, tx: unknown, http: mk(100, 100) })).outcome).toBe('not-found');
-    expect((await verifyEmission({ profile, contract: SPIKE, tx: unknown, http: mk(200, 100) })).outcome).toBe('not-indexed');
+    expect((await checkEvent({ profile, contract: SPIKE, tx: unknown, http: mk(100, 100) })).outcome).toBe('not-found');
+    expect((await checkEvent({ profile, contract: SPIKE, tx: unknown, http: mk(200, 100) })).outcome).toBe('not-indexed');
   });
 });
 
@@ -145,12 +145,12 @@ describe('indexer data with trailing zero bytes dropped (MIP "Consuming": zero e
     return new HttpClient({ fetch: replayFetch(tape), attempts: 1 });
   };
 
-  it('verify: the trimmed event is zero-extended, equals the raw log op and is A1', async () => {
-    const r = await verifyEmission({
+  it('check-event: the trimmed event is zero-extended, equals the raw log op and is A1', async () => {
+    const r = await checkEvent({
       profile,
       contract: SPIKE,
       tx: PUBLISH,
-      http: trimmedReplay('verify-spike-publish'),
+      http: trimmedReplay('check-event-spike-publish'),
       expect: { metadata: A1_META },
     });
     expect(r.outcome).toBe('ok');

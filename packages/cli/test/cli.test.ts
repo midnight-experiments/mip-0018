@@ -58,12 +58,12 @@ describe('mip0018 CLI', () => {
   it('prints usage and exits 2 without a command; 0 with --help', () => {
     expect(run([]).status).toBe(2);
     expect(run(['--help']).status).toBe(0);
-    expect(run(['verify', '--help']).stdout).toMatch(/Exit: 0 ok · 1 mismatch/);
+    expect(run(['check-event', '--help']).stdout).toMatch(/Exit: 0 ok · 1 mismatch/);
   });
 
   it('usage errors exit 2 (missing flags, unknown option, unknown network, undeployed without URLs)', () => {
-    expect(run(['verify', '--network', 'stagenet']).status).toBe(2);
-    expect(run(['verify', '--network', 'stagenet', '--bogus', 'x']).status).toBe(2);
+    expect(run(['check-event', '--network', 'stagenet']).status).toBe(2);
+    expect(run(['check-event', '--network', 'stagenet', '--bogus', 'x']).status).toBe(2);
     expect(run(['list', '--network', 'mainnet', '--contract', 'aa']).status).toBe(2);
     const r = run(['list', '--network', 'undeployed', '--contract', 'ab'.repeat(32)]);
     expect(r.status).toBe(2);
@@ -86,7 +86,7 @@ describe('mip0018 CLI', () => {
     expect(miss.stdout).toMatch(/not minted in the scanned range \[508540, 508544\]/);
     const k3 = run(['lookup', '--color', fx.expected.color, '--state', dir, '--kind', '3']);
     expect(k3.status).toBe(2);
-    expect(k3.stderr).toMatch(/kind 3 \(ledger token\) has no color/);
+    expect(k3.stderr).toMatch(/kind 3 \(contract token\) has no color/);
   });
 
   it('signer commands refuse to run without a proof server or a state dir (nothing opened)', () => {

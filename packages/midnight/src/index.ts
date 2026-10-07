@@ -11,7 +11,7 @@ export * from './indexer.ts';
 export * from './ws.ts';
 export * from './raw.ts';
 export * from './color.ts';
-export * from './verify.ts';
+export * from './check-event.ts';
 export * from './list.ts';
 export * from './scanner.ts';
 export * from './expect-state.ts';

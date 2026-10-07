@@ -142,10 +142,10 @@
       "submits": "call"
     },
     {
-      "id": "verify-publish-gold",
+      "id": "check-event-publish-gold",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -158,13 +158,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-publish-gold.json"
+      "stdout": "observed-check-event-publish-gold.json"
     },
     {
-      "id": "verify-publish-silver",
+      "id": "check-event-publish-silver",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -177,13 +177,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-publish-silver.json"
+      "stdout": "observed-check-event-publish-silver.json"
     },
     {
-      "id": "verify-publish-bronze",
+      "id": "check-event-publish-bronze",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -196,7 +196,7 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-publish-bronze.json"
+      "stdout": "observed-check-event-publish-bronze.json"
     },
     {
       "id": "list",
@@ -231,7 +231,7 @@
   ],
   "expected": "expected.json",
   "recheck": {
-    "verify": [
+    "checkEvent": [
       {
         "record": "record.json",
         "step": "publish-gold",

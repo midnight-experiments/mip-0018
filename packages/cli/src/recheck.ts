@@ -3,7 +3,7 @@
 // `mip0018 recheck` — re-checks one recorded case without a wallet: every check its case.json
 // lists under "recheck", against the public endpoints, from the run records and saved observations of the case.
 //
-//   verify            the recorded transaction of a step: the indexed event(s) = the raw transaction's log ops, the
+//   checkEvent        the recorded transaction of a step: the indexed event(s) = the raw transaction's log ops, the
 //                     node block, finality, and the expected result / payload per event
 //   list              the contract's current metadata (reference consumer) = expected.json
 //   noTransaction     a step that had to be refused before submission has no transaction in its record
@@ -27,7 +27,7 @@ import {
   normHex,
   projectState,
   tokenTypeHex,
-  verifyEmission,
+  checkEvent,
   type EventExpectation,
   type ExpectedIdentity,
   type NetworkProfile,
@@ -49,19 +49,19 @@ import {
 export const RECHECK_USAGE = `
 mip0018 recheck --network <stagenet|undeployed> --case <dir> [--out <dir>] [--json]
 
-Re-checks a recorded case without a wallet: runs every check of <dir>/case.json "recheck" (verify each recorded
+Re-checks a recorded case without a wallet: runs every check of <dir>/case.json "recheck" (check-event each recorded
 transaction with its expectation, list the contract's metadata against expected.json, steps that must have no
 transaction, removed verifier keys, colors through the mint scanner table and the saved wallet observation).
 
   --case <dir>   the case folder (case.json, expected.json, expect/*.json)
   --out <dir>    where the records and observations are (default: the case folder)
-  --wait <s>     verify: keep polling the indexer for a recorded transaction (default 0)
+  --wait <s>     check-event: keep polling the indexer for a recorded transaction (default 0)
 
 Exit: 0 every check passes · 1 a check fails · 2 usage · 4 a transaction is not indexed / final yet
 `;
 
 interface RecheckSpec {
-  verify?: { record: string; step: string; expect?: string }[];
+  checkEvent?: { record: string; step: string; expect?: string }[];
   /** `atStep`: the state as of that step's inclusion block (`list --to-block`). */
   list?: { record: string; expect: string; atStep?: string }[];
   noTransaction?: { record: string; step: string }[];
@@ -119,11 +119,11 @@ export async function recheckCase(
     }
   };
 
-  for (const v of spec.verify ?? [])
-    await guard(`verify ${v.step}`, async () => {
+  for (const v of spec.checkEvent ?? [])
+    await guard(`check-event ${v.step}`, async () => {
       const r = rec(v.record);
       const expect = v.expect ? (readJson(join(caseDir, v.expect), 'expectation') as EventExpectation | EventExpectation[]) : undefined;
-      const rep = await verifyEmission({
+      const rep = await checkEvent({
         profile,
         contract: recordContract(r, profile),
         tx: recordStep(r, v.step).tx,
@@ -135,7 +135,7 @@ export async function recheckCase(
         .map((e) => `${e.classification.result}${e.classification.reason ? `(${e.classification.reason})` : ''}`)
         .join(', ');
       add(
-        `verify ${v.step}`,
+        `check-event ${v.step}`,
         rep.exitCode === 0,
         rep.exitCode === 0
           ? `tx ${rep.transaction.slice(0, 16)}… block ${rep.inclusion?.height}: ${rep.events.length} event(s) ${res}, all ${rep.checks.length} checks ok`

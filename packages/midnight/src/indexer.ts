@@ -113,7 +113,7 @@ export const QUERIES = {
   contractEvents: `query ($filter: ContractEventFilter!, $limit: Int!, $offset: Int!) {
     contractEvents(filter: $filter, limit: $limit, offset: $offset) { ${EVENT_FIELDS} }
   }`,
-  verifyBundle: `query ($addr: HexEncoded!, $tx: HexEncoded!, $limit: Int!) {
+  checkEventBundle: `query ($addr: HexEncoded!, $tx: HexEncoded!, $limit: Int!) {
     block { height hash timestamp }
     contractEvents(filter: { contractAddress: $addr, transactionHash: $tx, types: [MISC] }, limit: $limit, offset: 0) { ${EVENT_FIELDS} }
     transactions(offset: { hash: $tx }) { ${TX_FIELDS} }
@@ -218,12 +218,12 @@ export class Indexer {
   }
 
   /** Events of one contract in one transaction + the transaction + the indexer tip, in ONE request. */
-  async verifyBundle(
+  async checkEventBundle(
     contractAddress: string,
     txHash: string,
   ): Promise<{ tip: BlockInfo; events: IndexedMiscEvent[]; transaction: IndexedTransaction | null }> {
     const d = await this.query<{ block: BlockInfo; contractEvents: IndexedMiscEvent[]; transactions: IndexedTransaction[] }>(
-      QUERIES.verifyBundle,
+      QUERIES.checkEventBundle,
       { addr: normAddress(contractAddress), tx: normTxHash(txHash), limit: MAX_PAGE },
     );
     if (d.contractEvents.length >= MAX_PAGE)

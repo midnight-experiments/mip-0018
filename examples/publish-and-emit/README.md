@@ -6,7 +6,7 @@ This walkthrough takes a token that already has the MIP-0018 lines in its contra
 deployment, renames and withdraws it, and shows create-and-destroy — first on a local chain, then on Stagenet.
 Every command below was run by the local end-to-end test (`packages/cli/test/e2e/examples-e2e.sh`, parts A and B;
 it keeps its records under `/e2e/dap/` instead of `/walk/` and adds `--expect` and `--to-block` to some `list` calls);
-the outputs are excerpts of that run (2026-10-03), with `/e2e/dap/` shown as `/walk/`.
+the outputs are excerpts of that run (2026-10-07), with `/e2e/dap/` shown as `/walk/`.
 
 What `mip0018` adds to the plain midnight-js calls (shown in the [appendix](#appendix-the-same-with-plain-midnight-js)):
 a public **run record** per contract (address, every transaction, written *before* submission), a **before-check**
@@ -58,38 +58,40 @@ signer deploy-and-publish $A --example fungible-token --record /walk/fungible-to
 `--example fungible-token` loads [`examples/openzeppelin/fungible-token/mip0018.adapter.ts`](../openzeppelin/fungible-token/mip0018.adapter.ts):
 the OpenZeppelin `Ownable` witnesses (a fresh owner secret, kept only in the private-state file), the constructor
 arguments of the example's [`metadata.json`](../openzeppelin/fungible-token/metadata.json), and the calls to make after
-the deployment with the exact payload each must emit. The command deploys, calls `publishMetadata()` and verifies the
+the deployment with the exact payload each must emit. The command deploys, calls `publishMetadata()` and checks the
 emission wallet-free (the indexer's event = the `log` op of the raw transaction, the node's block, finality, the
 exact payload):
 
 ```text
 network     undeployed  genesis 0x6356…56356a  indexer http://indexer:8088/api/v4/graphql
-contract    d2976af7d59b3bb5f91472c9e5a5571a6a6d653b21a38a9848fe5699a1360b36
-transaction d435f292c63513ac2d441b9a9ef1c71de38a0d66ddaac99fa4c45a13fd3f62a5  block 67 (25b2ec34…543b0f93)  SUCCESS  finalized (finalized head 67)  extrinsic 4
-event 0     id 59  segment 56475 (guaranteed)  entry publishMetadata
-  result    accept  domainSep 6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000  kind 3 (ledger)
-  records   name="Acme Gold" symbol="AGLD" decimals=6
+contract    787ce186ec75dc471d7c44ac7e64d423cad0a05d3bdb5393c2ae59b0c4fed602
+transaction f604562c064fa16d5ef3720bec8b966d3c21999817a7764d6215f3a6a371610f  block 34 (2791c917…2c85fd82)  SUCCESS  finalized (finalized head 35)  extrinsic 4
+event 0     id 59  segment 1065 (guaranteed)  entry publishMetadata
+  result    accept  domainSep 6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000  kind 3 (contract token)
+  records   name         "Acme Gold"  type 1
+            symbol       "AGLD"  type 1
+            decimals     6  type 2
   expected  matches
 checks
   OK   identity             node genesis 0x635663c02847be53aacef6ba8e6153d6a6ff81e8f8be51dcc92d40fca056356a (undeployed)
-  OK   indexed              transaction d435f292c63513ac2d441b9a9ef1c71de38a0d66ddaac99fa4c45a13fd3f62a5 in block 67 (25b2ec34a470cce6d9b64f8a33b489a3b305095636d216e918f1c004543b0f93), SUCCESS
-  OK   raw-hash             recomputed hash d435f292c63513ac2d441b9a9ef1c71de38a0d66ddaac99fa4c45a13fd3f62a5
+  OK   indexed              transaction f604562c064fa16d5ef3720bec8b966d3c21999817a7764d6215f3a6a371610f in block 34 (2791c917b535e12a8b1d0c6232ad483076b924ec07a0efac1e4f7f192c85fd82), SUCCESS
+  OK   raw-hash             recomputed hash f604562c064fa16d5ef3720bec8b966d3c21999817a7764d6215f3a6a371610f
   OK   raw-identifiers      2 identifiers recomputed
-  OK   event-0-record       event 59: bound to d2976af7d59b3bb5f91472c9e5a5571a6a6d653b21a38a9848fe5699a1360b36 (entry point publishMetadata), misc
+  OK   event-0-record       event 59: bound to 787ce186ec75dc471d7c44ac7e64d423cad0a05d3bdb5393c2ae59b0c4fed602 (entry point publishMetadata), misc
   OK   event-0-in-raw-tx    event 59: equals a log op of the contract in the raw transaction
   OK   event-0-segment      event 59: its segment applied
   OK   completeness         1 applied Misc log(s) of the contract in the raw transaction, 1 indexed
-  OK   node-block-hash      node block 67 = 0x25b2ec34a470cce6d9b64f8a33b489a3b305095636d216e918f1c004543b0f93
-  OK   node-extrinsic       raw transaction bytes are extrinsic 4 of block 67
+  OK   node-block-hash      node block 34 = 0x2791c917b535e12a8b1d0c6232ad483076b924ec07a0efac1e4f7f192c85fd82
+  OK   node-extrinsic       raw transaction bytes are extrinsic 4 of block 34
   OK   expect-0             event 59 matches the expectation
-  OK   finalized            block 67 ≤ finalized 67
+  OK   finalized            block 34 ≤ finalized 35
 result      ok (exit 0)
 record      /walk/fungible-token.json
 network     undeployed  genesis 0x6356…56356a
-contract    MyFungibleToken  d2976af7d59b3bb5f91472c9e5a5571a6a6d653b21a38a9848fe5699a1360b36
+contract    MyFungibleToken  787ce186ec75dc471d7c44ac7e64d423cad0a05d3bdb5393c2ae59b0c4fed602
 steps
-  deploy                             completed  tx 0b321822…a603900c block 61 SUCCESS fee 4938164564525608 SPECK
-  publish                            completed  tx d435f292…fd3f62a5 block 67 SUCCESS fee 164017660288561 SPECK
+  deploy                             completed  tx c285fe0d…82fa1d32 block 30 SUCCESS fee 4938164564525608 SPECK
+  publish                            completed  tx f604562c…a371610f block 34 SUCCESS fee 164017660288561 SPECK
 ```
 
 The fees are in SPECK (10^15 SPECK = 1 DUST): about 4.94 DUST for deploying the token with the verifier keys of all
@@ -113,7 +115,7 @@ with, and per step the transaction — written **before** the node saw it — it
     "name": "MyFungibleToken",
     "managedDir": "examples/openzeppelin/fungible-token/managed/MyFungibleToken",
     "adapter": "examples/openzeppelin/fungible-token/mip0018.adapter.ts",
-    "address": "d2976af7d59b3bb5f91472c9e5a5571a6a6d653b21a38a9848fe5699a1360b36",
+    "address": "787ce186ec75dc471d7c44ac7e64d423cad0a05d3bdb5393c2ae59b0c4fed602",
     "privateStateId": "MyFungibleToken",
     "constructorArgs": ["Acme Gold", "AGLD", 6],
     "verifierKeySha256": { "balanceOf": "1314444ccfea…", "burn": "fd37e5b4c1a4…", "decimals": "3cfdfb97570b…", "…": "…" }
@@ -121,16 +123,16 @@ with, and per step the transaction — written **before** the node saw it — it
   "steps": [
     {
       "id": "deploy", "kind": "deploy", "state": "completed",
-      "tx": { "hash": "0b32182233c41380724ac7aa5eada87e6da04c05f599430dee324de4a603900c", "ttl": "2026-10-03T05:21:00.000Z" },
-      "inclusion": { "height": 61, "status": "SUCCESS", "fee": "4938164564525608" },
-      "attempts": ["submitting 0b321822…", "node accepted 00323aab…", "midnight-js: SucceedEntirely at block 61", "completed: contract d2976af7… on chain with …"]
+      "tx": { "hash": "c285fe0db58803256df6f76150eb563c9e6e4f95640f72d120a4947a82fa1d32", "ttl": "2026-10-07T20:44:31.000Z" },
+      "inclusion": { "height": 30, "status": "SUCCESS", "fee": "4938164564525608" },
+      "attempts": ["submitting c285fe0d…", "node accepted 005e2e69…", "midnight-js: SucceedEntirely at block 30", "completed: contract 787ce186… on chain with …"]
     },
     {
       "id": "publish", "kind": "call", "circuit": "publishMetadata", "state": "completed",
-      "tx": { "hash": "d435f292c63513ac2d441b9a9ef1c71de38a0d66ddaac99fa4c45a13fd3f62a5" },
-      "inclusion": { "height": 67, "status": "SUCCESS", "fee": "164017660288561" },
+      "tx": { "hash": "f604562c064fa16d5ef3720bec8b966d3c21999817a7764d6215f3a6a371610f" },
+      "inclusion": { "height": 34, "status": "SUCCESS", "fee": "164017660288561" },
       "expectedEvents": [{ "name": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000", "payload": "6d69702d…" }],
-      "attempts": ["submitting d435f292…", "node accepted 00830e55…", "midnight-js: SucceedEntirely at block 67", "completed: 1 expected Misc event(s) observed in d435f292…"]
+      "attempts": ["submitting f604562c…", "node accepted 005a99b3…", "midnight-js: SucceedEntirely at block 34", "completed: 1 expected Misc event(s) observed in f604562c…"]
     }
   ]
 }
@@ -138,17 +140,18 @@ with, and per step the transaction — written **before** the node saw it — it
 
 The owner secret and the contract's maintenance key are not in it: they are in the 0600 private-state file.
 
-## 5. Verify and list without a wallet
+## 5. Check the event and list without a wallet
 
 ```sh
-mip0018 verify --network undeployed --record /walk/fungible-token.json --step publish
+mip0018 check-event --network undeployed --record /walk/fungible-token.json --step publish
 mip0018 list --network undeployed --record /walk/fungible-token.json --expect @examples/openzeppelin/fungible-token/metadata.json
 ```
 
-`verify` prints the same report as above (`result ok (exit 0)`). `list --json` (excerpt):
+`check-event` prints the same report as above (`result ok (exit 0)`): every record of the event, a key that is not a
+common key marked "not served". `list --json` (excerpt):
 
 ```text
-"snapshot": { "indexerTip": { "height": 69, … }, "toBlock": 69, "tipMatchesNode": true, "finalizedHeight": 69 },
+"snapshot": { "indexerTip": { "height": 36, … }, "toBlock": 36, "tipMatchesNode": true, "finalizedHeight": 36 },
 "counts": { "events": 1, "accepted": 1, "rejected": 0, "ignored": 0 },
 "identities": [ { "domainSep": "6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000", "kind": 3,
                   "colored": false, "common": { "name": "Acme Gold", "symbol": "AGLD", "decimals": "6" }, … } ],
@@ -172,17 +175,17 @@ signer publish $A --record /walk/fungible-token.json --circuit publishMetadata -
 mip0018 list --network undeployed --record /walk/fungible-token.json --history
 ```
 
-`withdrawMetadata` emits one event with a Null record at `name`, `symbol`, `decimals` and `standards` (`withdraw` in
-the Compact module): every field is deleted, so consumers do not reference the token at all until a later record
+`withdrawMetadata` emits one event with a Null record at each of the six common keys — `name`, `symbol`, `decimals`,
+`standards`, `image`, `image_sha256` (`withdraw` in the Compact module): every field is deleted, so consumers do not reference the token at all until a later record
 describes it again (MIP "Applying records"). Each `publish` prints the record (the before/after checks in action — the
 repeated withdrawal without `--force` is skipped, because it would change nothing):
 
 ```text
 steps
-  deploy                             completed  tx 0b321822…a603900c block 61 SUCCESS fee 4938164564525608 SPECK
-  publish                            completed  tx d435f292…fd3f62a5 block 67 SUCCESS fee 164017660288561 SPECK
-  rename                             completed  tx bca0d72c…dd0b7242 block 187 SUCCESS fee 170666944372062 SPECK
-  withdraw                           completed  tx 338da73f…5b1d7cbc block 192 SUCCESS fee 170864752122948 SPECK
+  deploy                             completed  tx c285fe0d…82fa1d32 block 30 SUCCESS fee 4938164564525608 SPECK
+  publish                            completed  tx f604562c…a371610f block 34 SUCCESS fee 164017660288561 SPECK
+  rename                             completed  tx 761ed938…5d531f75 block 118 SUCCESS fee 170666688769564 SPECK
+  withdraw                           completed  tx e54dd47a…69f06d6d block 123 SUCCESS fee 171037094324210 SPECK
   withdraw-again-skipped             completed  no tx  (skipped: the contract metadata already holds exactly these values (before-check on the finalized transaction; nothing submitted))
 ```
 
@@ -190,10 +193,10 @@ steps
 the Stagenet cases C06 and C11 do on purpose.) After the revive, `list`:
 
 ```text
-contract    d2976af7d59b3bb5f91472c9e5a5571a6a6d653b21a38a9848fe5699a1360b36  network undeployed
-snapshot    indexer block 203 (dcf3940d…445193e5) = node  to-block 203  node finalized 203
+contract    787ce186ec75dc471d7c44ac7e64d423cad0a05d3bdb5393c2ae59b0c4fed602  network undeployed
+snapshot    indexer block 135 (5ed433fb…1ec6b2d6) = node  to-block 135  node finalized 135
 events      5 (5 accepted, 0 rejected, 0 ignored) in 2 page(s)
-identity  domainSep 6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000  kind 3 (ledger)  color -
+identity  domainSep 6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000  kind 3 (contract token)  color -
   name         "Acme Gold"                              type 1  usable
   symbol       "AGLD"                                   type 1  usable
   decimals     6                                        type 2  usable
@@ -202,16 +205,16 @@ groups
   "AGLD": 6d69…0000/3
 history (replaced values; never current)
 source events
-  59       block 67       tx d435f292…fd3f62a5  accept 6d69…0000/3 (3 record(s))
-  90       block 187      tx bca0d72c…dd0b7242  accept 6d69…0000/3 (2 record(s))
-  92       block 192      tx 338da73f…5b1d7cbc  accept 6d69…0000/3 (4 record(s))
-  94       block 198      tx 35385c0e…363d2bca  accept 6d69…0000/3 (4 record(s))
-  96       block 203      tx c3613b4f…10a06fec  accept 6d69…0000/3 (3 record(s))
+  59       block 34       tx f604562c…a371610f  accept 6d69…0000/3 (3 record(s))
+  90       block 118      tx 761ed938…5d531f75  accept 6d69…0000/3 (2 record(s))
+  92       block 123      tx e54dd47a…69f06d6d  accept 6d69…0000/3 (6 record(s))
+  94       block 130      tx 5153b762…43dd740e  accept 6d69…0000/3 (6 record(s))
+  96       block 135      tx fe77b3fb…b8dd0288  accept 6d69…0000/3 (3 record(s))
 ```
 
-The history is empty: the withdrawal at block 192 deleted every field, so the identity and its history are gone, and
-nothing from before it comes back (MIP "Applying records"; vectors S3c, S3d). `list --to-block 187` (after the rename)
-shows "Acme Bars"/"ABAR"; at blocks 192 and 198 (after each withdrawal) `list` reports
+The history is empty: the withdrawal at block 123 deleted every field, so the identity and its history are gone, and
+nothing from before it comes back (MIP "Applying records"; vectors S3c, S3d). `list --to-block 118` (after the rename)
+shows "Acme Bars"/"ABAR"; at blocks 123 and 130 (after each withdrawal) `list` reports
 `identities  none: no token identity of this contract has a field with a value`. The same lifecycle on Stagenet:
 case [C11](../../deployments/stagenet/cases/C11/README.md).
 
@@ -230,11 +233,11 @@ signer publish $A --record /walk/minimal.json --circuit publishMetadata --step p
 
 ```text
 steps
-  deploy                             completed  tx 8e79af52…3e034269 block 52 SUCCESS fee 1228716976298232 SPECK
-  publish                            completed  tx ee36a358…e843786e block 56 SUCCESS fee 146132487220809 SPECK
-  verifier-key-remove:publishMetadata completed  tx 9197c439…a2de45d3 block 208 SUCCESS fee 38997327095931 SPECK
+  deploy                             completed  tx 6defaf26…d7060158 block 19 SUCCESS fee 1228706932471153 SPECK
+  publish                            completed  tx 8ebacff8…36cda0d5 block 23 SUCCESS fee 146122510748296 SPECK
+  verifier-key-remove:publishMetadata completed  tx 0f9333c9…1e32422a block 140 SUCCESS fee 38987436235576 SPECK
   publish-again                      pending    no tx
-2026-10-03T04:36:09.465Z publish: publish-again: publishMetadata has no verifier key on 1f39ef3aa3f0b9b756378e6f5081b614269412f1cadb1a7d248e1ca3c1739303 (removed?); nothing submitted
+2026-10-07T19:55:56.680Z publish: publish-again: publishMetadata has no verifier key on 080aae689603534324e2c88181db52a3b36b9e2dc0fb8023edbb0f9ef10cefa6 (removed?); nothing submitted
 ```
 
 The published payload is MIP Appendix A byte-for-byte (the example's domainSep is Appendix A's, `0x11` × 32); `list`
@@ -268,7 +271,7 @@ case folders [`deployments/stagenet/cases/`](../../deployments/stagenet/cases/RE
 |---|---|---|---|
 | [C01](../../deployments/stagenet/cases/C01/README.md) | OpenZeppelin fungible token: deploy, publish | `98a90519419e2ebb514b7c6ce87ee7f6f4f9753d9ee6f533c5d1c25b9d437dcf` | `a6fff9fb3f034aea393ff37fcd4343c418c3bfcc7cb22c502c1c1a6ffbc55dfd` (block 714501) |
 | [C06](../../deployments/stagenet/cases/C06/README.md) | minimal OwnerKey (this deployment's `withdrawMetadata` emits one Null record at `name`): publish, rename, withdraw ×2, revive | `9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3` | `71fb2c2d9ade1a3906ad92b3d245e6578478d58cac52d4f3f4c01fdbea2fc7e2` (block 714796; then rename 714804, withdraw 714813, withdraw again 714827, revive 714835) |
-| [C11](../../deployments/stagenet/cases/C11/README.md) | minimal OwnerKey: publish, withdraw (four Null records) ×2, revive | `b05ee03f0e0f0edb6b3097d68c26a9c198365fe4900df493467d606738db6141` | `054ecbd532d6a4dc997269f147be7930726e7c434d5fc26f60e53df840563dd6` (block 724896; then withdraw 724916, withdraw again 724940, revive 724957) |
+| [C11](../../deployments/stagenet/cases/C11/README.md) | minimal OwnerKey (this deployment's `withdrawMetadata` emits four Null records: `name`, `symbol`, `decimals`, `standards`): publish, withdraw ×2, revive | `b05ee03f0e0f0edb6b3097d68c26a9c198365fe4900df493467d606738db6141` | `054ecbd532d6a4dc997269f147be7930726e7c434d5fc26f60e53df840563dd6` (block 724896; then withdraw 724916, withdraw again 724940, revive 724957) |
 | [C10](../../deployments/stagenet/cases/C10/README.md) | minimal create-and-destroy | `048ec49aacdde9ef2fee1bd51c651df46d3224578e36a1e89bdbb88842edf0f6` | `85d6f8a241ceff9935dc1aec51e5c5c1c51818dd0a41ebf7b850e2ff413a5b4d` (block 715177; key removed in 715183) |
 
 Run on 2026-10-02 (C11: 2026-10-03) with wallet 1 of this repository's test wallets; every case re-checks wallet-free with
@@ -299,7 +302,7 @@ const deployed = await deployContract(providers, {
 const published = await deployed.callTx.publishMetadata();
 ```
 
-Run on the local chain (2026-10-03), then checked wallet-free with the expected payload from `metadata.json`:
+Run on the local chain (2026-10-07), then checked wallet-free with the expected payload from `metadata.json`:
 
 ```sh
 MIP0018_DOCKER_NETWORK=$MIP0018_STACK_NETWORK MIP0018_DOCKER_ENV="-e MIP0018_INDEXER_URL=$MIP0018_INDEXER_URL_IN_NETWORK \
@@ -309,11 +312,13 @@ MIP0018_DOCKER_NETWORK=$MIP0018_STACK_NETWORK MIP0018_DOCKER_ENV="-e MIP0018_IND
 ```
 
 ```text
-{"contract":"797079fe19d1245f02337033fb353b2cfb7c764298f3cc5b6d91a8ecdeec4e44","deploy":{"tx":"c19f86a9b7b9c862854d13a502a928c93c9fefabe62b91225da2df8936a202fa","block":216},"publish":{"tx":"d7f27ccb37fb9318477851084fee6be0aba0257f65cb2b9db7d6f3038cfe4f80","block":219,"status":"SucceedEntirely"}}
+{"contract":"3e612bb1926c897495728eee18572451a7f327cbda49f3b60f4602ba0c08610a","deploy":{"tx":"b8dc509dfbc00f0a69551f239f5abb58dad09d1dfd0e0cd11f44e5ea26cc9dd6","block":164},"publish":{"tx":"368f4b9716fb1db4280efbf3785e6c1d7d12ab72dd576e76bd8b828f4441da5c","block":167,"status":"SucceedEntirely"}}
 
-$ mip0018 verify --network undeployed --contract 797079fe…deec4e44 --tx d7f27ccb…8cfe4f80 --expect '{"payload":"6d69702d…","result":"accept"}'
-  result    accept  domainSep 6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000  kind 3 (ledger)
-  records   name="Acme Gold" symbol="AGLD" decimals=6
+$ mip0018 check-event --network undeployed --contract 3e612bb1…0c08610a --tx 368f4b97…f4441da5c --expect '{"payload":"6d69702d…","result":"accept"}'
+  result    accept  domainSep 6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000  kind 3 (contract token)
+  records   name         "Acme Gold"  type 1
+            symbol       "AGLD"  type 1
+            decimals     6  type 2
   expected  matches
 result      ok (exit 0)
 ```

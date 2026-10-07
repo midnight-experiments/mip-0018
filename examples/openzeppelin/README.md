@@ -129,7 +129,7 @@ consumer must conclude. The tests check every byte and every state in it against
 | Field | Content |
 |---|---|
 | `contract` | source paths, OpenZeppelin modules, `constructorArgs` (the literals to pass to `initialize`) |
-| `identities[]` | each token identity's metadata as `{domainSep, kind, name, symbol, decimals}` — the shape `mip0018 deploy-and-publish --metadata` and `verify --expect '{"metadata": …}'` take |
+| `identities[]` | each token identity's metadata as `{domainSep, kind, name, symbol, decimals}` — the shape `mip0018 deploy-and-publish --metadata` and `check-event --expect '{"metadata": …}'` take |
 | `steps[]` | what to do after deployment, in order: `{id, circuit, args, caller, events[], mints[]}`; each event is an identity plus `payload` (the exact 256 bytes, hex, from `@mip0018/codec`; `scripts/payload-hex.ts --fill` writes them) |
 | `expected` | the consumer state after `steps`: every identity that has at least one field (`colored`, the usable common fields) and the symbol groups. Colors depend on the deployed address: `rawTokenType(domainSep, contractAddress)` for kinds 1 and 2 |
 | `lifecycle[]` | later updates (rename, withdraw, withdraw again, revive), each with its `expected` state. A withdraw event is `{domainSep, kind, "withdraw": true, payload}` (Null records at `name`, `symbol`, `decimals`, `standards`); after it the identity is not listed, and the revive lists it again with only the revived fields |

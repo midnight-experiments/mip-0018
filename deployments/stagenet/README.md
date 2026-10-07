@@ -29,7 +29,7 @@ for c in C01 C02 C03 C04 C05 C06 C07 C08 C09 C10 C11 IDX U1; do
 done
 ```
 
-`recheck` runs every check the case's `case.json` lists: `verify` of each recorded transaction against its
+`recheck` runs every check the case's `case.json` lists: `check-event` of each recorded transaction against its
 expectation (the indexed event = the raw transaction's `log` op, hash and identifiers recomputed, node block hash,
 finality, exact name/payload and accept/reject/ignore with the reason), `list` of the contract against
 `expected.json` (C06 also as of each step's block), steps that had to be refused (no transaction), removed verifier
@@ -87,13 +87,13 @@ end 715433 — the pre-upgrade mint (715409) precedes the `VerifierKeyInsert` (7
 | `case.json` | the steps (one `mip0018` command each, with the exit code it must end with), the re-check list |
 | `expected.json`, `expect/*.json`, `args/*.json` | the expected consumer state and per-transaction expectations, computed from the case definition |
 | `record.json` | the run record: contract address, verifier-key SHA-256s, per step the transaction (journaled **before** submission), its inclusion (block, hash, status, fee) and the after-check's observation |
-| `observed-verify-<step>.json`, `observed-list*.json` | the wallet-free `verify` report of each transaction and the `list` report of the contract (C06, C11: as of each step's block) |
+| `observed-check-event-<step>.json`, `observed-list*.json` | the wallet-free `check-event` report of each transaction and the `list` report of the contract (C06, C07, C11, C12: as of each step's block) |
 | `wallet-status.json` | wallet 1's public balances per token type after the mints (the wallet SDK's own view of the colors) |
 | `index/`, `index-summary.json`, `lookup-*.json` | IDX: the scanner's state and the lookups |
 
 ## Limitations
 
-- **One operator**: the public indexer and node RPC are run by the same operator (`*.shielded.tools`); `verify`
+- **One operator**: the public indexer and node RPC are run by the same operator (`*.shielded.tools`); `check-event`
   cross-checks the indexer against the node (block hash, finality, raw transaction bytes inside the block's
   extrinsics), but both come from that operator.
 - **`@beta` APIs**: the indexer's v4 `contractEvents` / `blocks` surfaces and the wallet SDK 2.0.0-beta.2 are

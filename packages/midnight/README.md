@@ -5,7 +5,7 @@ Two entry points:
 
 | Entry | For | Never touches |
 |---|---|---|
-| `@mip0018/midnight` | anyone: verify an emission, list a contract's metadata, scan mints, look up colors | wallets, secrets |
+| `@mip0018/midnight` | anyone: check an event emission, list a contract's metadata, scan mints, look up colors | wallets, secrets |
 | `@mip0018/midnight/signer` | the issuer (signer container only): wallet session, deploy / call / verifier-key removal with run records and before/after checks | — |
 
 ## Wallet-free (`src/`)
@@ -19,7 +19,7 @@ Two entry points:
 | `ws.ts` | Minimal `graphql-transport-ws` client (Node's global WebSocket) |
 | `raw.ts` | ledger-v9 decoding of a raw transaction: hash, identifiers, deploys, maintenance updates, every `log` op (Misc data zero-extended to 288 bytes) and mint effect in ledger order; which parts were applied (guaranteed unless FAILURE; fallible only in a successful segment); event envelopes (`midnight:event[v14]`) |
 | `color.ts` | `tokenType(domainSep, contractAddress)` with ledger-v9 `rawTokenType` (+ an independent SHA-256 derivation used in tests) |
-| `verify.ts` | One emission: indexer event, name, binding from the event record, classification (accept / reject / ignore + reason), raw-transaction cross-check, node block hash, finality, extrinsic presence, optional expectation. Outcomes ok / mismatch / not-found / not-indexed |
+| `check-event.ts` | One event emission (`mip0018 check-event`): indexer event, name, binding from the event record, classification (accept / reject / ignore + reason), raw-transaction cross-check, node block hash, finality, extrinsic presence, optional expectation. Outcomes ok / mismatch / not-found / not-indexed |
 | `list.ts` | All MIP-0018 events of a contract reduced with `@mip0018/consumer` (colors injected for kinds 1 and 2) |
 | `scanner.ts` | The mint scanner (MIP "Lookup"): from a start height, every block → contract calls' raw transactions → applied `shieldedMints` / `unshieldedMints` → `color → (contract, domainSep, kinds, first mint)`, plus every MIP-0018 event and every deploy; atomic checkpoint after each block; resumable; `lookupColor` |
 

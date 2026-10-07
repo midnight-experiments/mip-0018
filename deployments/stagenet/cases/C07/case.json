@@ -3,8 +3,8 @@
   "schema": 1,
   "id": "C07",
   "title": "Raw emitter (test-only): capacity, exact-bytes and non-tombstone edge cases accepted; malformed payloads rejected; other names ignored",
-  "demonstrates": "A2a/A2b capacity, A3a–c exact bytes, A4b Uint<128> decimals, A5a–c non-tombstones accepted; R1, R2a, R3a, R3b, R4a, R5a, R5e, R5h, R6b rejected whole; I1a/I1b ([v2]) and I2a/I2b (other names) ignored — each verified with its reason, and the contract's state is exactly what the accepted ones set.",
-  "conclusion": "9 accepted, 9 rejected, 4 ignored events; one identity (0x11…/3) with exactly the accepted records' fields (expected.json lists every field).",
+  "demonstrates": "A2a/A2b capacity, A3a/A3b exact bytes, A4b Uint<128> decimals, A5a–c non-tombstones accepted; R1, R2a, R3a, R3b, R4a, R5a, R5e, R5h, R5i (a key that is not valid UTF-8, step A3c), R6b rejected whole; I1a/I1b ([v2]) and I2a/I2b (other names) ignored — each checked with its reason; the contract's state is what the accepted ones set, and a consumer serves only its common keys.",
+  "conclusion": "8 accepted, 10 rejected, 4 ignored events; one identity (0x11…/3) whose served fields are the common keys the accepted records set (expected.json lists every served field); the other accepted keys are not served.",
   "mip": {
     "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
     "eventName": "mip-0018:token-metadata[v1]"
@@ -14,7 +14,8 @@
     "vectors": "vectors/payload"
   },
   "notes": [
-    "--force: accepted vectors are emitted even when they would not change the state (without it, the before-check skips a call whose accepted events leave the contract's state unchanged); rejected and ignored ones are never skipped."
+    "--force: accepted vectors are emitted even when they would not change the state (without it, the before-check skips a call whose accepted events leave the contract's state unchanged); rejected and ignored ones are never skipped.",
+    "Step ids are the vector ids, except step A3c, which emits the event of vector R5i (key ff 6b 65 79): rejected, because keys MUST be valid UTF-8."
   ],
   "placeholders": {
     "{net}": "network options (Stagenet: --network stagenet)",
@@ -238,7 +239,7 @@
       ],
       "expectExit": 0,
       "submits": "call",
-      "note": "vector A3c: accept"
+      "note": "vector R5i: reject (invalid-utf8-key)"
     },
     {
       "id": "R4a",
@@ -527,10 +528,10 @@
       "note": "vector I2b: ignore (other-name)"
     },
     {
-      "id": "verify-A2a",
+      "id": "check-event-A2a",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -543,13 +544,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-A2a.json"
+      "stdout": "observed-check-event-A2a.json"
     },
     {
-      "id": "verify-R1",
+      "id": "check-event-R1",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -562,13 +563,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-R1.json"
+      "stdout": "observed-check-event-R1.json"
     },
     {
-      "id": "verify-A2b",
+      "id": "check-event-A2b",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -581,13 +582,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-A2b.json"
+      "stdout": "observed-check-event-A2b.json"
     },
     {
-      "id": "verify-R2a",
+      "id": "check-event-R2a",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -600,13 +601,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-R2a.json"
+      "stdout": "observed-check-event-R2a.json"
     },
     {
-      "id": "verify-A3a",
+      "id": "check-event-A3a",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -619,13 +620,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-A3a.json"
+      "stdout": "observed-check-event-A3a.json"
     },
     {
-      "id": "verify-R3a",
+      "id": "check-event-R3a",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -638,13 +639,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-R3a.json"
+      "stdout": "observed-check-event-R3a.json"
     },
     {
-      "id": "verify-A3b",
+      "id": "check-event-A3b",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -657,13 +658,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-A3b.json"
+      "stdout": "observed-check-event-A3b.json"
     },
     {
-      "id": "verify-R3b",
+      "id": "check-event-R3b",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -676,13 +677,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-R3b.json"
+      "stdout": "observed-check-event-R3b.json"
     },
     {
-      "id": "verify-A3c",
+      "id": "check-event-A3c",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -695,13 +696,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-A3c.json"
+      "stdout": "observed-check-event-A3c.json"
     },
     {
-      "id": "verify-R4a",
+      "id": "check-event-R4a",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -714,13 +715,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-R4a.json"
+      "stdout": "observed-check-event-R4a.json"
     },
     {
-      "id": "verify-A4b",
+      "id": "check-event-A4b",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -733,13 +734,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-A4b.json"
+      "stdout": "observed-check-event-A4b.json"
     },
     {
-      "id": "verify-R5a",
+      "id": "check-event-R5a",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -752,13 +753,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-R5a.json"
+      "stdout": "observed-check-event-R5a.json"
     },
     {
-      "id": "verify-A5a",
+      "id": "check-event-A5a",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -771,13 +772,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-A5a.json"
+      "stdout": "observed-check-event-A5a.json"
     },
     {
-      "id": "verify-R5e",
+      "id": "check-event-R5e",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -790,13 +791,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-R5e.json"
+      "stdout": "observed-check-event-R5e.json"
     },
     {
-      "id": "verify-A5b",
+      "id": "check-event-A5b",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -809,13 +810,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-A5b.json"
+      "stdout": "observed-check-event-A5b.json"
     },
     {
-      "id": "verify-R5h",
+      "id": "check-event-R5h",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -828,13 +829,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-R5h.json"
+      "stdout": "observed-check-event-R5h.json"
     },
     {
-      "id": "verify-A5c",
+      "id": "check-event-A5c",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -847,13 +848,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-A5c.json"
+      "stdout": "observed-check-event-A5c.json"
     },
     {
-      "id": "verify-R6b",
+      "id": "check-event-R6b",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -866,13 +867,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-R6b.json"
+      "stdout": "observed-check-event-R6b.json"
     },
     {
-      "id": "verify-I1a",
+      "id": "check-event-I1a",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -885,13 +886,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-I1a.json"
+      "stdout": "observed-check-event-I1a.json"
     },
     {
-      "id": "verify-I1b",
+      "id": "check-event-I1b",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -904,13 +905,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-I1b.json"
+      "stdout": "observed-check-event-I1b.json"
     },
     {
-      "id": "verify-I2a",
+      "id": "check-event-I2a",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -923,13 +924,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-I2a.json"
+      "stdout": "observed-check-event-I2a.json"
     },
     {
-      "id": "verify-I2b",
+      "id": "check-event-I2b",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -942,7 +943,7 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-I2b.json"
+      "stdout": "observed-check-event-I2b.json"
     },
     {
       "id": "list",
@@ -962,7 +963,7 @@
   ],
   "expected": "expected.json",
   "recheck": {
-    "verify": [
+    "checkEvent": [
       {
         "record": "record.json",
         "step": "A2a",
@@ -1077,7 +1078,8 @@
     "list": [
       {
         "record": "record.json",
-        "expect": "expected.json"
+        "expect": "expected.json",
+        "atStep": "I2b"
       }
     ]
   }

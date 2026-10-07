@@ -184,7 +184,7 @@ Facts the tool relies on (ledger v9, `midnight-ledger` 9.1.0.0-rc.3):
 ## Step 4 — check what consumers see
 
 ```sh
-docker/run.sh mip0018 -- verify --network <id> --contract <address> --tx <publish tx> \
+docker/run.sh mip0018 -- check-event --network <id> --contract <address> --tx <publish tx> \
   --expect '{"metadata":{"domainSep":"0x…","kind":1,"name":"Legacy Token","symbol":"LGCY","decimals":6}}'
 docker/run.sh mip0018 -- list   --network <id> --contract <address>          # identity, fields, color
 docker/run.sh mip0018 -- index  --network <id> --from-height <h> --state <dir>   # mint scanner
@@ -215,7 +215,7 @@ color), and `lookup` resolves that color to the metadata published after the upg
 # runtime tests, no chain: layout check (12 mutations), the upgrade against the deployed state (9)
 docker/run.sh exec 'npx vitest run examples/upgrade-existing-contract'
 
-# end to end on the local chain: deploy → mint → wrong signer (refused, rejected) → upgrade → verify/list/
+# end to end on the local chain: deploy → mint → wrong signer (refused, rejected) → upgrade → check-event/list/
 # index/lookup → no-overwrite (refused before submission, refused by the ledger) → idempotent re-runs
 MIP0018_DOCKER_PREFIX=<prefix> MIP0018_E2E_DIR=<empty dir outside the repo> \
   examples/upgrade-existing-contract/scripts/local-upgrade.sh

@@ -41,7 +41,7 @@ describe('Stagenet case folders', () => {
         'deploy-and-publish',
         'upgrade',
         'wallet',
-        'verify',
+        'check-event',
         'list',
         'index',
         'lookup',

@@ -18,7 +18,7 @@ import { Indexer, type IndexedMiscEvent } from './indexer.ts';
 import { checkIdentity, type NetworkProfile } from './network.ts';
 import { NodeRpc } from './rpc.ts';
 import { tokenType } from './color.ts';
-import { classify } from './verify.ts';
+import { classify } from './check-event.ts';
 
 export interface ListedEvent {
   id: number;
@@ -68,7 +68,7 @@ export function reduceEvents(
 ): { state: MetadataState; listed: ListedEvent[] } {
   const state = new MetadataState({ tokenType, keepHistory });
   // Chain order: block, transaction, event. Within a transaction the indexer's event ids follow the ledger's execution
-  // order (MIP "Applying records": guaranteed parts by ascending segment, then successful fallible segments); `verify`
+  // order (MIP "Applying records": guaranteed parts by ascending segment, then successful fallible segments); `check-event`
   // checks that per transaction against the raw ledger order (test/event-order.test.ts).
   const sorted = [...evs].sort(
     (a, b) => a.transaction.block.height - b.transaction.block.height || a.transaction.id - b.transaction.id || a.id - b.id,

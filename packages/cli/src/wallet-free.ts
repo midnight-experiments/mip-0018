@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Wallet-free commands: verify, list, index, lookup, vectors run. None of them reads a secret.
+// Wallet-free commands: check-event, list, index, lookup, vectors run. None of them reads a secret.
 
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
@@ -16,10 +16,10 @@ import {
   scan,
   statePath,
   tokenTypeHex,
-  verifyEmission,
+  checkEvent,
   type EventExpectation,
   type ListReport,
-  type VerifyReport,
+  type CheckEventReport,
 } from '@mip0018/midnight';
 import { formatAmount, type IdentityView } from '@mip0018/consumer';
 import {
@@ -43,18 +43,20 @@ import {
   str,
 } from './common.ts';
 
-// ---------------------------------------------------------------------------------------------------------- verify
+// ----------------------------------------------------------------------------------------------------- check-event
 
-export const VERIFY_USAGE = `
-mip0018 verify --network <stagenet|undeployed> (--contract <address> --tx <hash> | --record <file> [--step <id>]) [options]
+export const CHECK_EVENT_USAGE = `
+mip0018 check-event --network <stagenet|undeployed> (--contract <address> --tx <hash> | --record <file> [--step <id>]) [options]
 
-Checks one emission without a wallet: the contract's Misc event(s) in that transaction (indexer), the event name,
-the contract address from the event record, the decoded payload (accept / reject / ignore with the reason), the raw
-transaction (hash, identifiers, the same bytes in a log op of the contract, zero-extended to 288), the node's block
-hash, finality and the raw bytes inside the block's extrinsic.
+Checks one event emission without a wallet: the contract's Misc event(s) in that transaction (indexer), the event
+name, the contract address from the event record, the decoded payload (accept / reject / ignore with the reason) and
+every record it carries, the raw transaction (hash, identifiers, the same bytes in a log op of the contract,
+zero-extended to 288), the node's block hash, finality and the raw bytes inside the block's extrinsic. A record whose
+key is not a common key is marked "not served": consumers serve it only for a token whose current standards declares
+a standard that defines it (\`list\` shows what is served).
 
   --expect <json|@file>   expectation per event (object = the only event, array = per event in order):
-                          {"metadata": {"domainSep","kind","name","symbol","decimals","standards"}} | {"payload": hex}
+                          {"metadata": {"domainSep","kind","name","symbol","decimals","standards","image","imageSha256"}} | {"payload": hex}
                           | {"result": "accept|reject|ignore", "reason": …} | {"records": [...]} | {"domainSep","kind"}
   --record <file>         take the contract address and the transaction from a run record (public JSON)
   --step <id>             the record's step (default: its only call step that logged events)
@@ -66,25 +68,25 @@ hash, finality and the raw bytes inside the block's extrinsic.
 Exit: 0 ok · 1 mismatch · 2 usage · 3 not found · 4 not yet indexed / final
 `;
 
-function recordsText(rs: unknown[] | undefined): string {
-  return (rs ?? [])
-    .map((r) => {
-      const x = r as { keyText: string; valType: number; value: string; integer?: string };
-      const v = Buffer.from(x.value, 'hex');
-      const shown =
-        x.valType === 2
-          ? x.integer
-          : x.valType === 5
-            ? '<Null: deletes the field>'
-            : x.valType === 0
-              ? `0x${x.value}`
-              : JSON.stringify(v.toString('utf8'));
-      return `${x.keyText}=${shown}`;
-    })
-    .join(' ');
+/** One line per record of an accepted event: key, value, type, and "not served" for a key that is not a common key. */
+function recordLines(rs: unknown[] | undefined): string[] {
+  return (rs ?? []).map((r) => {
+    const x = r as { keyText: string; valType: number; value: string; integer?: string; served?: boolean };
+    const v = Buffer.from(x.value, 'hex');
+    const shown =
+      x.valType === 2
+        ? (x.integer ?? '')
+        : x.valType === 5
+          ? '<Null: deletes the field>'
+          : x.valType === 0
+            ? `0x${x.value}`
+            : JSON.stringify(v.toString('utf8'));
+    const served = x.served === false ? '  not served (not a common key)' : '';
+    return `${x.keyText.padEnd(12)} ${shown}  type ${x.valType}${served}`;
+  });
 }
 
-export function printVerify(r: VerifyReport): void {
+export function printCheckEvent(r: CheckEventReport): void {
   kv([
     ['network', `${r.network.id}  genesis ${short(r.network.genesisHash, 6)}  indexer ${r.network.indexer}`],
     ['contract', r.contract],
@@ -106,7 +108,7 @@ export function printVerify(r: VerifyReport): void {
         ? `accept  domainSep ${c.domainSep}  kind ${c.kind} (${KIND_NAME[c.kind!] ?? '?'})`
         : `${c.result}  reason ${c.reason}${c.offset !== undefined ? ` at offset ${c.offset}` : ''}`;
     kv([['  result', res]]);
-    if (c.result === 'accept') kv([['  records', recordsText(c.records)]]);
+    if (c.result === 'accept') recordLines(c.records).forEach((l, i) => kv([[i === 0 ? '  records' : '', l]]));
     if (e.expectation) kv([['  expected', e.expectation.ok ? 'matches' : `DIFFERS: ${e.expectation.differences.join('; ')}`]]);
   }
   out('checks');
@@ -115,7 +117,7 @@ export function printVerify(r: VerifyReport): void {
   kv([['result', `${r.outcome} (exit ${r.exitCode})`]]);
 }
 
-export async function cmdVerify(argv: string[]): Promise<number> {
+export async function cmdCheckEvent(argv: string[]): Promise<number> {
   const v = parse(
     argv,
     {
@@ -128,7 +130,7 @@ export async function cmdVerify(argv: string[]): Promise<number> {
       wait: { type: 'string' },
       'no-extrinsic-check': { type: 'boolean', default: false },
     },
-    VERIFY_USAGE,
+    CHECK_EVENT_USAGE,
   );
   const profile = profileFrom(v);
   let contract = str(v, 'contract');
@@ -143,7 +145,7 @@ export async function cmdVerify(argv: string[]): Promise<number> {
   if (contract === undefined) throw new UsageError('--contract (or --record) is required');
   if (tx === undefined) throw new UsageError('--tx (or --record) is required');
   const expect = jsonArg(v, 'expect') as EventExpectation | EventExpectation[] | undefined;
-  const r = await verifyEmission({
+  const r = await checkEvent({
     profile,
     contract,
     tx,
@@ -152,7 +154,7 @@ export async function cmdVerify(argv: string[]): Promise<number> {
     extrinsicCheck: !v['no-extrinsic-check'],
   });
   if (v.json) emitJson(r);
-  else printVerify(r);
+  else printCheckEvent(r);
   return r.exitCode;
 }
 
@@ -162,7 +164,9 @@ export const LIST_USAGE = `
 mip0018 list --network <stagenet|undeployed> (--contract <address> | --record <file>) [options]
 
 Every MIP-0018 event of a contract in chain order and the current metadata per token identity (reference consumer):
-visibility, fields (usable or not), color for kinds 1 and 2, symbol groups and the source events. Pages the indexer
+the served fields (the common keys; usable or not; a name/symbol over 64/12 characters shown as its first 64/12),
+color for kinds 1 and 2, symbol groups and the source events. Keys that are not served (neither common nor defined by
+a standard the token declares) are not shown; \`check-event\` prints every record of one event. Pages the indexer
 until an empty page; refuses rather than truncates. The indexer serves finalized blocks only, so the state is the
 finalized one (--finalized is accepted and always true).
 
@@ -191,7 +195,7 @@ export function printIdentity(id: IdentityView, indent = ''): void {
   for (const f of id.fields) {
     const key = Buffer.from(f.key).toString('utf8');
     out(
-      `${indent}  ${key.padEnd(12)} ${fieldText(f).padEnd(40)} type ${f.valType}${f.usable === undefined ? '' : f.usable ? '  usable' : '  UNUSABLE'}`,
+      `${indent}  ${key.padEnd(12)} ${fieldText(f).padEnd(40)} type ${f.valType}${f.usable === undefined ? '' : f.usable ? '  usable' : '  UNUSABLE'}${f.storedValue ? `  (first ${key === 'name' ? 64 : 12} characters of ${Array.from(Buffer.from(f.storedValue).toString('utf8')).length})` : ''}`,
     );
   }
   if (id.common.decimals !== undefined)
@@ -382,7 +386,7 @@ mip0018 lookup (--color <hex> | (--contract <address> | --record <file>) --domai
 Resolves a color (the 32-byte token type of a shielded coin or unshielded UTXO) through the scanner's table to the
 token identity (contract, domainSep, kind) and its current metadata: live from the indexer when --network is given
 (the contract's whole history), otherwise from the MIP-0018 events the scan recorded (scanned range only).
-Kind 3 (ledger tokens) has no color: list the contract's kind-3 events with \`mip0018 list\` instead.
+Kind 3 (contract tokens) has no color: list the contract's kind-3 events with \`mip0018 list\` instead.
 With --contract/--record and --domain-sep the color is computed (tokenType(domainSep, contract)) and looked up:
 the table must hold exactly that contract and domainSep for it.
 
@@ -405,7 +409,7 @@ export async function cmdLookup(argv: string[]): Promise<number> {
   );
   const kindArg = int(v, 'kind');
   if (kindArg === 3)
-    throw new UsageError('kind 3 (ledger token) has no color; query the contract with `mip0018 list --contract <address>`');
+    throw new UsageError('kind 3 (contract token) has no color; query the contract with `mip0018 list --contract <address>`');
   if (kindArg !== undefined && kindArg !== 1 && kindArg !== 2) throw new UsageError('--kind is 1 (shielded coin) or 2 (unshielded UTXO)');
   const stateDir = str(v, 'state', true)!;
   const s = loadState(stateDir);
@@ -493,7 +497,8 @@ mip0018 vectors run [--consumer "<command>"] [runner options]
 
 Runs the language-neutral vectors (vectors/tools/run.ts) against a consumer that implements the runner contract
 (vectors/README.md). Default consumer: the reference adapter (node packages/consumer/bin/vector-adapter.js).
-Other options (--only, --normative-only, --notes, --json <file>, --timeout, --no-verify) are passed through.
+Other options (--only, --normative-only, --notes, --json <file>, --timeout, --no-verify: skip the SHA256SUMS check)
+are passed through.
 `;
 
 export function cmdVectors(argv: string[]): number {

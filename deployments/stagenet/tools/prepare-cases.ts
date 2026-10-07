@@ -7,7 +7,7 @@
 //   expected.json    the consumer state the case must end in — computed from the example's metadata.json payloads
 //                    (or the vectors) with the reference reducer `@mip0018/consumer`, and cross-checked against the
 //                    example's own `expected` where it has one; never from an observation
-//   expect/*.json    per transaction: what `verify` must find (result, reason, exact name and payload per event)
+//   expect/*.json    per transaction: what `check-event` must find (result, reason, exact name and payload per event)
 //   args/*.json      circuit arguments too long for a command line (the raw emitter's 288-byte events)
 //   README.md        the commands rendered for Stagenet, and the transactions of the case's run record
 //
@@ -72,7 +72,7 @@ type Step = {
   note?: string;
 };
 type Recheck = {
-  verify?: { record: string; step: string; expect: string }[];
+  checkEvent?: { record: string; step: string; expect: string }[];
   list?: { record: string; expect: string; atStep?: string }[];
   noTransaction?: { record: string; step: string }[];
   operationsAbsent?: { record: string; circuit: string }[];
@@ -131,7 +131,7 @@ const sameState = (a: ExpectedState, b: ExpectedState, what: string) => {
   if (!c.ok) throw new Error(`${what}: the reducer disagrees with the example's expected state:\n  ${c.differences.join('\n  ')}`);
 };
 
-/** The verify expectation of a call (exact name + payload per event, and the result). */
+/** The check-event expectation of a call (exact name + payload per event, and the result). */
 const expectOf = (c: PublishCall): Expectation[] =>
   (c.expect ?? []).map((e) => {
     if (!e.payload) throw new Error(`${c.stepId}: no exact payload`);
@@ -185,12 +185,12 @@ const call = (c: PublishCall, o: { force?: boolean; note?: string; expectExit?: 
   ...(o.expectExit ? {} : { submits: 'call' as const }),
   ...(o.note ? { note: o.note } : {}),
 });
-const verify = (step: string): Step => ({
-  id: `verify-${step}`,
+const checkEvent = (step: string): Step => ({
+  id: `check-event-${step}`,
   runner: 'wallet-free',
-  argv: ['verify', NET, '--record', REC, '--step', step, '--expect', `@{case}/expect/${step}.json`, '--wait', '120', '--json'],
+  argv: ['check-event', NET, '--record', REC, '--step', step, '--expect', `@{case}/expect/${step}.json`, '--wait', '120', '--json'],
   expectExit: 0,
-  stdout: `observed-verify-${step}.json`,
+  stdout: `observed-check-event-${step}.json`,
 });
 const list = (expectFile = 'expected.json', id = 'list', record = REC): Step => ({
   id,
@@ -225,15 +225,15 @@ function ozCase(
   sameState(expected, meta.expected, `${id} (${example})`);
   const files: Record<string, unknown> = { 'expected.json': expected };
   const steps: Step[] = [deploy(['--example', example])];
-  const verifies: Recheck['verify'] = [];
+  const checks: Recheck['checkEvent'] = [];
   for (const c of calls) {
     steps.push(call(c));
     if ((c.expect ?? []).length > 0) {
       files[`expect/${c.stepId}.json`] = expectOf(c);
-      verifies.push({ record: 'record.json', step: c.stepId!, expect: `expect/${c.stepId}.json` });
+      checks.push({ record: 'record.json', step: c.stepId!, expect: `expect/${c.stepId}.json` });
     }
   }
-  for (const v of verifies) steps.push(verify(v.step));
+  for (const v of checks) steps.push(checkEvent(v.step));
   steps.push(list());
   const colors: Recheck['colors'] = [];
   if (o.wallet) {
@@ -257,7 +257,7 @@ function ozCase(
       source: { example: `examples/openzeppelin/${example}`, metadata: `examples/openzeppelin/${example}/metadata.json` },
       ...(o.notes ? { notes: o.notes } : {}),
       steps,
-      recheck: { verify: verifies, list: [{ record: 'record.json', expect: 'expected.json' }], ...(colors.length ? { colors } : {}) },
+      recheck: { checkEvent: checks, list: [{ record: 'record.json', expect: 'expected.json' }], ...(colors.length ? { colors } : {}) },
       files,
     },
     expected,
@@ -342,7 +342,7 @@ function build(): { cases: CaseDef[] } {
     const files: Record<string, unknown> = {};
     const steps: Step[] = [deploy(['--adapter', 'examples/minimal/owner-key.mip0018.adapter.ts'])];
     const evs: { name: string; payload: string }[][] = [];
-    const verifies: Recheck['verify'] = [];
+    const checks: Recheck['checkEvent'] = [];
     const lists: Recheck['list'] = [];
     for (const c of [publish, ...life]) {
       const force = c.stepId === 'withdraw-again';
@@ -359,9 +359,9 @@ function build(): { cases: CaseDef[] } {
       sameState(state, C06_EXPECTED[c.stepId!]!, `C06 after ${c.stepId}`);
       files[`expect/${c.stepId}.json`] = expectOf(c);
       files[`expected-after-${c.stepId}.json`] = state;
-      steps.push(verify(c.stepId!));
+      steps.push(checkEvent(c.stepId!));
       steps.push(list(`expected-after-${c.stepId}.json`, `list-after-${c.stepId}`));
-      verifies.push({ record: 'record.json', step: c.stepId!, expect: `expect/${c.stepId}.json` });
+      checks.push({ record: 'record.json', step: c.stepId!, expect: `expect/${c.stepId}.json` });
       lists.push({ record: 'record.json', expect: `expected-after-${c.stepId}.json`, atStep: c.stepId! });
     }
     const final = reduce(evs);
@@ -383,25 +383,32 @@ function build(): { cases: CaseDef[] } {
         deployedFrom: `examples/minimal/contracts/OwnerKey.compact at ${C06_DEPLOYED.commit}: its withdrawMetadata() emits one Null record at name (verifier key ${C06_DEPLOYED.withdrawVerifierKeySha256}, record.json)`,
       },
       notes: [
-        `This deployment's withdrawMetadata() emits one Null record at \`name\` (source: examples/minimal/contracts/OwnerKey.compact at ${C06_DEPLOYED.commit.slice(0, 7)}), so the case shows a single-key delete: decimals and standards stay, and the revive sets a name and a new symbol next to them. examples/minimal/contracts/OwnerKey.compact in this tree emits a Null record for each of the four keys; case C11 deploys it.`,
+        `This deployment's withdrawMetadata() emits one Null record at \`name\` (source: examples/minimal/contracts/OwnerKey.compact at ${C06_DEPLOYED.commit.slice(0, 7)}), so the case shows a single-key delete: decimals and standards stay, and the revive sets a name and a new symbol next to them. examples/minimal/contracts/OwnerKey.compact in this tree emits a Null record for each of the six common keys.`,
         'OwnerKey renames with setMetadata(name, symbol), so the revive sets name and symbol (10- and 4-byte values: "Acme Again"/"ACMA").',
         "Every intermediate state is re-checkable: `recheck` lists the contract as of each step's block (`list --to-block`).",
       ],
       steps,
-      recheck: { verify: verifies, list: lists },
+      recheck: { checkEvent: checks, list: lists },
       files,
     });
   }
 
-  // C11 — full withdrawal with examples/minimal's OwnerKey (withdrawMetadata = Mip0018_withdraw: four Null records)
+  // C11 — full withdrawal with examples/minimal's OwnerKey. The deployed contract's withdrawMetadata emits Null records
+  // at the four keys the token has (C11_DEPLOYED), so the withdraw steps expect exactly that payload.
   {
     const meta = minimalMeta('OwnerKey');
     const publish = { ...minimalCallOf(meta.steps[0]!) };
-    const life = minimalLifecycle('OwnerKey').filter((c) => c.stepId !== 'rename'); // withdraw, withdraw-again, revive
+    const life = minimalLifecycle('OwnerKey')
+      .filter((c) => c.stepId !== 'rename') // withdraw, withdraw-again, revive
+      .map((c) =>
+        c.circuit === 'withdrawMetadata'
+          ? { ...c, expect: (c.expect ?? []).map((e) => ({ ...e, payload: C11_DEPLOYED.withdrawPayload(e.domainSep!, e.kind!) })) }
+          : c,
+      );
     const files: Record<string, unknown> = {};
     const steps: Step[] = [deploy(['--adapter', 'examples/minimal/owner-key.mip0018.adapter.ts'])];
     const evs: { name: string; payload: string }[][] = [];
-    const verifies: Recheck['verify'] = [];
+    const checks: Recheck['checkEvent'] = [];
     const lists: Recheck['list'] = [];
     for (const c of [publish, ...life]) {
       const force = c.stepId === 'withdraw-again';
@@ -423,12 +430,12 @@ function build(): { cases: CaseDef[] } {
       sameState(state, own, `C11 after ${c.stepId} (metadata.json)`);
       files[`expect/${c.stepId}.json`] = expectOf(c);
       files[`expected-after-${c.stepId}.json`] = state;
-      steps.push(verify(c.stepId!));
+      steps.push(checkEvent(c.stepId!));
       steps.push(list(`expected-after-${c.stepId}.json`, `list-after-${c.stepId}`));
-      verifies.push({ record: 'record.json', step: c.stepId!, expect: `expect/${c.stepId}.json` });
+      checks.push({ record: 'record.json', step: c.stepId!, expect: `expect/${c.stepId}.json` });
       lists.push({ record: 'record.json', expect: `expected-after-${c.stepId}.json`, atStep: c.stepId! });
     }
-    // the withdraw event is exactly the codec's withdrawRecords(): header + four Null records (39 bytes)
+    // the withdraw event of the deployed contract: header + the four Null records (39 bytes)
     const w = expectOf(life.find((c) => c.stepId === 'withdraw')!)[0]!;
     if (!w.payload.endsWith('046e616d6505000673796d626f6c050008646563696d616c730500097374616e64617264730500' + '00'.repeat(184)))
       throw new Error('C11: the withdraw payload is not the four Null records');
@@ -442,24 +449,28 @@ function build(): { cases: CaseDef[] } {
       demonstrates:
         'MIP "Applying records" on chain: one event with a Null record for each key (name, symbol, decimals, standards) deletes every field, so the token identity is not referenced at all — not listed, in no group, as if it had never been described (S3c); a repeated withdrawal changes nothing (S3b); a later record describes it again with only that field (the revive: name and symbol; decimals and standards do not return, S3d).',
       conclusion:
-        'after publish: name "Acme Token", symbol "ACME", decimals 6, standards "mip-0004" (group "ACME"); after withdraw and after withdraw again: no identity and no group (`list`: identities none); final: ONLY name "Acme Again" and symbol "ACMA" (group "ACMA"); the withdraw payload = header + the four Null records (codec withdrawRecords()), the publish payload = MIP Appendix A.',
+        'after publish: name "Acme Token", symbol "ACME", decimals 6, standards "mip-0004" (group "ACME"); after withdraw and after withdraw again: no identity and no group (`list`: identities none); final: ONLY name "Acme Again" and symbol "ACMA" (group "ACMA"); the withdraw payload = header + the four Null records, the publish payload = MIP Appendix A.',
       source: {
         example: 'examples/minimal',
         contract: 'examples/minimal/contracts/OwnerKey.compact',
         metadata: 'examples/minimal/owner-key.metadata.json',
+        deployedFrom: `examples/minimal/contracts/OwnerKey.compact at ${C11_DEPLOYED.commit}: its withdrawMetadata() emits one event with Null records at name, symbol, decimals and standards (verifier key ${C11_DEPLOYED.withdrawVerifierKeySha256}, record.json)`,
       },
       notes: [
-        'Kind 3 has no color, so there is no color lookup: per the MIP "Lookup" section a ledger token is found by querying the contract\'s kind-3 events, which is `list` — after the withdrawal it must show no identity for (0x11…, 3) and no group.',
-        'The contract is examples/minimal/contracts/OwnerKey.compact: its withdrawMetadata() calls Mip0018_withdraw, one event with a Null record at name, symbol, decimals and standards (verifier key = docs/costs.json).',
+        'Kind 3 has no color, so there is no color lookup: per the MIP "Lookup" section a contract token is found by querying the contract\'s kind-3 events, which is `list` — after the withdrawal it must show no identity for (0x11…, 3) and no group.',
+        `This deployment's withdrawMetadata() emits one event with Null records at the four keys the token has: name, symbol, decimals, standards (source: examples/minimal/contracts/OwnerKey.compact at ${C11_DEPLOYED.commit.slice(0, 7)}). examples/minimal/contracts/OwnerKey.compact in this tree also deletes image and image_sha256 (a Null record for a field without a value has no effect).`,
       ],
       steps,
-      recheck: { verify: verifies, list: lists },
+      recheck: { checkEvent: checks, list: lists },
       files,
     });
   }
 
-  // C07 — raw emitter: capacity, accepted edge cases, malformed, foreign names
+  // C07 — raw emitter: capacity, accepted edge cases, malformed, foreign names. Each step emits one vector's event;
+  // the step id is the vector id, except step A3c, which emits vector R5i (a key that is not valid UTF-8).
   {
+    const STEP_VECTOR: Record<string, string> = { A3c: 'R5i' };
+    const vectorOf = (id: string) => STEP_VECTOR[id] ?? id;
     const ids = [
       'A2a',
       'R1',
@@ -487,12 +498,12 @@ function build(): { cases: CaseDef[] } {
     const files: Record<string, unknown> = {};
     const steps: Step[] = [deploy(['--example', 'raw-emitter'], 'TEST-ONLY contract (NOT FOR PRODUCTION): owner-gated emitRaw / emitTwo')];
     const evs: { name: string; payload: string }[][] = [];
-    const verifies: Recheck['verify'] = [];
+    const checks: Recheck['checkEvent'] = [];
     for (const id of ids) {
-      const v = vector(id);
+      const v = vector(vectorOf(id));
       const cl = classifyEvent({ type: 'Misc', name: fromHex(v.event.name_hex), payload: fromHex(v.event.payload_hex) });
       if (cl.result !== v.expect.result || ('reason' in cl ? cl.reason : undefined) !== v.expect.reason)
-        throw new Error(`C07: the codec classifies ${id} as ${cl.result}, the vector says ${v.expect.result}`);
+        throw new Error(`C07: the codec classifies ${vectorOf(id)} as ${cl.result}, the vector says ${v.expect.result}`);
       files[`args/${id}.json`] = [v.event.name_hex, v.event.payload_hex];
       files[`expect/${id}.json`] = [
         {
@@ -509,29 +520,31 @@ function build(): { cases: CaseDef[] } {
         argv: ['publish', NET, S1, '--record', REC, '--circuit', 'emitRaw', '--args', `@{case}/args/${id}.json`, '--step', id, '--force'],
         expectExit: 0,
         submits: 'call',
-        note: `vector ${id}: ${v.expect.result}${v.expect.reason ? ` (${v.expect.reason})` : ''}`,
+        note: `vector ${vectorOf(id)}: ${v.expect.result}${v.expect.reason ? ` (${v.expect.reason})` : ''}`,
       });
       evs.push([{ name: v.event.name_hex, payload: v.event.payload_hex }]);
-      verifies.push({ record: 'record.json', step: id, expect: `expect/${id}.json` });
+      checks.push({ record: 'record.json', step: id, expect: `expect/${id}.json` });
     }
-    for (const v of verifies) steps.push(verify(v.step));
+    for (const v of checks) steps.push(checkEvent(v.step));
     steps.push(list());
     const expected = reduce(evs, { fields: true, counts: true });
     files['expected.json'] = expected;
     expectedOf.C07 = expected;
+    const result = (id: string) => vector(vectorOf(id)).expect.result;
     cases.push({
       id: 'C07',
       title:
         'Raw emitter (test-only): capacity, exact-bytes and non-tombstone edge cases accepted; malformed payloads rejected; other names ignored',
       demonstrates:
-        "A2a/A2b capacity, A3a–c exact bytes, A4b Uint<128> decimals, A5a–c non-tombstones accepted; R1, R2a, R3a, R3b, R4a, R5a, R5e, R5h, R6b rejected whole; I1a/I1b ([v2]) and I2a/I2b (other names) ignored — each verified with its reason, and the contract's state is exactly what the accepted ones set.",
-      conclusion: `${ids.filter((i) => i.startsWith('A')).length} accepted, ${ids.filter((i) => i.startsWith('R')).length} rejected, ${ids.filter((i) => i.startsWith('I')).length} ignored events; one identity (0x11…/3) with exactly the accepted records' fields (expected.json lists every field).`,
+        "A2a/A2b capacity, A3a/A3b exact bytes, A4b Uint<128> decimals, A5a–c non-tombstones accepted; R1, R2a, R3a, R3b, R4a, R5a, R5e, R5h, R5i (a key that is not valid UTF-8, step A3c), R6b rejected whole; I1a/I1b ([v2]) and I2a/I2b (other names) ignored — each checked with its reason; the contract's state is what the accepted ones set, and a consumer serves only its common keys.",
+      conclusion: `${ids.filter((i) => result(i) === 'accept').length} accepted, ${ids.filter((i) => result(i) === 'reject').length} rejected, ${ids.filter((i) => result(i) === 'ignore').length} ignored events; one identity (0x11…/3) whose served fields are the common keys the accepted records set (expected.json lists every served field); the other accepted keys are not served.`,
       source: { contract: 'test-contracts/raw-emitter', vectors: 'vectors/payload' },
       notes: [
         "--force: accepted vectors are emitted even when they would not change the state (without it, the before-check skips a call whose accepted events leave the contract's state unchanged); rejected and ignored ones are never skipped.",
+        'Step ids are the vector ids, except step A3c, which emits the event of vector R5i (key ff 6b 65 79): rejected, because keys MUST be valid UTF-8.',
       ],
       steps,
-      recheck: { verify: verifies, list: [{ record: 'record.json', expect: 'expected.json' }] },
+      recheck: { checkEvent: checks, list: [{ record: 'record.json', expect: 'expected.json', atStep: 'I2b' }] },
       files,
     });
   }
@@ -580,11 +593,11 @@ function build(): { cases: CaseDef[] } {
           expectExit: 0,
           submits: 'call',
         },
-        verify('emit-two'),
+        checkEvent('emit-two'),
         list(),
       ],
       recheck: {
-        verify: [{ record: 'record.json', step: 'emit-two', expect: 'expect/emit-two.json' }],
+        checkEvent: [{ record: 'record.json', step: 'emit-two', expect: 'expect/emit-two.json' }],
         list: [{ record: 'record.json', expect: 'expected.json' }],
       },
       files: { 'args/S7b.json': args, 'expect/emit-two.json': ex, 'expected.json': expected },
@@ -662,7 +675,7 @@ function build(): { cases: CaseDef[] } {
       steps: [
         deploy(['--example', 'minimal']),
         call(publish),
-        verify('publish'),
+        checkEvent('publish'),
         {
           id: 'remove-key',
           runner: 'signer',
@@ -680,7 +693,7 @@ function build(): { cases: CaseDef[] } {
         list(),
       ],
       recheck: {
-        verify: [{ record: 'record.json', step: 'publish', expect: 'expect/publish.json' }],
+        checkEvent: [{ record: 'record.json', step: 'publish', expect: 'expect/publish.json' }],
         list: [{ record: 'record.json', expect: 'expected.json' }],
         operationsAbsent: [{ record: 'record.json', circuit: 'publishMetadata' }],
         noTransaction: [{ record: 'record.json', step: 'publish-again' }],
@@ -884,10 +897,10 @@ function build(): { cases: CaseDef[] } {
         },
         inspect('inspect-after', 'after: entry points {mint, publishMetadata}, mint key unchanged, counter 1, ledger-data hash unchanged'),
         {
-          id: 'verify-publish',
+          id: 'check-event-publish',
           runner: 'wallet-free',
           argv: [
-            'verify',
+            'check-event',
             NET,
             '--record',
             REC,
@@ -900,7 +913,7 @@ function build(): { cases: CaseDef[] } {
             '--json',
           ],
           expectExit: 0,
-          stdout: 'observed-verify-publish.json',
+          stdout: 'observed-check-event-publish.json',
         },
         list(),
         {
@@ -927,7 +940,7 @@ function build(): { cases: CaseDef[] } {
         },
       ],
       recheck: {
-        verify: [{ record: 'record.json', step: 'upgrade:call', expect: 'expect/publish.json' }],
+        checkEvent: [{ record: 'record.json', step: 'upgrade:call', expect: 'expect/publish.json' }],
         list: [{ record: 'record.json', expect: 'expected.json' }],
         noTransaction: [{ record: 'record.json', step: 'wrong-signer:insert' }],
         colors: [{ record: 'record.json', domainSep: ds, kind: 1, index: 'index', wallet: 'wallet-status.json', expectIdentity: identity }],
@@ -937,6 +950,20 @@ function build(): { cases: CaseDef[] } {
   }
   return { cases };
 }
+
+// C11's contract: examples/minimal/contracts/OwnerKey.compact at 57ce633, whose withdrawMetadata emits ONE event with
+// Null records at name, symbol, decimals and standards. Deployed verifier key from C11/record.json.
+const C11_DEPLOYED = {
+  commit: '57ce63326c231b80dca3efc464c12df599b537ba',
+  withdrawVerifierKeySha256: 'f2273345ed4752c9c31adc7eba502efc7fcddcfb5051581ffe4479aabdc0e871',
+  withdrawPayload: (domainSep: string, kind: number) =>
+    toHex(
+      encodePayload(
+        { domainSep: fromHex(domainSep), kind },
+        ['name', 'symbol', 'decimals', 'standards'].map((k) => record.tombstone(k)),
+      ),
+    ),
+};
 
 // C06's contract: examples/minimal/contracts/OwnerKey.compact at 70b54c6, whose withdrawMetadata emits ONE Null record
 // at `name`. Deployed verifier key from C06/record.json.
@@ -1152,7 +1179,7 @@ function indexReadme(cases: CaseDef[]): string {
     '',
     '<!-- Generated by deployments/stagenet/tools/prepare-cases.ts; do not edit. -->',
     '',
-    "Each folder holds `case.json` (one `mip0018` command per step, the exit code each must end with, the re-check list), `expected.json` (what the reference consumer must conclude, computed from the examples' metadata.json / the vectors) and `expect/*.json` (what `verify` must find per transaction), plus the run record and the observations; `mip0018 recheck --network stagenet --case <folder>` re-checks a case wallet-free.",
+    "Each folder holds `case.json` (one `mip0018` command per step, the exit code each must end with, the re-check list), `expected.json` (what the reference consumer must conclude, computed from the examples' metadata.json / the vectors) and `expect/*.json` (what `check-event` must find per transaction), plus the run record and the observations; `mip0018 recheck --network stagenet --case <folder>` re-checks a case wallet-free.",
     '',
     '| Case | What | Expected conclusion | Steps | Transactions |',
     '|---|---|---|---:|---:|',

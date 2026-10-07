@@ -8,7 +8,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
-import { checkIdentity, normAddress, verifyEmission, type EventExpectation } from '@mip0018/midnight';
+import { checkIdentity, normAddress, checkEvent, type EventExpectation } from '@mip0018/midnight';
 import {
   StepError,
   callStep,
@@ -59,7 +59,7 @@ import {
   str,
   type Values,
 } from './common.ts';
-import { printVerify } from './wallet-free.ts';
+import { printCheckEvent } from './wallet-free.ts';
 
 const SIGNER_OPTIONS = {
   ...NETWORK_OPTIONS,
@@ -470,10 +470,10 @@ export async function cmdRemoveCircuit(argv: string[]): Promise<number> {
 
 export const DAP_USAGE = `
 mip0018 deploy-and-publish (--example <name> | --adapter <file>) [--metadata <json>] --network <id> --record <file>
-                           [--compile] [--no-verify]
+                           [--compile] [--no-check-event]
 
 The request's "deploy + emit" in one command: compile (with keys, when managed/ has none or --compile) → deploy →
-every call the example's adapter lists (e.g. mints, then the publish) → verify each emitting transaction
+every call the example's adapter lists (e.g. mints, then the publish) → check-event each emitting transaction
 (wallet-free checks, expecting exactly the adapter's payloads). Each step is guarded by the before/after checks;
 re-run the same command to resume. The example is examples/<name>, examples/openzeppelin/<name> or
 test-contracts/<name> with a mip0018.adapter.ts.
@@ -493,7 +493,7 @@ export async function cmdDeployAndPublish(argv: string[]): Promise<number> {
       metadata: { type: 'string' },
       record: { type: 'string' },
       compile: { type: 'boolean', default: false },
-      'no-verify': { type: 'boolean', default: false },
+      'no-check-event': { type: 'boolean', default: false },
       force: { type: 'boolean', default: false },
     },
     DAP_USAGE,
@@ -517,13 +517,13 @@ export async function cmdDeployAndPublish(argv: string[]): Promise<number> {
   }
   return withRun(v, recordPath, src, async (run) => {
     let code: number = EXIT.ok;
-    const verified: unknown[] = [];
+    const checked: unknown[] = [];
     try {
       await deployStep(run, deployArgs, metadata);
       const ctx = { ...signerContext(run), metadata, contractAddress: run.record.contract.address };
       for (const p of adapter.publish?.(metadata, ctx) ?? []) {
         const step = await callStep(run, { circuit: p.circuit, args: p.args, ...(p.stepId ? { stepId: p.stepId } : {}) });
-        if (v['no-verify'] || !step.tx) continue;
+        if (v['no-check-event'] || !step.tx) continue;
         let expect: EventExpectation[] | EventExpectation | undefined = p.expect;
         if (expect === undefined && metadata)
           expect = {
@@ -537,22 +537,22 @@ export async function cmdDeployAndPublish(argv: string[]): Promise<number> {
             },
           };
         if (Array.isArray(expect) && expect.length === 0) continue; // emits nothing (e.g. a mint): the after-check saw zero events
-        const r = await verifyEmission({
+        const r = await checkEvent({
           profile: run.o.ep.profile,
           contract: run.record.contract.address!,
           tx: step.tx.hash,
           expect, // an array is checked event by event, including the count
           waitMs: 60_000,
         });
-        verified.push(r);
-        if (!v.json) printVerify(r);
+        checked.push(r);
+        if (!v.json) printCheckEvent(r);
         if (r.exitCode !== 0) code = r.exitCode;
       }
     } catch (e) {
       log(`deploy-and-publish: ${(e as Error).message}`);
       code = exitFor(e);
     } finally {
-      if (v.json) emitJson({ record: run.record, verified });
+      if (v.json) emitJson({ record: run.record, checked });
       else printRun(run, recordPath);
     }
     return code;

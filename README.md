@@ -1,7 +1,7 @@
 # MIP-0018 reference implementation
 
 Reference implementation of **MIP-0018: On-chain token metadata** for Midnight: test vectors, a Compact module that
-emits the metadata event, OpenZeppelin-based examples, a reference consumer, wallet-free tools to verify, list and look
+emits the metadata event, OpenZeppelin-based examples, a reference consumer, wallet-free tools to check events, list and look
 up metadata, and real cases on Stagenet.
 
 Every MIP section below has code, tests and, where a chain is involved, a recorded Stagenet case; every MUST and SHOULD

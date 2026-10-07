@@ -38,7 +38,7 @@ function rawOf(tape: Exchange[], hash: string): { raw: string; transactionResult
 }
 
 describe('raw transaction decoding (recorded Stagenet)', () => {
-  const tape = fx('verify-spike-publish.tape.json') as Exchange[];
+  const tape = fx('check-event-spike-publish.tape.json') as Exchange[];
   const publish = rawOf(tape, '223050717f704fe47d1bd0b6b91da8ea248139d2d15a23a2eab7cf07d5a51418');
 
   it('recomputes the hash and finds the A1 log op (zero-extended to 288 bytes)', () => {

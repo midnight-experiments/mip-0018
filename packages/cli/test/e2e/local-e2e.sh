@@ -9,7 +9,7 @@
 # runs against an already running stack and leaves it). Exit = number of failures.
 #
 # Cases: the toolchain spike through the package · wallet status / register-dust · deploy + publish with a crash right after
-# each submission and a resume (exactly one deploy, one event) · verify / list · re-publish skipped (already
+# each submission and a resume (exactly one deploy, one event) · check-event / list · re-publish skipped (already
 # present) · remove-circuit, then publish refused · deploy-and-publish of an example adapter · OZ Ownable token:
 # owner mint + publish, non-owner publish refused before submission · native mints (shielded + unshielded) · mint
 # scanner from height 0, killed mid-scan and resumed (identical table) · lookup (kinds 1, 2, unknown, kind 3) ·
@@ -129,12 +129,12 @@ check "exactly one Misc event on the emitter contract" test "$(events_of "$EM_AD
 PUB_TX="$(jget "$RECORDS/emitter.json" '[x for x in d["steps"] if x["kind"]=="call"][0]["tx"]["hash"]')"
 
 A1='{"metadata":{"domainSep":"0x1111111111111111111111111111111111111111111111111111111111111111","kind":3,"name":"Acme Token","symbol":"ACME","decimals":6,"standards":["mip-0004"]}}'
-rc=0; cli verify-em verify --network undeployed --contract "$EM_ADDR" --tx "$PUB_TX" --expect "$A1" || rc=$?
-expect_rc "verify publish (A1 expectation)" 0 "$rc"
-rc=0; cli verify-em-wrong verify --network undeployed --contract "$EM_ADDR" --tx "$PUB_TX" --expect '{"result":"reject"}' || rc=$?
-expect_rc "verify with a wrong expectation" 1 "$rc"
-rc=0; cli verify-unknown verify --network undeployed --contract "$EM_ADDR" --tx "$(printf 'ee%.0s' $(seq 1 32))" || rc=$?
-expect_rc "verify an unknown transaction (not found)" 3 "$rc"
+rc=0; cli check-event-em check-event --network undeployed --contract "$EM_ADDR" --tx "$PUB_TX" --expect "$A1" || rc=$?
+expect_rc "check-event publish (A1 expectation)" 0 "$rc"
+rc=0; cli check-event-em-wrong check-event --network undeployed --contract "$EM_ADDR" --tx "$PUB_TX" --expect '{"result":"reject"}' || rc=$?
+expect_rc "check-event with a wrong expectation" 1 "$rc"
+rc=0; cli check-event-unknown check-event --network undeployed --contract "$EM_ADDR" --tx "$(printf 'ee%.0s' $(seq 1 32))" || rc=$?
+expect_rc "check-event an unknown transaction (not found)" 3 "$rc"
 rc=0; cli list-em list --network undeployed --contract "$EM_ADDR" --json || rc=$?
 expect_rc "list emitter" 0 "$rc"
 check "list: one kind-3 identity with the A1 fields" py "import json; d=json.load(open('$LOGS/list-em.out')); i=d['identities']; assert len(i)==1 and i[0]['kind']==3 and i[0]['common']['name']=='Acme Token' and str(i[0]['common']['decimals'])=='6', i"
@@ -156,8 +156,8 @@ check "still exactly one Misc event after the refused publish" test "$(events_of
 say "deploy-and-publish --example toolchain-spike"
 A1_META='{"domainSep":"0x1111111111111111111111111111111111111111111111111111111111111111","kind":3,"name":"Acme Token","symbol":"ACME","decimals":6,"standards":["mip-0004"]}'
 rc=0; signer dap deploy-and-publish $A --example toolchain-spike --metadata "$A1_META" --record /e2e/records/dap.json || rc=$?
-expect_rc "deploy-and-publish (deploy → publish → verify with the metadata)" 0 "$rc"
-rc=0; signer dap-again deploy-and-publish $A --example toolchain-spike --metadata "$A1_META" --record /e2e/records/dap.json --no-verify || rc=$?
+expect_rc "deploy-and-publish (deploy → publish → check-event with the metadata)" 0 "$rc"
+rc=0; signer dap-again deploy-and-publish $A --example toolchain-spike --metadata "$A1_META" --record /e2e/records/dap.json --no-check-event || rc=$?
 expect_rc "deploy-and-publish re-run (every step already completed)" 0 "$rc"
 
 # ------------------------------------------------------------------------------------- OZ Ownable token (kind 1)
@@ -281,7 +281,7 @@ rc=0; signer guard-genesis deploy $A --contract "$EM" --record /e2e/records/guar
 expect_rc "wrong genesis aborts before any wallet or submission" 1 "$rc"
 check "wrong-genesis run created no record" test ! -e "$RECORDS/guard.json"
 check "wrong-genesis error names the chain mismatch" grep -q "wrong chain" "$LOGS/guard-genesis.err"
-rc=0; cli guard-public verify --network undeployed --indexer https://indexer.stagenet.shielded.tools/api/v4/graphql --rpc http://node:9944 --contract "$EM_ADDR" --tx "$PUB_TX" || rc=$?
+rc=0; cli guard-public check-event --network undeployed --indexer https://indexer.stagenet.shielded.tools/api/v4/graphql --rpc http://node:9944 --contract "$EM_ADDR" --tx "$PUB_TX" || rc=$?
 expect_rc "undeployed profile refuses a Stagenet URL (usage)" 2 "$rc"
 rc=0; signer guard-usage publish $B --record /e2e/records/emitter.json --bogus || rc=$?
 expect_rc "unknown option rejected before anything runs (usage)" 2 "$rc"

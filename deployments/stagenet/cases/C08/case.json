@@ -63,10 +63,10 @@
       "submits": "call"
     },
     {
-      "id": "verify-emit-two",
+      "id": "check-event-emit-two",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -79,7 +79,7 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-emit-two.json"
+      "stdout": "observed-check-event-emit-two.json"
     },
     {
       "id": "list",
@@ -99,7 +99,7 @@
   ],
   "expected": "expected.json",
   "recheck": {
-    "verify": [
+    "checkEvent": [
       {
         "record": "record.json",
         "step": "emit-two",

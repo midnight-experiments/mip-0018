@@ -11,7 +11,7 @@
 #   3. NEGATIVE wrong signer: the insert signed by a random key is refused before submission, and — forced — rejected
 #      by the node; nothing changes
 #   4. mip0018 upgrade: preflight → VerifierKeyInsert(publishMetadata, v4) → publishMetadata() call
-#   5. same address; mint key unchanged; ledger data unchanged; verify (kind-1 expectation) → 0; list → the identity
+#   5. same address; mint key unchanged; ledger data unchanged; check-event (kind-1 expectation) → 0; list → the identity
 #      with color = the pre-upgrade coin's color; wallet A still holds 1000 of it; mint scanner + lookup resolve that
 #      color to the metadata published after the upgrade
 #   6. NEGATIVE no overwrite: re-insert of the same circuit (same key, and another build's key) refused before
@@ -177,8 +177,8 @@ assert b['decoded']['$EX/managed/LegacyToken']==b['decoded']['$EX/managed/Legacy
 check "exactly one Misc event on the contract" test "$(events_of "$ADDR")" = 1
 
 EXPECT="{\"metadata\":{\"domainSep\":\"$DS\",\"kind\":1,\"name\":\"Legacy Token\",\"symbol\":\"LGCY\",\"decimals\":6}}"
-rc=0; cli verify verify --network undeployed --contract "$ADDR" --tx "$PUB_TX" --expect "$EXPECT" --json || rc=$?
-expect_rc "verify the publish (bound to the original address, kind-1 expectation)" 0 "$rc"
+rc=0; cli check-event check-event --network undeployed --contract "$ADDR" --tx "$PUB_TX" --expect "$EXPECT" --json || rc=$?
+expect_rc "check-event the publish (bound to the original address, kind-1 expectation)" 0 "$rc"
 rc=0; cli list list --network undeployed --contract "$ADDR" --json || rc=$?
 expect_rc "list the contract" 0 "$rc"
 check "list: one kind-1 identity (original address, domainSep 0x5e…) with color = the pre-upgrade coin's" py "

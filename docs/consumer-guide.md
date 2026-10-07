@@ -7,7 +7,7 @@ The reference implementation of every step is in this repository and passes all 
 | Step | Reference code | Wallet-free command |
 |---|---|---|
 | 1. Fetch a contract's events | [`@mip0018/midnight`](../packages/midnight/README.md) (`Indexer`, `listMetadata`) | `mip0018 list` |
-| 2–3. Classify, decode, validate | [`@mip0018/codec`](../packages/codec/README.md) (`classifyEvent`, `decodePayload`) | `mip0018 verify` |
+| 2–3. Classify, decode, validate | [`@mip0018/codec`](../packages/codec/README.md) (`classifyEvent`, `decodePayload`) | `mip0018 check-event` |
 | 4–5. Apply, present | [`@mip0018/consumer`](../packages/consumer/README.md) (`MetadataState`, `formatAmount`) | `mip0018 list` |
 | 8. Color → token | [`@mip0018/midnight`](../packages/midnight/README.md) (`tokenType`, scanner) | `mip0018 index`, `mip0018 lookup` |
 | 9. Test your own consumer | [`vectors/`](../vectors/README.md#runner-contract) (runner contract) | `mip0018 vectors run` |
@@ -177,7 +177,7 @@ within the event. Within a transaction, the MIP fixes the event order: "the guar
 intent (in ascending segment id), then each successful fallible segment (in ascending segment id); within a part,
 actions and their operations in order". The indexer's event ids follow it; if you decode raw transactions yourself,
 `decodeTransaction` + `applied` in `@mip0018/midnight` produce exactly that order (test
-[`event-order.test.ts`](../packages/midnight/test/event-order.test.ts)), and `mip0018 verify` checks per transaction
+[`event-order.test.ts`](../packages/midnight/test/event-order.test.ts)), and `mip0018 check-event` checks per transaction
 that the indexer's order equals the ledger's.
 
 - **A record sets its field's current value**, replacing any earlier one. An event changes only the keys it carries; it
@@ -359,7 +359,7 @@ provides the reference and the runner, not a second consumer).
 |---|---|
 | [`@mip0018/codec`](../packages/codec/README.md) | `classifyEvent`, `decodePayload`, `encodePayload`, `checkValue`, `isRfc3986Uri`, `splitMiscData` — dependency-free |
 | [`@mip0018/consumer`](../packages/consumer/README.md) | `MetadataState` (`apply`, `rollbackTo`, `identities`, `groups`, `display`, `history`), `formatAmount`, `parseStandards` |
-| [`@mip0018/midnight`](../packages/midnight/README.md) | indexer and node access, `tokenType`, raw-transaction decoding, `verify`, `list`, the mint scanner |
-| [`mip0018` CLI](../packages/cli/README.md) | `verify`, `list`, `index`, `lookup`, `recheck`, `vectors run` — no wallet |
+| [`@mip0018/midnight`](../packages/midnight/README.md) | indexer and node access, `tokenType`, raw-transaction decoding, `checkEvent`, `list`, the mint scanner |
+| [`mip0018` CLI](../packages/cli/README.md) | `check-event`, `list`, `index`, `lookup`, `recheck`, `vectors run` — no wallet |
 | [`examples/verify`](../examples/verify/README.md) | the wallet-free walkthrough on the real Stagenet cases |
 | [`deployments/stagenet`](../deployments/stagenet/README.md) | 13 recorded cases, each re-checkable with one command |

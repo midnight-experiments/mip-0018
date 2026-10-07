@@ -172,10 +172,10 @@ mip0018() { MIP0018_DOCKER_NETWORK="$MIP0018_STACK_NETWORK" MIP0018_DOCKER_ENV="
 A="--network undeployed --dev-genesis-wallet --wallet-cache /run/mip0018/state/a.wallet-cache"
 
 signer deploy-and-publish $A --example fungible-token --record /walk/fungible-token.json
-mip0018 verify --network undeployed --record /walk/fungible-token.json --step publish
+mip0018 check-event --network undeployed --record /walk/fungible-token.json --step publish
 ```
 
-`deploy-and-publish` compiles (when `managed/` has no keys), deploys, calls `publishMetadata()` and verifies the event
+`deploy-and-publish` compiles (when `managed/` has no keys), deploys, calls `publishMetadata()` and checks the event
 wallet-free against the exact payload the example expects. Stop the chain with `docker/local-stack/down.sh`.
 
 **Your own contract.** `--example <name>` loads `examples/<name>/mip0018.adapter.ts`; for your contract either:
@@ -214,13 +214,13 @@ signer publish $W --record deployments/stagenet/cases/C01/record.json --circuit 
 **Check what consumers see**, wallet-free (any network; Stagenet uses the public endpoints by default):
 
 ```sh
-docker/run.sh mip0018 -- verify --network stagenet --record deployments/stagenet/cases/C01/record.json --step publish \
+docker/run.sh mip0018 -- check-event --network stagenet --record deployments/stagenet/cases/C01/record.json --step publish \
   --expect @deployments/stagenet/cases/C01/expect/publish.json
 docker/run.sh mip0018 -- list --network stagenet --record deployments/stagenet/cases/C04/record.json --expect @deployments/stagenet/cases/C04/expected.json
 ```
 
-`verify` checks the one emission end to end (event name, binding to your contract, decode result, raw transaction,
-block, finality, the expected payload); `list` shows the state every consumer should reach. The run record
+`check-event` checks the one emission end to end (event name, binding to your contract, decode result and every
+record, raw transaction, block, finality, the expected payload); `list` shows the state every consumer should reach. The run record
 (`--record`) is public JSON: contract address, verifier-key hashes, transactions and observations — never a secret.
 
 ## 5. Rename and withdraw
@@ -302,4 +302,4 @@ Re-check any of them without a wallet: `docker/run.sh mip0018 -- recheck --netwo
 - [ ] `name`, `symbol`, `decimals` (`Uint<8>`) with exact byte lengths; `standards` only for what the token implements.
 - [ ] Every emitting circuit owner-guarded, publish-once, or removed after use; the maintenance key kept safe.
 - [ ] Runtime values validated off chain before the call.
-- [ ] `mip0018 verify` and `list` show what you expect on the network you published to.
+- [ ] `mip0018 check-event` and `list` show what you expect on the network you published to.

@@ -191,10 +191,10 @@
       "note": "after: entry points {mint, publishMetadata}, mint key unchanged, counter 1, ledger-data hash unchanged"
     },
     {
-      "id": "verify-publish",
+      "id": "check-event-publish",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -207,7 +207,7 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-publish.json"
+      "stdout": "observed-check-event-publish.json"
     },
     {
       "id": "list",
@@ -280,7 +280,7 @@
   ],
   "expected": "expected.json",
   "recheck": {
-    "verify": [
+    "checkEvent": [
       {
         "record": "record.json",
         "step": "upgrade:call",

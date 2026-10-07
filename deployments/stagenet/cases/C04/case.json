@@ -120,10 +120,10 @@
       "submits": "call"
     },
     {
-      "id": "verify-publish",
+      "id": "check-event-publish",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -136,7 +136,7 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-publish.json"
+      "stdout": "observed-check-event-publish.json"
     },
     {
       "id": "list",
@@ -171,7 +171,7 @@
   ],
   "expected": "expected.json",
   "recheck": {
-    "verify": [
+    "checkEvent": [
       {
         "record": "record.json",
         "step": "publish",

@@ -10,7 +10,7 @@
 #   docker/run.sh exec 'npm run -s compile -w test-contracts/raw-emitter -- --keys'
 #
 # Parts (MIP0018_E2E_PARTS, default "A B C D"):
-#   A  happy path: deploy-and-publish of examples/minimal and every examples/openzeppelin/* example → verify → list
+#   A  happy path: deploy-and-publish of examples/minimal and every examples/openzeppelin/* example → check-event → list
 #      --expect <the example's metadata.json>; one re-run (every step already completed)
 #   B  the publish-and-emit walkthrough: rename, withdraw, withdraw again, revive on the fungible token with `publish`
 #      (list after each = metadata.json lifecycle); create-and-destroy on the minimal example (remove-circuit, then a
@@ -114,19 +114,19 @@ if part A; then
   for ex in $EXAMPLES; do
     say "A: deploy-and-publish --example $ex"
     rc=0; signer "dap-$ex" deploy-and-publish $A --example "$ex" --record "/e2e/dap/$ex.json" || rc=$?
-    expect_rc "A $ex: deploy-and-publish (compile with keys if needed, deploy, metadata.json steps, verify each emission)" 0 "$rc"
+    expect_rc "A $ex: deploy-and-publish (compile with keys if needed, deploy, metadata.json steps, check-event each emission)" 0 "$rc"
     check "A $ex: every record step completed, one deploy" py "
 import json; r=json.load(open('$DAP/$ex.json')); s=r['steps']
 assert all(x['state']=='completed' for x in s), [(x['id'],x['state']) for x in s]
 assert [x['kind'] for x in s].count('deploy')==1 and r['contract']['address']
 "
-    # the last emitting step, verified again on its own with the exact payloads of metadata.json
+    # the last emitting step, checked again on its own with the exact payloads of metadata.json
     meta="$(meta_of "$ex")"
     last="$(py "import json; m=json.load(open('$repo/$meta')); print([s['id'] for s in m['steps'] if s['events']][-1])")"
     py "import json; m=json.load(open('$repo/$meta')); s=[s for s in m['steps'] if s['id']=='$last'][0]
 json.dump([{'result':'accept','payload':e['payload']} for e in s['events']], open('$DAP/$ex.expect-$last.json','w'))"
-    rc=0; cli "dap-verify-$ex" verify --network undeployed --record "/e2e/dap/$ex.json" --step "$last" --expect "@/e2e/dap/$ex.expect-$last.json" || rc=$?
-    expect_rc "A $ex: verify $last (event = log op of the raw tx, node block, finality, exact payload)" 0 "$rc"
+    rc=0; cli "dap-check-event-$ex" check-event --network undeployed --record "/e2e/dap/$ex.json" --step "$last" --expect "@/e2e/dap/$ex.expect-$last.json" || rc=$?
+    expect_rc "A $ex: check-event $last (event = log op of the raw tx, node block, finality, exact payload)" 0 "$rc"
     rc=0; cli "dap-list-$ex" list --network undeployed --record "/e2e/dap/$ex.json" --expect "@$meta" --json || rc=$?
     expect_rc "A $ex: list --expect <metadata.json expected state>" 0 "$rc"
     check "A $ex: list matched (expectation ok)" test "$(jget "$LOGS/dap-list-$ex.out" 'd["expectation"]["ok"]')" = True
@@ -170,8 +170,8 @@ import json; s=[x for x in json.load(open('$DAP/fungible-token.json'))['steps'] 
   expect_rc "B revive (publishMetadata again)" 0 "$rc"
   rc=0; cli wt-list-revive list --network undeployed --record $FT --to-block "$(at revive)" --expect @/e2e/dap/ft-after-3.json --history || rc=$?
   expect_rc "B list after revive = the published values again" 0 "$rc"
-  rc=0; cli wt-verify-revive verify --network undeployed --record $FT --step revive || rc=$?
-  expect_rc "B verify the revive" 0 "$rc"
+  rc=0; cli wt-check-event-revive check-event --network undeployed --record $FT --step revive || rc=$?
+  expect_rc "B check-event the revive" 0 "$rc"
 
   say "B: create-and-destroy on the minimal example"
   MN=/e2e/dap/minimal.json

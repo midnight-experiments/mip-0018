@@ -27,26 +27,30 @@
       "key": "6e616d65",
       "keyText": "name",
       "valType": 1,
-      "value": "41636d6520546f6b656e"
+      "value": "41636d6520546f6b656e",
+      "served": true
      },
      {
       "key": "73796d626f6c",
       "keyText": "symbol",
       "valType": 1,
-      "value": "41434d45"
+      "value": "41434d45",
+      "served": true
      },
      {
       "key": "646563696d616c73",
       "keyText": "decimals",
       "valType": 2,
       "value": "06",
-      "integer": "6"
+      "integer": "6",
+      "served": true
      },
      {
       "key": "7374616e6461726473",
       "keyText": "standards",
       "valType": 1,
-      "value": "6d69702d30303034"
+      "value": "6d69702d30303034",
+      "served": true
      }
     ]
    },
