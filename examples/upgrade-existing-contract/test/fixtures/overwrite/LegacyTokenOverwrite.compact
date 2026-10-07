@@ -25,5 +25,5 @@ pure circuit ownerId(secret: Bytes<32>): Bytes<32> {
 
 export circuit publishMetadata(): [] {
   assert(ownerId(ownerSecret()) == owner, "LegacyToken: caller is not the owner");
-  Mip0018_emitPayload(Mip0018_commonFields<11, 4>(domain, Mip0018_KIND_SHIELDED(), "Other Token", "OTHR", 6));
+  Mip0018_emitPayload(Mip0018_commonFields<11, 4>(domain, Mip0018_KIND_SHIELDED_UTXO(), "Other Token", "OTHR", 6));
 }

@@ -67,9 +67,9 @@ Matrix C01–C10: **53 transactions, all `SUCCESS`, 51.93 DUST**; U1: 4 included
 C11: 5 transactions (all `SUCCESS`), 4.97 DUST (fees per transaction in each case README and in
 [`docs/costs.md`](../../docs/costs.md#fees-on-stagenet)). Builds are deterministic: every deployed verifier key equals
 the SHA-256 in the cost tables ([`docs/costs.json`](../../docs/costs.json),
-[`examples/openzeppelin/costs.json`](../../examples/openzeppelin/costs.json)), except `withdrawMetadata` in C01–C06,
-whose contracts were compiled from sources where it emits one Null record at `name` (each key is in the case's
-`record.json`); C11's `withdrawMetadata` key equals the table. `LegacyToken.mint` and the inserted `publishMetadata` key
+[`examples/openzeppelin/costs.json`](../../examples/openzeppelin/costs.json)), except `withdrawMetadata`: in C01–C06
+it was compiled from sources where it emits one Null record at `name`, and in C11 from a source where it emits Null
+records at `name`, `symbol`, `decimals` and `standards` (each key is in the case's `record.json`). `LegacyToken.mint` and the inserted `publishMetadata` key
 equal the upgrade template's local build.
 
 **Mint scanner state** (case IDX): [`cases/IDX/index/index-state.json`](cases/IDX/index/index-state.json), start

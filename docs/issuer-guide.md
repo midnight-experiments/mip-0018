@@ -61,7 +61,7 @@ import "@mip0018/compact/src/Mip0018" prefix Mip0018_;  // compile with --compac
 export circuit publishMetadata(): [] {
   // guard it (owner check), make it publish-once, or remove its key after the first call
   Mip0018_emitPayload(Mip0018_commonFieldsWithStandards<10, 4, 8>(
-    domain, Mip0018_KIND_LEDGER(), "Acme Token", "ACME", 6, "mip-0004"));
+    domain, Mip0018_KIND_CONTRACT_TOKEN(), "Acme Token", "ACME", 6, "mip-0004"));
 }
 ```
 
@@ -77,14 +77,14 @@ Rename and withdraw, from the [OpenZeppelin fungible token](../examples/openzepp
 export circuit setMetadata(newName: Bytes<9>, newSymbol: Bytes<4>): [] {
   Ownable_assertOnlyOwner();
   Mip0018_emitPayload(Mip0018_payload2<4, 9, 6, 4>(
-    Mip0018_header(metadataDomain(), Mip0018_KIND_LEDGER()),
+    Mip0018_header(metadataDomain(), Mip0018_KIND_CONTRACT_TOKEN()),
     Mip0018_nameRecord<9>(newName),
     Mip0018_symbolRecord<4>(newSymbol)));
 }
 
 export circuit withdrawMetadata(): [] {
   Ownable_assertOnlyOwner();
-  Mip0018_emitPayload(Mip0018_withdraw(metadataDomain(), Mip0018_KIND_LEDGER()));
+  Mip0018_emitPayload(Mip0018_withdraw(metadataDomain(), Mip0018_KIND_CONTRACT_TOKEN()));
 }
 ```
 

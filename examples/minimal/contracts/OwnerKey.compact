@@ -30,7 +30,7 @@ circuit assertOwner(): [] {
 export circuit publishMetadata(): [] {
   assertOwner();
   Mip0018_emitPayload(Mip0018_commonFieldsWithStandards<10, 4, 8>(
-    domain, Mip0018_KIND_LEDGER(), "Acme Token", "ACME", 6, "mip-0004"));
+    domain, Mip0018_KIND_CONTRACT_TOKEN(), "Acme Token", "ACME", 6, "mip-0004"));
 }
 
 /**
@@ -40,16 +40,17 @@ export circuit publishMetadata(): [] {
 export circuit setMetadata(name: Bytes<10>, symbol: Bytes<4>): [] {
   assertOwner();
   Mip0018_emitPayload(Mip0018_payload2<4, 10, 6, 4>(
-    Mip0018_header(domain, Mip0018_KIND_LEDGER()), Mip0018_nameRecord<10>(name), Mip0018_symbolRecord<4>(symbol)));
+    Mip0018_header(domain, Mip0018_KIND_CONTRACT_TOKEN()), Mip0018_nameRecord<10>(name), Mip0018_symbolRecord<4>(symbol)));
 }
 
 /**
- * Withdraw: one event with a Null record for each key this token publishes (`name`, `symbol`,
- * `decimals`, `standards`). With no field left, consumers do not reference the token at all.
+ * Withdraw: one event with a Null record for each of the six common keys (`name`, `symbol`, `decimals`,
+ * `standards`, `image`, `image_sha256`; a Null record for a key without a value has no effect). With no field left,
+ * consumers do not reference the token at all.
  */
 export circuit withdrawMetadata(): [] {
   assertOwner();
-  Mip0018_emitPayload(Mip0018_withdraw(domain, Mip0018_KIND_LEDGER()));
+  Mip0018_emitPayload(Mip0018_withdraw(domain, Mip0018_KIND_CONTRACT_TOKEN()));
 }
 
 export circuit mint(to: Bytes<32>, amount: Uint<64>): [] {

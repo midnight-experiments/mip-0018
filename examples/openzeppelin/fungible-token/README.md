@@ -25,7 +25,7 @@ and can rename or withdraw them later.
 +import "@mip0018/compact/src/Mip0018" prefix Mip0018_;
 
  export { Either, ContractAddress };
-@@ -54,2 +55,33 @@
+@@ -54,2 +55,34 @@
    FungibleToken__burn(account, value);
  }
 +
@@ -40,7 +40,7 @@ and can rename or withdraw them later.
 +export circuit publishMetadata(): [] {
 +  Ownable_assertOnlyOwner();
 +  Mip0018_emitPayload(Mip0018_commonFields<9, 4>(
-+    metadataDomain(), Mip0018_KIND_LEDGER(), "Acme Gold", "AGLD", FungibleToken__decimals));
++    metadataDomain(), Mip0018_KIND_CONTRACT_TOKEN(), "Acme Gold", "AGLD", FungibleToken__decimals));
 +}
 +
 +// Rename (an extraordinary update): a new 9-byte name and 4-byte symbol; other fields keep
@@ -48,16 +48,17 @@ and can rename or withdraw them later.
 +export circuit setMetadata(newName: Bytes<9>, newSymbol: Bytes<4>): [] {
 +  Ownable_assertOnlyOwner();
 +  Mip0018_emitPayload(Mip0018_payload2<4, 9, 6, 4>(
-+    Mip0018_header(metadataDomain(), Mip0018_KIND_LEDGER()),
++    Mip0018_header(metadataDomain(), Mip0018_KIND_CONTRACT_TOKEN()),
 +    Mip0018_nameRecord<9>(newName),
 +    Mip0018_symbolRecord<4>(newSymbol)));
 +}
 +
-+// Withdraw: one event with a Null record for each key (name, symbol, decimals, standards);
++// Withdraw: one event with a Null record for each of the six common keys (name, symbol, decimals,
++// standards, image, image_sha256); this token publishes the first three, the others are no-ops;
 +// with no field left, consumers do not reference the token at all.
 +export circuit withdrawMetadata(): [] {
 +  Ownable_assertOnlyOwner();
-+  Mip0018_emitPayload(Mip0018_withdraw(metadataDomain(), Mip0018_KIND_LEDGER()));
++  Mip0018_emitPayload(Mip0018_withdraw(metadataDomain(), Mip0018_KIND_CONTRACT_TOKEN()));
 +}
 ```
 

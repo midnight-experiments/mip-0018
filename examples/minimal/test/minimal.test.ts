@@ -95,14 +95,16 @@ describe('OwnerKey', () => {
     expectA1(await as(sim, ALICE, 'publishMetadata'), sim.address);
   });
 
-  it('setMetadata (rename) and withdrawMetadata (four Null records) equal the codec bytes', async () => {
+  it('setMetadata (rename) and withdrawMetadata (six Null records) equal the codec bytes', async () => {
     const sim = await deployOK();
     const renamed = await as(sim, ALICE, 'setMetadata', utf8('Beta Token'), utf8('BETA'));
     expect(toHex(renamed.misc[0]!.payload)).toBe(
       toHex(encodePayload({ domainSep: DOMAIN, kind: Kind.ContractToken }, commonRecords({ name: 'Beta Token', symbol: 'BETA' }))),
     );
     const withdrawn = await as(sim, ALICE, 'withdrawMetadata');
-    expect(toHex(withdrawn.misc[0]!.payload)).toBe(toHex(encodePayload({ domainSep: DOMAIN, kind: Kind.ContractToken }, withdrawRecords())));
+    expect(toHex(withdrawn.misc[0]!.payload)).toBe(
+      toHex(encodePayload({ domainSep: DOMAIN, kind: Kind.ContractToken }, withdrawRecords())),
+    );
     for (const out of [renamed, withdrawn]) {
       expect(out.misc).toHaveLength(1);
       expect(toHex(out.misc[0]!.name)).toBe(toHex(EVENT_NAME));

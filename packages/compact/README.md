@@ -23,7 +23,7 @@ import "@mip0018/compact/src/Mip0018" prefix Mip0018_;  // compile with --compac
 export circuit publishMetadata(): [] {
   // guard it (owner check), make it publish-once, or remove its key after the first call
   Mip0018_emitPayload(Mip0018_commonFieldsWithStandards<10, 4, 8>(
-    domain, Mip0018_KIND_LEDGER(), "Acme Token", "ACME", 6, "mip-0004"));
+    domain, Mip0018_KIND_CONTRACT_TOKEN(), "Acme Token", "ACME", 6, "mip-0004"));
 }
 ```
 
@@ -38,35 +38,38 @@ why the MIP names this circuit. Complete contracts: [`examples/minimal`](../../e
 | Circuit | Returns | MIP section |
 |---|---|---|
 | `EVENT_NAME()` | `pad(32, "mip-0018:token-metadata[v1]")` | Event |
-| `KIND_SHIELDED()` / `KIND_UNSHIELDED()` / `KIND_LEDGER()` | 1 / 2 / 3 | Token identity and authority |
+| `KIND_SHIELDED_UTXO()` / `KIND_UNSHIELDED_UTXO()` / `KIND_CONTRACT_TOKEN()` | 1 / 2 / 3 | Token identity and authority |
 | `VALTYPE_BYTES()` … `VALTYPE_NULL()` | 0 … 5 | Value types |
 | `header(domainSep, kind)` | `MetadataHeader` (asserts kind ∈ {1, 2, 3}) | Payload |
 | `bytesRecord<K, V>(key, value)` · `utf8Record` · `jsonRecord` · `uriRecord` | `MetadataRecord<K, V>` with valType 0 / 1 / 3 / 4 | Payload, Value types |
 | `uintRecord<K>(key, Uint<8>)` · `uint128Record<K>(key, Uint<128>)` | `MetadataRecord<K, 1>` / `<K, 16>` (little-endian) | Value types |
 | `nullRecord<K>(key)` | `MetadataRecord<K, 0>` with valType 5 (tombstone): deletes the field at `key`; the token's other fields stay | Applying records |
-| `nameRecord<N>(name)` · `symbolRecord<S>(symbol)` · `decimalsRecord(Uint<8>)` · `standardsRecord<T>(list)` | the common-field records | Common fields |
-| `payload1<K1, V1>(h, r1)` … `payload4<K1, V1, …, K4, V4>(h, r1, …, r4)` | `Bytes<256>`: header ‖ records ‖ zero padding | Payload |
+| `nameRecord<N>(name)` · `symbolRecord<S>(symbol)` · `decimalsRecord(Uint<8>)` · `standardsRecord<T>(list)` | the common-field records (`name` 1–64 and `symbol` 1–12 characters: consumers show only that many; empty is a compile error) | Common fields |
+| `imageRecord<N>(uri)` · `imageSha256Record(hash: Bytes<32>)` | `image` (a URI, valType 4) and `image_sha256` (the SHA-256 of the file at `image`, valType 0, 32 bytes) | Common fields |
+| `payload1<K1, V1>(h, r1)` … `payload6<K1, V1, …, K6, V6>(h, r1, …, r6)` | `Bytes<256>`: header ‖ records ‖ zero padding | Payload |
 | `commonFields<N, S>(domainSep, kind, name, symbol, decimals)` | `Bytes<256>` | Common fields |
 | `commonFieldsWithStandards<N, S, T>(…, standards)` | `Bytes<256>` (Appendix A shape) | Common fields |
-| `withdraw(domainSep, kind)` | `Bytes<256>`: ONE event with Null records at `name`, `symbol`, `decimals`, `standards` (33-byte header + 39 bytes of records, the rest zero); equals `@mip0018/codec` `withdrawRecords()` | Applying records |
+| `withdraw(domainSep, kind)` | `Bytes<256>`: ONE event with Null records at the six common keys `name`, `symbol`, `decimals`, `standards`, `image`, `image_sha256` (33-byte header + 62 bytes of records, the rest zero); equals `@mip0018/codec` `withdrawRecords()` | Applying records |
 | `emitPayload(payload)` | emits `Misc { EVENT_NAME(), payload }` — the only `emit` (disclosed) | Event, Publishing |
 
 **Deleting metadata** (MIP "Applying records", per-key tombstones): a Null record deletes its own field, and a token
 identity exists only while at least one of its fields has a value. `withdraw(domainSep, kind)` withdraws a token
-that published the common keys: once all four are deleted, consumers do not reference the identity at all (not
-in listings, lookups, groups or history); a later non-Null record describes it again with only that field. A token
-that also published other keys must add a Null record for each of them (or the identity stays, with those keys).
+that published only common keys: once all six are deleted (a Null record for a field without a value has no effect),
+consumers do not reference the identity at all (not in listings, lookups, groups or history); a later non-Null
+record describes it again with only that field. A token that also published keys of a declared standard must add a
+Null record for each of them (or the identity stays, with those keys).
 To delete a single key, emit one Null record for it, e.g.
 `emitPayload(payload1<4, 0>(header(domainSep, kind), nullRecord<4>("name")))`.
 
 `keyLen` and `valLen` are derived from the generic sizes, so they cannot disagree with the data.
-Compact has no variadics: `payload1`–`payload4` cover one to four records; a contract that needs more
+Compact has no variadics: `payload1`–`payload6` cover one to six records; a contract that needs more
 in one event spreads them itself or sends a second event (MIP "Publishing": group records into as few
 events as fit).
 
 The alternative module `Mip0018Pure` has the same names; each record builder takes its own size as an
 extra generic argument (`utf8Record<K, V, R>` with `R = 3 + K + V`) and each payload builder its
-padding (`payload4<A, B, C, D, P>` with `33 + A + B + C + D + P = 256`), because Compact has no
+padding (`payload4<A, B, C, D, P>` with `33 + A + B + C + D + P = 256`; `imageRecord<N, R>` with `R = 8 + N`;
+`imageSha256Record` is always 47 bytes), because Compact has no
 arithmetic on generic sizes. The compiler checks both. Prefer the default module: it is simpler and
 cheaper for runtime values; the alternative exists because it does not rely on `serialize` for
 non-event types, which Compact 0.35.0 accepts although its standard-library documentation still says
@@ -80,8 +83,8 @@ key, `name` or `symbol`; a key or value longer than 255 bytes; records that do n
 (a 1-byte key leaves room for a 219-byte value); a value whose length differs from its declared size;
 `decimals` above 255; a wrong `R` or `P` in the alternative module; an undisclosed raw `emit`.
 
-Not checked in circuit: that a UTF-8 value is valid UTF-8, a JSON value valid JSON, a URI an RFC 3986
-URI (scheme required, ASCII), or `standards` a well-formed list. String literals are UTF-8 by
+Not checked in circuit: that a key or UTF-8 value is valid UTF-8, a JSON value valid JSON, a URI an RFC 3986
+URI (scheme required, ASCII), `standards` a well-formed list, or `name`/`symbol` within 64/12 characters. String literals are UTF-8 by
 construction; values passed in at run time must be validated off chain before the call (e.g. with
 `@mip0018/codec`'s `encodePayload`, which rejects anything a consumer would reject).
 
@@ -141,7 +144,7 @@ docker/run.sh exec 'npx vitest run packages/compact -t equivalence'
 
 | Test | What |
 |---|---|
-| [`test/vectors.test.ts`](test/vectors.test.ts) | Both modules, executed in compact-runtime 0.20.0: payload = fixture bytes for A1, A2a/b, A3a–c, A4a/b, A5a–c, S1a/b (inputs taken from the fixtures); round trip through the codec; literal A1; `withdraw` = codec `withdrawRecords()` and a single-key `nullRecord` = codec `record.tombstone(key)` for kinds 1/2/3; `commonFields` / URI = codec; kind 0, 4, 255 rejected; constants = codec |
+| [`test/vectors.test.ts`](test/vectors.test.ts) | Both modules, executed in compact-runtime 0.20.0: payload = fixture bytes for A1, A2a/b, A3a/b, A4a/b, A5a–c, A6, S1a/b (inputs taken from the fixtures); round trip through the codec; literal A1; `imageRecord`/`imageSha256Record` = A6; `payload6` with the six common-field builders = codec `commonRecords`; `withdraw` = codec `withdrawRecords()` (six Nulls, content ends at 95) and a single-key `nullRecord` = codec `record.tombstone(key)` for kinds 1/2/3; `commonFields` / URI = codec; kind 0, 4, 255 rejected; constants = codec |
 | [`test/equivalence.test.ts`](test/equivalence.test.ts) | Generated contracts: every value size 1–219 plus random 2–4-record shapes (uint8, uint128, Null), 3 random inputs each: typed = pure = `@mip0018/codec` `encodePayload` |
 | [`test/compile-fail.test.ts`](test/compile-fail.test.ts) | 16 programs the compiler must reject, with the expected message |
 

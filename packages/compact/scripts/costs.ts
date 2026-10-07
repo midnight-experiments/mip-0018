@@ -71,8 +71,8 @@ const costsContract = (contract: string, group: string): Target => ({
     { circuit: 'arg3', args: [DS, A1.name, A1.symbol, A1.decimals], note: 'runtime domainSep + 3 common fields' },
     { circuit: 'arg4', args: [DS, A1.name, A1.symbol, A1.decimals, A1.standards], note: 'runtime domainSep + 4 common fields' },
     { circuit: 'dsArg4', args: [DS], note: 'runtime domainSep, literal A1 records' },
-    { circuit: 'withdrawLit', note: '`withdraw` (four Null records), literal header' },
-    { circuit: 'withdrawArg', args: [DS, 3n], note: '`withdraw` (four Null records), runtime domainSep and kind' },
+    { circuit: 'withdrawLit', note: '`withdraw` (six Null records), literal header' },
+    { circuit: 'withdrawArg', args: [DS, 3n], note: '`withdraw` (six Null records), runtime domainSep and kind' },
   ],
 });
 
@@ -106,7 +106,7 @@ const TARGETS: Target[] = [
   minimal('OwnerKey', [
     { circuit: 'publishMetadata', note: 'owner check + ledger domainSep, literal records' },
     { circuit: 'setMetadata', args: [utf8('Beta Token'), utf8('BETA')], note: 'owner check + runtime name, symbol' },
-    { circuit: 'withdrawMetadata', note: 'owner check + `withdraw` (four Null records)' },
+    { circuit: 'withdrawMetadata', note: 'owner check + `withdraw` (six Null records)' },
     { circuit: 'mint', args: [BOB_ACCOUNT, 10n], note: 'normal operation (no metadata)' },
   ]),
   minimal('PublishOnce', [{ circuit: 'publishMetadata', note: 'publish-once flag + ledger domainSep, literal records' }]),

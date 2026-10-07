@@ -10,13 +10,14 @@
 //   * the event name and the `kind` / `valType` constants ("Event", "Value types",
 //     "Token identity and authority");
 //   * typed builders: a record is the struct `MetadataRecord<#K, #V>` whose key and
-//     value sizes are generic; the payload is the header plus 1-4 records serialized by
+//     value sizes are generic; the payload is the header plus 1-6 records serialized by
 //     Compact itself (`serialize<[...], 256>`), which appends the zero padding. The
 //     compiler therefore checks every size: a value of the wrong length, a key longer
 //     than 255 bytes, an empty key, or records that do not fit in 256 bytes are all
 //     compile errors ("Payload", "Limitations");
-//   * convenience builders for the common fields `name`, `symbol`, `decimals` (`Uint<8>`)
-//     and `standards`, and `withdraw`, which deletes all four ("Common fields", "Applying records");
+//   * convenience builders for the common fields `name`, `symbol`, `decimals` (`Uint<8>`),
+//     `standards`, `image` and `image_sha256`, and `withdraw`, which deletes all six
+//     ("Common fields", "Applying records");
 //   * `emitPayload`, the only circuit that calls `emit`.
 //
 // Generic arguments are always written explicitly at the call site (Compact requires it):
@@ -25,7 +26,7 @@
 //
 //   export circuit publishMetadata(): [] {
 //     Mip0018_emitPayload(Mip0018_commonFieldsWithStandards<10, 4, 8>(
-//       domain, Mip0018_KIND_LEDGER(), "Acme Token", "ACME", 6, "mip-0004"));
+//       domain, Mip0018_KIND_CONTRACT_TOKEN(), "Acme Token", "ACME", 6, "mip-0004"));
 //   }
 //
 // The sizes are fixed per contract from the actual value lengths: "Acme Token" is
@@ -62,18 +63,18 @@ module Mip0018 {
     return pad(32, "mip-0018:token-metadata[v1]");
   }
 
-  /** kind 1: native shielded token (MIP-0011); has a color. */
-  export pure circuit KIND_SHIELDED(): Uint<8> {
+  /** kind 1: shielded UTXO — a contract-issued UTXO token held as shielded coins (e.g. MIP-0011); has a color. */
+  export pure circuit KIND_SHIELDED_UTXO(): Uint<8> {
     return 1;
   }
 
-  /** kind 2: native unshielded token (MIP-0014); has a color. */
-  export pure circuit KIND_UNSHIELDED(): Uint<8> {
+  /** kind 2: unshielded UTXO — a contract-issued UTXO token held as unshielded UTXOs (e.g. MIP-0014); has a color. */
+  export pure circuit KIND_UNSHIELDED_UTXO(): Uint<8> {
     return 2;
   }
 
-  /** kind 3: ledger token (MIP-0004 or any contract-defined representation); no color. */
-  export pure circuit KIND_LEDGER(): Uint<8> {
+  /** kind 3: contract token — represented by contract logic (e.g. MIP-0004), not protocol UTXOs; no color. */
+  export pure circuit KIND_CONTRACT_TOKEN(): Uint<8> {
     return 3;
   }
 
@@ -191,13 +192,16 @@ module Mip0018 {
   // Common fields ("Common fields")
   // ---------------------------------------------------------------------------
 
-  /** `name`: UTF-8, not empty (N = 0 is a compile error). */
+  /**
+   * `name`: UTF-8, not empty (N = 0 is a compile error). The MIP gives `name` 1-64 characters: keep it within 64
+   * (consumers show only the first 64). Characters are not bytes, so the length is not checked here.
+   */
   export pure circuit nameRecord<#N>(name: Bytes<N>): MetadataRecord<4, N> {
     const nameIsNotEmpty = slice<1>(name, 0);
     return utf8Record<4, N>("name", name);
   }
 
-  /** `symbol`: UTF-8, not empty (S = 0 is a compile error). */
+  /** `symbol`: UTF-8, not empty (S = 0 is a compile error). Keep it within 12 characters (consumers show only the first 12). */
   export pure circuit symbolRecord<#S>(symbol: Bytes<S>): MetadataRecord<6, S> {
     const symbolIsNotEmpty = slice<1>(symbol, 0);
     return utf8Record<6, S>("symbol", symbol);
@@ -216,8 +220,26 @@ module Mip0018 {
     return utf8Record<9, T>("standards", standards);
   }
 
+  /**
+   * `image`: a URI (type 4) of the token's image or logo, e.g. "https://example.org/acme.png" (N = 0 is a compile
+   * error). The URI must be RFC 3986 and ASCII; it is not checked in circuit. Publish `image_sha256` with it so that
+   * consumers can check the content.
+   */
+  export pure circuit imageRecord<#N>(uri: Bytes<N>): MetadataRecord<5, N> {
+    const uriIsNotEmpty = slice<1>(uri, 0);
+    return uriRecord<5, N>("image", uri);
+  }
+
+  /**
+   * `image_sha256`: the SHA-256 of the file at `image` (type 0, exactly 32 bytes). Consumers do not display content
+   * from `image` whose SHA-256 differs from it.
+   */
+  export pure circuit imageSha256Record(hash: Bytes<32>): MetadataRecord<12, 32> {
+    return bytesRecord<12, 32>("image_sha256", hash);
+  }
+
   // ---------------------------------------------------------------------------
-  // Payloads: header + 1-4 records + zero padding (Compact has no variadics)
+  // Payloads: header + 1-6 records + zero padding (Compact has no variadics)
   // ---------------------------------------------------------------------------
 
   export pure circuit payload1<#K1, #V1>(h: MetadataHeader, r1: MetadataRecord<K1, V1>): Bytes<256> {
@@ -253,6 +275,32 @@ module Mip0018 {
                       MetadataRecord<K4, V4>], 256>([h, r1, r2, r3, r4]);
   }
 
+  export pure circuit payload5<#K1, #V1, #K2, #V2, #K3, #V3, #K4, #V4, #K5, #V5>(
+    h: MetadataHeader,
+    r1: MetadataRecord<K1, V1>,
+    r2: MetadataRecord<K2, V2>,
+    r3: MetadataRecord<K3, V3>,
+    r4: MetadataRecord<K4, V4>,
+    r5: MetadataRecord<K5, V5>
+  ): Bytes<256> {
+    return serialize<[MetadataHeader, MetadataRecord<K1, V1>, MetadataRecord<K2, V2>, MetadataRecord<K3, V3>,
+                      MetadataRecord<K4, V4>, MetadataRecord<K5, V5>], 256>([h, r1, r2, r3, r4, r5]);
+  }
+
+  export pure circuit payload6<#K1, #V1, #K2, #V2, #K3, #V3, #K4, #V4, #K5, #V5, #K6, #V6>(
+    h: MetadataHeader,
+    r1: MetadataRecord<K1, V1>,
+    r2: MetadataRecord<K2, V2>,
+    r3: MetadataRecord<K3, V3>,
+    r4: MetadataRecord<K4, V4>,
+    r5: MetadataRecord<K5, V5>,
+    r6: MetadataRecord<K6, V6>
+  ): Bytes<256> {
+    return serialize<[MetadataHeader, MetadataRecord<K1, V1>, MetadataRecord<K2, V2>, MetadataRecord<K3, V3>,
+                      MetadataRecord<K4, V4>, MetadataRecord<K5, V5>, MetadataRecord<K6, V6>], 256>(
+      [h, r1, r2, r3, r4, r5, r6]);
+  }
+
   /** `name`, `symbol`, `decimals` (one event, MIP Appendix A without `standards`). */
   export pure circuit commonFields<#N, #S>(
     domainSep: Bytes<32>,
@@ -283,19 +331,20 @@ module Mip0018 {
   }
 
   /**
-   * Withdraws a token: ONE event with Null records at `name`, `symbol`, `decimals` and
-   * `standards`, in that order (33-byte header + 39 bytes of records, the rest zero). A Null
-   * record deletes its field, and a token identity exists only while one of its fields has a
-   * value: once every key is deleted, consumers do not reference the identity
+   * Withdraws a token: ONE event with Null records at the six common keys `name`, `symbol`,
+   * `decimals`, `standards`, `image` and `image_sha256`, in that order (33-byte header + 62
+   * bytes of records, the rest zero). A Null record deletes its field (one without a value is
+   * unaffected), and a token identity exists only while one of its fields has a value: once
+   * every key is deleted, consumers do not reference the identity
    * `(network, this contract, domainSep, kind)` at all; a later non-Null record describes it
-   * again with only that field ("Applying records"). A token that also published keys beyond
-   * these four must add a Null record for each of them (build that event with `nullRecord`
-   * and `payload<n>`), otherwise those keys keep the identity alive.
+   * again with only that field ("Applying records"). A token that also published keys of a
+   * declared standard must add a Null record for each of them (build that event with
+   * `nullRecord` and `payload<n>`), otherwise those keys keep the identity alive.
    */
   export pure circuit withdraw(domainSep: Bytes<32>, kind: Uint<8>): Bytes<256> {
-    return payload4<4, 0, 6, 0, 8, 0, 9, 0>(
+    return payload6<4, 0, 6, 0, 8, 0, 9, 0, 5, 0, 12, 0>(
       header(domainSep, kind), nullRecord<4>("name"), nullRecord<6>("symbol"), nullRecord<8>("decimals"),
-      nullRecord<9>("standards"));
+      nullRecord<9>("standards"), nullRecord<5>("image"), nullRecord<12>("image_sha256"));
   }
 
   // ---------------------------------------------------------------------------

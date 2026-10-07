@@ -43,11 +43,11 @@ together because they share the contract and the `symbol` ("Symbol grouping").
 +export circuit publishMetadata(): [] {
 +  Ownable_assertOnlyOwner();
 +  Mip0018_emitPayload(Mip0018_commonFields<11, 3>(
-+    NativeShieldedToken__domain, Mip0018_KIND_SHIELDED(), "Acme Dollar", "ACD", NativeShieldedToken__decimals));
++    NativeShieldedToken__domain, Mip0018_KIND_SHIELDED_UTXO(), "Acme Dollar", "ACD", NativeShieldedToken__decimals));
 +  Mip0018_emitPayload(Mip0018_commonFields<11, 3>(
-+    NativeShieldedToken__domain, Mip0018_KIND_UNSHIELDED(), "Acme Dollar", "ACD", NativeShieldedToken__decimals));
++    NativeShieldedToken__domain, Mip0018_KIND_UNSHIELDED_UTXO(), "Acme Dollar", "ACD", NativeShieldedToken__decimals));
 +  Mip0018_emitPayload(Mip0018_commonFields<11, 3>(
-+    NativeShieldedToken__domain, Mip0018_KIND_LEDGER(), "Acme Dollar", "ACD", FungibleToken__decimals));
++    NativeShieldedToken__domain, Mip0018_KIND_CONTRACT_TOKEN(), "Acme Dollar", "ACD", FungibleToken__decimals));
 +}
 +
 +// Rename one representation (kind 1, 2 or 3): a new 11-byte name and 3-byte symbol. The other

@@ -39,7 +39,7 @@ own event(s): here three types, `gold`, `silver` and `bronze`.
 +export circuit publishMetadata(domain: Bytes<32>): [] {
 +  Ownable_assertOnlyOwner();
 +  Mip0018_emitPayload(Mip0018_commonFields<11, 5>(
-+    domain, Mip0018_KIND_SHIELDED(), "Acme Medals", "MEDAL", NativeShieldedTokenFamily__decimals));
++    domain, Mip0018_KIND_SHIELDED_UTXO(), "Acme Medals", "MEDAL", NativeShieldedTokenFamily__decimals));
 +}
 +
 +// Rename one token type: a new 11-byte name and 5-byte symbol for `domain` only; the other types
@@ -47,7 +47,7 @@ own event(s): here three types, `gold`, `silver` and `bronze`.
 +export circuit setMetadata(domain: Bytes<32>, newName: Bytes<11>, newSymbol: Bytes<5>): [] {
 +  Ownable_assertOnlyOwner();
 +  Mip0018_emitPayload(Mip0018_payload2<4, 11, 6, 5>(
-+    Mip0018_header(domain, Mip0018_KIND_SHIELDED()),
++    Mip0018_header(domain, Mip0018_KIND_SHIELDED_UTXO()),
 +    Mip0018_nameRecord<11>(newName),
 +    Mip0018_symbolRecord<5>(newSymbol)));
 +}
@@ -56,7 +56,7 @@ own event(s): here three types, `gold`, `silver` and `bronze`.
 +// other types are unchanged.
 +export circuit withdrawMetadata(domain: Bytes<32>): [] {
 +  Ownable_assertOnlyOwner();
-+  Mip0018_emitPayload(Mip0018_withdraw(domain, Mip0018_KIND_SHIELDED()));
++  Mip0018_emitPayload(Mip0018_withdraw(domain, Mip0018_KIND_SHIELDED_UTXO()));
 +}
 ```
 
@@ -69,7 +69,7 @@ own event(s): here three types, `gold`, `silver` and `bronze`.
   consumers then group the types under one symbol (MIP "Symbol grouping": presentation only — a group
   never says its members are interchangeable). MIP-0018 can describe more than the getters do:
   `setMetadata(domain, …)` gives one type its own name and symbol (the getters stay family-wide).
-- **Independent lifecycles** — `withdrawMetadata(domain)` deletes every key of that type only (one event, four Null records).
+- **Independent lifecycles** — `withdrawMetadata(domain)` deletes every key of that type only (one event, a Null record for each of the six common keys).
 
 ## Deploy and publish
 

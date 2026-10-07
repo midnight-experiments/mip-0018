@@ -19,7 +19,7 @@ import "../../../packages/compact/src/Mip0018" prefix Mip0018_;          // 1. t
 
 export circuit publishMetadata(): [] {                                  // 2. the circuit the MIP names
   Mip0018_emitPayload(Mip0018_commonFieldsWithStandards<10, 4, 8>(      // 3. sizes of the 3 strings
-    domain, Mip0018_KIND_LEDGER(), "Acme Token", "ACME", 6, "mip-0004")); // 4. your values
+    domain, Mip0018_KIND_CONTRACT_TOKEN(), "Acme Token", "ACME", 6, "mip-0004")); // 4. your values
 }                                                                       // 5.
 ```
 
@@ -65,7 +65,9 @@ exactly one `Misc` event. Circuit sizes and proving times: [`docs/costs.md`](../
 
 On Stagenet: `OwnerKey`'s publish → rename → withdraw ×2 → revive is case
 [C06](../../deployments/stagenet/cases/C06/README.md) (its contract was compiled from `OwnerKey.compact` at
-`70b54c6`, whose `withdrawMetadata` emits a single Null record at `name`), and the full withdrawal with `OwnerKey` as
-in this directory (four Null records in one event) is case [C11](../../deployments/stagenet/cases/C11/README.md); `CreateAndDestroy` is case
+`70b54c6`, whose `withdrawMetadata` emits a single Null record at `name`), and the full withdrawal is case
+[C11](../../deployments/stagenet/cases/C11/README.md) (compiled from `OwnerKey.compact` at `57ce633`, whose
+`withdrawMetadata` emits one event with Null records at `name`, `symbol`, `decimals` and `standards`, the four keys
+that token has; this directory's `withdrawMetadata` also deletes `image` and `image_sha256`); `CreateAndDestroy` is case
 [C10](../../deployments/stagenet/cases/C10/README.md). All re-check wallet-free with
 `docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/<ID>`.

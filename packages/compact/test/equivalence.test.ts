@@ -36,7 +36,7 @@ const sample = (records: RecordShape[], rnd: () => number) => {
   const args: unknown[] = [domainSep, BigInt(kind)];
   const want: MetadataRecord[] = [];
   for (const r of records) {
-    const key = bytes(r.k);
+    const key = ascii(r.k, printable); // keys are valid UTF-8 (MIP "Keys")
     args.push(key);
     let value: Uint8Array;
     if (r.kind === 'uint8' || r.kind === 'uint128') {

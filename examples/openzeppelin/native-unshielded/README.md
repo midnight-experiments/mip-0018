@@ -30,7 +30,7 @@ construction). Access control is still OpenZeppelin `Ownable`.
 +import "@mip0018/compact/src/Mip0018" prefix Mip0018_;
 
  export { Either, ContractAddress, UserAddress };
-@@ -58,2 +59,29 @@
+@@ -58,2 +59,30 @@
    return mintUnshieldedToken(_domain, disclose(amount), right<ContractAddress, UserAddress>(disclose(recipient)));
  }
 +
@@ -41,7 +41,7 @@ construction). Access control is still OpenZeppelin `Ownable`.
 +// constructor's `name_` and `symbol_`; `decimals` is read from the token's own state.
 +export circuit publishMetadata(): [] {
 +  Ownable_assertOnlyOwner();
-+  Mip0018_emitPayload(Mip0018_commonFields<11, 4>(_domain, Mip0018_KIND_UNSHIELDED(), "Acme Public", "APUB", _decimals));
++  Mip0018_emitPayload(Mip0018_commonFields<11, 4>(_domain, Mip0018_KIND_UNSHIELDED_UTXO(), "Acme Public", "APUB", _decimals));
 +}
 +
 +// Rename (an extraordinary update): a new 11-byte name and 4-byte symbol; other fields keep
@@ -49,16 +49,17 @@ construction). Access control is still OpenZeppelin `Ownable`.
 +export circuit setMetadata(newName: Bytes<11>, newSymbol: Bytes<4>): [] {
 +  Ownable_assertOnlyOwner();
 +  Mip0018_emitPayload(Mip0018_payload2<4, 11, 6, 4>(
-+    Mip0018_header(_domain, Mip0018_KIND_UNSHIELDED()),
++    Mip0018_header(_domain, Mip0018_KIND_UNSHIELDED_UTXO()),
 +    Mip0018_nameRecord<11>(newName),
 +    Mip0018_symbolRecord<4>(newSymbol)));
 +}
 +
-+// Withdraw: one event with a Null record for each key (name, symbol, decimals, standards);
++// Withdraw: one event with a Null record for each of the six common keys (name, symbol, decimals,
++// standards, image, image_sha256); this token publishes the first three, the others are no-ops;
 +// with no field left, consumers do not reference the token at all.
 +export circuit withdrawMetadata(): [] {
 +  Ownable_assertOnlyOwner();
-+  Mip0018_emitPayload(Mip0018_withdraw(_domain, Mip0018_KIND_UNSHIELDED()));
++  Mip0018_emitPayload(Mip0018_withdraw(_domain, Mip0018_KIND_UNSHIELDED_UTXO()));
 +}
 ```
 
