@@ -43,14 +43,17 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/C05
 ```
 
-## Transactions
+## Transactions (Preview, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
-| `deploy` | — | — | — |
-| `mint-gold` | — | — | — |
-| `mint-silver` | — | — | — |
-| `publish-gold` | — | — | — |
-| `publish-silver` | — | — | — |
-| `publish-bronze` | — | — | — |
+Contract `MyTokenFamily` at `93500811da5365b6a83ffe00b3f2d74bfbd0cd8bcaa124024578095b9854394e`; signer mn_addr_preview1wlhw0m3nh29lfmk0tj4lvfh2wfsekt8nns9h57gpyfe0az7e9fts2x420z.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `deploy` | deploy | `d490f5083836e8ef5601e81c0ba644e95652a97ddaf6a7935b6d4f8574fae854` | 41672 (`46559a9045a3d408…`) | SUCCESS | 8,731,094,106,068,636 | 8.731 |
+| `mint-gold` | call `mint` | `f47d4096b2cc7f4e0eaa4ae9f60d1ba54e1a7f34e1380705ecb3cf6f557e584f` | 41678 (`16cfb249b2c2a882…`) | SUCCESS | 270,896,228,571,429 | 0.271 |
+| `mint-silver` | call `mint` | `120aab045957118dd479b9aa077c16678a6c7f635efac8483edcbfad62742843` | 41684 (`d5f3c92a2121ad1d…`) | SUCCESS | 271,065,653,974,818 | 0.271 |
+| `publish-gold` | call `publishMetadata` | `f62199fa313df07fbe19fcadd8b638618ab220c5b9d7866210758cdb688666b0` | 41691 (`d3f69e4248d984e1…`) | SUCCESS | 218,901,455,038,284 | 0.219 |
+| `publish-silver` | call `publishMetadata` | `ba38259314434801487ebabe54014631f89eee5513056d5d9079d0b2bde66589` | 41697 (`dea037caae6162bb…`) | SUCCESS | 218,907,204,211,280 | 0.219 |
+| `publish-bronze` | call `publishMetadata` | `5bcbac077d3a6968002ec8ad0b94b3b71b7369405561b490c3e1ec7c43685de2` | 41704 (`b67ec933a2f068c7…`) | SUCCESS | 218,752,000,000,001 | 0.219 |
+| **total** | | | | | **9,929,616,647,864,448** | **9.930** |
 
