@@ -10,9 +10,13 @@
 //      the official midnightntwrk/compact releases;
 //   3. the npm pins in toolchain.json equal package.json overrides and the
 //      workspace manifests that use them;
-//   4. no file in those places mentions a non-official binary source.
+//   4. no file in those places mentions a non-official binary source;
+//   5. the install (node_modules) holds exactly one copy of each single-copy
+//      package (@midnightntwrk/ledger-v9, @midnightntwrk/onchain-runtime-v4), at
+//      the pinned version, and the top-level copy of every other npm pin is the
+//      pinned version. Two copies of the ledger WASM make contract calls fail.
 
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { repoRoot, toolchain } from './lib/mip.mjs';
 
@@ -100,10 +104,62 @@ for (const f of manifests) {
   }
 }
 
+// 5. install
+const SINGLE_COPY = ['@midnightntwrk/ledger-v9', '@midnightntwrk/onchain-runtime-v4'];
+const nodeModules = join(repoRoot, 'node_modules');
+/** Every installed copy of a package: [path relative to the repository, version]. */
+const installedCopies = (name) => {
+  const out = [];
+  const visit = (dir) => {
+    let entries;
+    try {
+      entries = readdirSync(dir);
+    } catch {
+      return;
+    }
+    for (const e of entries) {
+      if (e.startsWith('.')) continue;
+      if (e.startsWith('@')) {
+        for (const s of readdirSync(join(dir, e))) visitPackage(join(dir, e, s), `${e}/${s}`);
+      } else visitPackage(join(dir, e), e);
+    }
+  };
+  const visitPackage = (pkgDir, pkgName) => {
+    const manifest = join(pkgDir, 'package.json');
+    if (pkgName === name && existsSync(manifest)) out.push([relative(repoRoot, pkgDir), JSON.parse(readFileSync(manifest, 'utf8')).version]);
+    visit(join(pkgDir, 'node_modules'));
+  };
+  visit(nodeModules);
+  return out;
+};
+let installChecked = 0;
+if (!existsSync(nodeModules)) fail('node_modules is missing: install first (docker/run.sh ci), then run check:pins');
+else {
+  for (const name of SINGLE_COPY) {
+    const want = tc.npm[name];
+    if (want === undefined) fail(`toolchain.json npm has no pin for ${name}`);
+    const copies = installedCopies(name);
+    if (copies.length !== 1)
+      fail(`${name}: ${copies.length} installed copies (${copies.map(([p, v]) => `${p}@${v}`).join(', ') || 'none'}), exactly one required`);
+    else if (copies[0][1] !== want) fail(`${name}: installed ${copies[0][1]}, toolchain.json says ${want}`);
+    else installChecked++;
+  }
+  for (const [name, want] of Object.entries(tc.npm)) {
+    if (name.startsWith('$') || SINGLE_COPY.includes(name)) continue;
+    const manifest = join(nodeModules, name, 'package.json');
+    if (!existsSync(manifest)) fail(`${name} is not installed at the top level of node_modules`);
+    else {
+      const have = JSON.parse(readFileSync(manifest, 'utf8')).version;
+      if (have !== want) fail(`node_modules/${name}@${have}, toolchain.json says ${want}`);
+      else installChecked++;
+    }
+  }
+}
+
 if (problems.length) {
   for (const p of problems) console.error(`FAIL ${p}`);
   process.exit(1);
 }
 console.log(
-  `OK ${allowed.size} images, Compact ${tc.compact.version} release + devtool ${tc.compact.devtool.version}, ${Object.keys(tc.npm).filter((k) => !k.startsWith('$')).length} npm pins; official sources only`,
+  `OK ${allowed.size} images, Compact ${tc.compact.version} release + devtool ${tc.compact.devtool.version}, ${Object.keys(tc.npm).filter((k) => !k.startsWith('$')).length} npm pins (${installChecked} installed as pinned; one copy each of ${SINGLE_COPY.join(', ')}); official sources only`,
 );
