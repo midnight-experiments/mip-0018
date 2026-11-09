@@ -56,14 +56,17 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/C12
 ```
 
-## Transactions
+## Transactions (Preview, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
-| `a6` | — | — | — |
-| `s10a` | — | — | — |
-| `s11` | — | — | — |
-| `s12b` | — | — | — |
-| `s3a-publish` | — | — | — |
-| `s3a-delete-name` | — | — | — |
+Contract `RawEmitter` at `cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9` (attached from deployments/preview/cases/C07/record.json); signer mn_addr_preview1wlhw0m3nh29lfmk0tj4lvfh2wfsekt8nns9h57gpyfe0az7e9fts2x420z.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `a6` | call `emitRaw` | `8efc794912d5a88b4711cadd5553b6a2a9f19d3504462141952d6c1b1815b802` | 42054 (`e322ea247de127e9…`) | SUCCESS | 219,683,657,142,858 | 0.220 |
+| `s10a` | call `emitRaw` | `fff38dbeca19b0e5243cb64e2d49cba5caaa4b510f6419eec1eba1216b1260ae` | 42063 (`db0e85b91530d80c…`) | SUCCESS | 217,382,171,428,572 | 0.217 |
+| `s11` | call `emitRaw` | `b3b8e6ecc2639575478c8138329780571b4bac8053361c327ff8ef2337f0d9e3` | 42071 (`e78f70b60ba3c273…`) | SUCCESS | 222,596,571,428,572 | 0.223 |
+| `s12b` | call `emitRaw` | `4239fb9d367192945094cae92a2dd0b47d8ac69d7e40b2ee19f6373420531439` | 42079 (`d48b711011ffcbe1…`) | SUCCESS | 218,541,942,857,143 | 0.219 |
+| `s3a-publish` | call `emitRaw` | `66977c429c62e9acdc45e05ace9b315e87cea3fa1ac50d12e5b9d2936f0250f5` | 42087 (`260e2cac932c4924…`) | SUCCESS | 219,054,171,428,572 | 0.219 |
+| `s3a-delete-name` | call `emitRaw` | `9912b1a751f0f6461c91b8dc568e1462d7b408279d670f166e7f5cccf808f6f5` | 42095 (`12838a187fce3706…`) | SUCCESS | 217,381,714,285,715 | 0.217 |
+| **total** | | | | | **1,314,640,228,571,432** | **1.315** |
 
