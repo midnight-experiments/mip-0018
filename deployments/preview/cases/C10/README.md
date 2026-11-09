@@ -36,11 +36,15 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/C10
 ```
 
-## Transactions
+## Transactions (Preview, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
-| `deploy` | — | — | — |
-| `publish` | — | — | — |
-| `remove-key` | — | — | — |
+Contract `CreateAndDestroy` at `972122c67324da57729b0f9c9c080d86dc99dc8c1ad0adcce9762b5cb0df9a11`; signer mn_addr_preview1wlhw0m3nh29lfmk0tj4lvfh2wfsekt8nns9h57gpyfe0az7e9fts2x420z.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `deploy` | deploy | `767431ab3e64045c51794199cb646508711274568e8210c46f27fc344988d945` | 42023 (`b46828d98e082be9…`) | SUCCESS | 2,640,528,914,285,715 | 2.641 |
+| `publish` | call `publishMetadata` | `cc13881c9191233ad1ff767996278b291842c17c7f37f0e02a5759a9f435e834` | 42029 (`8114d44ae659a8e5…`) | SUCCESS | 209,925,942,857,143 | 0.210 |
+| `verifier-key-remove:publishMetadata` | verifier-key-remove `publishMetadata` | `fa8f184472401fe1ac2398054b9424239e0836d1425c3ce004e5bc2d9eb0bde4` | 42035 (`68415a63e50dd024…`) | SUCCESS | 174,816,000,000,001 | 0.175 |
+| `publish-again` | call `publishMetadata` | — | — | refused before submission (no transaction) | — | — |
+| **total** | | | | | **3,025,270,857,142,859** | **3.025** |
 
