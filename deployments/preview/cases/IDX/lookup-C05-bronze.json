@@ -1,0 +1,11 @@
+{
+  "found": false,
+  "color": "f3a250ea5d41f3ffcaf1064e04bd8a79aded9adf8d1bf38332ea5de98a4cc608",
+  "scanned": {
+    "network": "preview",
+    "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+    "from": 41531,
+    "to": 42095
+  },
+  "identities": []
+}

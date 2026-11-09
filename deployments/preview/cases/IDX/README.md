@@ -43,7 +43,15 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/IDX
 ```
 
-## Scan
+## Scan (Preview)
 
-Not run: no index state yet.
+Blocks 41531–42095 (state `index/index-state.json`). Colors minted in that range (the scanner records every mint on the public chain, so a contract that is not one of these cases can appear too):
+
+| Case | Color | Contract | domainSep | Shielded (first mint) | Unshielded (first mint) |
+|---|---|---|---|---|---|
+| C04 | `056c310ebcb469c9c5b8974842104ada748a84c2c42824be0f1ed165e3d81b2a` | `63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93` | `6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000` | 100000 (41635) | 100000 (41641) |
+| C05 | `58325446d1e1b0cd816504bfce22e387ed13975abed88fac313f1947f24c0487` | `93500811da5365b6a83ffe00b3f2d74bfbd0cd8bcaa124024578095b9854394e` | `6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000` | 3 (41678) | — |
+| C03 | `651ab6b0dd7ccb521586f3c14e235842171cbf27ba43ad5d3ac52aa991ce77d0` | `f6e2fac7659ec945494ceaed8c17c5f6cc88af9e6d7f83c9f88f6c9f33b42a1c` | `6d69702d303031383a6578616d706c653a756e736869656c6465640000000000` | — | 1000000 (41605) |
+| C02 | `6899f7c71eaac1384f0ed6575c62777897f5bba7e25f7f0d151b2a72241a26d8` | `fcfcb1d1d49257649fba11fffaa8c16858dd057485c13954b6f868a942bbfc02` | `6d69702d303031383a6578616d706c653a736869656c64656400000000000000` | 1000000 (41569) | — |
+| C05 | `7c98ff4715c5f47f2a1502a9e4d727a163608a31bb7fa459355a46e135e9da5a` | `93500811da5365b6a83ffe00b3f2d74bfbd0cd8bcaa124024578095b9854394e` | `6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000` | 5 (41684) | — |
 
