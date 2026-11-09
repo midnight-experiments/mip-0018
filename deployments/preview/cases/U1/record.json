@@ -1,0 +1,416 @@
+{
+  "kind": "mip0018-run-record",
+  "schema": 1,
+  "createdAt": "2026-11-09T23:18:01.470Z",
+  "updatedAt": "2026-11-09T23:21:14.006Z",
+  "network": {
+    "id": "preview",
+    "networkId": "preview",
+    "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+    "chainInstance": "0xee45046d11882c45ee0d468203169afa48f084ffaa380043ab84b1fabf3947fe",
+    "indexer": "https://indexer.preview.midnight.network/api/v4/graphql",
+    "rpc": "https://rpc.preview.midnight.network"
+  },
+  "contract": {
+    "name": "LegacyToken",
+    "managedDir": "examples/upgrade-existing-contract/managed/LegacyToken",
+    "verifierKeySha256": {
+      "mint": "b1dbe2b73135b3e586df2d1377e41c49520c45f4f2ac6581ae1c9b0ce5b3e53d"
+    },
+    "adapter": "examples/upgrade-existing-contract/legacy/mip0018.adapter.ts",
+    "privateStateId": "LegacyToken",
+    "address": "783fd16b82e6ce98381bf7a19d458f8bb179b6612984ef6f64c5cfbf2eab453a",
+    "constructorArgs": [
+      "0x6d69702d303031383a6578616d706c653a757067726164650000000000000000"
+    ],
+    "upgrades": [
+      {
+        "circuit": "publishMetadata",
+        "slot": "v4",
+        "contract": "LegacyTokenMetadata",
+        "managedDir": "examples/upgrade-existing-contract/managed/LegacyTokenMetadata",
+        "adapter": "examples/upgrade-existing-contract/upgrade/mip0018.adapter.ts",
+        "verifierKeySha256": "fd6304829cd6ee00d1e0cd5370845d7b43c8a8279a3a0b4d09c987097b8be1fc",
+        "checks": {
+          "at": "2026-11-09T23:20:14.697Z",
+          "ok": true,
+          "problems": [],
+          "notes": [],
+          "layout": [
+            {
+              "index": 0,
+              "legacy": "domain: Cell<Bytes<32>>",
+              "upgrade": "domain: Cell<Bytes<32>>",
+              "same": true
+            },
+            {
+              "index": 1,
+              "legacy": "owner: Cell<Bytes<32>>",
+              "upgrade": "owner: Cell<Bytes<32>>",
+              "same": true
+            },
+            {
+              "index": 2,
+              "legacy": "totalMinted: Cell<Uint<128>>",
+              "upgrade": "totalMinted: Cell<Uint<128>>",
+              "same": true
+            },
+            {
+              "index": 3,
+              "legacy": "mintCount: Counter",
+              "upgrade": "mintCount: Counter",
+              "same": true
+            }
+          ],
+          "decoded": [
+            {
+              "name": "domain",
+              "value": "6d69702d303031383a6578616d706c653a757067726164650000000000000000"
+            },
+            {
+              "name": "owner",
+              "value": "37d29073f5134235631399fe9086dfa947b03dfd49b98f40cb9a019d97010e7b"
+            },
+            {
+              "name": "totalMinted",
+              "value": "1000"
+            },
+            {
+              "name": "mintCount",
+              "value": "1"
+            }
+          ],
+          "otherCircuits": []
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "id": "deploy",
+      "kind": "deploy",
+      "args": [
+        "0x6d69702d303031383a6578616d706c653a757067726164650000000000000000"
+      ],
+      "state": "completed",
+      "attempts": [
+        {
+          "at": "2026-11-09T23:18:09.215Z",
+          "event": "submitting 46d13d03df55b89e07ac9781fde09fdb911feb47490349a9356a8043720b32f6"
+        },
+        {
+          "at": "2026-11-09T23:18:25.164Z",
+          "event": "node accepted 00e2727343850804faed5c53a5b84db2d9a3fe4672efbd1a206a2f952462054800"
+        },
+        {
+          "at": "2026-11-09T23:18:25.857Z",
+          "event": "midnight-js: SucceedEntirely at block 42130"
+        },
+        {
+          "at": "2026-11-09T23:18:26.330Z",
+          "event": "completed: contract 783fd16b82e6ce98381bf7a19d458f8bb179b6612984ef6f64c5cfbf2eab453a on chain with mint"
+        }
+      ],
+      "startedAt": "2026-11-09T23:18:07.478Z",
+      "tx": {
+        "hash": "46d13d03df55b89e07ac9781fde09fdb911feb47490349a9356a8043720b32f6",
+        "identifiers": [
+          "000cab9713ea81459be49ec87d303926f2cc7893b4d88bd9bf2b74c6d28d86a5af",
+          "00e2727343850804faed5c53a5b84db2d9a3fe4672efbd1a206a2f952462054800"
+        ],
+        "ttl": "2026-11-09T23:48:08.000Z",
+        "txId": "00e2727343850804faed5c53a5b84db2d9a3fe4672efbd1a206a2f952462054800"
+      },
+      "inclusion": {
+        "height": 42130,
+        "hash": "23e7a2d8e678ddf4f02f1d149663df01755ebb8ac2b699a13bb1ac8ea148780c",
+        "status": "SUCCESS",
+        "fee": "1892168914285715"
+      },
+      "observed": {
+        "exists": true,
+        "operations": [
+          "mint"
+        ],
+        "block": {
+          "height": 42130,
+          "hash": "23e7a2d8e678ddf4f02f1d149663df01755ebb8ac2b699a13bb1ac8ea148780c"
+        },
+        "txHash": "46d13d03df55b89e07ac9781fde09fdb911feb47490349a9356a8043720b32f6"
+      },
+      "completedAt": "2026-11-09T23:18:26.330Z"
+    },
+    {
+      "id": "mint",
+      "kind": "call",
+      "circuit": "mint",
+      "args": [
+        {
+          "bytes": {
+            "$signer": "coinPublicKey"
+          }
+        },
+        "1000",
+        {
+          "$random": 32
+        }
+      ],
+      "state": "completed",
+      "attempts": [
+        {
+          "at": "2026-11-09T23:18:41.142Z",
+          "event": "submitting 90a07830f88e475d4440c76800bd4b54bd7aeac83e938aa69572981894e6392a"
+        },
+        {
+          "at": "2026-11-09T23:19:01.199Z",
+          "event": "node accepted 009f2fb8c86c2a9581b38bde48025e783fee023eaebba61cf88f0bf9145c6b8ada"
+        },
+        {
+          "at": "2026-11-09T23:19:02.091Z",
+          "event": "midnight-js: SucceedEntirely at block 42136"
+        },
+        {
+          "at": "2026-11-09T23:19:02.781Z",
+          "event": "completed: 0 expected Misc event(s) observed in 90a07830f88e475d4440c76800bd4b54bd7aeac83e938aa69572981894e6392a"
+        }
+      ],
+      "startedAt": "2026-11-09T23:18:36.781Z",
+      "expectedEvents": [],
+      "tx": {
+        "hash": "90a07830f88e475d4440c76800bd4b54bd7aeac83e938aa69572981894e6392a",
+        "identifiers": [
+          "00c8af2825151b568a2715f7c09b68142ee0b3758f44b2609d824e8f5289802ceb",
+          "002c2a82852942082205e2922e55d535461dda4803c62cd0ac5b2ab1d7140df1f1",
+          "009f2fb8c86c2a9581b38bde48025e783fee023eaebba61cf88f0bf9145c6b8ada"
+        ],
+        "ttl": "2026-11-09T23:48:40.000Z",
+        "txId": "009f2fb8c86c2a9581b38bde48025e783fee023eaebba61cf88f0bf9145c6b8ada"
+      },
+      "inclusion": {
+        "height": 42136,
+        "hash": "782f6130396b27943792819f65af7ea22715975d89e4181e60fd9678cf3bae05",
+        "status": "SUCCESS",
+        "fee": "282254628571429"
+      },
+      "observed": {
+        "inclusion": {
+          "height": 42136,
+          "hash": "782f6130396b27943792819f65af7ea22715975d89e4181e60fd9678cf3bae05",
+          "status": "SUCCESS",
+          "fee": "282254628571429"
+        },
+        "events": []
+      },
+      "completedAt": "2026-11-09T23:19:02.781Z"
+    },
+    {
+      "id": "wrong-signer:insert",
+      "kind": "verifier-key-insert",
+      "circuit": "publishMetadata",
+      "args": {
+        "slot": "v4",
+        "verifierKeySha256": "fd6304829cd6ee00d1e0cd5370845d7b43c8a8279a3a0b4d09c987097b8be1fc",
+        "key": "from --maintenance-key-file"
+      },
+      "state": "pending",
+      "attempts": [
+        {
+          "at": "2026-11-09T23:19:25.779Z",
+          "event": "refused before submission: this maintenance key is not in the contract's committee (1 key(s)); the node would reject the update — nothing submitted"
+        }
+      ],
+      "startedAt": "2026-11-09T23:19:25.526Z",
+      "observed": {
+        "before": {
+          "keySha256": null,
+          "authority": {
+            "index": -1,
+            "committeeSize": 1,
+            "threshold": 1,
+            "counter": "0",
+            "ok": false
+          }
+        }
+      },
+      "error": "this maintenance key is not in the contract's committee (1 key(s)); the node would reject the update — nothing submitted"
+    },
+    {
+      "id": "wrong-signer-forced:insert",
+      "kind": "verifier-key-insert",
+      "circuit": "publishMetadata",
+      "args": {
+        "slot": "v4",
+        "verifierKeySha256": "fd6304829cd6ee00d1e0cd5370845d7b43c8a8279a3a0b4d09c987097b8be1fc",
+        "key": "from --maintenance-key-file"
+      },
+      "state": "failed",
+      "attempts": [
+        {
+          "at": "2026-11-09T23:19:37.210Z",
+          "event": "--force: submitting although this maintenance key is not in the contract's committee (1 key(s)); the node would reject the update"
+        },
+        {
+          "at": "2026-11-09T23:19:38.724Z",
+          "event": "submitting d6e0791f7a7bd1944380b78b46581d045f36cc7aa6cec9d2b1a1fafc3f9919d4"
+        },
+        {
+          "at": "2026-11-09T23:19:40.587Z",
+          "event": "REJECTED by the node at submission: ProviderFailedError: submitTx rejected the transaction. The provider's own failure is on `cause`, with its message redacted of anything that could carry transaction or witness material; read the provider's own logs for the unredacted detail. <- Error: (FiberFailure) SubmissionError: Transaction subm"
+        }
+      ],
+      "startedAt": "2026-11-09T23:19:36.966Z",
+      "observed": {
+        "before": {
+          "keySha256": null,
+          "authority": {
+            "index": -1,
+            "committeeSize": 1,
+            "threshold": 1,
+            "counter": "0",
+            "ok": false
+          }
+        },
+        "rejectedByNode": "ProviderFailedError: submitTx rejected the transaction. The provider's own failure is on `cause`, with its message redacted of anything that could carry transaction or witness material; read the provider's own logs for the unredacted detail. <- Error: (FiberFailure) SubmissionError: Transaction submission error <- Error: SubmissionError: Transaction submission error <- Error: SubmissionError: Transaction submission failed <- Error: RpcError: 1010: Invalid Transaction: Custom error: 135",
+        "after": {
+          "keySha256": null,
+          "authorityCounter": "0"
+        }
+      },
+      "tx": {
+        "hash": "d6e0791f7a7bd1944380b78b46581d045f36cc7aa6cec9d2b1a1fafc3f9919d4",
+        "identifiers": [
+          "00d4522909709d8b1b617504b289acceab17697aee3bbf8a2c831017eb696b09b7",
+          "0036f8ff925359e2fc5bab7e75d61d92620956f1771d7d54431245857646591925"
+        ],
+        "ttl": "2026-11-09T23:49:38.000Z"
+      },
+      "error": "ProviderFailedError: submitTx rejected the transaction. The provider's own failure is on `cause`, with its message redacted of anything that could carry transaction or witness material; read the provider's own logs for the unredacted detail. <- Error: (FiberFailure) SubmissionError: Transaction submission error <- Error: SubmissionError: Transaction submission error <- Error: SubmissionError: Transaction submission failed <- Error: RpcError: 1010: Invalid Transaction: Custom error: 135"
+    },
+    {
+      "id": "upgrade:insert",
+      "kind": "verifier-key-insert",
+      "circuit": "publishMetadata",
+      "args": {
+        "slot": "v4",
+        "verifierKeySha256": "fd6304829cd6ee00d1e0cd5370845d7b43c8a8279a3a0b4d09c987097b8be1fc",
+        "key": "deploy-time key (private-state file)"
+      },
+      "state": "completed",
+      "attempts": [
+        {
+          "at": "2026-11-09T23:19:53.842Z",
+          "event": "submitting bf66f3f11495e2e6f5789cb5f0be35c2976633c471ba75304465f00db5a91ec6"
+        },
+        {
+          "at": "2026-11-09T23:20:13.257Z",
+          "event": "node accepted 00130326ae006440d2b6cb1c0338de287ab73c6ccf4f3b78817c692b29e55197ac"
+        },
+        {
+          "at": "2026-11-09T23:20:13.960Z",
+          "event": "midnight-js submitTx: SucceedEntirely at block 42148"
+        },
+        {
+          "at": "2026-11-09T23:20:14.697Z",
+          "event": "completed: publishMetadata now has the inserted v4 verifier key (sha256 fd6304829cd6ee00…)"
+        }
+      ],
+      "startedAt": "2026-11-09T23:19:52.076Z",
+      "observed": {
+        "inclusion": {
+          "height": 42148,
+          "hash": "ea454e8cee0ae3b50471df63e13e001ab3a84a6deba56fa07d550ff8fb9f037b",
+          "status": "SUCCESS",
+          "fee": "1166898514285715"
+        },
+        "operations": [
+          "mint",
+          "publishMetadata"
+        ],
+        "keySha256": "fd6304829cd6ee00d1e0cd5370845d7b43c8a8279a3a0b4d09c987097b8be1fc",
+        "authorityCounter": "1"
+      },
+      "tx": {
+        "hash": "bf66f3f11495e2e6f5789cb5f0be35c2976633c471ba75304465f00db5a91ec6",
+        "identifiers": [
+          "004328c5189cd08930c99027cf1445aa5952365f576d704b51a645feee54a32e5b",
+          "00130326ae006440d2b6cb1c0338de287ab73c6ccf4f3b78817c692b29e55197ac"
+        ],
+        "ttl": "2026-11-09T23:49:53.000Z",
+        "txId": "00130326ae006440d2b6cb1c0338de287ab73c6ccf4f3b78817c692b29e55197ac"
+      },
+      "inclusion": {
+        "height": 42148,
+        "hash": "ea454e8cee0ae3b50471df63e13e001ab3a84a6deba56fa07d550ff8fb9f037b",
+        "status": "SUCCESS",
+        "fee": "1166898514285715"
+      },
+      "completedAt": "2026-11-09T23:20:14.697Z"
+    },
+    {
+      "id": "upgrade:call",
+      "kind": "call",
+      "circuit": "publishMetadata",
+      "args": [],
+      "state": "completed",
+      "attempts": [
+        {
+          "at": "2026-11-09T23:20:22.979Z",
+          "event": "submitting 48f5a1ac030067cb0be09d33e3a00309714956f6ed7da27ec24d5b056d4883e3"
+        },
+        {
+          "at": "2026-11-09T23:20:43.973Z",
+          "event": "node accepted 004f3055bf228f0db790f32af4b0aecd2493ffce3e7033e5022d1ceffde49ded5d"
+        },
+        {
+          "at": "2026-11-09T23:20:44.809Z",
+          "event": "midnight-js: SucceedEntirely at block 42153"
+        },
+        {
+          "at": "2026-11-09T23:21:14.005Z",
+          "event": "completed: 1 expected Misc event(s) observed in 48f5a1ac030067cb0be09d33e3a00309714956f6ed7da27ec24d5b056d4883e3"
+        }
+      ],
+      "startedAt": "2026-11-09T23:20:14.698Z",
+      "expectedEvents": [
+        {
+          "name": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+          "payload": "6d69702d303031383a6578616d706c653a75706772616465000000000000000001046e616d65010c4c656761637920546f6b656e0673796d626f6c01044c47435908646563696d616c730201060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "tx": {
+        "hash": "48f5a1ac030067cb0be09d33e3a00309714956f6ed7da27ec24d5b056d4883e3",
+        "identifiers": [
+          "00facb66e3a4c24aa78bec26e1318203492c6ff24f06eda86a50fbf5e114c7e95d",
+          "004f3055bf228f0db790f32af4b0aecd2493ffce3e7033e5022d1ceffde49ded5d"
+        ],
+        "ttl": "2026-11-09T23:50:22.000Z",
+        "txId": "004f3055bf228f0db790f32af4b0aecd2493ffce3e7033e5022d1ceffde49ded5d"
+      },
+      "inclusion": {
+        "height": 42153,
+        "hash": "06c4fc6c034d0fd208878e19f85b50d26b86421afc43a330a4e2116c9871caf6",
+        "status": "SUCCESS",
+        "fee": "218666742857143"
+      },
+      "observed": {
+        "inclusion": {
+          "height": 42153,
+          "hash": "06c4fc6c034d0fd208878e19f85b50d26b86421afc43a330a4e2116c9871caf6",
+          "status": "SUCCESS",
+          "fee": "218666742857143"
+        },
+        "events": [
+          {
+            "id": 13388,
+            "name": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+            "payload": "6d69702d303031383a6578616d706c653a75706772616465000000000000000001046e616d65010c4c656761637920546f6b656e0673796d626f6c01044c47435908646563696d616c730201060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      "completedAt": "2026-11-09T23:21:14.005Z"
+    }
+  ],
+  "signer": {
+    "unshieldedAddress": "mn_addr_preview1wlhw0m3nh29lfmk0tj4lvfh2wfsekt8nns9h57gpyfe0az7e9fts2x420z"
+  }
+}

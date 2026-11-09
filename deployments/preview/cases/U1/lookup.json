@@ -1,0 +1,102 @@
+{
+  "found": true,
+  "color": "110b4cf8aad92cebf85555196c46dfc1ac8ca15698ec77d2ab198cf0633b704a",
+  "scanned": {
+    "network": "preview",
+    "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+    "from": 42129,
+    "to": 42153
+  },
+  "entry": {
+    "color": "110b4cf8aad92cebf85555196c46dfc1ac8ca15698ec77d2ab198cf0633b704a",
+    "contractAddress": "783fd16b82e6ce98381bf7a19d458f8bb179b6612984ef6f64c5cfbf2eab453a",
+    "domainSep": "6d69702d303031383a6578616d706c653a757067726164650000000000000000",
+    "shielded": {
+      "firstMint": {
+        "height": 42136,
+        "blockHash": "782f6130396b27943792819f65af7ea22715975d89e4181e60fd9678cf3bae05",
+        "txHash": "90a07830f88e475d4440c76800bd4b54bd7aeac83e938aa69572981894e6392a"
+      },
+      "lastMint": {
+        "height": 42136,
+        "blockHash": "782f6130396b27943792819f65af7ea22715975d89e4181e60fd9678cf3bae05",
+        "txHash": "90a07830f88e475d4440c76800bd4b54bd7aeac83e938aa69572981894e6392a"
+      },
+      "mints": 1,
+      "amount": "1000"
+    }
+  },
+  "identities": [
+    {
+      "contractAddress": "783fd16b82e6ce98381bf7a19d458f8bb179b6612984ef6f64c5cfbf2eab453a",
+      "domainSep": "6d69702d303031383a6578616d706c653a757067726164650000000000000000",
+      "kind": 1,
+      "mintedInRange": true
+    }
+  ],
+  "metadataSource": "live indexer at block 42160",
+  "resolved": [
+    {
+      "contractAddress": "783fd16b82e6ce98381bf7a19d458f8bb179b6612984ef6f64c5cfbf2eab453a",
+      "domainSep": "6d69702d303031383a6578616d706c653a757067726164650000000000000000",
+      "kind": 1,
+      "mintedInRange": true,
+      "metadata": {
+        "key": "preview|783fd16b82e6ce98381bf7a19d458f8bb179b6612984ef6f64c5cfbf2eab453a|6d69702d303031383a6578616d706c653a757067726164650000000000000000|1",
+        "network": "preview",
+        "contractAddress": "783fd16b82e6ce98381bf7a19d458f8bb179b6612984ef6f64c5cfbf2eab453a",
+        "domainSep": "6d69702d303031383a6578616d706c653a757067726164650000000000000000",
+        "kind": 1,
+        "colored": true,
+        "color": "110b4cf8aad92cebf85555196c46dfc1ac8ca15698ec77d2ab198cf0633b704a",
+        "fields": [
+          {
+            "key": "6e616d65",
+            "valType": 1,
+            "value": "4c656761637920546f6b656e",
+            "setAt": {
+              "block": "42153",
+              "tx": 3248,
+              "event": 13388,
+              "record": 0
+            },
+            "keyHex": "6e616d65",
+            "usable": true
+          },
+          {
+            "key": "73796d626f6c",
+            "valType": 1,
+            "value": "4c474359",
+            "setAt": {
+              "block": "42153",
+              "tx": 3248,
+              "event": 13388,
+              "record": 1
+            },
+            "keyHex": "73796d626f6c",
+            "usable": true
+          },
+          {
+            "key": "646563696d616c73",
+            "valType": 2,
+            "value": "06",
+            "setAt": {
+              "block": "42153",
+              "tx": 3248,
+              "event": 13388,
+              "record": 2
+            },
+            "integer": "6",
+            "keyHex": "646563696d616c73",
+            "usable": true
+          }
+        ],
+        "common": {
+          "name": "Legacy Token",
+          "symbol": "LGCY",
+          "decimals": "6"
+        }
+      }
+    }
+  ]
+}

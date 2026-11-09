@@ -48,11 +48,17 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/U1
 ```
 
-## Transactions
+## Transactions (Preview, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
-| `deploy` | — | — | — |
-| `mint` | — | — | — |
-| `upgrade` | — | — | — |
+Contract `LegacyToken` at `783fd16b82e6ce98381bf7a19d458f8bb179b6612984ef6f64c5cfbf2eab453a`; signer mn_addr_preview1wlhw0m3nh29lfmk0tj4lvfh2wfsekt8nns9h57gpyfe0az7e9fts2x420z.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `deploy` | deploy | `46d13d03df55b89e07ac9781fde09fdb911feb47490349a9356a8043720b32f6` | 42130 (`23e7a2d8e678ddf4…`) | SUCCESS | 1,892,168,914,285,715 | 1.892 |
+| `mint` | call `mint` | `90a07830f88e475d4440c76800bd4b54bd7aeac83e938aa69572981894e6392a` | 42136 (`782f6130396b2794…`) | SUCCESS | 282,254,628,571,429 | 0.282 |
+| `wrong-signer:insert` | verifier-key-insert `publishMetadata` | — | — | refused before submission (no transaction) | — | — |
+| `wrong-signer-forced:insert` | verifier-key-insert `publishMetadata` | `d6e0791f7a7bd1944380b78b46581d045f36cc7aa6cec9d2b1a1fafc3f9919d4` | — | not included: 1010: Invalid Transaction: Custom error: 135 | — | — |
+| `upgrade:insert` | verifier-key-insert `publishMetadata` | `bf66f3f11495e2e6f5789cb5f0be35c2976633c471ba75304465f00db5a91ec6` | 42148 (`ea454e8cee0ae3b5…`) | SUCCESS | 1,166,898,514,285,715 | 1.167 |
+| `upgrade:call` | call `publishMetadata` | `48f5a1ac030067cb0be09d33e3a00309714956f6ed7da27ec24d5b056d4883e3` | 42153 (`06c4fc6c034d0fd2…`) | SUCCESS | 218,666,742,857,143 | 0.219 |
+| **total** | | | | | **3,559,988,800,000,002** | **3.560** |
 
