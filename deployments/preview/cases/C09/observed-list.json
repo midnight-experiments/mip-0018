@@ -1,0 +1,117 @@
+{
+  "network": {
+    "id": "preview",
+    "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+    "indexer": "https://indexer.preview.midnight.network/api/v4/graphql"
+  },
+  "contract": "c135766fdc8ef3ae24fcd1e89bd37f66513a9f5948e7d034567de24aaae9237e",
+  "snapshot": {
+    "indexerTip": {
+      "height": 42010,
+      "hash": "5fd04327c29fa37580da642bfab550c361c9d45faed9e99015e9bd14dc571403"
+    },
+    "toBlock": 42010,
+    "nodeHashAtTip": "0x5fd04327c29fa37580da642bfab550c361c9d45faed9e99015e9bd14dc571403",
+    "tipMatchesNode": true,
+    "finalizedHeight": 42010
+  },
+  "pages": 2,
+  "counts": {
+    "events": 1,
+    "accepted": 1,
+    "rejected": 0,
+    "ignored": 0
+  },
+  "events": [
+    {
+      "id": 13238,
+      "block": {
+        "height": 41547,
+        "hash": "83045afdaca03cda82a9ae8b769726b28217ecbc004e6e01e6320f392bde2335"
+      },
+      "txHash": "57f8a00479674d1498b1c2dfa6a3b44f82f6ee822aa8c3c41df6ce1907fb77e7",
+      "txId": 3166,
+      "result": "accept",
+      "identity": "preview|c135766fdc8ef3ae24fcd1e89bd37f66513a9f5948e7d034567de24aaae9237e|6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000|3",
+      "domainSep": "6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000",
+      "kind": 3,
+      "records": 3
+    }
+  ],
+  "identities": [
+    {
+      "key": "preview|c135766fdc8ef3ae24fcd1e89bd37f66513a9f5948e7d034567de24aaae9237e|6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000|3",
+      "network": "preview",
+      "contractAddress": "c135766fdc8ef3ae24fcd1e89bd37f66513a9f5948e7d034567de24aaae9237e",
+      "domainSep": "6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000",
+      "kind": 3,
+      "colored": false,
+      "color": null,
+      "fields": [
+        {
+          "key": "6e616d65",
+          "valType": 1,
+          "value": "41636d6520476f6c64",
+          "setAt": {
+            "block": "41547",
+            "tx": 3166,
+            "event": 13238,
+            "record": 0
+          },
+          "keyHex": "6e616d65",
+          "usable": true
+        },
+        {
+          "key": "73796d626f6c",
+          "valType": 1,
+          "value": "41474c44",
+          "setAt": {
+            "block": "41547",
+            "tx": 3166,
+            "event": 13238,
+            "record": 1
+          },
+          "keyHex": "73796d626f6c",
+          "usable": true
+        },
+        {
+          "key": "646563696d616c73",
+          "valType": 2,
+          "value": "06",
+          "setAt": {
+            "block": "41547",
+            "tx": 3166,
+            "event": 13238,
+            "record": 2
+          },
+          "integer": "6",
+          "keyHex": "646563696d616c73",
+          "usable": true
+        }
+      ],
+      "common": {
+        "name": "Acme Gold",
+        "symbol": "AGLD",
+        "decimals": "6"
+      }
+    }
+  ],
+  "groups": [
+    {
+      "network": "preview",
+      "contractAddress": "c135766fdc8ef3ae24fcd1e89bd37f66513a9f5948e7d034567de24aaae9237e",
+      "symbol": "41474c44",
+      "members": [
+        {
+          "domainSep": "6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000",
+          "kind": 3,
+          "key": "preview|c135766fdc8ef3ae24fcd1e89bd37f66513a9f5948e7d034567de24aaae9237e|6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000|3"
+        }
+      ]
+    }
+  ],
+  "expectation": {
+    "ok": true,
+    "differences": []
+  }
+}

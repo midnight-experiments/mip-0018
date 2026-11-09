@@ -37,8 +37,11 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/C09
 ```
 
-## Transactions
+## Transactions (Preview, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
+Contract `MyFungibleToken` at `c135766fdc8ef3ae24fcd1e89bd37f66513a9f5948e7d034567de24aaae9237e` (attached from deployments/preview/cases/C01/record.json); signer mn_addr_preview16recat7d5nkh0cxrzllk53x3vstsxmf6xyt7yzgvvh3kpsddz0cqqv7fsw.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `non-owner-set-metadata` | call `setMetadata` | — | — | refused before submission (no transaction) | — | — |
 

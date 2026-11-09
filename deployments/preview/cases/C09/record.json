@@ -1,0 +1,64 @@
+{
+  "kind": "mip0018-run-record",
+  "schema": 1,
+  "createdAt": "2026-11-09T23:05:42.405Z",
+  "updatedAt": "2026-11-09T23:06:26.063Z",
+  "network": {
+    "id": "preview",
+    "networkId": "preview",
+    "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+    "chainInstance": "0xee45046d11882c45ee0d468203169afa48f084ffaa380043ab84b1fabf3947fe",
+    "indexer": "https://indexer.preview.midnight.network/api/v4/graphql",
+    "rpc": "https://rpc.preview.midnight.network"
+  },
+  "contract": {
+    "name": "MyFungibleToken",
+    "managedDir": "examples/openzeppelin/fungible-token/managed/MyFungibleToken",
+    "verifierKeySha256": {
+      "balanceOf": "1314444ccfea9eae6918d9b35a3fb9ba23f50b2a30b7171fb3e24a9959b26391",
+      "burn": "fd37e5b4c1a4b04cfbae6a4098dc30a9831b3e713db4d5da412e8d0decc28a04",
+      "decimals": "3cfdfb97570b6be4895e2c940e2764659649a713cd33c09f599e9284d8ebc289",
+      "mint": "a0846beaa9e5ff39340ec47d21c1421e7d8041a989d0f082c87b4e4631b7f522",
+      "name": "57d6b70ed940d572c220d32083e0fd08ca8eea823db81c7632e578176f8b18fa",
+      "publishMetadata": "7f9ed58d29c39b4747f89d1aec3fbde3e2bf82c646c43227622a614860c3eda8",
+      "setMetadata": "5f927834f9a6a6803655abd11020d806869dc16e044e121e1e8ac359895cdbb5",
+      "symbol": "da26d654e5ff20109bb45901865f21c81fc0544a51d48cb00eedad3debe80028",
+      "transfer": "1f323d72002f82ba313e8a3c5c5cef7f918e85de4846d74f81cd3bf18eda7ea8",
+      "withdrawMetadata": "c4ef365704e0a06cb7f33cb0e793a4a48366cb8caa2cfe746bc0a00749ec059e"
+    },
+    "adapter": "examples/openzeppelin/fungible-token/mip0018.adapter.ts",
+    "address": "c135766fdc8ef3ae24fcd1e89bd37f66513a9f5948e7d034567de24aaae9237e",
+    "attached": {
+      "from": "deployments/preview/cases/C01/record.json",
+      "at": "2026-11-09T23:06:23.082Z"
+    },
+    "privateStateId": "MyFungibleToken"
+  },
+  "steps": [
+    {
+      "id": "non-owner-set-metadata",
+      "kind": "call",
+      "circuit": "setMetadata",
+      "args": [
+        {
+          "$utf8": "Evil Gold"
+        },
+        {
+          "$utf8": "EVIL"
+        }
+      ],
+      "state": "pending",
+      "attempts": [
+        {
+          "at": "2026-11-09T23:06:26.063Z",
+          "event": "refused before submission: ContractExecutionError: failed assert: Ownable: caller is not the owner"
+        }
+      ],
+      "startedAt": "2026-11-09T23:06:23.083Z",
+      "error": "ContractExecutionError: failed assert: Ownable: caller is not the owner"
+    }
+  ],
+  "signer": {
+    "unshieldedAddress": "mn_addr_preview16recat7d5nkh0cxrzllk53x3vstsxmf6xyt7yzgvvh3kpsddz0cqqv7fsw"
+  }
+}
