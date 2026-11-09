@@ -52,6 +52,49 @@
         ]
       },
       "requests": 10
+    },
+    {
+      "label": "after the last transaction",
+      "observedAt": "2026-11-09T23:39:38.378Z",
+      "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+      "genesisMatchesPin": true,
+      "chainInstance": "0xee45046d11882c45ee0d468203169afa48f084ffaa380043ab84b1fabf3947fe",
+      "chainInstanceMatches": true,
+      "node": {
+        "chain": "Midnight Preview",
+        "name": "Midnight Node",
+        "version": "2.1.101-913ec011",
+        "specName": "midnight",
+        "specVersion": 2001100,
+        "transactionVersion": 4,
+        "stateVersion": 3,
+        "finalizedHead": {
+          "hash": "0x33b46b712cc866c319c21ad40fc99268204c53cb15623b2b9c15cb352617cb2c",
+          "height": 42341
+        },
+        "bestHeight": 42344
+      },
+      "indexer": {
+        "latestBlock": {
+          "height": 42342,
+          "hash": "dde79d725c1c746304ad8128e6d51a2f5f335731db730fed403e7c2fbf38c027",
+          "timestamp": 1794267564000,
+          "protocolVersion": 2001100
+        }
+      },
+      "proofServer": {
+        "url": "http://proof-server:6300",
+        "health": {
+          "status": "ok",
+          "timestamp": "2026-11-09 23:39:38.380219508 +00:00:00"
+        },
+        "version": "9.0.1",
+        "proofVersions": [
+          "V2",
+          "V3"
+        ]
+      },
+      "requests": 10
     }
   ]
 }
