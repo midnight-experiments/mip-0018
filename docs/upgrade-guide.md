@@ -105,7 +105,7 @@ Rules:
 - **The value of `domainSep` comes from the state**, never from a literal you retype: the color is
   derived from it.
 - **Compile with keys** (not `--skip-zk`): the verifier key is what you insert. The template uses
-  Compact 0.35.0 with `--feature-zkir-v3` (`publishMetadata` here: k = 15, 17,683 rows).
+  Compact 0.36.0 (`publishMetadata` here: k = 16, 36,203 rows).
 
 ## Step 2 — check the layout (before anything is signed)
 

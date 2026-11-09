@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Compile-time guarantees of the module (Compact 0.35.0, --feature-zkir-v3): each fixture in
+// Compile-time guarantees of the module (Compact 0.36.0): each fixture in
 // test/compile-fail/ must be REJECTED by the compiler with the given message. Among them: a
 // constructor cannot emit (MIP "Publishing": hence the `publishMetadata()` convention), and every
 // size rule of the payload is a static error for both constructions.

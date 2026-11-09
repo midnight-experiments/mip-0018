@@ -39,7 +39,7 @@ jobs:
           cache-from: type=gha,scope=toolchain
           cache-to: type=gha,scope=toolchain,mode=max
       - name: Compact version
-        run: docker/run.sh exec 'compact compile --version && compact compile --language-version && compact compile --feature-zkir-v3 --ledger-version'
+        run: docker/run.sh exec 'compact compile --version && compact compile --language-version && compact compile --ledger-version'
       - name: npm ci
         run: docker/run.sh ci
       - name: Lint
@@ -56,7 +56,7 @@ jobs:
         run: docker/run.sh check:conformance-matrix
       - name: Relative links and anchors in the Markdown files resolve
         run: docker/run.sh check:md-links
-      - name: Compile the toolchain spike (Compact 0.35.0, ZKIR v3)
+      - name: Compile the toolchain spike (Compact 0.36.0)
         run: docker/run.sh compile:spike -- --skip-zk
 
   mip-pin:

@@ -2,7 +2,7 @@
 //
 // Toolchain spike: OpenZeppelin Compact Contracts 0.4.0-alpha.5
 // NativeShieldedToken + Ownable composed with a MIP-0018 emitter, compiled
-// with Compact 0.35.0 (language 0.27.0) and --feature-zkir-v3.
+// with Compact 0.36.0 (language 0.28.0).
 //
 // publishMetadata() is owner-only and emits a kind-1 payload whose domainSep
 // is the token's own `_domain` and whose decimals record comes from the

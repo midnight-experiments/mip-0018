@@ -8,7 +8,7 @@
 // owned with OpenZeppelin `Ownable`. A user may hold all three at once. There is no conversion
 // between them here (OpenZeppelin's `NativeTokenConverter` is not on main).
 //
-// Compile with Compact 0.35.0, --feature-zkir-v3 and --compact-path <repo>/node_modules
+// Compile with Compact 0.36.0 and --compact-path <repo>/node_modules
 // (examples/openzeppelin/README.md).
 
 pragma language_version >= 0.26.0;

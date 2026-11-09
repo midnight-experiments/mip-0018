@@ -71,7 +71,7 @@ export function readLayout(managedDir: string): Layout {
 export function layoutOfSource(source: string, o: { compactPath?: string } = {}): Layout {
   const out = mkdtempSync(join(tmpdir(), 'mip0018-layout-'));
   try {
-    const args = ['compile', '--feature-zkir-v3', '--skip-zk'];
+    const args = ['compile', '--skip-zk'];
     if (o.compactPath) args.push('--compact-path', o.compactPath);
     args.push(source, out);
     try {

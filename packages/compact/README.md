@@ -3,7 +3,7 @@
 Byte-exact MIP-0018 `TokenMetadata` emission in a few lines of Compact, for the pinned MIP text
 [`midnightntwrk/midnight-improvement-proposals@338ea194`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/338ea194bbe7c4e5d1829234a503b7c1b11ebf0f/mips/mip-0018-on-chain-token-metadata.md)
 (PR #372). Requires Compact ≥ 0.34.0 (MIP-0002 `Misc` events, ledger v9); built and tested with
-**Compact 0.35.0 (language 0.27.0) and `--feature-zkir-v3`**.
+**Compact 0.36.0 (language 0.28.0)**.
 
 | File | What |
 |---|---|

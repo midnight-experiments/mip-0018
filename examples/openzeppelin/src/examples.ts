@@ -44,7 +44,7 @@ export const managedDir = (example: ExampleName, variant: Variant = 'with-metada
 };
 
 /**
- * Compiles an example contract with the pinned compiler (Compact 0.35.0, --feature-zkir-v3) if its
+ * Compiles an example contract with the pinned compiler (Compact 0.36.0) if its
  * output is missing or stale. TypeScript only (--skip-zk) unless `skipZk: false`.
  */
 export const compileExample = (example: ExampleName, o: { variant?: Variant; skipZk?: boolean } = {}): string => {

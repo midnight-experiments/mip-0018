@@ -7,7 +7,7 @@ lines that publish MIP-0018 `TokenMetadata` events with this repository's Compac
 ([`packages/compact`](../../packages/compact)), and test the result.
 
 Pinned: **`@openzeppelin/compact-contracts@0.4.0-alpha.5`** (Ledger v9, built upstream for Compact
-0.34.0), compiled here with **Compact 0.35.0 (language 0.27.0) and `--feature-zkir-v3`** — every
+0.34.0), compiled here with **Compact 0.36.0 (language 0.28.0)** — every
 example compiles with no compiler message. Access control is OpenZeppelin `Ownable`.
 
 | Example | Token | OpenZeppelin modules | MIP `kind` | `domainSep` | Color |

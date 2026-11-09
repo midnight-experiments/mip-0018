@@ -11,7 +11,7 @@
 // module in packages/compact, which can only build valid payloads.
 //
 // Owner-gated with OpenZeppelin Compact Contracts 0.4.0-alpha.5 `Ownable`.
-// Compile with Compact 0.35.0, --feature-zkir-v3 and --compact-path <repo>/node_modules.
+// Compile with Compact 0.36.0 and --compact-path <repo>/node_modules.
 
 pragma language_version >= 0.26.0;
 

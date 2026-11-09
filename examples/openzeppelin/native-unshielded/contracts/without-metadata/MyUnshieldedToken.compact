@@ -8,7 +8,7 @@
 // `NativeShieldedToken`: one token type whose domain separator and metadata are fixed at
 // construction. Every UTXO it mints has the color `tokenType(_domain, <this contract>)`.
 //
-// Compile with Compact 0.35.0, --feature-zkir-v3 and --compact-path <repo>/node_modules
+// Compile with Compact 0.36.0 and --compact-path <repo>/node_modules
 // (examples/openzeppelin/README.md).
 
 pragma language_version >= 0.26.0;

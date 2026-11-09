@@ -9,7 +9,7 @@ walkthroughs [`examples/publish-and-emit`](../examples/publish-and-emit/README.m
 [consumer guide](consumer-guide.md).
 
 Toolchain: MIP-0018 needs MIP-0002 `Misc` events, so **Compact 0.34.0 or later**; this repository builds and tests with
-**Compact 0.35.0 and `--feature-zkir-v3`** ([`toolchain.json`](../toolchain.json)), all inside the pinned Docker image.
+**Compact 0.36.0** ([`toolchain.json`](../toolchain.json)), all inside the pinned Docker image.
 
 ## 1. What to publish
 
@@ -128,7 +128,7 @@ A malformed event is rejected whole by every consumer.
 Compile with keys (a deploy needs the verifier keys); for a contract of your own, in the pinned image:
 
 ```sh
-docker/run.sh exec 'compact compile --feature-zkir-v3 --compact-path node_modules examples/openzeppelin/fungible-token/contracts/MyFungibleToken.compact managed/MyFungibleToken'
+docker/run.sh exec 'compact compile --compact-path node_modules examples/openzeppelin/fungible-token/contracts/MyFungibleToken.compact managed/MyFungibleToken'
 ```
 
 (source path and output directory are yours; `managed/` output is never committed — builds are deterministic, and

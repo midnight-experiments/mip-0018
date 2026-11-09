@@ -1,6 +1,6 @@
 # test-contracts/toolchain-spike — toolchain gate
 
-Proves the pinned toolchain end to end: Compact **0.35.0** with **`--feature-zkir-v3`** compiles, proves and is accepted on the local stack and on Stagenet.
+Proves the pinned toolchain end to end: Compact **0.36.0** compiles, proves and is accepted on the local stack and on Stagenet.
 
 | File | Purpose |
 |---|---|

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Compiles the upgrade template's contracts with Compact 0.35.0 and --feature-zkir-v3 into managed/<name>.
+// Compiles the upgrade template's contracts with Compact 0.36.0 into managed/<name>.
 //
 //   node scripts/compile.ts                         # both, with prover/verifier keys (what deploy and upgrade need)
 //   node scripts/compile.ts --skip-zk               # both, TypeScript/ZKIR only (tests)

@@ -15,7 +15,7 @@ docker/run.sh exec <command>         # any command in the image
 - Chain tests use the local stack: `docker/local-stack/up.sh` (random free loopback ports ≥ 10000, written to `docker/local-stack/ports.env`), `fund.sh` for a funded test wallet, `down.sh` to remove it. Its state and logs are never committed.
 - Signing runs use `docker/signer.sh` (see [`SECURITY.md`](SECURITY.md)).
 - Versions are pinned in [`toolchain.json`](toolchain.json); `docker/run.sh check:pins` keeps the Dockerfile, the compose file and the manifests consistent with it. Only official binaries: Compact releases from `midnightntwrk/compact`, `midnightntwrk/*` images by digest, npm packages from the official scopes.
-- Compile every Compact file with Compact 0.35.0 and `--feature-zkir-v3`.
+- Compile every Compact file with Compact 0.36.0 (no compiler flags; ZKIR v3 is its only backend).
 
 Before opening or updating a pull request: `docker/run.sh ci lint typecheck test check:pins check:secrets check:mip-pin check:conformance-matrix check:md-links`.
 

@@ -1,7 +1,7 @@
 # Costs of MIP-0018 emitting circuits
 
 What it costs to emit MIP-0018 metadata from a Compact contract built with this repository's module
-(`packages/compact`), measured with **Compact 0.35.0 and `--feature-zkir-v3`**, the repository's toolchain. MIP "Security
+(`packages/compact`), measured with **Compact 0.36.0**, the repository's toolchain. MIP "Security
 Considerations — Spam and cost".
 
 - **k / rows**: circuit size from `zkir-v3 mock-compile` (the prover works on a 2^k-row table).

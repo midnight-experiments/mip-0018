@@ -10,7 +10,7 @@
 //
 // The payload is built with Compact's own serialization of fixed-size typed
 // records, so the compiler checks every length and the 256-byte bound.
-// Compile with Compact 0.35.0 and --feature-zkir-v3.
+// Compile with Compact 0.36.0.
 
 pragma language_version >= 0.26.0;
 

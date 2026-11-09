@@ -5,7 +5,7 @@
 #   MIP0018_DOCKER_PREFIX=<prefix> MIP0018_E2E_DIR=<empty dir outside the repo> \
 #     examples/upgrade-existing-contract/scripts/local-upgrade.sh
 #
-#   1. compile LegacyToken and the upgrade-only LegacyTokenMetadata with keys (Compact 0.35.0, --feature-zkir-v3)
+#   1. compile LegacyToken and the upgrade-only LegacyTokenMetadata with keys (Compact 0.36.0)
 #   2. deploy LegacyToken (maintenance authority = the deploy-time key), mint 1000 shielded coins to wallet A, record
 #      the color wallet A holds and a wallet-free snapshot of the contract (entry points, authority, ledger data hash)
 #   3. NEGATIVE wrong signer: the insert signed by a random key is refused before submission, and — forced — rejected

@@ -628,8 +628,8 @@ async function upgradeSource(dir: string, compile: boolean, log: (m: string) => 
   const name = basename(sources[0]!, '.compact');
   const managedDir = join(abs, 'managed', name);
   if (compile || !existsSync(join(managedDir, 'keys'))) {
-    log(`compiling ${sources[0]} (Compact, --feature-zkir-v3, with keys)`);
-    const r = spawnSync('compact', ['compile', '--feature-zkir-v3', join(abs, sources[0]!), managedDir], {
+    log(`compiling ${sources[0]} (Compact, with keys)`);
+    const r = spawnSync('compact', ['compile', join(abs, sources[0]!), managedDir], {
       cwd: repoRoot(),
       stdio: ['ignore', 'inherit', 'inherit'],
     });

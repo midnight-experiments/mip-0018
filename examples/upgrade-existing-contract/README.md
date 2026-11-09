@@ -18,7 +18,7 @@ procedure, its checks and its limits: **[`docs/upgrade-guide.md`](../../docs/upg
 ## The commands
 
 ```sh
-# 0. build both with keys (Compact 0.35.0, --feature-zkir-v3) and check the layout
+# 0. build both with keys (Compact 0.36.0) and check the layout
 docker/run.sh exec 'npm run -s compile -w examples/upgrade-existing-contract && npm run -s check-layout -w examples/upgrade-existing-contract'
 
 # 1. the token as it was deployed long ago (no MIP-0018 circuit), and a mint
