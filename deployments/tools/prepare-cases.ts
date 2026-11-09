@@ -595,12 +595,11 @@ function build(): { cases: CaseDef[] } {
         sameState(part(state, domainSep, 3), { identities: [C12_EXPECTED.s12b!], groups: C12_GROUPS.s12b! }, `C12 after ${c.id}`);
       sameState(part(state, DS11, 3), { identities: [c07Identity], groups: part(expectedOf.C07!, DS11, 3).groups }, `C12 after ${c.id}`);
       files[`expected-after-${c.id}.json`] = state;
-      checks.push({ record: 'record.json', step: c.id, expect: `expect/${c.id}.json` });
-      lists.push({ record: 'record.json', expect: `expected-after-${c.id}.json`, atStep: c.id });
-    }
-    for (const c of all) {
+      // checked right after the step: `list` reads the contract's current state
       steps.push(checkEvent(c.id));
       steps.push(list(`expected-after-${c.id}.json`, `list-after-${c.id}`));
+      checks.push({ record: 'record.json', step: c.id, expect: `expect/${c.id}.json` });
+      lists.push({ record: 'record.json', expect: `expected-after-${c.id}.json`, atStep: c.id });
     }
     const final = reduce(evs, { fields: true, counts: true });
     // the kind-1 identity ends exactly as vector S3a states it (every field: key, value type, value, usability)
