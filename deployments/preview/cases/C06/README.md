@@ -52,14 +52,17 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/C06
 ```
 
-## Transactions
+## Transactions (Preview, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
-| `deploy` | — | — | — |
-| `publish` | — | — | — |
-| `rename` | — | — | — |
-| `withdraw` | — | — | — |
-| `withdraw-again` | — | — | — |
-| `revive` | — | — | — |
+Contract `OwnerKey` at `f53dbefbedcf5a5ab992b343e6b4f66585883a929b6a0d277290066268f7ff4a`; signer mn_addr_preview1wlhw0m3nh29lfmk0tj4lvfh2wfsekt8nns9h57gpyfe0az7e9fts2x420z.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `deploy` | deploy | `afe0c018947b2f8d797bc58e9ebb63a351f02932d78fdcdfecdd2d8774551c19` | 41722 (`80b0d6fdaab971bc…`) | SUCCESS | 6,311,986,057,142,858 | 6.312 |
+| `publish` | call `publishMetadata` | `a7c889e8ee0c0de3dfb5c25943922cd8962d5c27d062b1686507c8e8dff20b6c` | 41728 (`a435054049252d74…`) | SUCCESS | 219,297,371,428,572 | 0.219 |
+| `rename` | call `setMetadata` | `7c499199eeca9bb2c83cbb4603df0a30a8307965a5131fe980f5738c207a7afd` | 41736 (`2d8c753478e633e0…`) | SUCCESS | 218,163,657,142,858 | 0.218 |
+| `withdraw` | call `withdrawMetadata` | `890fca4e464cb5874eb399b9a6102df132323c53a4192a769ede92873eabc298` | 41744 (`a74fb6c245ff83f9…`) | SUCCESS | 219,296,914,285,715 | 0.219 |
+| `withdraw-again` | call `withdrawMetadata` | `daedf0abfd48b725f5d43896e31b74e1f59aef821834618f565f863e166f0f5c` | 41752 (`7d70128abc2d1346…`) | SUCCESS | 219,296,914,285,715 | 0.219 |
+| `revive` | call `setMetadata` | `ff60bf6012e4453f5ecb9c4fdc8a36b361565705aa12171ed89996d8d621a1e6` | 41760 (`ea06ea7b37aa3455…`) | SUCCESS | 218,163,657,142,858 | 0.218 |
+| **total** | | | | | **7,406,204,571,428,576** | **7.406** |
 

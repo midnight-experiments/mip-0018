@@ -1,0 +1,75 @@
+{
+  "network": {
+    "id": "preview",
+    "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+    "indexer": "https://indexer.preview.midnight.network/api/v4/graphql"
+  },
+  "contract": "f53dbefbedcf5a5ab992b343e6b4f66585883a929b6a0d277290066268f7ff4a",
+  "snapshot": {
+    "indexerTip": {
+      "height": 41745,
+      "hash": "5d597498840d518a6eb181a6266f576436362ef0522cbcc48c0dd9b86bb52158"
+    },
+    "toBlock": 41745,
+    "nodeHashAtTip": "0x5d597498840d518a6eb181a6266f576436362ef0522cbcc48c0dd9b86bb52158",
+    "tipMatchesNode": true,
+    "finalizedHeight": 41745
+  },
+  "pages": 2,
+  "counts": {
+    "events": 3,
+    "accepted": 3,
+    "rejected": 0,
+    "ignored": 0
+  },
+  "events": [
+    {
+      "id": 13285,
+      "block": {
+        "height": 41728,
+        "hash": "a435054049252d74d87c113463a791bc8b041755556c4a197d416ba590f1227a"
+      },
+      "txHash": "a7c889e8ee0c0de3dfb5c25943922cd8962d5c27d062b1686507c8e8dff20b6c",
+      "txId": 3190,
+      "result": "accept",
+      "identity": "preview|f53dbefbedcf5a5ab992b343e6b4f66585883a929b6a0d277290066268f7ff4a|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "records": 4
+    },
+    {
+      "id": 13287,
+      "block": {
+        "height": 41736,
+        "hash": "2d8c753478e633e0635541878680d4d35e3c924af0e0953f548db47c918f6d2e"
+      },
+      "txHash": "7c499199eeca9bb2c83cbb4603df0a30a8307965a5131fe980f5738c207a7afd",
+      "txId": 3191,
+      "result": "accept",
+      "identity": "preview|f53dbefbedcf5a5ab992b343e6b4f66585883a929b6a0d277290066268f7ff4a|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "records": 2
+    },
+    {
+      "id": 13289,
+      "block": {
+        "height": 41744,
+        "hash": "a74fb6c245ff83f9d1a5533dd109afd28bc3400170b14ffd72f4efc73c0e7c36"
+      },
+      "txHash": "890fca4e464cb5874eb399b9a6102df132323c53a4192a769ede92873eabc298",
+      "txId": 3192,
+      "result": "accept",
+      "identity": "preview|f53dbefbedcf5a5ab992b343e6b4f66585883a929b6a0d277290066268f7ff4a|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "records": 6
+    }
+  ],
+  "identities": [],
+  "groups": [],
+  "expectation": {
+    "ok": true,
+    "differences": []
+  }
+}
