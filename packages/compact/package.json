@@ -17,7 +17,6 @@
     "src"
   ],
   "scripts": {
-    "compile": "node scripts/compile.ts",
     "costs": "node scripts/costs.ts",
     "test": "vitest run"
   },
