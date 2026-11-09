@@ -1,6 +1,6 @@
 [
  {
-  "url": "https://rpc.stagenet.shielded.tools",
+  "url": "http://node:9944",
   "body": {
    "id": 1,
    "jsonrpc": "2.0",
@@ -13,11 +13,11 @@
   "response": {
    "jsonrpc": "2.0",
    "id": 1,
-   "result": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491"
+   "result": "0x823383ec0302be8417cfcbcc62f21df08f4047bca37aaea89e3f54b550ebae1d"
   }
  },
  {
-  "url": "https://indexer.stagenet.shielded.tools/api/v4/graphql",
+  "url": "http://indexer:8088/api/v4/graphql",
   "body": {
    "query": "query { block { height hash timestamp } }",
    "variables": {}
@@ -26,32 +26,32 @@
   "response": {
    "data": {
     "block": {
-     "height": 711397,
-     "hash": "e13c7ce18fa81d9be3fe08856b7915e07cf11b7bf2d77246e49cdf55a7a52e78",
-     "timestamp": 1790909646000
+     "height": 644,
+     "hash": "8f450cada47e6558b5395c5f53726b9eb69c9fbfc2b7dc31efe384ce099f41b7",
+     "timestamp": 1794257190001
     }
    }
   }
  },
  {
-  "url": "https://rpc.stagenet.shielded.tools",
+  "url": "http://node:9944",
   "body": {
    "id": 1,
    "jsonrpc": "2.0",
    "method": "chain_getBlockHash",
    "params": [
-    711397
+    644
    ]
   },
   "status": 200,
   "response": {
    "jsonrpc": "2.0",
    "id": 1,
-   "result": "0xe13c7ce18fa81d9be3fe08856b7915e07cf11b7bf2d77246e49cdf55a7a52e78"
+   "result": "0x8f450cada47e6558b5395c5f53726b9eb69c9fbfc2b7dc31efe384ce099f41b7"
   }
  },
  {
-  "url": "https://rpc.stagenet.shielded.tools",
+  "url": "http://node:9944",
   "body": {
    "id": 1,
    "jsonrpc": "2.0",
@@ -62,17 +62,17 @@
   "response": {
    "jsonrpc": "2.0",
    "id": 1,
-   "result": "0xe13c7ce18fa81d9be3fe08856b7915e07cf11b7bf2d77246e49cdf55a7a52e78"
+   "result": "0x8f450cada47e6558b5395c5f53726b9eb69c9fbfc2b7dc31efe384ce099f41b7"
   }
  },
  {
-  "url": "https://rpc.stagenet.shielded.tools",
+  "url": "http://node:9944",
   "body": {
    "id": 1,
    "jsonrpc": "2.0",
    "method": "chain_getHeader",
    "params": [
-    "0xe13c7ce18fa81d9be3fe08856b7915e07cf11b7bf2d77246e49cdf55a7a52e78"
+    "0x8f450cada47e6558b5395c5f53726b9eb69c9fbfc2b7dc31efe384ce099f41b7"
    ]
   },
   "status": 200,
@@ -80,33 +80,33 @@
    "jsonrpc": "2.0",
    "id": 1,
    "result": {
-    "parentHash": "0xbb142bfbc8fc0fe281bc32c6e2f857ac63030be910adb1e14eb6da32c0d44119",
-    "number": "0xadae5",
-    "stateRoot": "0x6c6a14b9c07508bb6c28f9164256838db88f4bfbb958d7ca06202a05521fcc41",
-    "extrinsicsRoot": "0x6eb34a0198fbb9dbe297a7a63b59c0bf54a7080c8ebabef0e14ca7a95a7448a1",
+    "parentHash": "0x468c84673f5391cbaef77ad10d52e21fa1b1ce0d54813d23f191345054c2a2ff",
+    "number": "0x284",
+    "stateRoot": "0xc1e3bb254a11a52c47e6a46522e902734c231f2f0064ee2197a53203fb5e3fb5",
+    "extrinsicsRoot": "0xec02cc2967c655d6598f63889d1325330c68bf7fac73c686dadccf804fc1322b",
     "digest": {
      "logs": [
-      "0x066175726120cd84ca1100000000",
-      "0x066d637368806401dbe18e97ff40e991f27da38f3b8f49c6fee826ffb453b257e849b0364ac6",
-      "0x044d4e53561080841e00",
-      "0x04424545468403677172ade656bf032585cc776efd20345ad50efa369b36da79b8e4970ccbfbf7",
-      "0x0561757261010144f3e56e03b08bf6ffea6131a6427d3a997bf23a97becc332b876de8c250b45869e9ead2df0bcf56669059c7247f05957e8b2e0a5561c5354ffbdca907eedf8f"
+      "0x0661757261203108d31100000000",
+      "0x066d637368800558e8db00000000000000000000000000000000000000000000000000000000",
+      "0x044d4e535610cc881e00",
+      "0x0442454546840302dd04d2758faa25c6cc5731cf11c8ae5ccc054f5341231b88ac5f55dddd2c73",
+      "0x05617572610101a633a7bd6dba873bdce96bde5b46c6dcda478ddc6bb70906f4dbe96ef11d7a4fc237490725763f8ec57062d7fc1ec483fc93aef8cf77b8ced9d0ad6688413c88"
      ]
     }
    }
   }
  },
  {
-  "url": "https://indexer.stagenet.shielded.tools/api/v4/graphql",
+  "url": "http://indexer:8088/api/v4/graphql",
   "body": {
    "query": "query ($filter: ContractEventFilter!, $limit: Int!, $offset: Int!) {\n    contractEvents(filter: $filter, limit: $limit, offset: $offset) { \n  __typename id contractAddress transactionId raw\n  ... on MiscContractEvent { name payload }\n  transaction { id hash block { height hash } ... on RegularTransaction { transactionResult { status segments { id success } } } }\n }\n  }",
    "variables": {
     "filter": {
-     "contractAddress": "18097aeb608f35d83a65b2cad987084c97c6e9d1dc02973f2a6f6cc2fcdd76e1",
+     "contractAddress": "ae4c5f2d80f1d474850135364c72dd17be0f8da2991ab7ed139efea9e1ff087b",
      "types": [
       "MISC"
      ],
-     "toBlock": 710820
+     "toBlock": 39
     },
     "limit": 500,
     "offset": 0
@@ -118,22 +118,22 @@
     "contractEvents": [
      {
       "__typename": "MiscContractEvent",
-      "id": 53254,
-      "contractAddress": "18097aeb608f35d83a65b2cad987084c97c6e9d1dc02973f2a6f6cc2fcdd76e1",
-      "transactionId": 24127,
-      "raw": "6d69646e696768743a6576656e745b7631345d3a08000d027f036d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000111111111111111111111111111111111111111111111111111111111111111103046e616d65010a41636d6520546f6b656e0673796d626f6c010441434d4508646563696d616c73020106097374616e646172647301086d69702d30303034200904006101223050717f704fe47d1bd0b6b91da8ea248139d2d15a23a2eab7cf07d5a5141800005b760318097aeb608f35d83a65b2cad987084c97c6e9d1dc02973f2a6f6cc2fcdd76e13c7075626c6973684d65746164617461040a01",
+      "id": 60,
+      "contractAddress": "ae4c5f2d80f1d474850135364c72dd17be0f8da2991ab7ed139efea9e1ff087b",
+      "transactionId": 32,
+      "raw": "6d69646e696768743a6576656e745b7631345d3a08000d027f036d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000111111111111111111111111111111111111111111111111111111111111111103046e616d65010a41636d6520546f6b656e0673796d626f6c010441434d4508646563696d616c73020106097374616e646172647301086d69702d30303034200904006101b8f4443cdb1da751f575877aba757812131373e6d48e4f863c60dedf86839a4a00008a0003ae4c5f2d80f1d474850135364c72dd17be0f8da2991ab7ed139efea9e1ff087b3c7075626c6973684d65746164617461040a01",
       "name": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
       "payload": "111111111111111111111111111111111111111111111111111111111111111103046e616d65010a41636d6520546f6b656e0673796d626f6c010441434d4508646563696d616c73020106097374616e646172647301086d69702d303030340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
       "transaction": {
-       "id": 24127,
-       "hash": "223050717f704fe47d1bd0b6b91da8ea248139d2d15a23a2eab7cf07d5a51418",
+       "id": 32,
+       "hash": "b8f4443cdb1da751f575877aba757812131373e6d48e4f863c60dedf86839a4a",
        "transactionResult": {
         "status": "SUCCESS",
         "segments": null
        },
        "block": {
-        "height": 710810,
-        "hash": "0cadba2817cc6fd9e1e25905b0241762f2a5df517bd90de4623e1f1f23929658"
+        "height": 32,
+        "hash": "6f05b5c2883a3bcc70fb128431749ad1c894d96c16fd126044fdc0c5e1ac2037"
        }
       }
      }
@@ -142,16 +142,16 @@
   }
  },
  {
-  "url": "https://indexer.stagenet.shielded.tools/api/v4/graphql",
+  "url": "http://indexer:8088/api/v4/graphql",
   "body": {
    "query": "query ($filter: ContractEventFilter!, $limit: Int!, $offset: Int!) {\n    contractEvents(filter: $filter, limit: $limit, offset: $offset) { \n  __typename id contractAddress transactionId raw\n  ... on MiscContractEvent { name payload }\n  transaction { id hash block { height hash } ... on RegularTransaction { transactionResult { status segments { id success } } } }\n }\n  }",
    "variables": {
     "filter": {
-     "contractAddress": "18097aeb608f35d83a65b2cad987084c97c6e9d1dc02973f2a6f6cc2fcdd76e1",
+     "contractAddress": "ae4c5f2d80f1d474850135364c72dd17be0f8da2991ab7ed139efea9e1ff087b",
      "types": [
       "MISC"
      ],
-     "toBlock": 710820
+     "toBlock": 39
     },
     "limit": 500,
     "offset": 1

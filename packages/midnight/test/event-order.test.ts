@@ -9,8 +9,9 @@
 //   * `list` orders the events of one transaction by the indexer's event id. `check-event` (and so `recheck`) checks, per
 //     transaction, that the id order equals the raw ledger order: it matches each indexed event, in id order, with the
 //     NEXT applied log op of the contract (a cursor that only moves forward), so an indexer whose ids disagreed with
-//     the ledger order would fail `event-<i>-in-raw-tx`. The recorded Stagenet multi-event transactions (C04: three
-//     events in one call; C08: two) passed that check, in the order the circuits emit them.
+//     the ledger order would fail `event-<i>-in-raw-tx`. Two multi-event transactions recorded on a local chain (case
+//     C04's publish: three events in one call; C08's emitTwo: two) passed that check, in the order the circuits emit
+//     them (fixtures/local, record-local.ts).
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -96,9 +97,9 @@ describe('event order within a transaction (raw ledger order = the MIP rule)', (
   });
 });
 
-describe('recorded Stagenet multi-event transactions: indexer id order = ledger order', () => {
-  const observed = (id: string, file: string) =>
-    JSON.parse(readFileSync(join(REPO, 'deployments', 'stagenet', 'cases', id, file), 'utf8')) as CheckEventReport;
+describe('recorded multi-event transactions: indexer id order = ledger order', () => {
+  const fixture = (file: string) => JSON.parse(readFileSync(join(import.meta.dirname, 'fixtures', 'local', file), 'utf8')) as unknown;
+  const observed = (file: string) => fixture(file) as CheckEventReport;
   const idOrderMatchesLedger = (r: CheckEventReport) => {
     const ids = r.events.map((e) => e.id);
     expect(ids).toEqual([...ids].sort((a, b) => a - b)); // the report lists events in id order
@@ -107,7 +108,7 @@ describe('recorded Stagenet multi-event transactions: indexer id order = ledger 
   };
 
   it('C04: three events of one publishMetadata call, in the order the circuit emits them (kinds 1, 2, 3)', () => {
-    const r = observed('C04', 'observed-check-event-publish.json');
+    const r = observed('check-event-multi-kind-publish.json');
     expect(r.outcome).toBe('ok');
     idOrderMatchesLedger(r);
     const source = readFileSync(join(REPO, 'examples/openzeppelin/multi-kind/contracts/MyMultiKindToken.compact'), 'utf8');
@@ -123,13 +124,10 @@ describe('recorded Stagenet multi-event transactions: indexer id order = ledger 
   });
 
   it('C08: emitTwo(valid, malformed) — the valid event first, as emitted', () => {
-    const r = observed('C08', 'observed-check-event-emit-two.json');
+    const r = observed('check-event-emit-two.json');
     expect(r.outcome).toBe('ok');
     idOrderMatchesLedger(r);
-    const expectFile = JSON.parse(readFileSync(join(REPO, 'deployments/stagenet/cases/C08/expect/emit-two.json'), 'utf8')) as Array<{
-      result: string;
-      payload: string;
-    }>;
+    const expectFile = fixture('check-event-emit-two.expect.json') as Array<{ result: string; payload: string }>;
     expect(r.events.map((e) => e.classification.result)).toEqual(['accept', 'reject']);
     expect(r.events.map((e) => e.payload)).toEqual(expectFile.map((x) => x.payload));
   });

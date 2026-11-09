@@ -1,0 +1,129 @@
+{
+ "network": {
+  "id": "undeployed",
+  "genesisHash": "0x823383ec0302be8417cfcbcc62f21df08f4047bca37aaea89e3f54b550ebae1d",
+  "indexer": "http://indexer:8088/api/v4/graphql"
+ },
+ "contract": "ae4c5f2d80f1d474850135364c72dd17be0f8da2991ab7ed139efea9e1ff087b",
+ "snapshot": {
+  "indexerTip": {
+   "height": 644,
+   "hash": "8f450cada47e6558b5395c5f53726b9eb69c9fbfc2b7dc31efe384ce099f41b7"
+  },
+  "toBlock": 39,
+  "nodeHashAtTip": "0x8f450cada47e6558b5395c5f53726b9eb69c9fbfc2b7dc31efe384ce099f41b7",
+  "tipMatchesNode": true,
+  "finalizedHeight": 644
+ },
+ "pages": 2,
+ "counts": {
+  "events": 1,
+  "accepted": 1,
+  "rejected": 0,
+  "ignored": 0
+ },
+ "events": [
+  {
+   "id": 60,
+   "block": {
+    "height": 32,
+    "hash": "6f05b5c2883a3bcc70fb128431749ad1c894d96c16fd126044fdc0c5e1ac2037"
+   },
+   "txHash": "b8f4443cdb1da751f575877aba757812131373e6d48e4f863c60dedf86839a4a",
+   "txId": 32,
+   "result": "accept",
+   "identity": "undeployed|ae4c5f2d80f1d474850135364c72dd17be0f8da2991ab7ed139efea9e1ff087b|1111111111111111111111111111111111111111111111111111111111111111|3",
+   "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+   "kind": 3,
+   "records": 4
+  }
+ ],
+ "identities": [
+  {
+   "key": "undeployed|ae4c5f2d80f1d474850135364c72dd17be0f8da2991ab7ed139efea9e1ff087b|1111111111111111111111111111111111111111111111111111111111111111|3",
+   "network": "undeployed",
+   "contractAddress": "ae4c5f2d80f1d474850135364c72dd17be0f8da2991ab7ed139efea9e1ff087b",
+   "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+   "kind": 3,
+   "colored": false,
+   "color": null,
+   "fields": [
+    {
+     "key": "6e616d65",
+     "valType": 1,
+     "value": "41636d6520546f6b656e",
+     "setAt": {
+      "block": "32",
+      "tx": 32,
+      "event": 60,
+      "record": 0
+     },
+     "keyHex": "6e616d65",
+     "usable": true
+    },
+    {
+     "key": "73796d626f6c",
+     "valType": 1,
+     "value": "41434d45",
+     "setAt": {
+      "block": "32",
+      "tx": 32,
+      "event": 60,
+      "record": 1
+     },
+     "keyHex": "73796d626f6c",
+     "usable": true
+    },
+    {
+     "key": "646563696d616c73",
+     "valType": 2,
+     "value": "06",
+     "setAt": {
+      "block": "32",
+      "tx": 32,
+      "event": 60,
+      "record": 2
+     },
+     "integer": "6",
+     "keyHex": "646563696d616c73",
+     "usable": true
+    },
+    {
+     "key": "7374616e6461726473",
+     "valType": 1,
+     "value": "6d69702d30303034",
+     "setAt": {
+      "block": "32",
+      "tx": 32,
+      "event": 60,
+      "record": 3
+     },
+     "keyHex": "7374616e6461726473",
+     "usable": true
+    }
+   ],
+   "common": {
+    "name": "Acme Token",
+    "symbol": "ACME",
+    "decimals": "6",
+    "standards": [
+     "mip-0004"
+    ]
+   }
+  }
+ ],
+ "groups": [
+  {
+   "network": "undeployed",
+   "contractAddress": "ae4c5f2d80f1d474850135364c72dd17be0f8da2991ab7ed139efea9e1ff087b",
+   "symbol": "41434d45",
+   "members": [
+    {
+     "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+     "kind": 3,
+     "key": "undeployed|ae4c5f2d80f1d474850135364c72dd17be0f8da2991ab7ed139efea9e1ff087b|1111111111111111111111111111111111111111111111111111111111111111|3"
+    }
+   ]
+  }
+ ]
+}

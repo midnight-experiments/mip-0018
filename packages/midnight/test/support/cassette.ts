@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Record / replay of JSON-over-HTTP exchanges, so unit tests run the real clients against recorded Stagenet
+// Record / replay of JSON-over-HTTP exchanges, so unit tests run the real clients against recorded chain
 // responses without a network. A cassette is a list of { url, body, response }; replay matches on url + body
 // (JSON-normalised) and serves each recorded exchange once per occurrence, in order.
 
