@@ -1,7 +1,7 @@
 # Issuer guide — publish MIP-0018 metadata for your token
 
 How a token contract publishes its name, symbol and decimals as MIP-0018 events
-([MIP-0018 @ `274a84f2`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/274a84f221bcfc17e4b73e2c8b32fd8c028ea092/mips/mip-0018-on-chain-token-metadata.md)):
+([MIP-0018 @ `338ea194`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/338ea194bbe7c4e5d1829234a503b7c1b11ebf0f/mips/mip-0018-on-chain-token-metadata.md)):
 what to emit, the Compact lines to add, who may call them, and how to deploy, publish, rename and withdraw with the
 `mip0018` CLI. Everything shown was run on a local chain and on Stagenet; the commands are copied from the
 walkthroughs [`examples/publish-and-emit`](../examples/publish-and-emit/README.md) and
@@ -17,28 +17,38 @@ One event describes one **token identity** `(contractAddress, domainSep, kind)`:
 
 | `kind` | Token | `domainSep` | Color |
 |---:|---|---|---|
-| 1 | native shielded (coins) | the value your contract passes to `mintShieldedToken` | `tokenType(domainSep, contractAddress)` |
-| 2 | native unshielded (UTXOs) | the value passed to `mintUnshieldedToken` | the same formula |
-| 3 | ledger token (balances in contract state) | any stable 32 bytes you choose, e.g. `pad(32, "acme:gold")` | none |
+| 1 | shielded UTXO — a contract-issued UTXO token held as shielded coins | the value your contract passes to `mintShieldedToken` | `tokenType(domainSep, contractAddress)` |
+| 2 | unshielded UTXO — a contract-issued UTXO token held as unshielded UTXOs | the value passed to `mintUnshieldedToken` | the same formula |
+| 3 | contract token — represented by contract logic, e.g. balances in contract state | any stable 32 bytes you choose, e.g. `pad(32, "acme:gold")` | none |
 
 The contract address is never in the payload: consumers take it from the event record, so a contract can only describe
-its own tokens. For a native token the `domainSep` **must** be the minting value — read it from the same ledger field
-the mint uses — or the color consumers derive will not be the color of your coins. One asset held in several forms
-(shielded, unshielded, ledger) is several identities: publish one event per kind
+its own tokens. For a contract-issued UTXO token the `domainSep` **must** be the minting value — read it from the same
+ledger field the mint uses — or the color consumers derive will not be the color of your coins. One asset held in
+several forms (shielded UTXO, unshielded UTXO, contract token) is several identities: publish one event per kind
 ([`examples/openzeppelin/multi-kind`](../examples/openzeppelin/multi-kind/README.md)).
 
 What to put in the event:
 
-- **`name`, `symbol`, `decimals`** (SHOULD) — non-empty UTF-8, non-empty UTF-8, and `decimals` as a `Uint<8>`.
-  Consumers assume no default: a token without `decimals` shows no amounts.
+- **`name`, `symbol`, `decimals`** (SHOULD) — `name` UTF-8 of 1–64 characters, `symbol` UTF-8 of 1–12 characters, and
+  `decimals` as a `Uint<8>`. A character is a grapheme cluster (what a reader sees as one character), not a byte;
+  consumers show only the first 64 / 12, so keep within the limits. Consumers assume no default: a token without
+  `decimals` shows no amounts.
 - **`standards`** (MAY) — standards the token claims, as `mip-NNNN` identifiers separated by single spaces. Claim only
   what the token implements: the OpenZeppelin examples publish none, because OpenZeppelin claims no MIP.
+- **`image`, `image_sha256`** (MAY) — the token's image or logo as a URI (type 4: ASCII only, e.g.
+  `https://example.org/acme.png`), and the SHA-256 of that file (type 0, exactly 32 bytes). Consumers do not display
+  content whose SHA-256 differs from `image_sha256`, so publish the hash of the exact file you serve. Module:
+  `imageRecord<N>(uri)` and `imageSha256Record(hash)`; codec: `record.image`, `record.imageSha256`.
+- **Only keys a MIP defines are served.** Consumers serve the common keys above and the keys of standards the token
+  declares in `standards`; any other key is accepted on chain but shown by no conforming consumer. Keys must be valid
+  UTF-8.
 - **Exact bytes.** Keys and values are compared byte for byte. The MIP says it outright (Payload):
   "Each fixed-size field must be exactly as long as the key or value it carries: a shorter value padded with zero
   bytes is a different value (for example `"AGL"` sent as a `Bytes<4>` is `"AGL\0"`), and consumers accept it as such."
   Every size in the module is the value's UTF-8 byte length.
 - **One event per identity.** The payload is 256 bytes: a 33-byte header, then records of `3 + key + value` bytes; the
-  largest value is 219 bytes. The three common fields plus `standards` take 62 bytes (MIP Appendix A).
+  largest value is 219 bytes. The three common fields plus `standards` take 62 bytes (MIP Appendix A); `image` and
+  `image_sha256` take `8 + URI length` and 47 more.
 - **Getters.** If the token also exposes standard getters (for example MIP-0004/0011/0014 `name()` / `symbol()` /
   `decimals()`), publish the same values when you first publish. Nothing on chain checks this; the OpenZeppelin
   examples take both from one `metadata.json` and read `decimals` from the token state. "A later update, such as a
@@ -61,7 +71,7 @@ import "@mip0018/compact/src/Mip0018" prefix Mip0018_;  // compile with --compac
 export circuit publishMetadata(): [] {
   // guard it (owner check), make it publish-once, or remove its key after the first call
   Mip0018_emitPayload(Mip0018_commonFieldsWithStandards<10, 4, 8>(
-    domain, Mip0018_KIND_LEDGER(), "Acme Token", "ACME", 6, "mip-0004"));
+    domain, Mip0018_KIND_CONTRACT_TOKEN(), "Acme Token", "ACME", 6, "mip-0004"));
 }
 ```
 
@@ -77,14 +87,14 @@ Rename and withdraw, from the [OpenZeppelin fungible token](../examples/openzepp
 export circuit setMetadata(newName: Bytes<9>, newSymbol: Bytes<4>): [] {
   Ownable_assertOnlyOwner();
   Mip0018_emitPayload(Mip0018_payload2<4, 9, 6, 4>(
-    Mip0018_header(metadataDomain(), Mip0018_KIND_LEDGER()),
+    Mip0018_header(metadataDomain(), Mip0018_KIND_CONTRACT_TOKEN()),
     Mip0018_nameRecord<9>(newName),
     Mip0018_symbolRecord<4>(newSymbol)));
 }
 
 export circuit withdrawMetadata(): [] {
   Ownable_assertOnlyOwner();
-  Mip0018_emitPayload(Mip0018_withdraw(metadataDomain(), Mip0018_KIND_LEDGER()));
+  Mip0018_emitPayload(Mip0018_withdraw(metadataDomain(), Mip0018_KIND_CONTRACT_TOKEN()));
 }
 ```
 
@@ -92,13 +102,14 @@ A rename changes only the keys it carries. **Deleting** is per key (MIP "Applyin
 record deletes its own field, and "a token identity exists only while at least one of its fields has a value".
 
 - **Withdraw a token**: emit a Null record for each of its keys; one event can carry them all. `withdraw(domainSep,
-  kind)` is that event for the common keys — Null records at `name`, `symbol`, `decimals` and `standards` (39 bytes of
-  records). Once every key is deleted, consumers do not reference the identity at all (not listed, not found by a
-  lookup, in no group, no history); the next publish describes it again with only what it carries. **A token that
-  published keys beyond these four must add a Null record for each of them** — otherwise those keys keep the identity
-  alive with only them. Build that event with `nullRecord<K>(key)` and `payload<n>`, e.g.
+  kind)` is that event for the six common keys — Null records at `name`, `symbol`, `decimals`, `standards`, `image` and
+  `image_sha256` (62 bytes of records; a Null record for a key without a value changes nothing). Once every key is
+  deleted, consumers do not reference the identity at all (not listed, not found by a lookup, in no group, no
+  history); the next publish describes it again with only what it carries. **A token that published keys of a
+  declared standard must add a Null record for each of them** — otherwise those keys keep the identity alive. Build
+  that event with `nullRecord<K>(key)` and `payload<n>`, e.g.
   `Mip0018_payload1<4, 0>(Mip0018_header(domainSep, kind), Mip0018_nullRecord<4>("logo"))` for a 4-byte key `logo`
-  (or put up to four Null records in one `payload4`).
+  (or put up to six Null records in one `payload6`).
 - **Delete a single key**: one Null record for it, e.g.
   `Mip0018_emitPayload(Mip0018_payload1<4, 0>(Mip0018_header(domainSep, kind), Mip0018_nullRecord<4>("name")))`; the
   other fields stay. A Null record for a key that has no value changes nothing.
@@ -131,7 +142,7 @@ access-controlled, publish-once, or removed after use" (Publishing). Four patter
 
 | Pattern | Example | Rename / withdraw later | `publishMetadata()` size | Caveats |
 |---|---|---|---|---|
-| OpenZeppelin `Ownable` | [`examples/openzeppelin`](../examples/openzeppelin/README.md) | yes, owner-only | fungible k = 13 (literal `domainSep`), native k = 15 | `Ownable_assertOnlyOwner()` first in every emitting circuit; the owner secret lives in the deployer's private state |
+| OpenZeppelin `Ownable` | [`examples/openzeppelin`](../examples/openzeppelin/README.md) | yes, owner-only | fungible k = 13 (literal `domainSep`), native-shielded / native-unshielded examples k = 15 | `Ownable_assertOnlyOwner()` first in every emitting circuit; the owner secret lives in the deployer's private state |
 | Owner key (hand-rolled) | [`OwnerKey`](../examples/minimal/contracts/OwnerKey.compact) | yes, owner-only | k = 15, 17,782 rows | the same idea without OpenZeppelin |
 | Publish once | [`PublishOnce`](../examples/minimal/contracts/PublishOnce.compact) | no | k = 14, 14,065 rows | payload must be **constant** (anyone may make the one call); keep the flag in your own ledger field — do not reuse OpenZeppelin `Initializable` (shared module state) |
 | Create and destroy | [`CreateAndDestroy`](../examples/minimal/contracts/CreateAndDestroy.compact) | no (only through a maintenance update) | k = 14, 14,041 rows | unguarded with a **constant** payload; the deployer calls it, then removes its verifier key (`VerifierKeyRemove` in the `v4` slot for ZKIR-v3 circuits — midnight-js 5.0.0-rc.2 removes only `v3`). Until then anyone holding the compiled artefacts can call it, but can only re-emit the same values |
@@ -172,10 +183,10 @@ mip0018() { MIP0018_DOCKER_NETWORK="$MIP0018_STACK_NETWORK" MIP0018_DOCKER_ENV="
 A="--network undeployed --dev-genesis-wallet --wallet-cache /run/mip0018/state/a.wallet-cache"
 
 signer deploy-and-publish $A --example fungible-token --record /walk/fungible-token.json
-mip0018 verify --network undeployed --record /walk/fungible-token.json --step publish
+mip0018 check-event --network undeployed --record /walk/fungible-token.json --step publish
 ```
 
-`deploy-and-publish` compiles (when `managed/` has no keys), deploys, calls `publishMetadata()` and verifies the event
+`deploy-and-publish` compiles (when `managed/` has no keys), deploys, calls `publishMetadata()` and checks the event
 wallet-free against the exact payload the example expects. Stop the chain with `docker/local-stack/down.sh`.
 
 **Your own contract.** `--example <name>` loads `examples/<name>/mip0018.adapter.ts`; for your contract either:
@@ -214,13 +225,13 @@ signer publish $W --record deployments/stagenet/cases/C01/record.json --circuit 
 **Check what consumers see**, wallet-free (any network; Stagenet uses the public endpoints by default):
 
 ```sh
-docker/run.sh mip0018 -- verify --network stagenet --record deployments/stagenet/cases/C01/record.json --step publish \
+docker/run.sh mip0018 -- check-event --network stagenet --record deployments/stagenet/cases/C01/record.json --step publish \
   --expect @deployments/stagenet/cases/C01/expect/publish.json
 docker/run.sh mip0018 -- list --network stagenet --record deployments/stagenet/cases/C04/record.json --expect @deployments/stagenet/cases/C04/expected.json
 ```
 
-`verify` checks the one emission end to end (event name, binding to your contract, decode result, raw transaction,
-block, finality, the expected payload); `list` shows the state every consumer should reach. The run record
+`check-event` checks the one emission end to end (event name, binding to your contract, decode result and every
+record, raw transaction, block, finality, the expected payload); `list` shows the state every consumer should reach. The run record
 (`--record`) is public JSON: contract address, verifier-key hashes, transactions and observations — never a secret.
 
 ## 5. Rename and withdraw
@@ -239,8 +250,9 @@ What consumers then show: after the rename "Acme Prime"/"ACMP" (the replaced nam
 deployed contract (`OwnerKey.compact` at `70b54c6`) has a `withdrawMetadata` that emits a single Null record at
 `name`: it deletes only `name`, and the revive sets a name and a new symbol next to the remaining `decimals` and
 `standards` ([C06](../deployments/stagenet/cases/C06/README.md)). With `OwnerKey` as in this repository
-([C11](../deployments/stagenet/cases/C11/README.md)): after `withdrawMetadata` (four Null records in
-one event) the token is not listed at all and has no group; after the revive it has **only** `name` and `symbol` —
+([C11](../deployments/stagenet/cases/C11/README.md); that deployment's `withdrawMetadata`, compiled at `57ce633`,
+emits Null records at the four keys the token has: `name`, `symbol`, `decimals`, `standards`): after
+`withdrawMetadata` the token is not listed at all and has no group; after the revive it has **only** `name` and `symbol` —
 `decimals` and `standards` do not come back, so republish every field you want shown.
 
 A publish that would change nothing (the same values again, a second withdrawal) is skipped by the before-check; pass
@@ -283,11 +295,12 @@ compile an upgrade-only `publishMetadata()` against its exact ledger layout, ins
 | Case | Shows |
 |---|---|
 | [C01](../deployments/stagenet/cases/C01/README.md) | OpenZeppelin `FungibleToken` (kind 3): deploy, publish three fields |
-| [C02](../deployments/stagenet/cases/C02/README.md), [C03](../deployments/stagenet/cases/C03/README.md) | native shielded / unshielded: the minted coin's color = the identity's color |
+| [C02](../deployments/stagenet/cases/C02/README.md), [C03](../deployments/stagenet/cases/C03/README.md) | shielded / unshielded UTXO (OpenZeppelin native tokens): the minted coin's color = the identity's color |
 | [C04](../deployments/stagenet/cases/C04/README.md) | one asset as kinds 1, 2, 3 from one publish: one symbol group |
 | [C05](../deployments/stagenet/cases/C05/README.md) | token family: three `domainSep`, three identities |
 | [C06](../deployments/stagenet/cases/C06/README.md) | lifecycle: publish (Appendix A bytes), rename, delete `name` with a Null record twice, revive |
-| [C11](../deployments/stagenet/cases/C11/README.md) | full withdrawal (four Null records in one event): the token disappears from `list`; withdraw again changes nothing; revive with only `name` and `symbol` |
+| [C11](../deployments/stagenet/cases/C11/README.md) | full withdrawal (one event with a Null record at each of the token's four keys): the token disappears from `list`; withdraw again changes nothing; revive with only `name` and `symbol` |
+| [C12](../deployments/stagenet/cases/C12/README.md) | `image` + `image_sha256`, a key that is not served, a name and a symbol over their lengths (served truncated), a 31-byte `image_sha256` (unusable) |
 | [C09](../deployments/stagenet/cases/C09/README.md) | a non-owner's rename refused |
 | [C10](../deployments/stagenet/cases/C10/README.md) | create and destroy |
 | [U1](../deployments/stagenet/cases/U1/README.md) | adding `publishMetadata()` to a deployed token |
@@ -298,8 +311,9 @@ Re-check any of them without a wallet: `docker/run.sh mip0018 -- recheck --netwo
 ## Checklist
 
 - [ ] One event per identity, published right after deployment; nothing emitted by mint, transfer or burn.
-- [ ] Native tokens: `domainSep` read from the field the mint uses.
-- [ ] `name`, `symbol`, `decimals` (`Uint<8>`) with exact byte lengths; `standards` only for what the token implements.
+- [ ] Contract-issued UTXO tokens (kinds 1, 2): `domainSep` read from the field the mint uses.
+- [ ] `name` (≤ 64 characters), `symbol` (≤ 12), `decimals` (`Uint<8>`) with exact byte lengths; `standards` only for
+  what the token implements; `image_sha256` = the SHA-256 of the file at `image`.
 - [ ] Every emitting circuit owner-guarded, publish-once, or removed after use; the maintenance key kept safe.
 - [ ] Runtime values validated off chain before the call.
-- [ ] `mip0018 verify` and `list` show what you expect on the network you published to.
+- [ ] `mip0018 check-event` and `list` show what you expect on the network you published to.

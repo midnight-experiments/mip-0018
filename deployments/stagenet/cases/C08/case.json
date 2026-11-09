@@ -6,7 +6,7 @@
   "demonstrates": "Independent events (vector S7b): event 0 sets name = \"Good\" and applies; event 1 is malformed (valType 6) and is rejected whole without undoing event 0.",
   "conclusion": "One identity (0x11…/3) with only name = \"Good\"; 2 events: 1 accepted, 1 rejected (reserved-valtype).",
   "mip": {
-    "commit": "274a84f221bcfc17e4b73e2c8b32fd8c028ea092",
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {
@@ -63,10 +63,10 @@
       "submits": "call"
     },
     {
-      "id": "verify-emit-two",
+      "id": "check-event-emit-two",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -79,7 +79,7 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-emit-two.json"
+      "stdout": "observed-check-event-emit-two.json"
     },
     {
       "id": "list",
@@ -99,7 +99,7 @@
   ],
   "expected": "expected.json",
   "recheck": {
-    "verify": [
+    "checkEvent": [
       {
         "record": "record.json",
         "step": "emit-two",

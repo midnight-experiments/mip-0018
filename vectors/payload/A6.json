@@ -1,0 +1,40 @@
+{
+  "id": "A6",
+  "mip": {
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
+    "testId": "A6"
+  },
+  "normative": true,
+  "description": "Image: image = \"https://example.org/acme.png\" (type 4) and a 32-byte image_sha256 (type 0, the SHA-256 of the S12 test content) in one event. Records at offsets 33 and 69; content ends at 116.",
+  "event": {
+    "type": "Misc",
+    "name_hex": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+    "payload_hex": "11111111111111111111111111111111111111111111111111111111111111110305696d616765041c68747470733a2f2f6578616d706c652e6f72672f61636d652e706e670c696d6167655f7368613235360020df0e7f2208098c42ba231bd6ed5eacce4c7a7b21e4eb5ea1a79bccb0fa2374640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "payload_file": "A6.bin"
+  },
+  "expect": {
+    "result": "accept",
+    "header": {
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3
+    },
+    "records": [
+      {
+        "offset": 33,
+        "key_hex": "696d616765",
+        "key_text": "image",
+        "valType": 4,
+        "value_hex": "68747470733a2f2f6578616d706c652e6f72672f61636d652e706e67",
+        "value_text": "https://example.org/acme.png"
+      },
+      {
+        "offset": 69,
+        "key_hex": "696d6167655f736861323536",
+        "key_text": "image_sha256",
+        "valType": 0,
+        "value_hex": "df0e7f2208098c42ba231bd6ed5eacce4c7a7b21e4eb5ea1a79bccb0fa237464"
+      }
+    ],
+    "contentEnd": 116
+  }
+}

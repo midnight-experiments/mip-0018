@@ -2,7 +2,7 @@
   "name": "@mip0018/cli",
   "version": "0.1.0",
   "private": true,
-  "description": "mip0018 — deploy and publish MIP-0018 metadata, and verify, list, index (mint scanner) and look up colors without a wallet.",
+  "description": "mip0018 — deploy and publish MIP-0018 metadata, and check events, list, index (mint scanner) and look up colors without a wallet.",
   "license": "Apache-2.0",
   "type": "module",
   "engines": {

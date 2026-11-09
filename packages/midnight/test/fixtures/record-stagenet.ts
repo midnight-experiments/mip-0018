@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { HttpClient } from '../../src/http.ts';
 import { stagenetProfile } from '../../src/network.ts';
-import { verifyEmission } from '../../src/verify.ts';
+import { checkEvent } from '../../src/check-event.ts';
 import { listMetadata } from '../../src/list.ts';
 import { scan } from '../../src/scanner.ts';
 import { toJson } from '../../src/hex.ts';
@@ -40,8 +40,8 @@ async function rec(name: string, run: (http: HttpClient) => Promise<unknown>): P
   process.stdout.write(`${name}: ${tape.length} exchanges\n`);
 }
 
-await rec('verify-spike-publish', (http) => verifyEmission({ profile, contract: SPIKE, tx: TX.publish, http }));
-await rec('verify-spike-deploy', (http) => verifyEmission({ profile, contract: SPIKE, tx: TX.deploy, http }));
+await rec('check-event-spike-publish', (http) => checkEvent({ profile, contract: SPIKE, tx: TX.publish, http }));
+await rec('check-event-spike-deploy', (http) => checkEvent({ profile, contract: SPIKE, tx: TX.deploy, http }));
 await rec('list-spike', (http) => listMetadata({ profile, contract: SPIKE, toBlock: 710820, http }));
 const dir = mkdtempSync(join(tmpdir(), 'mip0018-scan-'));
 try {

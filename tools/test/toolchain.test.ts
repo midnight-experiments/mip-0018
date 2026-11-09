@@ -19,11 +19,11 @@ describe('toolchain.json', () => {
     }
   });
 
-  it('pins the MIP text by commit and SHA-256 and links PR #340', () => {
+  it('pins the MIP text by commit and SHA-256 and links PR #372', () => {
     expect(toolchain.mip.commit).toMatch(/^[0-9a-f]{40}$/u);
     expect(toolchain.mip.sha256).toMatch(/^[0-9a-f]{64}$/u);
     expect(toolchain.mip.url).toContain(toolchain.mip.commit);
-    expect(toolchain.mip.pullRequest).toBe('https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340');
+    expect(toolchain.mip.pullRequest).toBe('https://github.com/midnightntwrk/midnight-improvement-proposals/pull/372');
   });
 
   it('keeps the spike compiler on the same pins as the Docker image', () => {

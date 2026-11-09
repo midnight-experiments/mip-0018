@@ -62,6 +62,32 @@ describe('rule mutations', () => {
     expect(await failing({ rules: { removeEmptyIdentity: false } })).toEqual(['S3c', 'S4b']);
   });
 
+  // The rules of MIP-0018 PR #372 and the vectors that must catch a consumer breaking them.
+  it('mutation acceptNonUtf8Key (a key that is not valid UTF-8 is accepted) fails R5i', async () => {
+    expect(await failing({ codecRules: { keyUtf8: false } })).toEqual(['R5i']);
+  });
+  it('mutation serveAllKeys (every stored key is served) fails S10a and every expectation with an unserved key', async () => {
+    expect(await failing({ rules: { servedKeysOnly: false } })).toEqual(['A3a-state', 'S9a', 'S9b', 'S9c', 'S9d', 'S10a', 'S10b', 'S10d']);
+  });
+  it('mutation noRecomputeOnStandardsChange (a key is served according to the standards in force when it arrived) fails S10c, S10d', async () => {
+    expect(await failing({ rules: { recomputeServedKeys: false } })).toEqual(['S10c', 'S10d']);
+  });
+  it('mutation listUnservedIdentity (an identity with only unserved keys is reported without fields) fails S10a', async () => {
+    expect(await failing({ rules: { hideUnservedIdentity: false } })).toEqual(['S10a']);
+  });
+  it('mutation noTruncation (a name/symbol over 64/12 characters is served whole) fails S11a, S11b', async () => {
+    expect(await failing({ rules: { truncateLength: false } })).toEqual(['S11a', 'S11b']);
+  });
+  it('mutation truncateByCodePoints (lengths count code points, not grapheme clusters) fails S11a, S11b', async () => {
+    expect(await failing({ rules: { truncateGraphemes: false } })).toEqual(['S11a', 'S11b']);
+  });
+  it('mutation ignoreImageHash (content from image is displayed whatever image_sha256 says) fails S12a', async () => {
+    expect(await failing({ rules: { imageHash: false } })).toEqual(['S12a']);
+  });
+  it('mutation imageForm off (an image_sha256 of any length is usable) fails S12b and A5b-state', async () => {
+    expect(await failing({ rules: { imageForm: false } })).toEqual(['A5b-state', 'S12b']);
+  });
+
   afterAll(() => {
     console.log(`rule mutations (${summary.length}):\n${summary.join('\n')}`);
   });

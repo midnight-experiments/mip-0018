@@ -114,7 +114,7 @@ const roundTrip = (ev: ObservedMisc, f: PayloadFixture) => {
   ).toEqual(f.expect.records);
 };
 
-const PAYLOAD_VECTORS = ['A1', 'A2a', 'A2b', 'A3a', 'A3b', 'A3c', 'A4a', 'A4b', 'A5a', 'A5b', 'A5c'];
+const PAYLOAD_VECTORS = ['A1', 'A2a', 'A2b', 'A3a', 'A3b', 'A4a', 'A4b', 'A5a', 'A5b', 'A5c', 'A6'];
 const STATE_VECTORS = ['S1a', 'S1b'];
 const DS11 = new Uint8Array(32).fill(0x11);
 const utf8 = (s: string) => new TextEncoder().encode(s);
@@ -163,7 +163,7 @@ describe.each(CONSTRUCTIONS)('$label', ({ contract }) => {
   });
 
   it.each([1n, 2n, 3n])(
-    'withdraw(kind %s) equals the codec withdrawRecords() byte for byte (four Nulls, 72 bytes of content)',
+    'withdraw(kind %s) equals the codec withdrawRecords() byte for byte (six Nulls, 95 bytes of content)',
     async (kind) => {
       const sim = await deploy();
       const ds = new Uint8Array(32).map((_, i) => i);
@@ -171,15 +171,46 @@ describe.each(CONSTRUCTIONS)('$label', ({ contract }) => {
       const want = encodePayload({ domainSep: ds, kind: Number(kind) }, withdrawRecords());
       const ev = single(out.misc, sim.address, toHex(want));
       const d = decodePayload(ev.payload);
-      expect(d.ok && d.contentEnd).toBe(72); // 33-byte header + 39 bytes of records, the rest zero
+      expect(d.ok && d.contentEnd).toBe(95); // 33-byte header + 62 bytes of records, the rest zero
       expect(d.ok && d.records.map((r) => [new TextDecoder().decode(r.key), r.valType, r.value.length])).toEqual([
         ['name', ValType.Null, 0],
         ['symbol', ValType.Null, 0],
         ['decimals', ValType.Null, 0],
         ['standards', ValType.Null, 0],
+        ['image', ValType.Null, 0],
+        ['image_sha256', ValType.Null, 0],
       ]);
     },
   );
+
+  it('imageRecord / imageSha256Record give the A6 bytes (= the codec record.image / record.imageSha256)', async () => {
+    const f = payloadFixture('A6');
+    const hash = fromHex(f.expect.records[1]!.value_hex);
+    const sim = await deploy();
+    const out = await sim.call('A6_common', DS11, 3n, hash);
+    roundTrip(single(out.misc, sim.address, f.event.payload_hex), f);
+    expect(f.event.payload_hex).toBe(
+      toHex(encodePayload({ domainSep: DS11, kind: 3 }, [record.image('https://example.org/acme.png'), record.imageSha256(hash)])),
+    );
+  });
+
+  it('payload6 with the six common-field builders equals the codec commonRecords()', async () => {
+    const hash = new Uint8Array(32).map((_, i) => 0xc0 + i);
+    const sim = await deploy();
+    const out = await sim.call('allCommon', DS11, 2n, hash);
+    const want = encodePayload(
+      { domainSep: DS11, kind: Kind.UnshieldedUtxo },
+      commonRecords({
+        name: 'Acme',
+        symbol: 'ACME',
+        decimals: 6,
+        standards: 'mip-0004',
+        image: 'https://example.org/acme.png',
+        imageSha256: hash,
+      }),
+    );
+    single(out.misc, sim.address, toHex(want));
+  });
 
   it.each([1n, 2n, 3n])('nullRecord deletes a single key: Null at "name" (kind %s) equals the codec tombstone("name")', async (kind) => {
     const sim = await deploy();
@@ -192,7 +223,7 @@ describe.each(CONSTRUCTIONS)('$label', ({ contract }) => {
     const sim = await deploy();
     const out = await sim.call('commonFields', DS11, 1n, utf8('Acme Token'), utf8('ACME'), 18n);
     const want = encodePayload(
-      { domainSep: DS11, kind: Kind.NativeShielded },
+      { domainSep: DS11, kind: Kind.ShieldedUtxo },
       commonRecords({ name: 'Acme Token', symbol: 'ACME', decimals: 18 }),
     );
     single(out.misc, sim.address, toHex(want));
@@ -203,7 +234,7 @@ describe.each(CONSTRUCTIONS)('$label', ({ contract }) => {
     const uri = 'https://acme.example/img.png';
     expect(utf8(uri)).toHaveLength(28);
     const out = await sim.call('uriRecord', DS11, 2n, utf8('uri'), utf8(uri));
-    const want = encodePayload({ domainSep: DS11, kind: Kind.NativeUnshielded }, [record.uri('uri', uri)]);
+    const want = encodePayload({ domainSep: DS11, kind: Kind.UnshieldedUtxo }, [record.uri('uri', uri)]);
     single(out.misc, sim.address, toHex(want));
   });
 
@@ -217,9 +248,9 @@ describe.each(CONSTRUCTIONS)('$label', ({ contract }) => {
     const pure = sim.module.pureCircuits;
     expect(toHex(pure.eventName!() as Uint8Array)).toBe(toHex(EVENT_NAME));
     expect((pure.constants!() as bigint[]).map(Number)).toEqual([
-      Kind.NativeShielded,
-      Kind.NativeUnshielded,
-      Kind.Ledger,
+      Kind.ShieldedUtxo,
+      Kind.UnshieldedUtxo,
+      Kind.ContractToken,
       ValType.Bytes,
       ValType.Utf8,
       ValType.UInt,

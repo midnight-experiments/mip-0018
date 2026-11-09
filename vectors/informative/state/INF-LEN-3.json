@@ -1,0 +1,124 @@
+{
+  "id": "INF-LEN-3",
+  "mip": {
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
+    "testId": "INF-LEN"
+  },
+  "normative": false,
+  "description": "Grouping compares the stored symbol: kinds 1 and 3 of 0x11 with \"ACMEACMEACME-AA\" and kind 1 of 0x22 with \"ACMEACMEACME-BB\" are all served as \"ACMEACMEACME\", but form two groups (\"ACMEACMEACME-AA\" with two members, \"ACMEACMEACME-BB\" alone).",
+  "basis": "MIP \"Common fields\": name 1–64 characters, symbol 1–12; an over-length name or symbol is still usable and is truncated; MIP \"Terminology\": a character is a grapheme cluster (Unicode UAX #29). Lengths count characters, never bytes. Grouping compares the stored symbol bytes (a choice of this repository: the MIP compares a usable symbol \"as exact bytes\").",
+  "steps": [
+    {
+      "op": "apply",
+      "network": "testnet-a",
+      "block": 1,
+      "tx": 0,
+      "event": 0,
+      "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "type": "Misc",
+      "name_hex": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+      "payload_hex": "1111111111111111111111111111111111111111111111111111111111111111010673796d626f6c010f41434d4541434d4541434d452d414100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "op": "apply",
+      "network": "testnet-a",
+      "block": 1,
+      "tx": 0,
+      "event": 1,
+      "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "type": "Misc",
+      "name_hex": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+      "payload_hex": "1111111111111111111111111111111111111111111111111111111111111111030673796d626f6c010f41434d4541434d4541434d452d414100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "op": "apply",
+      "network": "testnet-a",
+      "block": 1,
+      "tx": 0,
+      "event": 2,
+      "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "type": "Misc",
+      "name_hex": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+      "payload_hex": "2222222222222222222222222222222222222222222222222222222222222222010673796d626f6c010f41434d4541434d4541434d452d424200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "expect": {
+    "identities": [
+      {
+        "network": "testnet-a",
+        "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+        "kind": 1,
+        "fields": {
+          "73796d626f6c": {
+            "key_text": "symbol",
+            "valType": 1,
+            "value_hex": "41434d4541434d4541434d45",
+            "value_text": "ACMEACMEACME",
+            "usable": true
+          }
+        }
+      },
+      {
+        "network": "testnet-a",
+        "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+        "kind": 3,
+        "fields": {
+          "73796d626f6c": {
+            "key_text": "symbol",
+            "valType": 1,
+            "value_hex": "41434d4541434d4541434d45",
+            "value_text": "ACMEACMEACME",
+            "usable": true
+          }
+        }
+      },
+      {
+        "network": "testnet-a",
+        "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "domainSep": "2222222222222222222222222222222222222222222222222222222222222222",
+        "kind": 1,
+        "fields": {
+          "73796d626f6c": {
+            "key_text": "symbol",
+            "valType": 1,
+            "value_hex": "41434d4541434d4541434d45",
+            "value_text": "ACMEACMEACME",
+            "usable": true
+          }
+        }
+      }
+    ],
+    "groups": [
+      {
+        "network": "testnet-a",
+        "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "symbol_hex": "41434d4541434d4541434d452d4141",
+        "symbol_text": "ACMEACMEACME-AA",
+        "members": [
+          {
+            "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+            "kind": 1
+          },
+          {
+            "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+            "kind": 3
+          }
+        ]
+      },
+      {
+        "network": "testnet-a",
+        "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "symbol_hex": "41434d4541434d4541434d452d4242",
+        "symbol_text": "ACMEACMEACME-BB",
+        "members": [
+          {
+            "domainSep": "2222222222222222222222222222222222222222222222222222222222222222",
+            "kind": 1
+          }
+        ]
+      }
+    ]
+  }
+}

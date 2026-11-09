@@ -11,6 +11,7 @@
  * against an oracle they did not produce. A1 is additionally checked against a literal transcription of the
  * MIP's Appendix A, and the 26 URI verdicts against the two independent grammars of the URI investigation.
  */
+import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { cat, pad32, printable, repeat, sequence, toHex, utf8, type Bytes } from './bytes.ts';
@@ -81,9 +82,21 @@ const R = {
   /** `decimals` as `Uint<8>` (one byte). */
   decimals: (n: number) => rec('decimals', UINT, [n], String(n)),
   standards: (s: string) => rec('standards', UTF8, s),
+  image: (uri: string) => rec('image', URI, uri),
+  imageSha256: (hash: Bytes) => rec('image_sha256', BYTES, hash),
   /** A Null record (tombstone): deletes the field at `key` (MIP "Applying records"). */
   tombstone: (key: string) => rec(key, NULL, EMPTY),
 };
+
+/** SHA-256 (node:crypto), for `image_sha256` values. */
+function sha256(bytes: Bytes): Bytes {
+  return new Uint8Array(createHash('sha256').update(bytes).digest());
+}
+/** The image content the S12 vectors check, and a substitute with another SHA-256. */
+const IMAGE_URI = 'https://example.org/acme.png';
+const IMAGE_CONTENT = utf8('MIP-0018 test image content: acme.png');
+const IMAGE_OTHER = utf8('MIP-0018 test image content: substituted');
+const IMAGE_SHA256 = sha256(IMAGE_CONTENT);
 
 interface Built {
   bytes: Bytes;
@@ -404,6 +417,27 @@ function display(d: DisplayDef): Record<string, unknown> {
   };
 }
 
+interface ImageDef {
+  network?: string;
+  contract?: string;
+  domainSep?: Bytes;
+  kind: number;
+  content: Bytes;
+  /** Whether content with these bytes, fetched from the identity's `image`, may be displayed. */
+  displayable: boolean;
+}
+
+function image(d: ImageDef): Record<string, unknown> {
+  return {
+    network: d.network ?? NET_A,
+    contractAddress: d.contract ?? CONTRACT_A,
+    domainSep: toHex(d.domainSep ?? D11),
+    kind: d.kind,
+    content_hex: toHex(d.content),
+    displayable: d.displayable,
+  };
+}
+
 interface StateDef {
   id: string;
   testId: string;
@@ -414,6 +448,9 @@ interface StateDef {
   identities: Array<Record<string, unknown>>;
   groups?: Array<Record<string, unknown>>;
   display?: Array<Record<string, unknown>>;
+  images?: Array<Record<string, unknown>>;
+  /** Keys that (test) standards define, loaded by the consumer before the steps (MIP "Keys"). */
+  definedKeys?: Record<string, Array<{ key: string; valType: number }>>;
   dir?: string;
 }
 
@@ -423,10 +460,12 @@ function stateVector(d: StateDef): void {
   const normative = d.normative ?? true;
   const v: Record<string, unknown> = { id: d.id, mip: { commit: MIP.commit, testId: d.testId }, normative, description: d.description };
   if (d.basis !== undefined) v.basis = d.basis;
+  if (d.definedKeys !== undefined) v.definedKeys = d.definedKeys;
   v.steps = d.steps;
   const expect: Record<string, unknown> = { identities: d.identities };
   if (d.groups !== undefined) expect.groups = d.groups;
   if (d.display !== undefined) expect.display = d.display;
+  if (d.images !== undefined) expect.images = d.images;
   v.expect = expect;
   emit(`${dir}/${d.id}.json`, json(v));
   manifest.push({ id: d.id, kind: 'state', file: `${dir}/${d.id}.json`, testId: d.testId, normative });
@@ -499,12 +538,6 @@ acceptVector({
   contentEnd: 43,
 });
 acceptVector({
-  id: 'A3c',
-  testId: 'A3',
-  description: 'Exact bytes: a non-UTF-8 key (ff 6b 65 79) is accepted.',
-  recs: [rec([0xff, 0x6b, 0x65, 0x79], UTF8, 'ok')],
-});
-acceptVector({
   id: 'A4a',
   testId: 'A4',
   description: 'Integer widths: decimals as 06 (Uint<8>) decodes to 6.',
@@ -536,6 +569,15 @@ acceptVector({
   testId: 'A5',
   description: 'Non-tombstones: JSON null (type 3, key "meta") is an ordinary value.',
   recs: A5C_RECS,
+});
+const A6_RECS = [R.image(IMAGE_URI), R.imageSha256(IMAGE_SHA256)];
+acceptVector({
+  id: 'A6',
+  testId: 'A6',
+  description: `Image: image = "${IMAGE_URI}" (type 4) and a 32-byte image_sha256 (type 0, the SHA-256 of the S12 test content) in one event. Records at offsets 33 and 69; content ends at 116.`,
+  recs: A6_RECS,
+  offsets: [33, 69],
+  contentEnd: 116,
 });
 
 // ===============================================================================================================
@@ -717,6 +759,14 @@ rejectVector(
   33,
 );
 rejectVector(
+  'R5i',
+  'R5',
+  'Invalid UTF-8 in a key: the 4-byte key ff 6b 65 79 (type-1 value "ok"). Keys MUST be valid UTF-8.',
+  build(D11, 3, [rec([0xff, 0x6b, 0x65, 0x79], UTF8, 'ok')]).bytes,
+  'invalid-utf8-key',
+  33,
+);
+rejectVector(
   'R6a',
   'R6',
   'A valid record (name = "Acme", 33..43) followed by an invalid one (symbol with the non-UTF-8 value ff, at 44).',
@@ -775,9 +825,10 @@ ignoreVector(
 stateVector({
   id: 'A3a-state',
   testId: 'A3',
-  description: 'Exact bytes (state): the A3a event gives one identity two fields, "symbol" = "ACME" and "symbol\\0" = "ZZZ".',
+  description:
+    'Exact bytes (state): the A3a event sets "symbol" = "ACME" and "symbol\\0" = "ZZZ", two different keys: symbol stays "ACME". "symbol\\0" is neither a common key nor defined by a declared standard, so it is not served.',
   steps: [apply({ block: 1, recs: [R.symbol('ACME'), rec(cat(utf8('symbol'), [0x00]), UTF8, 'ZZZ')] })],
-  identities: [identity({ kind: 3, fields: [F.symbol('ACME', true), field(cat(utf8('symbol'), [0x00]), UTF8, 'ZZZ')] })],
+  identities: [identity({ kind: 3, fields: [F.symbol('ACME', true)] })],
 });
 stateVector({
   id: 'A4b-state',
@@ -788,26 +839,44 @@ stateVector({
   identities: [identity({ kind: 3, fields: [field('decimals', UINT, cat([0x06], repeat(0, 15)), true)] })],
   display: [display({ kind: 3, raw: '1234567', decimals: '6', text: '1.234567' })],
 });
+// A5 (state): an empty string, empty bytes and JSON null replace a common field's value; the field keeps a value (it
+// is unusable), it is not deleted as a Null record would delete it.
 stateVector({
   id: 'A5a-state',
   testId: 'A5',
-  description: 'Non-tombstones (state): after name = "Acme" and an empty string at "note", the identity has both fields.',
-  steps: [apply({ block: 1, recs: A5A_RECS })],
-  identities: [identity({ kind: 3, fields: [F.name('Acme', true), field('note', UTF8, EMPTY)] })],
+  description:
+    'Non-tombstones (state): after name = "Acme", symbol = "ACME", an empty string at symbol (type 1) is an ordinary value: symbol has the value "" (unusable), it is not deleted.',
+  steps: [apply({ block: 1, recs: [R.name('Acme'), R.symbol('ACME')] }), apply({ block: 2, recs: [rec('symbol', UTF8, EMPTY)] })],
+  identities: [identity({ kind: 3, fields: [F.name('Acme', true), F.symbol('', false)] })],
 });
 stateVector({
   id: 'A5b-state',
   testId: 'A5',
-  description: 'Non-tombstones (state): after name = "Acme" and empty bytes at "blob", the identity has both fields.',
-  steps: [apply({ block: 1, recs: A5B_RECS })],
-  identities: [identity({ kind: 3, fields: [F.name('Acme', true), field('blob', BYTES, EMPTY)] })],
+  description:
+    'Non-tombstones (state): after name = "Acme" and a 32-byte image_sha256, empty bytes at image_sha256 (type 0) are an ordinary value: image_sha256 has the empty value (unusable), it is not deleted.',
+  steps: [
+    apply({ block: 1, recs: [R.name('Acme'), R.imageSha256(IMAGE_SHA256)] }),
+    apply({ block: 2, recs: [rec('image_sha256', BYTES, EMPTY)] }),
+  ],
+  identities: [identity({ kind: 3, fields: [F.name('Acme', true), field('image_sha256', BYTES, EMPTY, false)] })],
 });
 stateVector({
   id: 'A5c-state',
   testId: 'A5',
-  description: 'Non-tombstones (state): after name = "Acme" and JSON null at "meta", the identity has both fields.',
-  steps: [apply({ block: 1, recs: A5C_RECS })],
-  identities: [identity({ kind: 3, fields: [F.name('Acme', true), field('meta', JSON_T, 'null')] })],
+  description:
+    'Non-tombstones (state): after name = "Acme", standards = "mip-0004", JSON null at standards (type 3) is an ordinary value: standards has the value null (unusable), it is not deleted.',
+  steps: [
+    apply({ block: 1, recs: [R.name('Acme'), R.standards('mip-0004')] }),
+    apply({ block: 2, recs: [rec('standards', JSON_T, 'null')] }),
+  ],
+  identities: [identity({ kind: 3, fields: [F.name('Acme', true), field('standards', JSON_T, 'null', false)] })],
+});
+stateVector({
+  id: 'A6-state',
+  testId: 'A6',
+  description: `Image (state): the A6 event gives the identity a usable image ("${IMAGE_URI}", type 4) and a usable 32-byte image_sha256 (type 0).`,
+  steps: [apply({ block: 1, recs: A6_RECS })],
+  identities: [identity({ kind: 3, fields: [field('image', URI, IMAGE_URI, true), field('image_sha256', BYTES, IMAGE_SHA256, true)] })],
 });
 
 // S1 — order within an event
@@ -1059,7 +1128,8 @@ function s9Identities(o: S9Opts = {}): Array<Record<string, unknown>> {
     identity({ domainSep: D33, kind: 3, fields: [F.name('Lower Case', true), F.symbol('acme', true)] }),
     identity({ domainSep: D44, kind: 3, fields: [F.name('Leading Space', true), F.symbol(' ACME', true)] }),
     identity({ domainSep: D55, kind: 3, fields: [F.name('Bytes Symbol', true), field('symbol', BYTES, 'ACME', false)] }),
-    identity({ domainSep: D66, kind: 3, fields: [F.name('Upper Key', true), field('SYMBOL', UTF8, 'ACME')] }),
+    // The key "SYMBOL" is neither a common key nor defined by a declared standard: not served.
+    identity({ domainSep: D66, kind: 3, fields: [F.name('Upper Key', true)] }),
     identity({ domainSep: D77, kind: 3, fields: [F.name('No Symbol', true)] }),
     identity({ network: NET_B, domainSep: D11, kind: 1, fields: [F.name('Other Network', true), F.symbol('ACME', true)] }),
   ];
@@ -1075,7 +1145,7 @@ const S9_SETUP =
 stateVector({
   id: 'S9a',
   testId: 'S9',
-  description: `Symbol grouping: ${S9_SETUP} Kinds 1 and 3 of 0x11 and kind 1 of 0x22 form one group; the other contract, the other network, "acme" and " ACME" are separate groups; the type-0 symbol, the key "SYMBOL" and the missing symbol are ungrouped.`,
+  description: `Symbol grouping: ${S9_SETUP} Kinds 1 and 3 of 0x11 and kind 1 of 0x22 form one group; the other contract, the other network, "acme" and " ACME" are separate groups; the type-0 symbol, the key "SYMBOL" (not served) and the missing symbol are ungrouped.`,
   steps: S9_BASE,
   identities: s9Identities(),
   groups: [
@@ -1131,6 +1201,168 @@ stateVector({
       [D22, 1],
     ]),
     ...S9_OTHER_GROUPS,
+  ],
+});
+
+// S10 — served keys (MIP "Keys": consumers MUST NOT serve a key that is neither a common key nor defined by a standard
+// the token currently declares; the served keys follow the current `standards`)
+stateVector({
+  id: 'S10a',
+  testId: 'S10',
+  description:
+    'Served keys: foo = "x" (type 1) is accepted but not served. Kind 3 gets only foo = "x" (block 1, event 0): it has no served field and is not referenced. Kind 1 gets name = "Acme" and foo = "x" in one event (event 1): only name is served.',
+  steps: [
+    apply({ block: 1, event: 0, kind: 3, recs: [rec('foo', UTF8, 'x')] }),
+    apply({ block: 1, event: 1, kind: 1, recs: [R.name('Acme'), rec('foo', UTF8, 'x')] }),
+  ],
+  identities: [identity({ kind: 1, fields: [F.name('Acme', true)] })],
+});
+/** A test standard that defines key `k` (type 1); the consumer loads it from the vector before the steps. */
+const S10_DEFINED = { 'test-s10': [{ key: 'k', valType: UTF8 }] };
+const S10_K = (v: string, usable = true) => field('k', UTF8, v, usable);
+const S10_STEPS = [
+  apply({ block: 1, recs: [R.name('Acme'), rec('k', UTF8, 'v')] }),
+  apply({ block: 2, recs: [R.standards('test-s10')] }),
+  apply({ block: 3, recs: [rec('k', UTF8, 'w')] }),
+  apply({ block: 4, recs: [R.standards('')] }),
+  apply({ block: 5, recs: [R.standards('test-s10')] }),
+];
+const S10_SETUP =
+  'The vector defines the test standard "test-s10" with key "k" (type 1) in definedKeys, which the consumer loads before the steps.';
+stateVector({
+  id: 'S10b',
+  testId: 'S10',
+  description: `Served keys: ${S10_SETUP} name = "Acme" and k = "v" before standards lists "test-s10" (block 1): k is not served.`,
+  definedKeys: S10_DEFINED,
+  steps: S10_STEPS.slice(0, 1),
+  identities: [identity({ kind: 3, fields: [F.name('Acme', true)] })],
+});
+stateVector({
+  id: 'S10c',
+  testId: 'S10',
+  description: `Served keys: ${S10_SETUP} After S10b, standards = "test-s10" (block 2): k = "v", sent before the standard was declared, is served.`,
+  definedKeys: S10_DEFINED,
+  steps: S10_STEPS.slice(0, 2),
+  identities: [identity({ kind: 3, fields: [F.name('Acme', true), F.standards('test-s10', true), S10_K('v')] })],
+});
+stateVector({
+  id: 'S10d',
+  testId: 'S10',
+  description: `Served keys: ${S10_SETUP} After S10c, k = "w" while "test-s10" is declared (block 3), then standards = "" (block 4): k is not served.`,
+  definedKeys: S10_DEFINED,
+  steps: S10_STEPS.slice(0, 4),
+  identities: [identity({ kind: 3, fields: [F.name('Acme', true), F.standards('', true)] })],
+});
+stateVector({
+  id: 'S10e',
+  testId: 'S10',
+  description: `Served keys: ${S10_SETUP} After S10d, standards = "test-s10" again (block 5): k is served again, with its latest value "w".`,
+  definedKeys: S10_DEFINED,
+  steps: S10_STEPS,
+  identities: [identity({ kind: 3, fields: [F.name('Acme', true), F.standards('test-s10', true), S10_K('w')] })],
+});
+
+// S11 — name and symbol length (MIP "Common fields": `name` 1–64 characters, `symbol` 1–12; an over-length value is
+// still usable and is truncated; MIP "Terminology": a character is a grapheme cluster, Unicode UAX #29). The values
+// mix ASCII with multi-code-point clusters whose segmentation has been the same in every Unicode version since 6.2:
+// base letters with combining marks (GB9), regional-indicator flag pairs (GB12/GB13) and Hangul L+V+T jamo (GB6/GB7).
+// The clusters are listed by hand (the oracle); truncating by code points or bytes gives other results.
+const GC = {
+  eAcute: 'e\u0301', // e + COMBINING ACUTE ACCENT
+  aRing: 'A\u030A', // A + COMBINING RING ABOVE
+  oDiaMacron: 'o\u0308\u0304', // o + COMBINING DIAERESIS + COMBINING MACRON
+  flagUY: '\u{1F1FA}\u{1F1FE}', // REGIONAL INDICATOR U + Y
+  flagJP: '\u{1F1EF}\u{1F1F5}', // REGIONAL INDICATOR J + P
+  hangulHan: '\u1112\u1161\u11AB', // HIEUH + A + NIEUN (conjoining jamo L V T)
+  hangulGag: '\u1100\u1161\u11A8', // KIYEOK + A + KIYEOK (conjoining jamo L V T)
+};
+const NAME_HEAD = [
+  ...'Acme Caf',
+  GC.eAcute,
+  ...' token ',
+  GC.flagUY,
+  ' ',
+  GC.hangulHan,
+  GC.hangulGag,
+  ' ',
+  GC.aRing,
+  ...'ngstr',
+  GC.oDiaMacron,
+  ...'m, seventy characters for test S11a',
+  GC.flagJP,
+];
+const NAME_CLUSTERS = [...NAME_HEAD, GC.hangulHan, ...' tail'];
+const SYMBOL_CLUSTERS = [
+  GC.aRing,
+  'C',
+  'M',
+  GC.eAcute,
+  GC.flagUY,
+  GC.hangulHan,
+  'X',
+  'Y',
+  'Z',
+  GC.oDiaMacron,
+  '1',
+  '2',
+  '3',
+  GC.flagJP,
+  GC.hangulGag,
+];
+check(NAME_HEAD.length === 64 && NAME_CLUSTERS.length === 70, 'the S11a name has 70 characters, 64 kept');
+check(SYMBOL_CLUSTERS.length === 15, 'the S11b symbol has 15 characters');
+{
+  // Authoring check only (the lists above are the oracle): each listed cluster is one grapheme cluster here too.
+  const seg = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+  for (const list of [NAME_CLUSTERS, SYMBOL_CLUSTERS])
+    check(Array.from(seg.segment(list.join('')), (x) => x.segment).join('|') === list.join('|'), 'grapheme clusters as listed');
+}
+const NAME_70 = NAME_CLUSTERS.join('');
+const NAME_64 = NAME_HEAD.join('');
+const SYMBOL_15 = SYMBOL_CLUSTERS.join('');
+const SYMBOL_12 = SYMBOL_CLUSTERS.slice(0, 12).join('');
+check(Array.from(NAME_70).length > 70 && Array.from(NAME_64).length > 64, 'S11a: code points are more than characters');
+stateVector({
+  id: 'S11a',
+  testId: 'S11',
+  description: `Name length: a 70-character name (${Array.from(NAME_70).length} code points, ${utf8(NAME_70).length} bytes; combining marks, flags, Hangul L+V+T) is usable and truncated to its first 64 characters (grapheme clusters; ${utf8(NAME_64).length} bytes, ending with a flag).`,
+  steps: [apply({ block: 1, recs: [R.name(NAME_70)] })],
+  identities: [identity({ kind: 3, fields: [F.name(NAME_64, true)] })],
+});
+stateVector({
+  id: 'S11b',
+  testId: 'S11',
+  description: `Symbol length: a 15-character symbol (${Array.from(SYMBOL_15).length} code points, ${utf8(SYMBOL_15).length} bytes) is usable and truncated to its first 12 characters (grapheme clusters; ${utf8(SYMBOL_12).length} bytes).`,
+  steps: [apply({ block: 1, recs: [R.symbol(SYMBOL_15)] })],
+  identities: [identity({ kind: 3, fields: [F.symbol(SYMBOL_12, true)] })],
+});
+
+// S12 — image hash (MIP "Common fields": with image_sha256 set, content from image whose SHA-256 differs is not
+// displayed; an image_sha256 that is not 32 bytes is unusable)
+stateVector({
+  id: 'S12a',
+  testId: 'S12',
+  description: `Image hash: image = "${IMAGE_URI}" and image_sha256 = SHA-256 of the test content: content whose SHA-256 differs is not displayed. (Displaying the matching content is up to the consumer.)`,
+  steps: [apply({ block: 1, recs: [R.name('Acme'), ...A6_RECS] })],
+  identities: [
+    identity({
+      kind: 3,
+      fields: [F.name('Acme', true), field('image', URI, IMAGE_URI, true), field('image_sha256', BYTES, IMAGE_SHA256, true)],
+    }),
+  ],
+  images: [image({ kind: 3, content: IMAGE_CONTENT, displayable: true }), image({ kind: 3, content: IMAGE_OTHER, displayable: false })],
+});
+const IMAGE_SHA256_31 = IMAGE_SHA256.slice(0, 31);
+stateVector({
+  id: 'S12b',
+  testId: 'S12',
+  description: `Image hash: image = "${IMAGE_URI}" and a 31-byte image_sha256 (the first 31 bytes of the S12a hash): image_sha256 is unusable.`,
+  steps: [apply({ block: 1, recs: [R.name('Acme'), R.image(IMAGE_URI), R.imageSha256(IMAGE_SHA256_31)] })],
+  identities: [
+    identity({
+      kind: 3,
+      fields: [F.name('Acme', true), field('image', URI, IMAGE_URI, true), field('image_sha256', BYTES, IMAGE_SHA256_31, false)],
+    }),
   ],
 });
 
@@ -1235,7 +1467,7 @@ stateVector({
   description:
     'Common fields with the wrong type or form: name as bytes (type 0), symbol empty, decimals as bytes (type 0) — all unusable; the event is accepted.',
   basis:
-    'MIP "Common fields": name/symbol = UTF-8 string, not empty; decimals = unsigned integer; a field without that type or form is unusable.',
+    'MIP "Common fields": name = UTF-8 string of 1–64 characters, symbol 1–12 (an empty one is unusable); decimals = unsigned integer; a field without that type or form is unusable.',
   steps: [apply({ block: 1, recs: [rec('name', BYTES, 'Acme'), rec('symbol', UTF8, EMPTY), rec('decimals', BYTES, [0x06])] })],
   identities: [
     identity({
@@ -1243,6 +1475,103 @@ stateVector({
       fields: [field('name', BYTES, 'Acme', false), field('symbol', UTF8, EMPTY, false), field('decimals', BYTES, [0x06], false)],
     }),
   ],
+  dir: 'informative/state',
+});
+
+// ---- keys (MIP "Keys": keys MUST be valid UTF-8 — multi-byte UTF-8 is valid) ----
+acceptVector({
+  id: 'INF-KEY-1',
+  testId: 'INF-KEY',
+  normative: false,
+  description: 'A multi-byte UTF-8 key ("名前", e5 90 8d e5 89 8d) is valid UTF-8 and the event is accepted.',
+  basis:
+    'MIP "Keys": "Keys MUST be valid UTF-8." Keys are exact bytes; any valid UTF-8 key is accepted (it is served only if a declared standard defines it).',
+  recs: [rec('名前', UTF8, 'x')],
+  dir: 'informative/payload',
+});
+
+// ---- name/symbol length with multi-byte characters, and grouping on the stored symbol (MIP "Common fields") ----
+// Characters are grapheme clusters (MIP "Terminology"), not bytes; grouping compares the stored symbol bytes, a choice
+// of this repository (informative).
+const LEN_BASIS =
+  'MIP "Common fields": name 1–64 characters, symbol 1–12; an over-length name or symbol is still usable and is truncated; MIP "Terminology": a character is a grapheme cluster (Unicode UAX #29). Lengths count characters, never bytes. Grouping compares the stored symbol bytes (a choice of this repository: the MIP compares a usable symbol "as exact bytes").';
+const NAME_70_MB = 'é'.repeat(30) + '名'.repeat(20) + '😀'.repeat(20);
+check(Array.from(NAME_70_MB).length === 70 && utf8(NAME_70_MB).length === 200, 'INF-LEN-1 name: 70 characters, 200 bytes');
+const NAME_64_MB = 'é'.repeat(30) + '名'.repeat(20) + '😀'.repeat(14);
+stateVector({
+  id: 'INF-LEN-1',
+  testId: 'INF-LEN',
+  normative: false,
+  description:
+    'A name of 70 characters in 200 bytes (30 × "é" U+00E9, 2 bytes; 20 × "名", 3 bytes; 20 × "😀", 4 bytes; one code point each) is truncated to its first 64 characters (30 × "é", 20 × "名", 14 × "😀"; 176 bytes), not to 64 bytes.',
+  basis: LEN_BASIS,
+  steps: [apply({ block: 1, recs: [R.name(NAME_70_MB)] })],
+  identities: [identity({ kind: 3, fields: [F.name(NAME_64_MB, true)] })],
+  dir: 'informative/state',
+});
+stateVector({
+  id: 'INF-LEN-2',
+  testId: 'INF-LEN',
+  normative: false,
+  description: 'A symbol of 15 × "😀" (15 characters, 60 bytes) is truncated to its first 12 characters (48 bytes).',
+  basis: LEN_BASIS,
+  steps: [apply({ block: 1, recs: [R.symbol('😀'.repeat(15))] })],
+  identities: [identity({ kind: 3, fields: [F.symbol('😀'.repeat(12), true)] })],
+  dir: 'informative/state',
+});
+const SYM_AA = 'ACMEACMEACME-AA';
+const SYM_BB = 'ACMEACMEACME-BB';
+stateVector({
+  id: 'INF-LEN-3',
+  testId: 'INF-LEN',
+  normative: false,
+  description: `Grouping compares the stored symbol: kinds 1 and 3 of 0x11 with "${SYM_AA}" and kind 1 of 0x22 with "${SYM_BB}" are all served as "ACMEACMEACME", but form two groups ("${SYM_AA}" with two members, "${SYM_BB}" alone).`,
+  basis: LEN_BASIS,
+  steps: [
+    apply({ block: 1, event: 0, domainSep: D11, kind: 1, recs: [R.symbol(SYM_AA)] }),
+    apply({ block: 1, event: 1, domainSep: D11, kind: 3, recs: [R.symbol(SYM_AA)] }),
+    apply({ block: 1, event: 2, domainSep: D22, kind: 1, recs: [R.symbol(SYM_BB)] }),
+  ],
+  identities: [
+    identity({ domainSep: D11, kind: 1, fields: [F.symbol('ACMEACMEACME', true)] }),
+    identity({ domainSep: D11, kind: 3, fields: [F.symbol('ACMEACMEACME', true)] }),
+    identity({ domainSep: D22, kind: 1, fields: [F.symbol('ACMEACMEACME', true)] }),
+  ],
+  groups: [
+    group(NET_A, CONTRACT_A, SYM_AA, [
+      [D11, 1],
+      [D11, 3],
+    ]),
+    group(NET_A, CONTRACT_A, SYM_BB, [[D22, 1]]),
+  ],
+  dir: 'informative/state',
+});
+
+// ---- image content (MIP "Common fields": "When image_sha256 is set, consumers MUST NOT display content from image
+// whose SHA-256 differs from it. Without image_sha256, the content cannot be checked") ----
+const IMG_BASIS =
+  'MIP "Common fields": "When image_sha256 is set, consumers MUST NOT display content from image whose SHA-256 differs from it. Without image_sha256, the content cannot be checked." This repository reads a set image_sha256 of another length (unusable) as one no content matches, and leaves unchecked content to the consumer (allowed).';
+stateVector({
+  id: 'INF-IMG-1',
+  testId: 'INF-IMG',
+  normative: false,
+  description:
+    'An image_sha256 of 31 bytes is set but unusable: no SHA-256 equals it, so no content from image is displayed, not even the content whose first 31 hash bytes match.',
+  basis: IMG_BASIS,
+  steps: [apply({ block: 1, recs: [R.image(IMAGE_URI), R.imageSha256(IMAGE_SHA256_31)] })],
+  identities: [identity({ kind: 3, fields: [field('image', URI, IMAGE_URI, true), field('image_sha256', BYTES, IMAGE_SHA256_31, false)] })],
+  images: [image({ kind: 3, content: IMAGE_CONTENT, displayable: false })],
+  dir: 'informative/state',
+});
+stateVector({
+  id: 'INF-IMG-2',
+  testId: 'INF-IMG',
+  normative: false,
+  description: 'Without image_sha256 the content cannot be checked; the reference consumer allows it (unchecked).',
+  basis: IMG_BASIS,
+  steps: [apply({ block: 1, recs: [R.image(IMAGE_URI)] })],
+  identities: [identity({ kind: 3, fields: [field('image', URI, IMAGE_URI, true)] })],
+  images: [image({ kind: 3, content: IMAGE_OTHER, displayable: true })],
   dir: 'informative/state',
 });
 
@@ -1394,7 +1723,7 @@ emit(
 );
 
 /** Folders the generator owns completely (stale files there are an error / are removed). */
-const GENERATED_DIRS = ['payload', 'state', 'informative/state', 'informative/zero-extension'];
+const GENERATED_DIRS = ['payload', 'state', 'informative/payload', 'informative/state', 'informative/zero-extension'];
 function isGeneratedPath(rel: string): boolean {
   if (GENERATED_DIRS.some((d) => rel.startsWith(`${d}/`))) return true;
   return /^informative\/uri\/[^/]+$/.test(rel) && rel !== 'informative/uri/README.md';

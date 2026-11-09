@@ -6,7 +6,7 @@
   "demonstrates": "The unguarded constant publishMetadata() exists only until its verifier key is removed by the deployer (maintenance authority); afterwards it cannot be called at all.",
   "conclusion": "one event (= MIP Appendix A, A1, byte-for-byte); the key is gone; the second publish is refused before submission; list shows the A1 metadata.",
   "mip": {
-    "commit": "274a84f221bcfc17e4b73e2c8b32fd8c028ea092",
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {
@@ -58,10 +58,10 @@
       "submits": "call"
     },
     {
-      "id": "verify-publish",
+      "id": "check-event-publish",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -74,7 +74,7 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-publish.json"
+      "stdout": "observed-check-event-publish.json"
     },
     {
       "id": "remove-key",
@@ -131,7 +131,7 @@
   ],
   "expected": "expected.json",
   "recheck": {
-    "verify": [
+    "checkEvent": [
       {
         "record": "record.json",
         "step": "publish",

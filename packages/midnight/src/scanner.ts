@@ -28,7 +28,7 @@ import { HttpClient, realSleep } from './http.ts';
 import { Indexer, type ScannedBlock } from './indexer.ts';
 import { checkIdentity, type NetworkProfile } from './network.ts';
 import { applied, decodeTransaction } from './raw.ts';
-import { classify } from './verify.ts';
+import { classify } from './check-event.ts';
 
 export const STATE_FILE = 'index-state.json';
 const MIP0018_NAME_HEX = Buffer.from(EVENT_NAME_TEXT, 'utf8').toString('hex').padEnd(64, '0');

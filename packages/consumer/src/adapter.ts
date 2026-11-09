@@ -2,6 +2,7 @@
 // vectors/schema/runner.schema.json). One request object in, one response object out.
 import { fromHex, toHex } from '@mip0018/codec';
 import { ALL_CODEC_RULES, classifyEventWith, type CodecRules } from '@mip0018/codec/internal';
+import { type DefinedKeys } from './common.ts';
 import { type ConsumerRules } from './rules.ts';
 import { MetadataState, type IdentityView } from './state.ts';
 
@@ -52,7 +53,25 @@ function decodeResponse(id: unknown, req: Json, codecRules: CodecRules): Json {
   };
 }
 
-/** One identity of the state response. Only identities with at least one field exist (MIP "Applying records"). */
+/**
+ * The request's `definedKeys` (standard identifier → key definitions), loaded before any event is applied: the keys
+ * those standards define are served while a token declares them (MIP "Keys").
+ */
+function definedKeysOf(v: unknown): DefinedKeys {
+  if (v === undefined) return {};
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) throw new TypeError('definedKeys must be an object');
+  const out: Record<string, Array<{ key: string; valType: number }>> = {};
+  for (const [id, defs] of Object.entries(v as Json)) {
+    if (!Array.isArray(defs)) throw new TypeError(`definedKeys.${id} must be an array`);
+    out[id] = defs.map((d, i) => {
+      const o = (typeof d === 'object' && d !== null ? d : {}) as Json;
+      return { key: str(o.key, `definedKeys.${id}[${i}].key`), valType: int(o.valType, `definedKeys.${id}[${i}].valType`) };
+    });
+  }
+  return out;
+}
+
+/** One identity of the state response: its served fields. Only identities with a served field are referenced. */
 function identityJson(v: IdentityView): Json {
   const fields: Json = {};
   for (const f of v.fields) {
@@ -72,7 +91,7 @@ function identityJson(v: IdentityView): Json {
 
 function stateResponse(id: unknown, req: Json, opts: AdapterOptions): Json {
   if (!Array.isArray(req.steps)) throw new TypeError('steps must be an array');
-  const stateOpts: ConstructorParameters<typeof MetadataState>[0] = {};
+  const stateOpts: ConstructorParameters<typeof MetadataState>[0] = { definedKeys: definedKeysOf(req.definedKeys) };
   if (opts.rules !== undefined) stateOpts.rules = opts.rules;
   if (opts.codecRules !== undefined) stateOpts.codecRules = opts.codecRules;
   const state = new MetadataState(stateOpts);
@@ -117,6 +136,23 @@ function stateResponse(id: unknown, req: Json, opts: AdapterOptions): Json {
       text: d.text,
     });
   }
+  const images: Json[] = [];
+  for (const q of Array.isArray(req.images) ? (req.images as Json[]) : []) {
+    const view = state.identity(
+      str(q.network, 'network'),
+      str(q.contractAddress, 'contractAddress'),
+      str(q.domainSep, 'domainSep'),
+      int(q.kind, 'kind'),
+    );
+    images.push({
+      network: q.network,
+      contractAddress: q.contractAddress,
+      domainSep: q.domainSep,
+      kind: q.kind,
+      content_hex: q.content_hex,
+      displayable: state.imageContentAllowed(view, fromHex(str(q.content_hex, 'content_hex'))),
+    });
+  }
   return {
     id,
     identities: identities.map(identityJson),
@@ -127,6 +163,7 @@ function stateResponse(id: unknown, req: Json, opts: AdapterOptions): Json {
       members: g.members.map((m) => ({ domainSep: m.domainSep, kind: m.kind })),
     })),
     display,
+    images,
   };
 }
 

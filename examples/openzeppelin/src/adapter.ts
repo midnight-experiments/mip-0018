@@ -12,7 +12,7 @@
 //   * constructor  the example's metadata.json `contract.constructorArgs` (in order; `initialOwner` is appended):
 //                  `deploy --example <name>` with no --args deploys exactly the documented token
 //   * calls        metadata.json `steps` (mints, then the publish) → circuit + JSON arguments, with the exact
-//                  payload every event must have (checked by `verify` inside `deploy-and-publish`); the same mapping
+//                  payload every event must have (checked by `check-event` inside `deploy-and-publish`); the same mapping
 //                  serves the `lifecycle` steps (rename, withdraw, revive) for `mip0018 publish`
 //
 // The publish circuits emit literals compiled into the contract, so `--metadata` can only restate them: anything

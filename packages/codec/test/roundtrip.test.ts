@@ -10,7 +10,7 @@ const accepted = loadVectors().filter((v) => v.entry.kind === 'payload' && (v.da
 
 describe('round trip', () => {
   it('covers every accepted payload vector (normative and informative)', () => {
-    expect(accepted.length).toBe(11 + 16 + 4); // A1-A5 sub-cases + 16 accepted URI cases + 4 trimmed (INF-ZEXT-1…4)
+    expect(accepted.length).toBe(11 + 16 + 4 + 1); // A1-A6 sub-cases + 16 accepted URI cases + 4 trimmed (INF-ZEXT-1…4) + a UTF-8 key (INF-KEY-1)
   });
   for (const v of accepted) {
     it(`encode(decode(${v.entry.id})) is the fixture`, () => {

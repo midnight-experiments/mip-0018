@@ -1,11 +1,11 @@
 {
   "id": "S9a",
   "mip": {
-    "commit": "274a84f221bcfc17e4b73e2c8b32fd8c028ea092",
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
     "testId": "S9"
   },
   "normative": true,
-  "description": "Symbol grouping: Contract A on testnet-a: kinds 1 and 3 under domainSep 0x11 and kind 1 under 0x22 with symbol \"ACME\"; also \"acme\" (0x33), \" ACME\" (0x44), a type-0 \"ACME\" (0x55), key \"SYMBOL\" (0x66) and no symbol (0x77). Contract B on testnet-a and contract A on testnet-b each publish \"ACME\" under 0x11 kind 1. Kinds 1 and 3 of 0x11 and kind 1 of 0x22 form one group; the other contract, the other network, \"acme\" and \" ACME\" are separate groups; the type-0 symbol, the key \"SYMBOL\" and the missing symbol are ungrouped.",
+  "description": "Symbol grouping: Contract A on testnet-a: kinds 1 and 3 under domainSep 0x11 and kind 1 under 0x22 with symbol \"ACME\"; also \"acme\" (0x33), \" ACME\" (0x44), a type-0 \"ACME\" (0x55), key \"SYMBOL\" (0x66) and no symbol (0x77). Contract B on testnet-a and contract A on testnet-b each publish \"ACME\" under 0x11 kind 1. Kinds 1 and 3 of 0x11 and kind 1 of 0x22 form one group; the other contract, the other network, \"acme\" and \" ACME\" are separate groups; the type-0 symbol, the key \"SYMBOL\" (not served) and the missing symbol are ungrouped.",
   "steps": [
     {
       "op": "apply",
@@ -285,12 +285,6 @@
             "value_hex": "5570706572204b6579",
             "value_text": "Upper Key",
             "usable": true
-          },
-          "53594d424f4c": {
-            "key_text": "SYMBOL",
-            "valType": 1,
-            "value_hex": "41434d45",
-            "value_text": "ACME"
           }
         }
       },

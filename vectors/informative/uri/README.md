@@ -2,7 +2,7 @@
 
 **Not normative** (the MIP's Testing list has only R5's relative URI). The MIP's rule for a type-4 value (Value
 types): "A URI as defined in RFC 3986: a scheme is required, a fragment is allowed, and relative references are not.
-All characters are ASCII; characters outside ASCII MUST be percent-encoded, and host names converted to their ASCII
+The value is ASCII only: anything outside ASCII MUST be percent-encoded, and host names converted to their ASCII
 form, before emitting." It is the URI definition ERC-721 `tokenURI` uses. A value that breaks it rejects the whole
 event, so two consumers whose URI parsers disagree would disagree on every record of that event; these cases fix the
 verdict for 26 realistic inputs. Relative references are rejected, as normative vector R5e requires.

@@ -6,7 +6,7 @@
   "demonstrates": "Symbol grouping on chain (vector S9): three identities under one domainSep and symbol form one group; kinds 1 and 2 share one color.",
   "conclusion": "3 identities (\"Acme Dollar\", \"ACD\", 2) in ONE group \"ACD\"; kinds 1 and 2 colored (same color), kind 3 not.",
   "mip": {
-    "commit": "274a84f221bcfc17e4b73e2c8b32fd8c028ea092",
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {
@@ -120,10 +120,10 @@
       "submits": "call"
     },
     {
-      "id": "verify-publish",
+      "id": "check-event-publish",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -136,7 +136,7 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-publish.json"
+      "stdout": "observed-check-event-publish.json"
     },
     {
       "id": "list",
@@ -171,7 +171,7 @@
   ],
   "expected": "expected.json",
   "recheck": {
-    "verify": [
+    "checkEvent": [
       {
         "record": "record.json",
         "step": "publish",

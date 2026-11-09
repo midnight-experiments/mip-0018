@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// A fungible (ledger) token built from OpenZeppelin Compact Contracts 0.4.0-alpha.5:
+// A fungible contract token built from OpenZeppelin Compact Contracts 0.4.0-alpha.5:
 // `FungibleToken` (public balances, ERC-20 shape) owned with `Ownable`.
 //
 // Compile with Compact 0.35.0, --feature-zkir-v3 and --compact-path <repo>/node_modules
@@ -55,7 +55,7 @@ export circuit burn(account: Either<Bytes<32>, ContractAddress>, value: Uint<128
   FungibleToken__burn(account, value);
 }
 
-// MIP-0018 metadata. A ledger token (kind 3) has no domain separator of its own: this constant
+// MIP-0018 metadata. A contract token (kind 3) has no domain separator of its own: this constant
 // is its `domainSep`. Choose it once; changing it later describes a different token.
 pure circuit metadataDomain(): Bytes<32> {
   return pad(32, "mip-0018:example:fungible");
@@ -66,7 +66,7 @@ pure circuit metadataDomain(): Bytes<32> {
 export circuit publishMetadata(): [] {
   Ownable_assertOnlyOwner();
   Mip0018_emitPayload(Mip0018_commonFields<9, 4>(
-    metadataDomain(), Mip0018_KIND_LEDGER(), "Acme Gold", "AGLD", FungibleToken__decimals));
+    metadataDomain(), Mip0018_KIND_CONTRACT_TOKEN(), "Acme Gold", "AGLD", FungibleToken__decimals));
 }
 
 // Rename (an extraordinary update): a new 9-byte name and 4-byte symbol; other fields keep
@@ -74,14 +74,15 @@ export circuit publishMetadata(): [] {
 export circuit setMetadata(newName: Bytes<9>, newSymbol: Bytes<4>): [] {
   Ownable_assertOnlyOwner();
   Mip0018_emitPayload(Mip0018_payload2<4, 9, 6, 4>(
-    Mip0018_header(metadataDomain(), Mip0018_KIND_LEDGER()),
+    Mip0018_header(metadataDomain(), Mip0018_KIND_CONTRACT_TOKEN()),
     Mip0018_nameRecord<9>(newName),
     Mip0018_symbolRecord<4>(newSymbol)));
 }
 
-// Withdraw: one event with a Null record for each key (name, symbol, decimals, standards);
+// Withdraw: one event with a Null record for each of the six common keys (name, symbol, decimals,
+// standards, image, image_sha256); this token publishes the first three, the others are no-ops;
 // with no field left, consumers do not reference the token at all.
 export circuit withdrawMetadata(): [] {
   Ownable_assertOnlyOwner();
-  Mip0018_emitPayload(Mip0018_withdraw(metadataDomain(), Mip0018_KIND_LEDGER()));
+  Mip0018_emitPayload(Mip0018_withdraw(metadataDomain(), Mip0018_KIND_CONTRACT_TOKEN()));
 }

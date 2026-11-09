@@ -14,12 +14,12 @@ const ADAPTER = fileURLToPath(new URL('../bin/vector-adapter.js', import.meta.ur
 const vectors = loadVectors();
 
 describe('reference consumer against the vectors', () => {
-  it('passes every normative (67) and informative (43) vector in-process', async () => {
+  it('passes every normative (78) and informative (49) vector in-process', async () => {
     const report = await runVectors(vectors, async (req) => handleRequest(req));
     const failed = report.results.filter((r) => !r.ok);
     if (failed.length > 0) console.log(formatReport(report));
-    expect(report.normative).toEqual({ passed: 67, total: 67 });
-    expect(report.informative).toEqual({ passed: 43, total: 43 });
+    expect(report.normative).toEqual({ passed: 78, total: 78 });
+    expect(report.informative).toEqual({ passed: 49, total: 49 });
     expect(report.results.flatMap((r) => r.notes)).toEqual([]); // reason codes and offsets match too
   });
 
@@ -33,13 +33,13 @@ describe('reference consumer against the vectors', () => {
     }
   });
 
-  it('the runner CLI with bin/vector-adapter.js reports 67/67 and exits 0', () => {
+  it('the runner CLI with bin/vector-adapter.js reports 78/78 and exits 0', () => {
     const r = spawnSync(process.execPath, [join(VECTORS_DIR, 'tools/run.ts'), '--notes', '--consumer', `${process.execPath} ${ADAPTER}`], {
       encoding: 'utf8',
       timeout: 120_000,
     });
     expect(r.stderr).toBe('');
-    expect(r.stdout).toMatch(/normative: 67\/67 passed; informative: 43\/43 passed/);
+    expect(r.stdout).toMatch(/normative: 78\/78 passed; informative: 49\/49 passed/);
     expect(r.stdout).not.toMatch(/^FAIL/m);
     expect(r.stdout).not.toMatch(/note:/);
     expect(r.status).toBe(0);

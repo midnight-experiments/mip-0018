@@ -3,8 +3,8 @@
 // MIP-0018 On-Chain Token Metadata Emission — Compact module, ALTERNATIVE API:
 // individual pure circuits that return bytes, composed with `Bytes[...]` spreads.
 //
-// Pinned MIP text: midnightntwrk/midnight-improvement-proposals@274a84f221bcfc17e4b73e2c8b32fd8c028ea092
-// (mips/mip-0018-on-chain-token-metadata.md, PR #340).
+// Pinned MIP text: midnightntwrk/midnight-improvement-proposals@338ea194bbe7c4e5d1829234a503b7c1b11ebf0f
+// (mips/mip-0018-on-chain-token-metadata.md, PR #372).
 //
 // Prefer the default module `Mip0018` (typed records serialized by Compact). This module
 // produces exactly the same bytes and exists because it does not use `serialize` on
@@ -45,15 +45,18 @@ module Mip0018Pure {
     return pad(32, "mip-0018:token-metadata[v1]");
   }
 
-  export pure circuit KIND_SHIELDED(): Uint<8> {
+  /** kind 1: shielded UTXO (contract-issued UTXO token, shielded coins); has a color. */
+  export pure circuit KIND_SHIELDED_UTXO(): Uint<8> {
     return 1;
   }
 
-  export pure circuit KIND_UNSHIELDED(): Uint<8> {
+  /** kind 2: unshielded UTXO (contract-issued UTXO token, unshielded UTXOs); has a color. */
+  export pure circuit KIND_UNSHIELDED_UTXO(): Uint<8> {
     return 2;
   }
 
-  export pure circuit KIND_LEDGER(): Uint<8> {
+  /** kind 3: contract token (represented by contract logic); no color. */
+  export pure circuit KIND_CONTRACT_TOKEN(): Uint<8> {
     return 3;
   }
 
@@ -133,13 +136,13 @@ module Mip0018Pure {
   // Common fields ("Common fields")
   // ---------------------------------------------------------------------------
 
-  /** `name` record; R = 7 + N; N = 0 is a compile error. */
+  /** `name` record; R = 7 + N; N = 0 is a compile error. Keep `name` within 64 characters (consumers show the first 64). */
   export pure circuit nameRecord<#N, #R>(name: Bytes<N>): Bytes<R> {
     const nameIsNotEmpty = slice<1>(name, 0);
     return utf8Record<4, N, R>("name", name);
   }
 
-  /** `symbol` record; R = 9 + S; S = 0 is a compile error. */
+  /** `symbol` record; R = 9 + S; S = 0 is a compile error. Keep `symbol` within 12 characters (consumers show the first 12). */
   export pure circuit symbolRecord<#S, #R>(symbol: Bytes<S>): Bytes<R> {
     const symbolIsNotEmpty = slice<1>(symbol, 0);
     return utf8Record<6, S, R>("symbol", symbol);
@@ -155,8 +158,19 @@ module Mip0018Pure {
     return utf8Record<9, T, R>("standards", standards);
   }
 
+  /** `image` record (a URI, type 4); R = 8 + N; N = 0 is a compile error. The URI is not checked in circuit. */
+  export pure circuit imageRecord<#N, #R>(uri: Bytes<N>): Bytes<R> {
+    const uriIsNotEmpty = slice<1>(uri, 0);
+    return uriRecord<5, N, R>("image", uri);
+  }
+
+  /** `image_sha256` record (type 0, the 32-byte SHA-256 of the file at `image`): always 47 bytes. */
+  export pure circuit imageSha256Record(hash: Bytes<32>): Bytes<47> {
+    return bytesRecord<12, 32, 47>("image_sha256", hash);
+  }
+
   // ---------------------------------------------------------------------------
-  // Payloads: header + 1-4 records + P zero bytes; 33 + records + P = 256 is checked.
+  // Payloads: header + 1-6 records + P zero bytes; 33 + records + P = 256 is checked.
   // ---------------------------------------------------------------------------
 
   export pure circuit payload1<#A, #P>(h: Bytes<33>, r1: Bytes<A>): Bytes<256> {
@@ -179,6 +193,29 @@ module Mip0018Pure {
     r4: Bytes<D>
   ): Bytes<256> {
     return Bytes[...h, ...r1, ...r2, ...r3, ...r4, ...default<Bytes<P>>];
+  }
+
+  export pure circuit payload5<#A, #B, #C, #D, #E, #P>(
+    h: Bytes<33>,
+    r1: Bytes<A>,
+    r2: Bytes<B>,
+    r3: Bytes<C>,
+    r4: Bytes<D>,
+    r5: Bytes<E>
+  ): Bytes<256> {
+    return Bytes[...h, ...r1, ...r2, ...r3, ...r4, ...r5, ...default<Bytes<P>>];
+  }
+
+  export pure circuit payload6<#A, #B, #C, #D, #E, #F, #P>(
+    h: Bytes<33>,
+    r1: Bytes<A>,
+    r2: Bytes<B>,
+    r3: Bytes<C>,
+    r4: Bytes<D>,
+    r5: Bytes<E>,
+    r6: Bytes<F>
+  ): Bytes<256> {
+    return Bytes[...h, ...r1, ...r2, ...r3, ...r4, ...r5, ...r6, ...default<Bytes<P>>];
   }
 
   /**
@@ -218,17 +255,20 @@ module Mip0018Pure {
 
   /**
    * Withdraws a token: ONE event with Null records at `name` (7 bytes), `symbol` (9),
-   * `decimals` (11) and `standards` (12) + 184 zero bytes — the same bytes as
-   * `Mip0018.withdraw`. Once every key is deleted, consumers do not reference the identity;
-   * a token with other keys adds a Null record for each of them ("Applying records").
+   * `decimals` (11), `standards` (12), `image` (8) and `image_sha256` (15) + 161 zero bytes —
+   * the same bytes as `Mip0018.withdraw`. Once every key is deleted, consumers do not reference
+   * the identity; a token with keys of a declared standard adds a Null record for each of them
+   * ("Applying records").
    */
   export pure circuit withdraw(domainSep: Bytes<32>, kind: Uint<8>): Bytes<256> {
-    return payload4<7, 9, 11, 12, 184>(
+    return payload6<7, 9, 11, 12, 8, 15, 161>(
       header(domainSep, kind),
       nullRecord<4, 7>("name"),
       nullRecord<6, 9>("symbol"),
       nullRecord<8, 11>("decimals"),
-      nullRecord<9, 12>("standards"));
+      nullRecord<9, 12>("standards"),
+      nullRecord<5, 8>("image"),
+      nullRecord<12, 15>("image_sha256"));
   }
 
   // ---------------------------------------------------------------------------

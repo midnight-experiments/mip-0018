@@ -11,11 +11,11 @@ export const VECTORS_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const MIP = {
   id: 'MIP-0018',
   repository: 'midnightntwrk/midnight-improvement-proposals',
-  commit: '274a84f221bcfc17e4b73e2c8b32fd8c028ea092',
+  commit: '338ea194bbe7c4e5d1829234a503b7c1b11ebf0f',
   path: 'mips/mip-0018-on-chain-token-metadata.md',
-  sha256: 'e64fe1429b9f7589077f1323572cf5c3ffa90c7c96690242a9e76d2658058d8b',
-  url: 'https://github.com/midnightntwrk/midnight-improvement-proposals/blob/274a84f221bcfc17e4b73e2c8b32fd8c028ea092/mips/mip-0018-on-chain-token-metadata.md',
-  pr: 'https://github.com/midnightntwrk/midnight-improvement-proposals/pull/340',
+  sha256: '8d4204e7aa24428faa44740ba99612f5556f628347c50e38903e4bea83f17245',
+  url: 'https://github.com/midnightntwrk/midnight-improvement-proposals/blob/338ea194bbe7c4e5d1829234a503b7c1b11ebf0f/mips/mip-0018-on-chain-token-metadata.md',
+  pr: 'https://github.com/midnightntwrk/midnight-improvement-proposals/pull/372',
 } as const;
 
 export const FORMAT = 'mip0018-vectors/1';

@@ -1,6 +1,9 @@
-// Common fields (MIP "Common fields"): usability of `name`, `symbol`, `decimals`, `standards`, the `standards` list
-// format, and amount display.
-import { decodeUtf8, toHex, ValType } from '@mip0018/codec';
+// Common fields (MIP "Common fields"): usability of `name`, `symbol`, `decimals`, `standards`, `image` and
+// `image_sha256`; the served (truncated) `name`/`symbol`; the `standards` list format; the image content check; amount
+// display. Keys (MIP "Keys"): the keys a consumer serves — the common keys and the keys of standards the token
+// declares.
+import { createHash } from 'node:crypto';
+import { decodeUtf8, IMAGE_SHA256_SIZE, NAME_MAX_CHARS, SYMBOL_MAX_CHARS, toHex, ValType } from '@mip0018/codec';
 import { ALL_CONSUMER_RULES, type ConsumerRules } from './rules.ts';
 
 const enc = new TextEncoder();
@@ -8,7 +11,83 @@ export const KEY_NAME = toHex(enc.encode('name'));
 export const KEY_SYMBOL = toHex(enc.encode('symbol'));
 export const KEY_DECIMALS = toHex(enc.encode('decimals'));
 export const KEY_STANDARDS = toHex(enc.encode('standards'));
-export const COMMON_KEYS: ReadonlySet<string> = new Set([KEY_NAME, KEY_SYMBOL, KEY_DECIMALS, KEY_STANDARDS]);
+export const KEY_IMAGE = toHex(enc.encode('image'));
+export const KEY_IMAGE_SHA256 = toHex(enc.encode('image_sha256'));
+/** The six keys of MIP "Common fields" (hex): always served. */
+export const COMMON_KEYS: ReadonlySet<string> = new Set([KEY_NAME, KEY_SYMBOL, KEY_DECIMALS, KEY_STANDARDS, KEY_IMAGE, KEY_IMAGE_SHA256]);
+
+/** A key a standard defines, with its value type (MIP "Keys": a key has meaning only when a MIP defines it). */
+export interface KeyDefinition {
+  key: string;
+  valType: number;
+}
+
+/**
+ * Key definitions per standard identifier, e.g. `{ "mip-00xx": [{ key: "k", valType: 1 }] }`. The keys a standard
+ * defines are served only while a token's current, usable `standards` lists that identifier. Empty by default: no MIP
+ * defines keys beyond the common fields yet.
+ */
+export type DefinedKeys = Readonly<Record<string, readonly KeyDefinition[]>>;
+
+/**
+ * The keys served for a token whose current usable `standards` lists `declared`: the common keys plus every key the
+ * declared standards define (hex → the value types those definitions allow).
+ */
+export function servedKeys(declared: readonly string[], definedKeys: DefinedKeys): Map<string, Set<number>> {
+  const out = new Map<string, Set<number>>();
+  for (const id of declared) {
+    const defs = Object.hasOwn(definedKeys, id) ? definedKeys[id] : undefined;
+    for (const d of defs ?? []) {
+      const k = toHex(enc.encode(d.key));
+      if (COMMON_KEYS.has(k)) continue;
+      const types = out.get(k) ?? new Set<number>();
+      types.add(d.valType);
+      out.set(k, types);
+    }
+  }
+  return out;
+}
+
+const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+
+/** The characters of a text: its extended grapheme clusters (Unicode Standard Annex #29), e.g. "e" + U+0301 is one. */
+export function characters(text: string): string[] {
+  return Array.from(graphemes.segment(text), (s) => s.segment);
+}
+
+/**
+ * The first `max` characters (extended grapheme clusters, MIP "Terminology": "a visible character, that is, a grapheme
+ * cluster as defined by Unicode Standard Annex #29") of a UTF-8 value, and whether anything was cut. Invalid UTF-8 is
+ * returned as is.
+ */
+export function truncateCharacters(value: Uint8Array, max: number): { value: Uint8Array; truncated: boolean } {
+  return truncateWith(value, max, characters);
+}
+
+/** Mutation only (`truncateGraphemes: false`): counts Unicode code points instead of characters. */
+function truncateCodePoints(value: Uint8Array, max: number): { value: Uint8Array; truncated: boolean } {
+  return truncateWith(value, max, (t) => Array.from(t));
+}
+
+function truncateWith(value: Uint8Array, max: number, split: (text: string) => string[]): { value: Uint8Array; truncated: boolean } {
+  const text = decodeUtf8(value);
+  if (text === undefined) return { value, truncated: false };
+  const parts = split(text);
+  if (parts.length <= max) return { value, truncated: false };
+  return { value: enc.encode(parts.slice(0, max).join('')), truncated: true };
+}
+
+/**
+ * The value a consumer serves and displays for a field: a usable `name` or `symbol` longer than 64 / 12 characters is
+ * truncated to its first 64 / 12 characters (grapheme clusters; MIP "Common fields": "consumers SHOULD discard any
+ * extra characters"); every other value is served as stored. The stored bytes never change, and grouping compares them.
+ */
+export function servedValue(keyHex: string, valType: number, value: Uint8Array, rules: ConsumerRules = ALL_CONSUMER_RULES): Uint8Array {
+  if (!rules.truncateLength || valType !== ValType.Utf8) return value;
+  const max = keyHex === KEY_NAME ? NAME_MAX_CHARS : keyHex === KEY_SYMBOL ? SYMBOL_MAX_CHARS : undefined;
+  if (max === undefined) return value;
+  return (rules.truncateGraphemes ? truncateCharacters : truncateCodePoints)(value, max).value;
+}
 
 /**
  * Parses a `standards` value: identifiers separated by single spaces (0x20); an identifier is non-empty and has no
@@ -36,7 +115,8 @@ export function parseStandards(value: Uint8Array): string[] | undefined {
 
 /**
  * Whether the current value of a common field has the type and form the MIP requires. `undefined` for keys that
- * are not common fields (the MIP gives them no usability rule).
+ * are not common fields (the MIP gives them no usability rule). A `name` or `symbol` over its maximum length is still
+ * usable; it is served truncated (`servedValue`).
  */
 export function commonFieldUsable(
   keyHex: string,
@@ -52,9 +132,40 @@ export function commonFieldUsable(
       return rules.decimalsType ? valType === ValType.UInt : true;
     case KEY_STANDARDS:
       return valType === ValType.Utf8 && (!rules.standardsFormat || parseStandards(value) !== undefined);
+    case KEY_IMAGE:
+      return rules.imageForm ? valType === ValType.Uri : true;
+    case KEY_IMAGE_SHA256:
+      return rules.imageForm ? valType === ValType.Bytes && value.length === IMAGE_SHA256_SIZE : true;
     default:
       return undefined;
   }
+}
+
+/** SHA-256 of `content`. */
+export function sha256(content: Uint8Array): Uint8Array {
+  return new Uint8Array(createHash('sha256').update(content).digest());
+}
+
+/**
+ * Whether content fetched from `image` may be displayed (MIP "Common fields": "When `image_sha256` is set, consumers
+ * MUST NOT display content from `image` whose SHA-256 differs from it"). `imageSha256` is the token's current
+ * `image_sha256` value as stored, or `undefined` when the field has no value:
+ *
+ * - no `image_sha256`: `true` — the content cannot be checked, and the caller decides (MIP "Off-chain content");
+ * - `image_sha256` set: `true` only when it equals the content's SHA-256. A value that is not 32 bytes (unusable)
+ *   equals no SHA-256, so no content is displayed for it.
+ *
+ * The reference tools never fetch `image`; this check is for consumers that do. Images are untrusted content and
+ * SHOULD be rendered in a way that cannot run scripts (not as inline SVG; MIP "Security Considerations").
+ */
+export function imageContentAllowed(
+  imageSha256: Uint8Array | undefined,
+  content: Uint8Array,
+  rules: ConsumerRules = ALL_CONSUMER_RULES,
+): boolean {
+  if (imageSha256 === undefined || !rules.imageHash) return true;
+  const digest = sha256(content);
+  return imageSha256.length === digest.length && digest.every((b, i) => b === imageSha256[i]);
 }
 
 export interface FormatOptions {

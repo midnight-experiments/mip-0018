@@ -1,5 +1,5 @@
 // @mip0018/consumer — reference MIP-0018 consumer (dependency-free apart from @mip0018/codec).
-// Pinned text: midnightntwrk/midnight-improvement-proposals@274a84f221bcfc17e4b73e2c8b32fd8c028ea092 (PR #340).
+// Pinned text: midnightntwrk/midnight-improvement-proposals@338ea194bbe7c4e5d1829234a503b7c1b11ebf0f (PR #372).
 export {
   ChainOrderError,
   MetadataState,
@@ -20,11 +20,21 @@ export {
   COMMON_KEYS,
   commonFieldUsable,
   formatAmount,
+  imageContentAllowed,
   KEY_DECIMALS,
+  KEY_IMAGE,
+  KEY_IMAGE_SHA256,
   KEY_NAME,
   KEY_STANDARDS,
   KEY_SYMBOL,
   parseStandards,
+  servedKeys,
+  servedValue,
+  sha256,
+  characters,
+  truncateCharacters,
+  type DefinedKeys,
   type FormatOptions,
+  type KeyDefinition,
 } from './common.ts';
 export { handleLine, handleRequest, type AdapterOptions } from './adapter.ts';

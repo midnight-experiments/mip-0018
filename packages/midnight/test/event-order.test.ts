@@ -4,9 +4,9 @@
 // the ledger's execution order: the guaranteed part of every intent (in ascending segment id), then each successful
 // fallible segment (in ascending segment id); within a part, actions and their operations in order."
 //
-//   * `index` (mint scanner) and `verify` take the order from the raw transaction (`decodeTransaction` + `applied`):
+//   * `index` (mint scanner) and `check-event` take the order from the raw transaction (`decodeTransaction` + `applied`):
 //     a synthetic multi-intent transaction below shows that order is exactly the MIP's.
-//   * `list` orders the events of one transaction by the indexer's event id. `verify` (and so `recheck`) checks, per
+//   * `list` orders the events of one transaction by the indexer's event id. `check-event` (and so `recheck`) checks, per
 //     transaction, that the id order equals the raw ledger order: it matches each indexed event, in id order, with the
 //     NEXT applied log op of the contract (a cursor that only moves forward), so an indexer whose ids disagreed with
 //     the ledger order would fail `event-<i>-in-raw-tx`. The recorded Stagenet multi-event transactions (C04: three
@@ -18,7 +18,7 @@ import { ContractCall } from '@midnightntwrk/ledger-v9';
 import { EVENT_NAME, encodePayload, record } from '@mip0018/codec';
 import { describe, expect, it } from 'vitest';
 import { applied, decodeTransaction } from '../src/raw.ts';
-import type { VerifyReport } from '../src/verify.ts';
+import type { CheckEventReport } from '../src/check-event.ts';
 
 const REPO = join(import.meta.dirname, '..', '..', '..');
 const ADDRESS = 'cc'.repeat(32);
@@ -98,8 +98,8 @@ describe('event order within a transaction (raw ledger order = the MIP rule)', (
 
 describe('recorded Stagenet multi-event transactions: indexer id order = ledger order', () => {
   const observed = (id: string, file: string) =>
-    JSON.parse(readFileSync(join(REPO, 'deployments', 'stagenet', 'cases', id, file), 'utf8')) as VerifyReport;
-  const idOrderMatchesLedger = (r: VerifyReport) => {
+    JSON.parse(readFileSync(join(REPO, 'deployments', 'stagenet', 'cases', id, file), 'utf8')) as CheckEventReport;
+  const idOrderMatchesLedger = (r: CheckEventReport) => {
     const ids = r.events.map((e) => e.id);
     expect(ids).toEqual([...ids].sort((a, b) => a - b)); // the report lists events in id order
     for (const e of r.events) expect(r.checks.find((c) => c.id === `event-${e.index}-in-raw-tx`)?.ok).toBe(true);
@@ -107,7 +107,7 @@ describe('recorded Stagenet multi-event transactions: indexer id order = ledger 
   };
 
   it('C04: three events of one publishMetadata call, in the order the circuit emits them (kinds 1, 2, 3)', () => {
-    const r = observed('C04', 'observed-verify-publish.json');
+    const r = observed('C04', 'observed-check-event-publish.json');
     expect(r.outcome).toBe('ok');
     idOrderMatchesLedger(r);
     const source = readFileSync(join(REPO, 'examples/openzeppelin/multi-kind/contracts/MyMultiKindToken.compact'), 'utf8');
@@ -115,15 +115,15 @@ describe('recorded Stagenet multi-event transactions: indexer id order = ledger 
       source.indexOf('export circuit publishMetadata'),
       source.indexOf('\n}\n', source.indexOf('export circuit publishMetadata')),
     );
-    const KIND: Record<string, number> = { SHIELDED: 1, UNSHIELDED: 2, LEDGER: 3 };
-    const emitted = [...body.matchAll(/Mip0018_KIND_(SHIELDED|UNSHIELDED|LEDGER)\(\)/gu)].map((m) => KIND[m[1]!]);
+    const KIND: Record<string, number> = { SHIELDED_UTXO: 1, UNSHIELDED_UTXO: 2, CONTRACT_TOKEN: 3 };
+    const emitted = [...body.matchAll(/Mip0018_KIND_(SHIELDED_UTXO|UNSHIELDED_UTXO|CONTRACT_TOKEN)\(\)/gu)].map((m) => KIND[m[1]!]);
     expect(emitted).toEqual([1, 2, 3]);
     expect(r.events.map((e) => e.classification.kind)).toEqual(emitted);
     expect(new Set(r.events.map((e) => `${e.source?.logicalSegment}/${e.source?.physicalSegment}`)).size).toBe(1); // one part
   });
 
   it('C08: emitTwo(valid, malformed) — the valid event first, as emitted', () => {
-    const r = observed('C08', 'observed-verify-emit-two.json');
+    const r = observed('C08', 'observed-check-event-emit-two.json');
     expect(r.outcome).toBe('ok');
     idOrderMatchesLedger(r);
     const expectFile = JSON.parse(readFileSync(join(REPO, 'deployments/stagenet/cases/C08/expect/emit-two.json'), 'utf8')) as Array<{

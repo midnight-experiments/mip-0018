@@ -23,7 +23,7 @@ export circuit A1_common(ds: Bytes<32>, kind: Uint<8>, name: Bytes<10>, symbol: 
 // The inline spread form.
 export circuit A1_literal(): [] {
   const p: Bytes<256> = Bytes[
-    ...P_header(pad(32, "\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11"), P_KIND_LEDGER()),
+    ...P_header(pad(32, "\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11"), P_KIND_CONTRACT_TOKEN()),
     ...P_nameRecord<10, 17>("Acme Token"),
     ...P_symbolRecord<4, 13>("ACME"),
     ...P_decimalsRecord(6),
@@ -48,9 +48,6 @@ export circuit A3b(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<3>): []
   P_emitPayload(P_payload1<10, 213>(P_header(ds, kind), P_bytesRecord<4, 3, 10>(k1, v1)));
 }
 
-export circuit A3c(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<2>): [] {
-  P_emitPayload(P_payload1<9, 214>(P_header(ds, kind), P_utf8Record<4, 2, 9>(k1, v1)));
-}
 
 export circuit A4a(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<8>, v1: Uint<8>): [] {
   P_emitPayload(P_payload1<12, 211>(P_header(ds, kind), P_uintRecord<8, 12>(k1, v1)));
@@ -72,13 +69,30 @@ export circuit A5c(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<4>, k2:
   P_emitPayload(P_payload2<11, 11, 201>(P_header(ds, kind), P_utf8Record<4, 4, 11>(k1, v1), P_jsonRecord<4, 4, 11>(k2, v2)));
 }
 
+export circuit A6(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<5>, v1: Bytes<28>, k2: Bytes<12>, v2: Bytes<32>): [] {
+  P_emitPayload(P_payload2<36, 47, 140>(P_header(ds, kind), P_uriRecord<5, 28, 36>(k1, v1), P_bytesRecord<12, 32, 47>(k2, v2)));
+}
+
+// A6 with the image builders: image = "https://example.org/acme.png", image_sha256 = hash.
+export circuit A6_common(ds: Bytes<32>, kind: Uint<8>, hash: Bytes<32>): [] {
+  P_emitPayload(P_payload2<36, 47, 140>(P_header(ds, kind), P_imageRecord<28, 36>("https://example.org/acme.png"),
+    P_imageSha256Record(hash)));
+}
+
+// The six common keys in one event (payload6): 11 + 13 + 12 + 20 + 36 + 47 = 139 bytes of records, 84 zero bytes.
+export circuit allCommon(ds: Bytes<32>, kind: Uint<8>, hash: Bytes<32>): [] {
+  P_emitPayload(P_payload6<11, 13, 12, 20, 36, 47, 84>(P_header(ds, kind), P_nameRecord<4, 11>("Acme"),
+    P_symbolRecord<4, 13>("ACME"), P_decimalsRecord(6), P_standardsRecord<8, 20>("mip-0004"),
+    P_imageRecord<28, 36>("https://example.org/acme.png"), P_imageSha256Record(hash)));
+}
+
 export circuit S1a(ds: Bytes<32>, kind: Uint<8>, k1: Bytes<4>, v1: Bytes<1>, k2: Bytes<4>, k3: Bytes<4>, v3: Bytes<1>): [] {
   P_emitPayload(P_payload3<8, 7, 8, 200>(P_header(ds, kind), P_utf8Record<4, 1, 8>(k1, v1), P_nullRecord<4, 7>(k2),
     P_utf8Record<4, 1, 8>(k3, v3)));
 }
 
 export circuit S1a_common(ds: Bytes<32>, a: Bytes<1>, b: Bytes<1>): [] {
-  P_emitPayload(P_payload3<8, 7, 8, 200>(P_header(ds, P_KIND_SHIELDED()), P_nameRecord<1, 8>(a),
+  P_emitPayload(P_payload3<8, 7, 8, 200>(P_header(ds, P_KIND_SHIELDED_UTXO()), P_nameRecord<1, 8>(a),
     P_nullRecord<4, 7>("name"), P_nameRecord<1, 8>(b)));
 }
 
@@ -108,6 +122,6 @@ export pure circuit eventName(): Bytes<32> {
 }
 
 export pure circuit constants(): Vector<9, Uint<8>> {
-  return [P_KIND_SHIELDED(), P_KIND_UNSHIELDED(), P_KIND_LEDGER(), P_VALTYPE_BYTES(), P_VALTYPE_UTF8(),
+  return [P_KIND_SHIELDED_UTXO(), P_KIND_UNSHIELDED_UTXO(), P_KIND_CONTRACT_TOKEN(), P_VALTYPE_BYTES(), P_VALTYPE_UTF8(),
           P_VALTYPE_UINT(), P_VALTYPE_JSON(), P_VALTYPE_URI(), P_VALTYPE_NULL()];
 }

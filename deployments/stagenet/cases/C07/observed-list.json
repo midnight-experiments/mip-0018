@@ -7,19 +7,19 @@
   "contract": "23aa27cbc948fb6df9072750b879e9b7f78206f77c638674a8e01b418ee3355b",
   "snapshot": {
     "indexerTip": {
-      "height": 726303,
-      "hash": "d6e7ff14c4db20563737a206d379355e9ace3b491f356f9a47e860fa6d6a35fe"
+      "height": 794030,
+      "hash": "67c4441cb0ec10ed577fdf09017fe40bb2924b448b4ccaf20afdd7400cc1281e"
     },
-    "toBlock": 726303,
-    "nodeHashAtTip": "0xd6e7ff14c4db20563737a206d379355e9ace3b491f356f9a47e860fa6d6a35fe",
+    "toBlock": 715063,
+    "nodeHashAtTip": "0x67c4441cb0ec10ed577fdf09017fe40bb2924b448b4ccaf20afdd7400cc1281e",
     "tipMatchesNode": true,
-    "finalizedHeight": 726303
+    "finalizedHeight": 794030
   },
   "pages": 2,
   "counts": {
     "events": 22,
-    "accepted": 9,
-    "rejected": 9,
+    "accepted": 8,
+    "rejected": 10,
     "ignored": 4
   },
   "events": [
@@ -131,11 +131,8 @@
       },
       "txHash": "ea3e64f05d57dab178dc65b420857036fcf75809b4123a2525a0312c77a3a142",
       "txId": 24285,
-      "result": "accept",
-      "identity": "stagenet|23aa27cbc948fb6df9072750b879e9b7f78206f77c638674a8e01b418ee3355b|1111111111111111111111111111111111111111111111111111111111111111|3",
-      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
-      "kind": 3,
-      "records": 1
+      "result": "reject",
+      "reason": "invalid-utf8-key"
     },
     {
       "id": 53518,
@@ -304,30 +301,6 @@
       "color": null,
       "fields": [
         {
-          "key": "6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b",
-          "valType": 0,
-          "value": "",
-          "setAt": {
-            "block": "714891",
-            "tx": 24276,
-            "event": 53498,
-            "record": 0
-          },
-          "keyHex": "6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b"
-        },
-        {
-          "key": "76",
-          "valType": 0,
-          "value": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9da",
-          "setAt": {
-            "block": "714907",
-            "tx": 24279,
-            "event": 53504,
-            "record": 0
-          },
-          "keyHex": "76"
-        },
-        {
           "key": "73796d626f6c",
           "valType": 1,
           "value": "41434d45",
@@ -339,42 +312,6 @@
           },
           "keyHex": "73796d626f6c",
           "usable": true
-        },
-        {
-          "key": "73796d626f6c00",
-          "valType": 1,
-          "value": "5a5a5a",
-          "setAt": {
-            "block": "714923",
-            "tx": 24281,
-            "event": 53508,
-            "record": 1
-          },
-          "keyHex": "73796d626f6c00"
-        },
-        {
-          "key": "64617461",
-          "valType": 0,
-          "value": "010000",
-          "setAt": {
-            "block": "714942",
-            "tx": 24283,
-            "event": 53512,
-            "record": 0
-          },
-          "keyHex": "64617461"
-        },
-        {
-          "key": "ff6b6579",
-          "valType": 1,
-          "value": "6f6b",
-          "setAt": {
-            "block": "714956",
-            "tx": 24285,
-            "event": 53516,
-            "record": 0
-          },
-          "keyHex": "ff6b6579"
         },
         {
           "key": "646563696d616c73",
@@ -402,42 +339,6 @@
           },
           "keyHex": "6e616d65",
           "usable": true
-        },
-        {
-          "key": "6e6f7465",
-          "valType": 1,
-          "value": "",
-          "setAt": {
-            "block": "714988",
-            "tx": 24289,
-            "event": 53524,
-            "record": 1
-          },
-          "keyHex": "6e6f7465"
-        },
-        {
-          "key": "626c6f62",
-          "valType": 0,
-          "value": "",
-          "setAt": {
-            "block": "715004",
-            "tx": 24293,
-            "event": 53531,
-            "record": 1
-          },
-          "keyHex": "626c6f62"
-        },
-        {
-          "key": "6d657461",
-          "valType": 3,
-          "value": "6e756c6c",
-          "setAt": {
-            "block": "715019",
-            "tx": 24296,
-            "event": 53536,
-            "record": 1
-          },
-          "keyHex": "6d657461"
         }
       ],
       "common": {

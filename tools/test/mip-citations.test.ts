@@ -44,9 +44,9 @@ describe('MIP citations', () => {
       seen.push(url);
       return { ok: true, json: async () => [{ sha: url.includes('/pulls/') ? OTHER : PIN }] };
     };
-    const mip = { repository: REPO, path: 'mips/x.md', pullRequest: `https://github.com/${REPO}/pull/340` };
+    const mip = { repository: REPO, path: 'mips/x.md', pullRequest: `https://github.com/${REPO}/pull/372` };
     expect((await mipTextCommits(mip, { fetchImpl })).sort()).toEqual([PIN, OTHER].sort());
-    expect(seen[0]).toContain('/pulls/340/commits');
+    expect(seen[0]).toContain('/pulls/372/commits');
     expect(seen[1]).toContain('commits?path=mips%2Fx.md');
   });
 
@@ -56,7 +56,7 @@ describe('MIP citations', () => {
       auth.push((init as { headers?: Record<string, string> } | undefined)?.headers?.authorization);
       return { ok: true, json: async () => [] };
     };
-    const mip = { repository: REPO, path: 'mips/x.md', pullRequest: `https://github.com/${REPO}/pull/340` };
+    const mip = { repository: REPO, path: 'mips/x.md', pullRequest: `https://github.com/${REPO}/pull/372` };
     await mipTextCommits(mip, { fetchImpl, token: 'test-token' });
     await mipTextCommits(mip, { fetchImpl, token: '' });
     expect(auth).toEqual(['Bearer test-token', 'Bearer test-token', undefined, undefined]);

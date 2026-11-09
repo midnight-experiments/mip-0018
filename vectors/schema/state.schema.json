@@ -12,6 +12,7 @@
     "normative": { "type": "boolean" },
     "description": { "type": "string", "minLength": 1 },
     "basis": { "type": "string", "minLength": 1 },
+    "definedKeys": { "$ref": "#/$defs/definedKeys" },
     "steps": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/step" } },
     "expect": { "$ref": "#/$defs/stateExpectation" }
   },
@@ -33,6 +34,23 @@
   },
   "$defs": {
     "network": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$" },
+    "definedKeys": {
+      "description": "Keys that (test) standards define, per standard identifier: the consumer loads them before the steps and serves each key only while a token's current, usable `standards` lists that identifier (MIP \"Keys\"). Without it, no standard defines keys and only the common keys are served.",
+      "type": "object",
+      "propertyNames": { "type": "string", "pattern": "^[^\\u0000-\\u0020\\u007f]+$" },
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["key", "valType"],
+          "properties": {
+            "key": { "type": "string", "minLength": 1 },
+            "valType": { "type": "integer", "minimum": 0, "maximum": 4 }
+          }
+        }
+      }
+    },
     "position": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
     "identity": {
       "type": "object",
@@ -83,13 +101,13 @@
         "value_hex": { "type": "string", "pattern": "^([0-9a-f]{2}){0,255}$" },
         "value_text": { "description": "Informative: the value as text when printable.", "type": "string" },
         "usable": {
-          "description": "Common keys (`name`, `symbol`, `decimals`, `standards`) only: whether the current value has the type and form the MIP requires.",
+          "description": "Common keys (`name`, `symbol`, `decimals`, `standards`, `image`, `image_sha256`) and keys of a declared standard: whether the current value has the type and form the MIP (or the key's definition) requires.",
           "type": "boolean"
         }
       }
     },
     "identityState": {
-      "description": "A token identity that exists: it has at least one field with a value. An identity whose last field was deleted is not referenced at all (MIP \"Applying records\"), so expectations leave it out.",
+      "description": "A token identity that is referenced: it has at least one served field with a value. An identity whose last field was deleted is not referenced at all (MIP \"Applying records\"), and neither is one whose fields are all keys that are not served; expectations leave them out.",
       "type": "object",
       "additionalProperties": false,
       "required": ["network", "contractAddress", "domainSep", "kind", "fields"],
@@ -103,7 +121,7 @@
           "type": "boolean"
         },
         "fields": {
-          "description": "Current value per key; property names are the key bytes in lowercase hex. Never empty.",
+          "description": "Current served value per served key (the common keys and the keys of standards the token declares; a `name`/`symbol` over 64 / 12 characters is served as its first 64 / 12); property names are the key bytes in lowercase hex. Never empty.",
           "type": "object",
           "minProperties": 1,
           "propertyNames": { "pattern": "^([0-9a-f]{2}){1,255}$" },
@@ -163,6 +181,33 @@
         "text": { "anyOf": [{ "type": "string" }, { "type": "null" }] }
       }
     },
+    "imageQuery": {
+      "description": "Content fetched from one identity's `image`, to check against its `image_sha256`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["network", "contractAddress", "domainSep", "kind", "content_hex"],
+      "properties": {
+        "network": { "$ref": "#/$defs/network" },
+        "contractAddress": { "$ref": "payload.schema.json#/$defs/hex32" },
+        "domainSep": { "$ref": "payload.schema.json#/$defs/hex32" },
+        "kind": { "type": "integer", "minimum": 1, "maximum": 3 },
+        "content_hex": { "$ref": "payload.schema.json#/$defs/hex" }
+      }
+    },
+    "image": {
+      "description": "Whether the content may be displayed for that identity (MIP \"Common fields\": content whose SHA-256 differs from a set `image_sha256` MUST NOT be displayed).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["network", "contractAddress", "domainSep", "kind", "content_hex", "displayable"],
+      "properties": {
+        "network": { "$ref": "#/$defs/network" },
+        "contractAddress": { "$ref": "payload.schema.json#/$defs/hex32" },
+        "domainSep": { "$ref": "payload.schema.json#/$defs/hex32" },
+        "kind": { "type": "integer", "minimum": 1, "maximum": 3 },
+        "content_hex": { "$ref": "payload.schema.json#/$defs/hex" },
+        "displayable": { "type": "boolean" }
+      }
+    },
     "stateExpectation": {
       "type": "object",
       "additionalProperties": false,
@@ -170,7 +215,8 @@
       "properties": {
         "identities": { "type": "array", "items": { "$ref": "#/$defs/identityState" } },
         "groups": { "type": "array", "items": { "$ref": "#/$defs/group" } },
-        "display": { "type": "array", "items": { "$ref": "#/$defs/display" } }
+        "display": { "type": "array", "items": { "$ref": "#/$defs/display" } },
+        "images": { "type": "array", "items": { "$ref": "#/$defs/image" } }
       }
     }
   }

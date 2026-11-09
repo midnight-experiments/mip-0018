@@ -4,19 +4,20 @@
   "id": "C11",
   "title": "Minimal OwnerKey (kind 3) full withdrawal: deploy, publish, withdraw (four Null records, one event), withdraw again, revive",
   "demonstrates": "MIP \"Applying records\" on chain: one event with a Null record for each key (name, symbol, decimals, standards) deletes every field, so the token identity is not referenced at all — not listed, in no group, as if it had never been described (S3c); a repeated withdrawal changes nothing (S3b); a later record describes it again with only that field (the revive: name and symbol; decimals and standards do not return, S3d).",
-  "conclusion": "after publish: name \"Acme Token\", symbol \"ACME\", decimals 6, standards \"mip-0004\" (group \"ACME\"); after withdraw and after withdraw again: no identity and no group (`list`: identities none); final: ONLY name \"Acme Again\" and symbol \"ACMA\" (group \"ACMA\"); the withdraw payload = header + the four Null records (codec withdrawRecords()), the publish payload = MIP Appendix A.",
+  "conclusion": "after publish: name \"Acme Token\", symbol \"ACME\", decimals 6, standards \"mip-0004\" (group \"ACME\"); after withdraw and after withdraw again: no identity and no group (`list`: identities none); final: ONLY name \"Acme Again\" and symbol \"ACMA\" (group \"ACMA\"); the withdraw payload = header + the four Null records, the publish payload = MIP Appendix A.",
   "mip": {
-    "commit": "274a84f221bcfc17e4b73e2c8b32fd8c028ea092",
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {
     "example": "examples/minimal",
     "contract": "examples/minimal/contracts/OwnerKey.compact",
-    "metadata": "examples/minimal/owner-key.metadata.json"
+    "metadata": "examples/minimal/owner-key.metadata.json",
+    "deployedFrom": "examples/minimal/contracts/OwnerKey.compact at 57ce63326c231b80dca3efc464c12df599b537ba: its withdrawMetadata() emits one event with Null records at name, symbol, decimals and standards (verifier key f2273345ed4752c9c31adc7eba502efc7fcddcfb5051581ffe4479aabdc0e871, record.json)"
   },
   "notes": [
-    "Kind 3 has no color, so there is no color lookup: per the MIP \"Lookup\" section a ledger token is found by querying the contract's kind-3 events, which is `list` — after the withdrawal it must show no identity for (0x11…, 3) and no group.",
-    "The contract is examples/minimal/contracts/OwnerKey.compact: its withdrawMetadata() calls Mip0018_withdraw, one event with a Null record at name, symbol, decimals and standards (verifier key = docs/costs.json)."
+    "Kind 3 has no color, so there is no color lookup: per the MIP \"Lookup\" section a contract token is found by querying the contract's kind-3 events, which is `list` — after the withdrawal it must show no identity for (0x11…, 3) and no group.",
+    "This deployment's withdrawMetadata() emits one event with Null records at the four keys the token has: name, symbol, decimals, standards (source: examples/minimal/contracts/OwnerKey.compact at 57ce633). examples/minimal/contracts/OwnerKey.compact in this tree also deletes image and image_sha256 (a Null record for a field without a value has no effect)."
   ],
   "placeholders": {
     "{net}": "network options (Stagenet: --network stagenet)",
@@ -62,10 +63,10 @@
       "submits": "call"
     },
     {
-      "id": "verify-publish",
+      "id": "check-event-publish",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -78,7 +79,7 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-publish.json"
+      "stdout": "observed-check-event-publish.json"
     },
     {
       "id": "list-after-publish",
@@ -114,10 +115,10 @@
       "submits": "call"
     },
     {
-      "id": "verify-withdraw",
+      "id": "check-event-withdraw",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -130,7 +131,7 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-withdraw.json"
+      "stdout": "observed-check-event-withdraw.json"
     },
     {
       "id": "list-after-withdraw",
@@ -168,10 +169,10 @@
       "note": "the identity is already gone, so the before-check sees no change and would skip it: --force emits it anyway (vector S3b)"
     },
     {
-      "id": "verify-withdraw-again",
+      "id": "check-event-withdraw-again",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -184,7 +185,7 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-withdraw-again.json"
+      "stdout": "observed-check-event-withdraw-again.json"
     },
     {
       "id": "list-after-withdraw-again",
@@ -222,10 +223,10 @@
       "submits": "call"
     },
     {
-      "id": "verify-revive",
+      "id": "check-event-revive",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -238,7 +239,7 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-revive.json"
+      "stdout": "observed-check-event-revive.json"
     },
     {
       "id": "list-after-revive",
@@ -258,7 +259,7 @@
   ],
   "expected": "expected.json",
   "recheck": {
-    "verify": [
+    "checkEvent": [
       {
         "record": "record.json",
         "step": "publish",

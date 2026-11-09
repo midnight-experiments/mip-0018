@@ -3,7 +3,7 @@
 // The mip0018 CLI adapters of the minimal example, without a chain: what the CLI derives from each adapter (constructor
 // arguments from metadata.json or --metadata, the secretKey witness and private state, call arguments converted with
 // contract-info.json types) deploys the contract in compact-runtime and emits exactly the payload the adapter tells
-// `verify` to expect; OwnerKey's lifecycle reaches every expected state of owner-key.metadata.json; another signer is
+// `check-event` to expect; OwnerKey's lifecycle reaches every expected state of owner-key.metadata.json; another signer is
 // not the owner; --metadata may choose the domainSep but nothing compiled in.
 
 import { randomBytes } from 'node:crypto';

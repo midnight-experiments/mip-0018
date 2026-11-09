@@ -8,6 +8,12 @@
 // - A Null record (tombstone) deletes its own field. A token identity exists only while at least one of its fields
 //   has a value: once its last field is deleted it is not referenced at all (listings, lookups, groups, history), as
 //   if it had never been described, and Null records alone never create one (MIP "Applying records").
+// - Every accepted record is stored, but only the common keys and the keys of standards the token currently declares
+//   in a usable `standards` are served (MIP "Keys"). The served keys are computed from the stored fields and the
+//   current `standards` every time a view is built, so a change of `standards` serves (or stops serving) keys whose
+//   records arrived earlier. An identity with no served field is not referenced, as if it had no fields.
+// - A `name`/`symbol` longer than 64 / 12 characters (grapheme clusters) is served as its first 64 / 12; the stored
+//   bytes are unchanged and grouping compares them (MIP "Common fields").
 // - The color of kinds 1 and 2 comes from an injected `tokenType(domainSep, contractAddress)` (ledger-specific; this
 //   package stays dependency-free); kind 3 never gets a color and the hook is never called for it.
 import { toHex, ValType, type DecodedRecord, type Header, type IgnoreReason, type RejectReason } from '@mip0018/codec';
@@ -16,11 +22,17 @@ import {
   COMMON_KEYS,
   commonFieldUsable,
   formatAmount,
+  imageContentAllowed,
   KEY_DECIMALS,
+  KEY_IMAGE,
+  KEY_IMAGE_SHA256,
   KEY_NAME,
   KEY_STANDARDS,
   KEY_SYMBOL,
   parseStandards,
+  servedKeys,
+  servedValue,
+  type DefinedKeys,
 } from './common.ts';
 import { ALL_CONSUMER_RULES, type ConsumerRules } from './rules.ts';
 
@@ -64,16 +76,32 @@ export interface HistoryEntry extends FieldValue {
 
 export interface FieldView extends FieldValue {
   keyHex: string;
-  /** Common keys only: whether the current value has the type and form the MIP requires. */
+  /**
+   * The served value: the stored value, except a `name`/`symbol` over its maximum length, which is served as its first
+   * 64 / 12 characters (grapheme clusters, Unicode UAX #29).
+   */
+  value: Uint8Array;
+  /** Only when `value` was truncated: the stored bytes (what the record carried; grouping compares these). */
+  storedValue?: Uint8Array;
+  /**
+   * Common keys and keys of a declared standard: whether the current value has the type and form the MIP (or the
+   * standard's key definition) requires.
+   */
   usable?: boolean;
 }
 
 export interface CommonFields {
+  /** Served (truncated to 64 characters) when usable. */
   name?: string;
+  /** Served (truncated to 12 characters) when usable. */
   symbol?: string;
   decimals?: bigint;
   /** Claimed standard identifiers; `[]` when `standards` is empty. Absent when unset or unusable. */
   standards?: string[];
+  /** The `image` URI when usable. Never fetched by this package. */
+  image?: string;
+  /** The `image_sha256` value (hex) when usable (exactly 32 bytes). */
+  imageSha256?: string;
 }
 
 export interface IdentityView {
@@ -87,7 +115,10 @@ export interface IdentityView {
   colored: boolean;
   /** The color, when `colored` and a `tokenType` hook was given. */
   color: Uint8Array | null;
-  /** Every field with a current value; never empty (an identity without fields is not referenced). */
+  /**
+   * Every served field with a current value (common keys and keys of declared standards); never empty (an identity
+   * without a served field is not referenced).
+   */
   fields: FieldView[];
   /** Usable values of the common fields only (no defaults, no fallbacks). */
   common: CommonFields;
@@ -123,10 +154,20 @@ export interface MetadataStateOptions {
    * last field is deleted, the identity goes with all its history. Default false.
    */
   keepHistory?: boolean;
+  /**
+   * Keys that standards define, per standard identifier (MIP "Keys"): served only for tokens whose current usable
+   * `standards` lists that identifier. Default: none (only the common keys are served).
+   */
+  definedKeys?: DefinedKeys;
   /** Testing only: disable reducer rules (rule-mutation test). */
   rules?: Partial<ConsumerRules>;
   /** Testing only: disable decoder rules (rule-mutation test). */
   codecRules?: Partial<CodecRules>;
+}
+
+interface StoredField extends FieldValue {
+  /** Mutation `noRecomputeOnStandardsChange` only: whether the key was served when this value was set. */
+  servedWhenSet: boolean;
 }
 
 interface Identity {
@@ -135,7 +176,8 @@ interface Identity {
   contractAddress: Uint8Array;
   domainSep: Uint8Array;
   kind: number;
-  fields: Map<string, FieldValue>;
+  /** Every stored field (served or not). */
+  fields: Map<string, StoredField>;
   history: Map<string, HistoryEntry[]>;
 }
 
@@ -186,12 +228,14 @@ export class MetadataState {
   private readonly last = new Map<string, Position>();
   private readonly tokenType: TokenTypeFn | undefined;
   private readonly keepHistory: boolean;
+  private readonly definedKeys: DefinedKeys;
   private readonly rules: ConsumerRules;
   private readonly codecRules: CodecRules;
 
   constructor(opts: MetadataStateOptions = {}) {
     this.tokenType = opts.tokenType;
     this.keepHistory = opts.keepHistory ?? false;
+    this.definedKeys = opts.definedKeys ?? {};
     this.rules = { ...ALL_CONSUMER_RULES, ...(opts.rules ?? {}) };
     this.codecRules = { ...ALL_CODEC_RULES, ...(opts.codecRules ?? {}) };
   }
@@ -241,14 +285,20 @@ export class MetadataState {
   }
 
   /**
-   * Every token identity that currently has at least one field, in the order they were (last) described. An identity
-   * whose last field was deleted is not listed, exactly as one that was never described.
+   * Every token identity that currently has at least one served field, in the order they were (last) described. An
+   * identity whose last field was deleted, or whose fields are all unserved keys, is not listed, exactly as one that
+   * was never described.
    */
   identities(): IdentityView[] {
-    return [...this.identitiesByKey.values()].map((id) => this.view(id));
+    const out: IdentityView[] = [];
+    for (const id of this.identitiesByKey.values()) {
+      const v = this.view(id);
+      if (v !== undefined) out.push(v);
+    }
+    return out;
   }
 
-  /** One identity, or `undefined` if it has no field (never described, or every field deleted). */
+  /** One identity, or `undefined` if it has no served field (never described, every field deleted, or only unserved keys). */
   identity(network: string, contractAddress: Uint8Array | string, domainSep: Uint8Array | string, kind: number): IdentityView | undefined {
     const c = typeof contractAddress === 'string' ? contractAddress.toLowerCase() : toHex(contractAddress);
     const d = typeof domainSep === 'string' ? domainSep.toLowerCase() : toHex(domainSep);
@@ -256,9 +306,28 @@ export class MetadataState {
     return id === undefined ? undefined : this.view(id);
   }
 
-  /** Marked history of one field (only with `keepHistory`); emptied by a Null record at that key. */
+  /**
+   * Marked history of one served field (only with `keepHistory`); emptied by a Null record at that key. Empty for a key
+   * that is not served and for an identity that is not referenced. Values are served values (truncated `name`/`symbol`).
+   */
   history(identityKey: string, keyHex: string): HistoryEntry[] {
-    return [...(this.identitiesByKey.get(identityKey)?.history.get(keyHex.toLowerCase()) ?? [])];
+    const id = this.identitiesByKey.get(identityKey);
+    const k = keyHex.toLowerCase();
+    if (id === undefined || this.view(id) === undefined) return [];
+    const f = id.fields.get(k);
+    if (f === undefined || !this.isServed(id, k, f)) return [];
+    return (id.history.get(k) ?? []).map((h) => ({ ...h, value: servedValue(k, h.valType, h.value, this.rules) }));
+  }
+
+  /**
+   * Whether content fetched from the identity's `image` may be displayed: `false` when its `image_sha256` is set and
+   * the content's SHA-256 differs (or the set value is not 32 bytes); `true` without `image_sha256` (unchecked). See
+   * `imageContentAllowed` in common.ts. `false` for an identity that is not referenced.
+   */
+  imageContentAllowed(identity: IdentityView | undefined, content: Uint8Array): boolean {
+    if (identity === undefined) return false;
+    const h = identity.fields.find((f) => f.keyHex === KEY_IMAGE_SHA256);
+    return imageContentAllowed(h === undefined ? undefined : (h.storedValue ?? h.value), content, this.rules);
   }
 
   /**
@@ -270,6 +339,7 @@ export class MetadataState {
   groups(): SymbolGroup[] {
     const groups = new Map<string, SymbolGroup>();
     for (const id of this.identitiesByKey.values()) {
+      if (this.view(id) === undefined) continue; // not referenced
       const sym = id.fields.get(KEY_SYMBOL);
       if (sym === undefined) continue;
       const usable = this.rules.groupUsableOnly
@@ -355,7 +425,8 @@ export class MetadataState {
       // A non-Null record describes the identity (again, with only this field if every field had been deleted).
       const id = this.identitiesByKey.get(key) ?? create();
       const previous = id.fields.get(keyHex);
-      const next: FieldValue = { key: storedKey.slice(), valType: r.valType, value: r.value, setAt: at };
+      const servedWhenSet = COMMON_KEYS.has(keyHex) || this.declaredKeys(id).has(keyHex);
+      const next: StoredField = { key: storedKey.slice(), valType: r.valType, value: r.value, setAt: at, servedWhenSet };
       if (r.integer !== undefined) next.integer = r.integer;
       if (previous !== undefined) {
         if (!this.rules.latestWins) continue; // mutation only: first value wins
@@ -367,7 +438,8 @@ export class MetadataState {
         }
         if (this.keepHistory) {
           const h = id.history.get(keyHex) ?? [];
-          h.push({ ...previous, replacedAt: at });
+          const { servedWhenSet: _served, ...replaced } = previous;
+          h.push({ ...replaced, replacedAt: at });
           id.history.set(keyHex, h);
         }
       }
@@ -376,26 +448,54 @@ export class MetadataState {
     return key;
   }
 
-  private view(id: Identity): IdentityView {
+  /** The non-common keys the identity's current usable `standards` makes served (hex → allowed value types). */
+  private declaredKeys(id: Identity): Map<string, Set<number>> {
+    const std = id.fields.get(KEY_STANDARDS);
+    if (std === undefined || commonFieldUsable(KEY_STANDARDS, std.valType, std.value, this.rules) !== true) return new Map();
+    return servedKeys(parseStandards(std.value) ?? [], this.definedKeys);
+  }
+
+  /** Whether a stored field is served (MIP "Keys"). */
+  private isServed(id: Identity, keyHex: string, f: StoredField): boolean {
+    if (!this.rules.servedKeysOnly) return true; // mutation only: serve every key
+    if (COMMON_KEYS.has(keyHex)) return true;
+    if (!this.rules.recomputeServedKeys) return f.servedWhenSet; // mutation only: decided when the record arrived
+    return this.declaredKeys(id).has(keyHex);
+  }
+
+  /** The identity as served, or `undefined` when it has no served field (it is not referenced). */
+  private view(id: Identity): IdentityView | undefined {
     const colored = this.rules.colorNativeOnly ? id.kind === 1 || id.kind === 2 : true;
-    const color =
-      colored && this.tokenType !== undefined && (id.kind === 1 || id.kind === 2)
-        ? this.tokenType(id.domainSep.slice(), id.contractAddress.slice())
-        : null;
+    const declared = this.declaredKeys(id);
     const fields: FieldView[] = [];
     const common: CommonFields = {};
     for (const [keyHex, f] of id.fields) {
-      const usable = commonFieldUsable(keyHex, f.valType, f.value, this.rules);
-      const fv: FieldView = { ...f, keyHex };
+      if (!this.isServed(id, keyHex, f)) continue;
+      const { servedWhenSet: _served, ...stored } = f;
+      let usable = commonFieldUsable(keyHex, f.valType, f.value, this.rules);
+      const types = declared.get(keyHex);
+      if (usable === undefined && types !== undefined) usable = types.has(f.valType);
+      const value = usable === true ? servedValue(keyHex, f.valType, f.value, this.rules) : f.value;
+      const fv: FieldView = { ...stored, keyHex, value };
+      if (value !== f.value) fv.storedValue = f.value;
       if (usable !== undefined) fv.usable = usable;
       fields.push(fv);
       if (usable !== true) continue;
-      const text = new TextDecoder().decode(f.value);
+      const text = new TextDecoder().decode(value);
       if (keyHex === KEY_NAME) common.name = text;
       else if (keyHex === KEY_SYMBOL) common.symbol = text;
       else if (keyHex === KEY_DECIMALS && f.integer !== undefined) common.decimals = f.integer;
       else if (keyHex === KEY_STANDARDS) common.standards = parseStandards(f.value) ?? [];
+      else if (keyHex === KEY_IMAGE) common.image = text;
+      else if (keyHex === KEY_IMAGE_SHA256) common.imageSha256 = toHex(f.value);
     }
+    // An identity whose stored fields are all unserved keys is not referenced (mutation only: reported without fields).
+    // An identity without any stored field exists only under the keepEmptyIdentity mutation, which reports it.
+    if (fields.length === 0 && id.fields.size > 0 && this.rules.hideUnservedIdentity) return undefined;
+    const color =
+      colored && this.tokenType !== undefined && (id.kind === 1 || id.kind === 2)
+        ? this.tokenType(id.domainSep.slice(), id.contractAddress.slice())
+        : null;
     return {
       key: id.key,
       network: id.network,

@@ -37,6 +37,7 @@ describe('runner CLI', () => {
       'A3',
       'A4',
       'A5',
+      'A6',
       'R1',
       'R2',
       'R3',
@@ -53,12 +54,15 @@ describe('runner CLI', () => {
       'S7',
       'S8',
       'S9',
+      'S10',
+      'S11',
+      'S12',
     ]) {
       expect(r.stdout).toMatch(new RegExp(`^  ${t} `, 'm'));
     }
     expect(r.stdout).toMatch(/^PASS +I1a /m); // ignore vectors pass
     expect(r.stdout).toMatch(/^FAIL +A1 /m);
-    expect(r.stdout).toMatch(/normative: 5\/67 passed/);
+    expect(r.stdout).toMatch(/normative: 5\/78 passed/);
   });
 
   it('--only selects vectors by id or MIP test id', () => {

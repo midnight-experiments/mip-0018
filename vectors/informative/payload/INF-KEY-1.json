@@ -1,0 +1,34 @@
+{
+  "id": "INF-KEY-1",
+  "mip": {
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
+    "testId": "INF-KEY"
+  },
+  "normative": false,
+  "description": "A multi-byte UTF-8 key (\"名前\", e5 90 8d e5 89 8d) is valid UTF-8 and the event is accepted.",
+  "basis": "MIP \"Keys\": \"Keys MUST be valid UTF-8.\" Keys are exact bytes; any valid UTF-8 key is accepted (it is served only if a declared standard defines it).",
+  "event": {
+    "type": "Misc",
+    "name_hex": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+    "payload_hex": "11111111111111111111111111111111111111111111111111111111111111110306e5908de5898d010178000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "payload_file": "INF-KEY-1.bin"
+  },
+  "expect": {
+    "result": "accept",
+    "header": {
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3
+    },
+    "records": [
+      {
+        "offset": 33,
+        "key_hex": "e5908de5898d",
+        "key_text": "名前",
+        "valType": 1,
+        "value_hex": "78",
+        "value_text": "x"
+      }
+    ],
+    "contentEnd": 43
+  }
+}

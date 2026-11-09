@@ -257,6 +257,61 @@
         }
       },
       "requests": 9
+    },
+    {
+      "label": "C12 preflight",
+      "observedAt": "2026-10-07T20:29:25.086Z",
+      "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
+      "genesisMatchesPin": true,
+      "node": {
+        "chain": "Midnight Stagenet",
+        "name": "Midnight Node",
+        "version": "2.0.0-d9729c13",
+        "specName": "midnight",
+        "specVersion": 2000000,
+        "transactionVersion": 4,
+        "stateVersion": 1,
+        "finalizedHead": {
+          "hash": "0xff4e8fbd803e6a53fcd296ca39627173ef8bb236c09839e50ff908ab871af7d5",
+          "height": 793916
+        },
+        "bestHeight": 793919
+      },
+      "indexer": {
+        "latestBlock": {
+          "height": 793916,
+          "hash": "ff4e8fbd803e6a53fcd296ca39627173ef8bb236c09839e50ff908ab871af7d5",
+          "timestamp": 1791404946000,
+          "protocolVersion": 2000000
+        }
+      },
+      "proofServers": {
+        "contract": {
+          "url": "http://mips-00013-s13-proof-c33143:6300",
+          "health": {
+            "status": "ok",
+            "timestamp": "2026-10-07 20:29:25.090050455 +00:00:00"
+          },
+          "version": "9.0.0-rc.8",
+          "proofVersions": [
+            "V2",
+            "V3"
+          ]
+        },
+        "dust": {
+          "url": "http://mips-00013-s13-wproof-c33143:6300",
+          "health": {
+            "status": "ok",
+            "timestamp": "2026-10-07 20:29:25.096078365 +00:00:00"
+          },
+          "version": "9.0.0-rc.6",
+          "proofVersions": [
+            "V2",
+            "V3"
+          ]
+        }
+      },
+      "requests": 9
     }
   ]
 }

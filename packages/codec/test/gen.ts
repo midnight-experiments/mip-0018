@@ -88,7 +88,8 @@ export function validRecords(r: Rng): MetadataRecord[] {
   const n = 1 + r.int(8);
   for (let i = 0; i < n; i++) {
     const t = r.int(6);
-    const key = r.chance(0.8) ? asciiText(r, 12) : r.bytes(1 + r.int(12));
+    // Keys are valid UTF-8 (MIP "Keys"): ASCII, or text with multi-byte characters.
+    const key = r.chance(0.8) ? asciiText(r, 12) : te.encode(r.pick(['é', 'Ω', '😀', '名前', 'key-ü', '\u0000x']));
     const k = key.length === 0 ? Uint8Array.of(0x6b) : key;
     let rec: MetadataRecord;
     if (t === 2) rec = { key: k, valType: 2, value: encodeUint(BigInt(r.u32()), 4 + r.int(10)) };

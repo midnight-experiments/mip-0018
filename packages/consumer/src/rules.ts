@@ -32,8 +32,41 @@ export interface ConsumerRules {
   identityNetwork: boolean;
   /** Reorganization — state is recomputed from the remaining canonical events. */
   rollbackRecompute: boolean;
+  /**
+   * Keys — only the common keys and the keys of standards the token currently declares in `standards` are served.
+   * Disabled = the `serveAllKeys` mutation: every stored key is served.
+   */
+  servedKeysOnly: boolean;
+  /**
+   * Keys — the served keys follow the token's current `standards`: when `standards` changes, the served keys are
+   * recomputed from the stored records. Disabled = the `noRecomputeOnStandardsChange` mutation: a key is served or
+   * not according to the `standards` in force when its record arrived.
+   */
+  recomputeServedKeys: boolean;
+  /**
+   * An identity with no served field is not referenced (listings, lookups, groups, history), as if it had no fields.
+   * Disabled = the `listUnservedIdentity` mutation: it is reported without fields.
+   */
+  hideUnservedIdentity: boolean;
   /** Common fields — `name`/`symbol` must not be empty. */
   nonEmptyText: boolean;
+  /**
+   * Common fields — a `name`/`symbol` over 64 / 12 characters is served as its first 64 / 12 characters. Disabled =
+   * the `noTruncation` mutation.
+   */
+  truncateLength: boolean;
+  /**
+   * Terminology — a character is a grapheme cluster (Unicode UAX #29). Disabled = the `truncateByCodePoints` mutation:
+   * lengths count Unicode code points.
+   */
+  truncateGraphemes: boolean;
+  /** Common fields — `image` must be a URI (type 4) and `image_sha256` exactly 32 bytes (type 0). */
+  imageForm: boolean;
+  /**
+   * Common fields — content from `image` whose SHA-256 differs from a set `image_sha256` is not displayed. Disabled =
+   * the `ignoreImageHash` mutation.
+   */
+  imageHash: boolean;
   /** Common fields — `decimals` must be an unsigned integer (type 2). */
   decimalsType: boolean;
   /** Common fields — `standards` must follow the list format. */
@@ -64,7 +97,14 @@ export const ALL_CONSUMER_RULES: Readonly<ConsumerRules> = Object.freeze({
   identityContract: true,
   identityNetwork: true,
   rollbackRecompute: true,
+  servedKeysOnly: true,
+  recomputeServedKeys: true,
+  hideUnservedIdentity: true,
   nonEmptyText: true,
+  truncateLength: true,
+  truncateGraphemes: true,
+  imageForm: true,
+  imageHash: true,
   decimalsType: true,
   standardsFormat: true,
   noFallback: true,

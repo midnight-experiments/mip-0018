@@ -27,7 +27,7 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 |---|---|---|---|---|
 | 1 | `deploy` | wallet1 | 0 | `signer deploy --network stagenet --mnemonic-file /run/mip0018/secrets/stagenet-wallet.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --example fungible-token --record deployments/stagenet/cases/C01/record.json` |
 | 2 | `publish` | wallet1 | 0 | `signer publish --network stagenet --mnemonic-file /run/mip0018/secrets/stagenet-wallet.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --record deployments/stagenet/cases/C01/record.json --circuit publishMetadata --step publish` |
-| 3 | `verify-publish` | none | 0 | `wallet_free verify --network stagenet --record deployments/stagenet/cases/C01/record.json --step publish --expect @deployments/stagenet/cases/C01/expect/publish.json --wait 120 --json > deployments/stagenet/cases/C01/observed-verify-publish.json` |
+| 3 | `check-event-publish` | none | 0 | `wallet_free check-event --network stagenet --record deployments/stagenet/cases/C01/record.json --step publish --expect @deployments/stagenet/cases/C01/expect/publish.json --wait 120 --json > deployments/stagenet/cases/C01/observed-check-event-publish.json` |
 | 4 | `list` | none | 0 | `wallet_free list --network stagenet --record deployments/stagenet/cases/C01/record.json --expect @deployments/stagenet/cases/C01/expected.json --json > deployments/stagenet/cases/C01/observed-list.json` |
 
 ## Re-check (wallet-free, one command)

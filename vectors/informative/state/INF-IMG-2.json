@@ -1,0 +1,52 @@
+{
+  "id": "INF-IMG-2",
+  "mip": {
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
+    "testId": "INF-IMG"
+  },
+  "normative": false,
+  "description": "Without image_sha256 the content cannot be checked; the reference consumer allows it (unchecked).",
+  "basis": "MIP \"Common fields\": \"When image_sha256 is set, consumers MUST NOT display content from image whose SHA-256 differs from it. Without image_sha256, the content cannot be checked.\" This repository reads a set image_sha256 of another length (unusable) as one no content matches, and leaves unchecked content to the consumer (allowed).",
+  "steps": [
+    {
+      "op": "apply",
+      "network": "testnet-a",
+      "block": 1,
+      "tx": 0,
+      "event": 0,
+      "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "type": "Misc",
+      "name_hex": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+      "payload_hex": "11111111111111111111111111111111111111111111111111111111111111110305696d616765041c68747470733a2f2f6578616d706c652e6f72672f61636d652e706e6700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "expect": {
+    "identities": [
+      {
+        "network": "testnet-a",
+        "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+        "kind": 3,
+        "fields": {
+          "696d616765": {
+            "key_text": "image",
+            "valType": 4,
+            "value_hex": "68747470733a2f2f6578616d706c652e6f72672f61636d652e706e67",
+            "value_text": "https://example.org/acme.png",
+            "usable": true
+          }
+        }
+      }
+    ],
+    "images": [
+      {
+        "network": "testnet-a",
+        "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+        "kind": 3,
+        "content_hex": "4d49502d30303138207465737420696d61676520636f6e74656e743a207375627374697475746564",
+        "displayable": true
+      }
+    ]
+  }
+}

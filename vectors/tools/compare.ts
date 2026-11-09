@@ -6,10 +6,12 @@
 //   Once its last field is deleted, consumers MUST NOT reference the identity at all"): the reported identities must
 //   match the expected ones exactly as a set, keyed by (network, contractAddress, domainSep, kind). A reported
 //   identity without fields fails, as does one the expectation does not list.
-// - Fields: valType and value_hex always; `usable` when the expectation has it. The four common keys (`name`,
-//   `symbol`, `decimals`, `standards`) must be reported; any other key is optional (MIP "Consuming": "Indexers MAY
-//   index only some tokens or keys") — a missing one is a note, a reported one must match. A reported key the
-//   expectation does not have fails.
+// - Fields (MIP "Keys": consumers MUST NOT serve a key that is neither a common key nor defined by a standard the token
+//   currently declares): valType and value_hex always; `usable` when the expectation has it. The six common keys
+//   (`name`, `symbol`, `decimals`, `standards`, `image`, `image_sha256`) and the keys of the vector's `definedKeys` (the
+//   test standards the consumer loaded) must be reported when expected; any other expected key is optional (MIP
+//   "Consuming": "Indexers MAY index only some tokens or keys") — a missing one is a note, a reported one must match. A
+//   reported key the expectation does not have fails: it is not served.
 // - Groups (MIP Testing S9: "Grouping is a SHOULD, so two outcomes are valid: no groups at all, or exactly the
 //   following groups"): only groups of two or more members are compared, on both sides. A consumer that reports no
 //   such group (no `groups`, an empty list, or single-member groups only) passes, with the check marked not
@@ -18,6 +20,11 @@
 // - Display (MIP Testing S8: "A consumer that displays amounts …"): a consumer that omits `display` (or sends null)
 //   does not display amounts and the check is marked not applicable; otherwise every expected entry must be present
 //   (matched by identity + raw) with equal decimals and text.
+// - Images (MIP Testing S12: "With image_sha256 set, content from image whose SHA-256 differs is not displayed"): a
+//   consumer that omits `images` (or sends null) does not display images and the check is marked not applicable;
+//   otherwise every expected entry must be present (matched by identity + content_hex); an entry expected
+//   `displayable: false` must be reported false. One expected true and reported false is a note: a consumer may refuse
+//   content for its own reasons.
 
 export interface Comparison {
   ok: boolean;
@@ -27,8 +34,22 @@ export interface Comparison {
   notApplicable: string[];
 }
 
-/** The MIP's common keys (Common fields): `name`, `symbol`, `decimals`, `standards`, as hex. */
-export const COMMON_KEYS_HEX: ReadonlySet<string> = new Set(['6e616d65', '73796d626f6c', '646563696d616c73', '7374616e6461726473']);
+/** The MIP's common keys (Common fields): `name`, `symbol`, `decimals`, `standards`, `image`, `image_sha256`, as hex. */
+export const COMMON_KEYS_HEX: ReadonlySet<string> = new Set([
+  '6e616d65',
+  '73796d626f6c',
+  '646563696d616c73',
+  '7374616e6461726473',
+  '696d616765',
+  '696d6167655f736861323536',
+]);
+
+/** The keys (hex) a vector's `definedKeys` defines: a consumer that loaded them must report them when expected. */
+export function definedKeysHex(definedKeys: Record<string, Array<{ key: string }>> = {}): Set<string> {
+  const out = new Set<string>();
+  for (const defs of Object.values(definedKeys)) for (const d of defs) out.add(Buffer.from(d.key, 'utf8').toString('hex'));
+  return out;
+}
 
 type Json = Record<string, unknown>;
 
@@ -89,7 +110,7 @@ function identityKey(o: Json): string {
   return [o.network, lower(o.contractAddress), lower(o.domainSep), o.kind].join('|');
 }
 
-function compareIdentities(expected: Json[], got: unknown, failures: string[], notes: string[]): void {
+function compareIdentities(expected: Json[], got: unknown, failures: string[], notes: string[], required: ReadonlySet<string>): void {
   if (!Array.isArray(got)) {
     failures.push('identities: missing or not an array');
     return;
@@ -128,7 +149,7 @@ function compareIdentities(expected: Json[], got: unknown, failures: string[], n
       const gv = gfLower.get(key);
       const label = evo.key_text !== undefined ? `${key} (${String(evo.key_text)})` : key;
       if (!isObj(gv)) {
-        if (COMMON_KEYS_HEX.has(key)) failures.push(`identity ${k}: field ${label} missing`);
+        if (COMMON_KEYS_HEX.has(key) || required.has(key)) failures.push(`identity ${k}: field ${label} missing`);
         else
           notes.push(
             `identity ${k}: field ${label} not reported (allowed: not a common key; "Indexers MAY index only some tokens or keys")`,
@@ -142,7 +163,11 @@ function compareIdentities(expected: Json[], got: unknown, failures: string[], n
       if (evo.usable !== undefined && gv.usable !== evo.usable)
         failures.push(`identity ${k}: field ${label} usable expected ${String(evo.usable)}, got ${String(gv.usable)}`);
     }
-    for (const key of gfLower.keys()) if (!(key in ef)) failures.push(`identity ${k}: unexpected field ${key}`);
+    for (const key of gfLower.keys())
+      if (!(key in ef))
+        failures.push(
+          `identity ${k}: unexpected field ${key} (a key that is neither common nor defined by a declared standard MUST NOT be served, MIP "Keys")`,
+        );
   }
   for (const [k, g] of act)
     if (!exp.has(k))
@@ -213,13 +238,39 @@ function compareDisplay(expected: Json[], got: unknown, failures: string[], notA
   }
 }
 
-export function compareState(expect: Json, got: Json): Comparison {
+function compareImages(expected: Json[], got: unknown, failures: string[], notes: string[], notApplicable: string[]): void {
+  if (got === undefined || got === null) {
+    notApplicable.push('images: not reported — the consumer does not display images (S12 applies to content a consumer displays)');
+    return;
+  }
+  if (!Array.isArray(got)) {
+    failures.push('images: not an array');
+    return;
+  }
+  const list = got as Json[];
+  for (const e of expected) {
+    const k = `${identityKey(e)}|${String(e.content_hex)}`;
+    const g = list.find((x) => isObj(x) && `${identityKey(x)}|${String(lower(x.content_hex))}` === k);
+    if (g === undefined) {
+      failures.push(`image ${k}: missing`);
+      continue;
+    }
+    if (typeof g.displayable !== 'boolean') failures.push(`image ${k}: displayable is not a boolean`);
+    else if (e.displayable === false && g.displayable !== false)
+      failures.push(`image ${k}: displayable expected false (the content's SHA-256 differs from image_sha256), got true`);
+    else if (e.displayable === true && g.displayable !== true)
+      notes.push(`image ${k}: content refused although it matches (allowed: the consumer may refuse content for its own reasons)`);
+  }
+}
+
+export function compareState(expect: Json, got: Json, definedKeys: Record<string, Array<{ key: string }>> = {}): Comparison {
   const failures: string[] = [];
   const notes: string[] = [];
   const notApplicable: string[] = [];
   if (typeof got.error === 'string') return { ok: false, failures: [`consumer error: ${got.error}`], notes, notApplicable };
-  compareIdentities(expect.identities as Json[], got.identities, failures, notes);
+  compareIdentities(expect.identities as Json[], got.identities, failures, notes, definedKeysHex(definedKeys));
   if (expect.groups !== undefined) compareGroups(expect.groups as Json[], got.groups, failures, notApplicable);
   if (expect.display !== undefined) compareDisplay(expect.display as Json[], got.display, failures, notApplicable);
+  if (expect.images !== undefined) compareImages(expect.images as Json[], got.images, failures, notes, notApplicable);
   return { ok: failures.length === 0, failures, notes, notApplicable };
 }

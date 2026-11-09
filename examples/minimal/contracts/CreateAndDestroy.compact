@@ -8,7 +8,7 @@
 // removed the worst anyone else can do is re-emit exactly the same metadata at their own cost.
 // Never give an unguarded circuit runtime parameters: whoever calls it could publish anything.
 //
-// Token: a tiny ledger token (kind 3) whose whole supply is credited to `holder` at deployment.
+// Token: a tiny contract token (kind 3) whose whole supply is credited to `holder` at deployment.
 
 pragma language_version >= 0.26.0;
 
@@ -29,7 +29,7 @@ constructor(domainSep: Bytes<32>, supply: Uint<64>, holder: Bytes<32>) {
 // (2) The metadata, emitted once. MIP Appendix A values: name, symbol, decimals, standards.
 export circuit publishMetadata(): [] {
   Mip0018_emitPayload(Mip0018_commonFieldsWithStandards<10, 4, 8>(
-    domain, Mip0018_KIND_LEDGER(), "Acme Token", "ACME", 6, "mip-0004"));
+    domain, Mip0018_KIND_CONTRACT_TOKEN(), "Acme Token", "ACME", 6, "mip-0004"));
 }
 
 // Normal token operation: never emits metadata.

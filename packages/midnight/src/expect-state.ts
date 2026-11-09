@@ -6,14 +6,17 @@
 // which is also what deployments/stagenet/cases/<ID>/expected.json holds:
 //
 //   { "identities": [ { "domainSep": "0x…", "kind": 1|2|3, "colored": bool,
-//                       "common": { "name"?, "symbol"?, "decimals"? (number), "standards"? (space-joined) },
+//                       "common": { "name"?, "symbol"?, "decimals"? (number), "standards"? (space-joined), "image"?,
+//                                   "imageSha256"? (hex) },
 //                       "fields"?: { "<key hex>": { "key_text", "valType", "value_hex", "usable"? } } } ],
 //     "groups": [ { "symbol": "<text>", "members": [ { "domainSep": "0x…", "kind" } ] } ],
 //     "counts"?: { "events"?, "accepted"?, "rejected"?, "ignored"? } }
 //
 // Identities are matched by (domainSep, kind): the observed set must equal the expected set. Only identities that have
-// at least one field exist (MIP "Applying records": once its last field is deleted, an identity is not referenced at
-// all), so a withdrawn identity is simply not listed. `fields` and `counts` are compared only when the expectation has
+// at least one served field are referenced (MIP "Applying records": once its last field is deleted, an identity is not
+// referenced at all; MIP "Keys": only the common keys and the keys of declared standards are served), so a withdrawn
+// identity is simply not listed. `common` and `fields` hold served values (a name/symbol over 64/12 characters is its
+// first 64/12). `fields` and `counts` are compared only when the expectation has
 // them (metadata.json files do not; the raw-emitter cases do). Colors are not part of the expectation (they depend on
 // the deployed address); `colored` says whether one is derived, and `recheck` compares the actual colors with the
 // scanner and the wallet. A property outside this shape is refused.
@@ -72,7 +75,7 @@ export function expectedStateFrom(json: unknown): ExpectedState {
 const SHAPE = {
   state: ['identities', 'groups', 'counts'],
   identity: ['domainSep', 'kind', 'colored', 'common', 'fields'],
-  common: ['name', 'symbol', 'decimals', 'standards'],
+  common: ['name', 'symbol', 'decimals', 'standards', 'image', 'imageSha256'],
   field: ['key_text', 'valType', 'value_hex', 'usable'],
   group: ['symbol', 'members'],
   member: ['domainSep', 'kind'],
@@ -116,6 +119,8 @@ export function commonOf(v: IdentityView): Record<string, unknown> {
     c.decimals = d <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(d) : d.toString();
   }
   if (v.common.standards !== undefined) c.standards = v.common.standards.join(' ');
+  if (v.common.image !== undefined) c.image = v.common.image;
+  if (v.common.imageSha256 !== undefined) c.imageSha256 = v.common.imageSha256;
   return c;
 }
 

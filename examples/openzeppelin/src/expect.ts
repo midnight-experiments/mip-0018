@@ -8,8 +8,8 @@ import type { CallOutcome, ExpectedEvent, ExpectedState, Step } from './testing.
  * The emitted payload, decoded with @mip0018/codec, carries exactly the metadata.json values: the
  * header, the keys in order, and each value byte for byte — a UTF-8 value decodes to the very same
  * string (no zero padding: a `Bytes<K>` wider than its value would append 0x00 bytes, which the MIP
- * treats as a different value), `decimals` is a 1-byte `Uint<8>`, a withdrawal is one Null record at each of
- * `name`, `symbol`, `decimals` and `standards`, in that order.
+ * treats as a different value), `decimals` is a 1-byte `Uint<8>`, a withdrawal is one Null record at each of the
+ * six common keys `name`, `symbol`, `decimals`, `standards`, `image` and `image_sha256`, in that order.
  */
 export const expectExactRecords = (payload: Uint8Array, e: ExpectedEvent, label: string): void => {
   const d = decodePayload(payload);
@@ -23,6 +23,8 @@ export const expectExactRecords = (payload: Uint8Array, e: ExpectedEvent, label:
         ['symbol', 5, ''],
         ['decimals', 5, ''],
         ['standards', 5, ''],
+        ['image', 5, ''],
+        ['image_sha256', 5, ''],
       ]
     : (['name', 'symbol', 'decimals', 'standards'] as const)
         .filter((k) => text(k) !== undefined)

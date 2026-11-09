@@ -14,7 +14,7 @@ import { hexToBytes, normHex } from '../hex.ts';
 import { Indexer, type IndexedMiscEvent, type IndexedTransaction } from '../indexer.ts';
 import { reduceEvents } from '../list.ts';
 import type { NetworkProfile } from '../network.ts';
-import { classify } from '../verify.ts';
+import { classify } from '../check-event.ts';
 import { operationsWithKey } from './maintenance.ts';
 
 export interface ContractView {

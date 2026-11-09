@@ -12,10 +12,10 @@ example compiles with no compiler message. Access control is OpenZeppelin `Ownab
 
 | Example | Token | OpenZeppelin modules | MIP `kind` | `domainSep` | Color |
 |---|---|---|---|---|---|
-| [`fungible-token`](fungible-token) | ledger token, ERC-20 shape | `FungibleToken` + `Ownable` | 3 | a constant the contract chooses | none |
+| [`fungible-token`](fungible-token) | contract token, ERC-20 shape | `FungibleToken` + `Ownable` | 3 | a constant the contract chooses | none |
 | [`native-shielded`](native-shielded) | shielded coins, one type | `NativeShieldedToken` + `Ownable` | 1 | `NativeShieldedToken__domain` | `tokenType(domainSep, contract)` |
 | [`native-unshielded`](native-unshielded) | unshielded UTXOs, one type | `Ownable` only — **OpenZeppelin has no unshielded module**; the standard library's `mintUnshieldedToken` | 2 | the contract's `_domain` | `tokenType(domainSep, contract)` |
-| [`multi-kind`](multi-kind) | one asset as shielded coins, unshielded UTXOs and ledger balances | `NativeShieldedToken` + `FungibleToken` + `Ownable` (+ `mintUnshieldedToken`) | 1, 2, 3 | one, `NativeShieldedToken__domain` | kinds 1 and 2: the same color |
+| [`multi-kind`](multi-kind) | one asset as shielded coins, unshielded UTXOs and balances in contract state (a contract token) | `NativeShieldedToken` + `FungibleToken` + `Ownable` (+ `mintUnshieldedToken`) | 1, 2, 3 | one, `NativeShieldedToken__domain` | kinds 1 and 2: the same color |
 | [`token-family`](token-family) | many shielded token types | `NativeShieldedTokenFamily` + `Ownable` | 1 per type | the type's `domain` | one per type |
 
 Each example has the OpenZeppelin token you start from (`contracts/without-metadata/`), the same
@@ -34,20 +34,20 @@ import "@mip0018/compact/src/Mip0018" prefix Mip0018_;
 export circuit publishMetadata(): [] {
   Ownable_assertOnlyOwner();
   Mip0018_emitPayload(Mip0018_commonFields<9, 4>(
-    metadataDomain(), Mip0018_KIND_LEDGER(), "Acme Gold", "AGLD", FungibleToken__decimals));
+    metadataDomain(), Mip0018_KIND_CONTRACT_TOKEN(), "Acme Gold", "AGLD", FungibleToken__decimals));
 }
 // ...
 export circuit setMetadata(newName: Bytes<9>, newSymbol: Bytes<4>): [] {
   Ownable_assertOnlyOwner();
   Mip0018_emitPayload(Mip0018_payload2<4, 9, 6, 4>(
-    Mip0018_header(metadataDomain(), Mip0018_KIND_LEDGER()),
+    Mip0018_header(metadataDomain(), Mip0018_KIND_CONTRACT_TOKEN()),
     Mip0018_nameRecord<9>(newName),
     Mip0018_symbolRecord<4>(newSymbol)));
 }
 // ...
 export circuit withdrawMetadata(): [] {
   Ownable_assertOnlyOwner();
-  Mip0018_emitPayload(Mip0018_withdraw(metadataDomain(), Mip0018_KIND_LEDGER()));
+  Mip0018_emitPayload(Mip0018_withdraw(metadataDomain(), Mip0018_KIND_CONTRACT_TOKEN()));
 }
 ```
 
@@ -57,7 +57,7 @@ export circuit withdrawMetadata(): [] {
 2. **Add `publishMetadata()`** — the owner check first, then one `Mip0018_emitPayload(...)` per token
    identity, built with the typed constructor (`commonFields<N, S>`; the generic arguments are the byte
    lengths of the name and symbol, checked by the compiler):
-   - `domainSep` and `kind` as in the table above: for a native token the **same** `domainSep` its
+   - `domainSep` and `kind` as in the table above: for a contract-issued UTXO token (kinds 1, 2) the **same** `domainSep` its
      mints use (read it from the module's state), so the color a consumer derives,
      `tokenType(domainSep, contractAddress)`, is the color of the coins;
    - `name` and `symbol`: **the same literals the deployer passes to `initialize`**. OpenZeppelin
@@ -105,7 +105,7 @@ metadata events" (every example tests that these emit nothing).
   tests decode every emitted event and compare each value with `metadata.json`;
   [`test/exact-values.test.ts`](test/exact-values.test.ts) shows the padded case).
 - **Sizes and costs.** A literal `domainSep` keeps `publishMetadata()` at k = 13; reading it from state
-  (native tokens) costs k = 15; three events in one circuit k = 16 (table below).
+  (the native-shielded and native-unshielded examples) costs k = 15; three events in one circuit k = 16 (table below).
 
 ## Build and test
 
@@ -129,7 +129,7 @@ consumer must conclude. The tests check every byte and every state in it against
 | Field | Content |
 |---|---|
 | `contract` | source paths, OpenZeppelin modules, `constructorArgs` (the literals to pass to `initialize`) |
-| `identities[]` | each token identity's metadata as `{domainSep, kind, name, symbol, decimals}` — the shape `mip0018 deploy-and-publish --metadata` and `verify --expect '{"metadata": …}'` take |
+| `identities[]` | each token identity's metadata as `{domainSep, kind, name, symbol, decimals}` — the shape `mip0018 deploy-and-publish --metadata` and `check-event --expect '{"metadata": …}'` take |
 | `steps[]` | what to do after deployment, in order: `{id, circuit, args, caller, events[], mints[]}`; each event is an identity plus `payload` (the exact 256 bytes, hex, from `@mip0018/codec`; `scripts/payload-hex.ts --fill` writes them) |
 | `expected` | the consumer state after `steps`: every identity that has at least one field (`colored`, the usable common fields) and the symbol groups. Colors depend on the deployed address: `rawTokenType(domainSep, contractAddress)` for kinds 1 and 2 |
 | `lifecycle[]` | later updates (rename, withdraw, withdraw again, revive), each with its `expected` state. A withdraw event is `{domainSep, kind, "withdraw": true, payload}` (Null records at `name`, `symbol`, `decimals`, `standards`); after it the identity is not listed, and the revive lists it again with only the revived fields |
@@ -144,53 +144,53 @@ the examples add.
 
 <!-- oz-costs:begin — generated by `node examples/openzeppelin/scripts/costs.ts`; do not edit by hand -->
 
-Measured 2026-10-03 (UTC): Compact 0.35.0 (debb05f94), language 0.27.0, ZKIR v3 (--feature-zkir-v3), @openzeppelin/compact-contracts@0.4.0-alpha.5; proving with midnightntwrk/proof-server 9.0.0-rc.8 (local, 3 runs, median) on linux/x64, 16 CPUs (AMD Ryzen 7 2700X Eight-Core Processor). Verifier-key SHA-256s and per-run proving times: [`costs.json`](costs.json).
+Measured 2026-10-07 (UTC): Compact 0.35.0 (debb05f94), language 0.27.0, ZKIR v3 (--feature-zkir-v3), @openzeppelin/compact-contracts@0.4.0-alpha.5; proving with midnightntwrk/proof-server 9.0.0-rc.8 (local, 3 runs, median) on linux/x64, 16 CPUs (AMD Ryzen 7 2700X Eight-Core Processor). Verifier-key SHA-256s and per-run proving times: [`costs.json`](costs.json).
 
 | Example · circuit | What | k | rows | prover key | verifier key | proving (median) |
 |---|---|---:|---:|---:|---:|---:|
-| **`fungible-token` · `publishMetadata`** | MIP-0018: owner + constant domainSep, literal name/symbol, `decimals` from state | 13 | 6,716 | 11.3 MB | 2.1 kB | 1.4 s |
-| **`fungible-token` · `setMetadata`** | MIP-0018: owner + runtime name (9 B), symbol (4 B) | 14 | 8,424 | 22.6 MB | 2.1 kB | 2.5 s |
-| **`fungible-token` · `withdrawMetadata`** | MIP-0018: owner + `withdraw` (four Null records) | 13 | 2,057 | 11.3 MB | 2.1 kB | 1.4 s |
-| `fungible-token` · `mint` | token: owner mint | 13 | 2,568 | 11.3 MB | 2.1 kB | 1.6 s |
-| `fungible-token` · `transfer` | token: transfer | 13 | 2,615 | 11.3 MB | 2.1 kB | 1.5 s |
-| `fungible-token` · `burn` | token: owner burn | 13 | 2,543 | 11.3 MB | 2.1 kB | 1.3 s |
-| `fungible-token` · `balanceOf` | token: getter | 9 | 282 | 446.0 kB | 1.4 kB | 273 ms |
-| `fungible-token` · `name` | token: getter | 6 | 45 | 58.4 kB | 1.4 kB | 138 ms |
-| `fungible-token` · `symbol` | token: getter | 6 | 45 | 58.4 kB | 1.4 kB | 186 ms |
-| `fungible-token` · `decimals` | token: getter | 6 | 45 | 58.3 kB | 1.4 kB | 76 ms |
-| **`native-shielded` · `publishMetadata`** | MIP-0018: owner + `NativeShieldedToken__domain`, literal name/symbol, `decimals` from state | 15 | 20,362 | 45.1 MB | 2.1 kB | 4.9 s |
-| **`native-shielded` · `setMetadata`** | MIP-0018: owner + runtime name (11 B), symbol (4 B) | 15 | 22,192 | 45.1 MB | 2.1 kB | 5.3 s |
-| **`native-shielded` · `withdrawMetadata`** | MIP-0018: owner + `withdraw` (four Null records) | 14 | 15,908 | 22.6 MB | 2.1 kB | 2.9 s |
-| `native-shielded` · `mint` | token: owner mint (shielded coin) | 14 | 11,796 | 22.6 MB | 2.1 kB | 2.6 s |
-| `native-shielded` · `burn` | token: owner burn of a coin paid in | 16 | 40,754 | 90.2 MB | 2.1 kB | 10.5 s |
-| `native-shielded` · `tokenColor` | token: getter | 13 | 3,847 | 11.3 MB | 2.1 kB | 1.3 s |
-| `native-shielded` · `name` | token: getter | 6 | 45 | 58.4 kB | 1.4 kB | 74 ms |
-| `native-shielded` · `symbol` | token: getter | 6 | 45 | 58.4 kB | 1.4 kB | 106 ms |
-| `native-shielded` · `decimals` | token: getter | 6 | 45 | 58.3 kB | 1.4 kB | 114 ms |
-| **`native-unshielded` · `publishMetadata`** | MIP-0018: owner + `_domain`, literal name/symbol, `decimals` from state | 15 | 20,362 | 45.1 MB | 2.1 kB | 4.4 s |
-| **`native-unshielded` · `setMetadata`** | MIP-0018: owner + runtime name (11 B), symbol (4 B) | 15 | 22,193 | 45.1 MB | 2.1 kB | 5.1 s |
-| **`native-unshielded` · `withdrawMetadata`** | MIP-0018: owner + `withdraw` (four Null records) | 14 | 15,909 | 22.6 MB | 2.1 kB | 3.4 s |
-| `native-unshielded` · `mint` | token: owner mint (unshielded UTXO) | 13 | 6,024 | 11.3 MB | 2.1 kB | 1.7 s |
-| `native-unshielded` · `tokenColor` | token: getter | 13 | 3,836 | 11.3 MB | 2.1 kB | 1.7 s |
-| `native-unshielded` · `name` | token: getter | 6 | 34 | 58.3 kB | 1.4 kB | 156 ms |
-| `native-unshielded` · `symbol` | token: getter | 6 | 34 | 58.3 kB | 1.4 kB | 125 ms |
-| `native-unshielded` · `decimals` | token: getter | 6 | 34 | 58.2 kB | 1.4 kB | 140 ms |
-| **`multi-kind` · `publishMetadata`** | MIP-0018: owner + three events (kinds 1, 2, 3), ledger domainSep and decimals | 16 | 56,945 | 90.2 MB | 2.1 kB | 10.2 s |
-| **`multi-kind` · `setMetadata`** | MIP-0018: owner + runtime kind, name (11 B), symbol (3 B) | 15 | 22,060 | 45.1 MB | 2.1 kB | 5.4 s |
-| **`multi-kind` · `withdrawMetadata`** | MIP-0018: owner + `withdraw` (four Null records), runtime kind | 14 | 15,927 | 22.6 MB | 2.1 kB | 2.8 s |
-| `multi-kind` · `mintShielded` | token: owner mint (shielded coin) | 14 | 11,796 | 22.6 MB | 2.1 kB | 2.7 s |
-| `multi-kind` · `mintUnshielded` | token: owner mint (unshielded UTXO) | 13 | 6,024 | 11.3 MB | 2.1 kB | 1.5 s |
-| `multi-kind` · `mintLedger` | token: owner mint (ledger balance) | 13 | 2,568 | 11.3 MB | 2.1 kB | 1.6 s |
-| `multi-kind` · `transfer` | token: ledger transfer | 13 | 2,615 | 11.3 MB | 2.1 kB | 1.5 s |
-| `multi-kind` · `balanceOf` | token: getter | 9 | 282 | 446.0 kB | 1.4 kB | 254 ms |
-| **`token-family` · `publishMetadata`** | MIP-0018: owner + runtime domain, literal name/symbol, `decimals` from state | 15 | 20,443 | 45.1 MB | 2.1 kB | 4.7 s |
-| **`token-family` · `setMetadata`** | MIP-0018: owner + runtime domain, name (11 B), symbol (5 B) | 15 | 22,421 | 45.1 MB | 2.1 kB | 5.4 s |
-| **`token-family` · `withdrawMetadata`** | MIP-0018: owner + `withdraw` (four Null records), runtime domain | 14 | 15,983 | 22.6 MB | 2.1 kB | 3.6 s |
-| `token-family` · `mint` | token: owner mint (shielded coin of one type) | 14 | 11,872 | 22.6 MB | 2.1 kB | 2.6 s |
-| `token-family` · `tokenColor` | token: getter | 13 | 3,923 | 11.3 MB | 2.1 kB | 2.0 s |
-| `token-family` · `name` | token: getter | 6 | 45 | 58.4 kB | 1.4 kB | 342 ms |
-| `token-family` · `symbol` | token: getter | 6 | 45 | 58.4 kB | 1.4 kB | 87 ms |
-| `token-family` · `decimals` | token: getter | 6 | 45 | 58.3 kB | 1.4 kB | 83 ms |
+| **`fungible-token` · `publishMetadata`** | MIP-0018: owner + constant domainSep, literal name/symbol, `decimals` from state | 13 | 6,716 | 11.3 MB | 2.1 kB | 1.3 s |
+| **`fungible-token` · `setMetadata`** | MIP-0018: owner + runtime name (9 B), symbol (4 B) | 14 | 8,424 | 22.6 MB | 2.1 kB | 2.2 s |
+| **`fungible-token` · `withdrawMetadata`** | MIP-0018: owner + `withdraw` (six Null records) | 13 | 2,057 | 11.3 MB | 2.1 kB | 1.1 s |
+| `fungible-token` · `mint` | token: owner mint | 13 | 2,568 | 11.3 MB | 2.1 kB | 1.2 s |
+| `fungible-token` · `transfer` | token: transfer | 13 | 2,615 | 11.3 MB | 2.1 kB | 1.1 s |
+| `fungible-token` · `burn` | token: owner burn | 13 | 2,543 | 11.3 MB | 2.1 kB | 1.2 s |
+| `fungible-token` · `balanceOf` | token: getter | 9 | 282 | 446.0 kB | 1.4 kB | 106 ms |
+| `fungible-token` · `name` | token: getter | 6 | 45 | 58.4 kB | 1.4 kB | 45 ms |
+| `fungible-token` · `symbol` | token: getter | 6 | 45 | 58.4 kB | 1.4 kB | 46 ms |
+| `fungible-token` · `decimals` | token: getter | 6 | 45 | 58.3 kB | 1.4 kB | 51 ms |
+| **`native-shielded` · `publishMetadata`** | MIP-0018: owner + `NativeShieldedToken__domain`, literal name/symbol, `decimals` from state | 15 | 20,362 | 45.1 MB | 2.1 kB | 4.4 s |
+| **`native-shielded` · `setMetadata`** | MIP-0018: owner + runtime name (11 B), symbol (4 B) | 15 | 22,192 | 45.1 MB | 2.1 kB | 4.3 s |
+| **`native-shielded` · `withdrawMetadata`** | MIP-0018: owner + `withdraw` (six Null records) | 14 | 16,044 | 22.6 MB | 2.1 kB | 2.4 s |
+| `native-shielded` · `mint` | token: owner mint (shielded coin) | 14 | 11,796 | 22.6 MB | 2.1 kB | 2.1 s |
+| `native-shielded` · `burn` | token: owner burn of a coin paid in | 16 | 40,754 | 90.2 MB | 2.1 kB | 8.4 s |
+| `native-shielded` · `tokenColor` | token: getter | 13 | 3,847 | 11.3 MB | 2.1 kB | 1.2 s |
+| `native-shielded` · `name` | token: getter | 6 | 45 | 58.4 kB | 1.4 kB | 51 ms |
+| `native-shielded` · `symbol` | token: getter | 6 | 45 | 58.4 kB | 1.4 kB | 50 ms |
+| `native-shielded` · `decimals` | token: getter | 6 | 45 | 58.3 kB | 1.4 kB | 48 ms |
+| **`native-unshielded` · `publishMetadata`** | MIP-0018: owner + `_domain`, literal name/symbol, `decimals` from state | 15 | 20,362 | 45.1 MB | 2.1 kB | 4.3 s |
+| **`native-unshielded` · `setMetadata`** | MIP-0018: owner + runtime name (11 B), symbol (4 B) | 15 | 22,193 | 45.1 MB | 2.1 kB | 4.4 s |
+| **`native-unshielded` · `withdrawMetadata`** | MIP-0018: owner + `withdraw` (six Null records) | 14 | 16,045 | 22.6 MB | 2.1 kB | 2.3 s |
+| `native-unshielded` · `mint` | token: owner mint (unshielded UTXO) | 13 | 6,024 | 11.3 MB | 2.1 kB | 1.2 s |
+| `native-unshielded` · `tokenColor` | token: getter | 13 | 3,836 | 11.3 MB | 2.1 kB | 1.1 s |
+| `native-unshielded` · `name` | token: getter | 6 | 34 | 58.3 kB | 1.4 kB | 43 ms |
+| `native-unshielded` · `symbol` | token: getter | 6 | 34 | 58.3 kB | 1.4 kB | 47 ms |
+| `native-unshielded` · `decimals` | token: getter | 6 | 34 | 58.2 kB | 1.4 kB | 50 ms |
+| **`multi-kind` · `publishMetadata`** | MIP-0018: owner + three events (kinds 1, 2, 3), ledger domainSep and decimals | 16 | 56,945 | 90.2 MB | 2.1 kB | 8.8 s |
+| **`multi-kind` · `setMetadata`** | MIP-0018: owner + runtime kind, name (11 B), symbol (3 B) | 15 | 22,060 | 45.1 MB | 2.1 kB | 4.6 s |
+| **`multi-kind` · `withdrawMetadata`** | MIP-0018: owner + `withdraw` (six Null records), runtime kind | 14 | 16,063 | 22.6 MB | 2.1 kB | 2.4 s |
+| `multi-kind` · `mintShielded` | token: owner mint (shielded coin) | 14 | 11,796 | 22.6 MB | 2.1 kB | 2.2 s |
+| `multi-kind` · `mintUnshielded` | token: owner mint (unshielded UTXO) | 13 | 6,024 | 11.3 MB | 2.1 kB | 1.2 s |
+| `multi-kind` · `mintLedger` | token: owner mint (ledger balance) | 13 | 2,568 | 11.3 MB | 2.1 kB | 1.1 s |
+| `multi-kind` · `transfer` | token: ledger transfer | 13 | 2,615 | 11.3 MB | 2.1 kB | 1.2 s |
+| `multi-kind` · `balanceOf` | token: getter | 9 | 282 | 446.0 kB | 1.4 kB | 104 ms |
+| **`token-family` · `publishMetadata`** | MIP-0018: owner + runtime domain, literal name/symbol, `decimals` from state | 15 | 20,443 | 45.1 MB | 2.1 kB | 4.2 s |
+| **`token-family` · `setMetadata`** | MIP-0018: owner + runtime domain, name (11 B), symbol (5 B) | 15 | 22,421 | 45.1 MB | 2.1 kB | 4.5 s |
+| **`token-family` · `withdrawMetadata`** | MIP-0018: owner + `withdraw` (six Null records), runtime domain | 14 | 16,119 | 22.6 MB | 2.1 kB | 2.5 s |
+| `token-family` · `mint` | token: owner mint (shielded coin of one type) | 14 | 11,872 | 22.6 MB | 2.1 kB | 2.1 s |
+| `token-family` · `tokenColor` | token: getter | 13 | 3,923 | 11.3 MB | 2.1 kB | 1.1 s |
+| `token-family` · `name` | token: getter | 6 | 45 | 58.4 kB | 1.4 kB | 43 ms |
+| `token-family` · `symbol` | token: getter | 6 | 45 | 58.4 kB | 1.4 kB | 45 ms |
+| `token-family` · `decimals` | token: getter | 6 | 45 | 58.3 kB | 1.4 kB | 47 ms |
 
 <!-- oz-costs:end -->
 

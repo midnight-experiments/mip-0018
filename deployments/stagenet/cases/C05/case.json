@@ -6,7 +6,7 @@
   "demonstrates": "Separate identities per domainSep (vector S6) in one contract.",
   "conclusion": "3 kind-1 identities (\"Acme Medals\", \"MEDAL\", 0), one per domain, in one group \"MEDAL\"; three distinct colors.",
   "mip": {
-    "commit": "274a84f221bcfc17e4b73e2c8b32fd8c028ea092",
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
     "eventName": "mip-0018:token-metadata[v1]"
   },
   "source": {
@@ -142,10 +142,10 @@
       "submits": "call"
     },
     {
-      "id": "verify-publish-gold",
+      "id": "check-event-publish-gold",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -158,13 +158,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-publish-gold.json"
+      "stdout": "observed-check-event-publish-gold.json"
     },
     {
-      "id": "verify-publish-silver",
+      "id": "check-event-publish-silver",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -177,13 +177,13 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-publish-silver.json"
+      "stdout": "observed-check-event-publish-silver.json"
     },
     {
-      "id": "verify-publish-bronze",
+      "id": "check-event-publish-bronze",
       "runner": "wallet-free",
       "argv": [
-        "verify",
+        "check-event",
         "{net}",
         "--record",
         "{out}/record.json",
@@ -196,7 +196,7 @@
         "--json"
       ],
       "expectExit": 0,
-      "stdout": "observed-verify-publish-bronze.json"
+      "stdout": "observed-check-event-publish-bronze.json"
     },
     {
       "id": "list",
@@ -231,7 +231,7 @@
   ],
   "expected": "expected.json",
   "recheck": {
-    "verify": [
+    "checkEvent": [
       {
         "record": "record.json",
         "step": "publish-gold",

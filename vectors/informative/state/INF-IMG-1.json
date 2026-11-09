@@ -1,0 +1,58 @@
+{
+  "id": "INF-IMG-1",
+  "mip": {
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
+    "testId": "INF-IMG"
+  },
+  "normative": false,
+  "description": "An image_sha256 of 31 bytes is set but unusable: no SHA-256 equals it, so no content from image is displayed, not even the content whose first 31 hash bytes match.",
+  "basis": "MIP \"Common fields\": \"When image_sha256 is set, consumers MUST NOT display content from image whose SHA-256 differs from it. Without image_sha256, the content cannot be checked.\" This repository reads a set image_sha256 of another length (unusable) as one no content matches, and leaves unchecked content to the consumer (allowed).",
+  "steps": [
+    {
+      "op": "apply",
+      "network": "testnet-a",
+      "block": 1,
+      "tx": 0,
+      "event": 0,
+      "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "type": "Misc",
+      "name_hex": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+      "payload_hex": "11111111111111111111111111111111111111111111111111111111111111110305696d616765041c68747470733a2f2f6578616d706c652e6f72672f61636d652e706e670c696d6167655f736861323536001fdf0e7f2208098c42ba231bd6ed5eacce4c7a7b21e4eb5ea1a79bccb0fa2374000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "expect": {
+    "identities": [
+      {
+        "network": "testnet-a",
+        "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+        "kind": 3,
+        "fields": {
+          "696d616765": {
+            "key_text": "image",
+            "valType": 4,
+            "value_hex": "68747470733a2f2f6578616d706c652e6f72672f61636d652e706e67",
+            "value_text": "https://example.org/acme.png",
+            "usable": true
+          },
+          "696d6167655f736861323536": {
+            "key_text": "image_sha256",
+            "valType": 0,
+            "value_hex": "df0e7f2208098c42ba231bd6ed5eacce4c7a7b21e4eb5ea1a79bccb0fa2374",
+            "usable": false
+          }
+        }
+      }
+    ],
+    "images": [
+      {
+        "network": "testnet-a",
+        "contractAddress": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+        "kind": 3,
+        "content_hex": "4d49502d30303138207465737420696d61676520636f6e74656e743a2061636d652e706e67",
+        "displayable": false
+      }
+    ]
+  }
+}

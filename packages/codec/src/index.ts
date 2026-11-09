@@ -1,15 +1,18 @@
 // @mip0018/codec — dependency-free MIP-0018 TokenMetadata codec.
-// Pinned text: midnightntwrk/midnight-improvement-proposals@274a84f221bcfc17e4b73e2c8b32fd8c028ea092 (PR #340).
+// Pinned text: midnightntwrk/midnight-improvement-proposals@338ea194bbe7c4e5d1829234a503b7c1b11ebf0f (PR #372).
 export {
   DOMAIN_SEP_SIZE,
   EVENT_NAME,
   EVENT_NAME_TEXT,
   HEADER_SIZE,
+  IMAGE_SHA256_SIZE,
   Kind,
   MAX_VALUE_SIZE,
   MISC_EVENT_TYPE,
+  NAME_MAX_CHARS,
   NAME_SIZE,
   PAYLOAD_SIZE,
+  SYMBOL_MAX_CHARS,
   UINT_MAX_BYTES,
   UINT_MIN_BYTES,
   ValType,
@@ -26,6 +29,7 @@ export {
   type MetadataRecord,
 } from './decode.ts';
 export {
+  COMMON_KEY_TEXTS,
   commonRecords,
   encodePayload,
   InvalidHeader,
