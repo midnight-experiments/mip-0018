@@ -1,7 +1,7 @@
 # examples/openzeppelin/native-shielded — a native shielded token (kind 1)
 
 An OpenZeppelin `NativeShieldedToken` (Zswap coins of one token type, MIP-0011 shape) owned with
-`Ownable`, from [OpenZeppelin Compact Contracts 0.4.0-alpha.5](https://github.com/OpenZeppelin/compact-contracts/tree/v0.4.0-alpha.5),
+`Ownable`, from [OpenZeppelin Compact Contracts 0.5.0-alpha.2](https://github.com/OpenZeppelin/compact-contracts/tree/v0.5.0-alpha.2),
 gains MIP-0018 metadata. Wallets hold this token as shielded coins whose color is
 `tokenType(domainSep, contractAddress)`; the metadata event names that same `domainSep`, so a wallet
 that holds a coin can find the token's name, symbol and decimals.

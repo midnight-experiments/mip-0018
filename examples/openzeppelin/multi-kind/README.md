@@ -2,7 +2,7 @@
 
 One contract represents one asset, "Acme Dollar", three ways at once: shielded coins
 (OpenZeppelin `NativeShieldedToken`), unshielded UTXOs (the standard library's `mintUnshieldedToken`;
-OpenZeppelin 0.4.0-alpha.5 has no unshielded module) and balances in contract state (OpenZeppelin
+OpenZeppelin 0.5.0-alpha.2 has no unshielded module) and balances in contract state (OpenZeppelin
 `FungibleToken`), all under **one `domainSep`**, owned with `Ownable`. A user can hold all three.
 
 MIP-0018 treats each representation as its **own token identity** — `(network, contractAddress,

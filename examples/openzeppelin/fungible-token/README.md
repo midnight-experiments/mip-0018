@@ -1,7 +1,7 @@
 # examples/openzeppelin/fungible-token — a contract token (kind 3)
 
 An OpenZeppelin `FungibleToken` (public balances, ERC-20 shape) owned with `Ownable`, from
-[OpenZeppelin Compact Contracts 0.4.0-alpha.5](https://github.com/OpenZeppelin/compact-contracts/tree/v0.4.0-alpha.5),
+[OpenZeppelin Compact Contracts 0.5.0-alpha.2](https://github.com/OpenZeppelin/compact-contracts/tree/v0.5.0-alpha.2),
 gains MIP-0018 metadata: the owner publishes its `name`, `symbol` and `decimals` once after deployment,
 and can rename or withdraw them later.
 

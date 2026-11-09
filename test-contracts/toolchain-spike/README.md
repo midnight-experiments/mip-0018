@@ -5,7 +5,7 @@ Proves the pinned toolchain end to end: Compact **0.36.0** compiles, proves and 
 | File | Purpose |
 |---|---|
 | `contracts/SpikeEmitter.compact` | Smallest emitter: one unguarded `publishMetadata()` that emits the payload of MIP-0018 test A1 (Appendix A), built with Compact's serialization of typed records. Used with create-and-destroy (the deployer calls it once, then removes its verifier key). |
-| `contracts/SpikeOzToken.compact` | OpenZeppelin 0.4.0-alpha.5 `Ownable` + `NativeShieldedToken` composed with an owner-only emitting circuit (compile check for language 0.27.0). |
+| `contracts/SpikeOzToken.compact` | OpenZeppelin 0.5.0-alpha.2 `Ownable` + `NativeShieldedToken` composed with an owner-only emitting circuit (compile check for language 0.28.0). |
 | `scripts/compile.sh` | `docker/run.sh compile:spike` — compiles both and prints `k`/rows per circuit. |
 | `src/local.ts` | `spike:local` — deploy, call, check the indexed event equals A1 byte-for-byte, remove the verifier key, check a second call fails (local stack). |
 | `src/stagenet.ts`, `scripts/stagenet.sh` | The same on Stagenet in the signer container (no second call). Writes `records/stagenet.json` (public data only). |

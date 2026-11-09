@@ -2,7 +2,7 @@
   "name": "@mip0018/examples-openzeppelin",
   "version": "0.1.0",
   "private": true,
-  "description": "MIP-0018 metadata added to OpenZeppelin Compact Contracts 0.4.0-alpha.5 tokens: fungible (kind 3), native shielded (kind 1), native unshielded (kind 2), one asset in three kinds, token family.",
+  "description": "MIP-0018 metadata added to OpenZeppelin Compact Contracts 0.5.0-alpha.2 tokens: fungible (kind 3), native shielded (kind 1), native unshielded (kind 2), one asset in three kinds, token family.",
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {

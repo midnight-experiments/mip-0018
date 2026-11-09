@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // A native unshielded token (unshielded UTXOs, MIP-0014 shape) owned with OpenZeppelin `Ownable`
-// (OpenZeppelin Compact Contracts 0.4.0-alpha.5).
+// (OpenZeppelin Compact Contracts 0.5.0-alpha.2).
 //
-// OpenZeppelin 0.4.0-alpha.5 has NO native unshielded token module, so the token part calls the
+// OpenZeppelin 0.5.0-alpha.2 has NO native unshielded token module, so the token part calls the
 // Compact standard library's `mintUnshieldedToken` directly, in the style of OpenZeppelin's
 // `NativeShieldedToken`: one token type whose domain separator and metadata are fixed at
 // construction. Every UTXO it mints has the color `tokenType(_domain, <this contract>)`.

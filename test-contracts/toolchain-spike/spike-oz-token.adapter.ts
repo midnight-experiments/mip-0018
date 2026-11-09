@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// mip0018 adapter for SpikeOzToken (OpenZeppelin 0.4.0-alpha.5 `Ownable` + `NativeShieldedToken`).
+// mip0018 adapter for SpikeOzToken (OpenZeppelin 0.5.0-alpha.2 `Ownable` + `NativeShieldedToken`).
 //
 // OZ `Ownable` authenticates the caller with the witness `wit_OwnableSK()` (a 32-byte secret); the owner id stored
 // at construction is `persistentHash<Vector<1, Bytes<32>>>([secret])` (OZ `Utils.computeAccountId`). At deploy this

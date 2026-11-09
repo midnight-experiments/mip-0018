@@ -6,7 +6,7 @@ cannot learn what an OpenZeppelin token is called. These examples take an OpenZe
 lines that publish MIP-0018 `TokenMetadata` events with this repository's Compact module
 ([`packages/compact`](../../packages/compact)), and test the result.
 
-Pinned: **`@openzeppelin/compact-contracts@0.4.0-alpha.5`** (Ledger v9, built upstream for Compact
+Pinned: **`@openzeppelin/compact-contracts@0.5.0-alpha.2`** (Ledger v9, built upstream for Compact
 0.34.0), compiled here with **Compact 0.36.0 (language 0.28.0)** — every
 example compiles with no compiler message. Access control is OpenZeppelin `Ownable`.
 
@@ -93,7 +93,7 @@ metadata events" (every example tests that these emit nothing).
   those getters return when it first publishes them. A later update, such as a rename, is the token's
   current metadata for consumers of this MIP even where the getters cannot change." A MIP that defines
   a token standard MAY restrict or override this for tokens that declare that standard in `standards`.
-- **Claim only the standards your token implements.** OpenZeppelin 0.4.0-alpha.5 claims no MIP, so the
+- **Claim only the standards your token implements.** OpenZeppelin 0.5.0-alpha.2 claims no MIP, so the
   examples publish no `standards`. To claim some, use
   `Mip0018_commonFieldsWithStandards<N, S, T>(…, "mip-00xx …")`.
 - **The generated TypeScript `Ledger` type does not include module state** (OpenZeppelin's `_balances`,

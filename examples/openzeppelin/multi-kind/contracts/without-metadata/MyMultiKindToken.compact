@@ -3,7 +3,7 @@
 // One asset in three representations from one contract, all under ONE domain separator:
 //   * native shielded coins     — OpenZeppelin `NativeShieldedToken`;
 //   * native unshielded UTXOs   — the Compact standard library's `mintUnshieldedToken` (OpenZeppelin
-//                                 Compact Contracts 0.4.0-alpha.5 has no native unshielded module);
+//                                 Compact Contracts 0.5.0-alpha.2 has no native unshielded module);
 //   * contract balances         — OpenZeppelin `FungibleToken`;
 // owned with OpenZeppelin `Ownable`. A user may hold all three at once. There is no conversion
 // between them here (OpenZeppelin's `NativeTokenConverter` is not on main).

@@ -8,7 +8,7 @@
   "contract": {
     "source": "contracts/MyUnshieldedToken.compact",
     "withoutMetadata": "contracts/without-metadata/MyUnshieldedToken.compact",
-    "openzeppelin": "@openzeppelin/compact-contracts@0.4.0-alpha.5 (access/Ownable); the token part is the Compact standard library (mintUnshieldedToken): OpenZeppelin has no native unshielded module",
+    "openzeppelin": "@openzeppelin/compact-contracts@0.5.0-alpha.2 (access/Ownable); the token part is the Compact standard library (mintUnshieldedToken): OpenZeppelin has no native unshielded module",
     "constructorArgs": {
       "domainSep": "0x6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
       "name_": "Acme Public",

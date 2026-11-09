@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // A family of native shielded tokens from one contract, built from OpenZeppelin Compact Contracts
-// 0.4.0-alpha.5: `NativeShieldedTokenFamily` (many token types; each call names its 32-byte
+// 0.5.0-alpha.2: `NativeShieldedTokenFamily` (many token types; each call names its 32-byte
 // `domain`) owned with `Ownable`. Every token type shares the family's name, symbol and decimals
 // (OpenZeppelin's "one brand" rule); each domain has its own color `tokenType(domain, <this contract>)`.
 //
