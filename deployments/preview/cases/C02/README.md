@@ -36,11 +36,14 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/C02
 ```
 
-## Transactions
+## Transactions (Preview, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
-| `deploy` | — | — | — |
-| `mint` | — | — | — |
-| `publish` | — | — | — |
+Contract `MyShieldedToken` at `fcfcb1d1d49257649fba11fffaa8c16858dd057485c13954b6f868a942bbfc02`; signer mn_addr_preview1wlhw0m3nh29lfmk0tj4lvfh2wfsekt8nns9h57gpyfe0az7e9fts2x420z.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `deploy` | deploy | `0b16f0d1676efb8c7444974d47757a2441a8ec5c028c5791b6ddc3f168688383` | 41563 (`b74c42e8d296e6a3…`) | SUCCESS | 9,842,614,628,571,429 | 9.843 |
+| `mint` | call `mint` | `74cb4950e799aaaea1f0f7c87690fa30e0ef68bf75ab67d8acbe15661e953ae4` | 41569 (`9e02f1a6a80118f2…`) | SUCCESS | 271,284,800,000,001 | 0.271 |
+| `publish` | call `publishMetadata` | `56caf0bbf78a09d9c1e88215d66f8d6c415cf9b54f91314a39ce2208b6f13723` | 41576 (`0dd03b04b4aca062…`) | SUCCESS | 219,220,359,550,024 | 0.219 |
+| **total** | | | | | **10,333,119,788,121,454** | **10.333** |
 
