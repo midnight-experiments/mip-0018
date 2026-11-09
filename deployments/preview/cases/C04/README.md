@@ -40,13 +40,16 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/C04
 ```
 
-## Transactions
+## Transactions (Preview, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
-| `deploy` | — | — | — |
-| `mint-shielded` | — | — | — |
-| `mint-unshielded` | — | — | — |
-| `mint-ledger` | — | — | — |
-| `publish` | — | — | — |
+Contract `MyMultiKindToken` at `63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93`; signer mn_addr_preview1wlhw0m3nh29lfmk0tj4lvfh2wfsekt8nns9h57gpyfe0az7e9fts2x420z.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `deploy` | deploy | `78d3ffbd271e0ee48d919e989bfede796ec8a56f9487428ee80db363f6996209` | 41629 (`e61029c7d3c5859d…`) | SUCCESS | 9,612,568,914,285,715 | 9.613 |
+| `mint-shielded` | call `mintShielded` | `5d9172b05979d6ac8bbf1fc34d3bff197c98fda007389bf3a5407b245ea20205` | 41635 (`007808f09cf6f1ec…`) | SUCCESS | 271,341,942,857,143 | 0.271 |
+| `mint-unshielded` | call `mintUnshielded` | `13501ee6ec89e2b79f6f4c0c91bb16812c3bcdb998e013b57ab0db363413e34c` | 41641 (`38572a4f1abb799a…`) | SUCCESS | 279,478,127,477,932 | 0.279 |
+| `mint-ledger` | call `mintLedger` | `5a98e318715052f9eb0d30da831498e887b84e10cff4c764669104d06d0bc5c9` | 41647 (`45f08ef8c62f51b2…`) | SUCCESS | 333,465,177,730,732 | 0.333 |
+| `publish` | call `publishMetadata` | `3cded8814ab6da8a68d7a492d8e9337ab45347aba3e482ff56a60c6c0391aae8` | 41655 (`45f95cc67b75b0bd…`) | SUCCESS | 245,127,307,764,472 | 0.245 |
+| **total** | | | | | **10,741,981,470,115,994** | **10.742** |
 
