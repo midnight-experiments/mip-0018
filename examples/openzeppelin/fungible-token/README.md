@@ -67,7 +67,7 @@ and emit nothing ("Normal token operation … MUST NOT emit metadata events").
 
 - **`metadataDomain()`** — a contract token's `domainSep` is any stable 32 bytes the contract chooses
   (MIP "Token identity and authority"). Keep it a constant: changing it describes a different token.
-  Because it is a literal, `publishMetadata()` stays small (k = 13 with the owner check).
+  Because it is a literal, `publishMetadata()` stays small (k = 14 with the owner check).
 - **The same literals as `initialize`** — OpenZeppelin stores `name` and `symbol` as
   `Opaque<"string">`, which a circuit cannot turn into bytes, so the circuit repeats them as `Bytes`
   literals. Pass exactly these strings to the constructor (the deploy scripts take both from

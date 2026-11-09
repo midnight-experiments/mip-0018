@@ -118,8 +118,8 @@ metadata events" (tested: those circuits emit nothing).
 ## Costs
 
 A constant payload costs only the `emit` (k = 6, 48 rows); any runtime byte (even a `domainSep` read
-from the ledger) brings the circuit to k = 14 (≈ 14,000 rows), and four runtime common fields to
-k = 15. Full table, proving times and fees: [`docs/costs.md`](../../docs/costs.md).
+from the ledger) brings the circuit to k = 15–16 (≈ 30,000–35,000 rows), and four runtime common fields
+to k = 16 (≈ 55,000 rows). Full table, proving times and fees: [`docs/costs.md`](../../docs/costs.md).
 
 ## Testing harness (`@mip0018/compact/testing`)
 

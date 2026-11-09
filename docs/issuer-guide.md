@@ -118,7 +118,7 @@ record deletes its own field, and "a token identity exists only while at least o
 serializes, so the compiler checks every size. The alternative `Mip0018Pure` composes the payload from individual
 pure circuits with `Bytes[...]` spreads; it exists because it does not rely on `serialize` for non-event types. Both
 emit identical bytes, equal to the vectors; the typed one is 1.3–1.5× smaller for runtime values (four runtime fields:
-k = 15 vs 16), so use it unless you have a reason not to.
+k = 16 vs 17), so use it unless you have a reason not to.
 
 **What the compiler cannot check**: that a runtime UTF-8 value is valid UTF-8, a JSON value valid JSON, or a URI an
 RFC 3986 `URI` (scheme required, ASCII only). String literals are fine; validate runtime arguments off
@@ -142,10 +142,10 @@ access-controlled, publish-once, or removed after use" (Publishing). Four patter
 
 | Pattern | Example | Rename / withdraw later | `publishMetadata()` size | Caveats |
 |---|---|---|---|---|
-| OpenZeppelin `Ownable` | [`examples/openzeppelin`](../examples/openzeppelin/README.md) | yes, owner-only | fungible k = 13 (literal `domainSep`), native-shielded / native-unshielded examples k = 15 | `Ownable_assertOnlyOwner()` first in every emitting circuit; the owner secret lives in the deployer's private state |
-| Owner key (hand-rolled) | [`OwnerKey`](../examples/minimal/contracts/OwnerKey.compact) | yes, owner-only | k = 15, 17,782 rows | the same idea without OpenZeppelin |
-| Publish once | [`PublishOnce`](../examples/minimal/contracts/PublishOnce.compact) | no | k = 14, 14,065 rows | payload must be **constant** (anyone may make the one call); keep the flag in your own ledger field — do not reuse OpenZeppelin `Initializable` (shared module state) |
-| Create and destroy | [`CreateAndDestroy`](../examples/minimal/contracts/CreateAndDestroy.compact) | no (only through a maintenance update) | k = 14, 14,041 rows | unguarded with a **constant** payload; the deployer calls it, then removes its verifier key (`VerifierKeyRemove` in the `v4` slot, where ZKIR-v3 keys live; midnight-js 5.0.0's `removeVerifierKey()` uses it too). Until then anyone holding the compiled artefacts can call it, but can only re-emit the same values |
+| OpenZeppelin `Ownable` | [`examples/openzeppelin`](../examples/openzeppelin/README.md) | yes, owner-only | fungible k = 14 (literal `domainSep`), native-shielded / native-unshielded examples k = 16 | `Ownable_assertOnlyOwner()` first in every emitting circuit; the owner secret lives in the deployer's private state |
+| Owner key (hand-rolled) | [`OwnerKey`](../examples/minimal/contracts/OwnerKey.compact) | yes, owner-only | k = 16, 38,363 rows | the same idea without OpenZeppelin |
+| Publish once | [`PublishOnce`](../examples/minimal/contracts/PublishOnce.compact) | no | k = 16, 34,554 rows | payload must be **constant** (anyone may make the one call); keep the flag in your own ledger field — do not reuse OpenZeppelin `Initializable` (shared module state) |
+| Create and destroy | [`CreateAndDestroy`](../examples/minimal/contracts/CreateAndDestroy.compact) | no (only through a maintenance update) | k = 16, 34,530 rows | unguarded with a **constant** payload; the deployer calls it, then removes its verifier key (`VerifierKeyRemove` in the `v4` slot, where ZKIR-v3 keys live; midnight-js 5.0.0's `removeVerifierKey()` uses it too). Until then anyone holding the compiled artefacts can call it, but can only re-emit the same values |
 
 Whatever the circuit's guard, the contract's **maintenance authority** can insert or remove circuits at any time, so it
 can change the metadata as well ([upgrade guide, Limits](upgrade-guide.md#limits)). Keep that key as carefully as the
@@ -277,8 +277,8 @@ From the Stagenet receipts ([`docs/costs.md`](costs.md#fees-on-stagenet)):
 - **The deploy dominates**: it stores every circuit's verifier key — about 0.6–0.9 DUST per extra circuit; the
   OpenZeppelin examples with three metadata circuits cost 6.1–7.0 DUST to deploy.
 - **Circuit size costs proving time, not fees**: a fully constant payload compiles to k = 6 (the bare `emit`); any
-  runtime byte, even a `domainSep` read from the ledger, gives k = 14; four runtime fields k = 15 (typed) — about
-  2–4 s per proof on a 16-CPU host.
+  runtime byte, even a `domainSep` read from the ledger, gives k = 15–16; four runtime fields k = 16 (typed) — about
+  1.5–4 s per proof on a 12-CPU host.
 - `VerifierKeyRemove` (create-and-destroy) ≈ 0.04 DUST; `VerifierKeyInsert` (upgrade) ≈ 0.9 DUST on Stagenet.
 
 ## 7. Existing contracts

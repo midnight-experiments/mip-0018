@@ -29,111 +29,149 @@ docker/local-stack/down.sh
    compile-time constant (literal `domainSep`, kind and values), the compiler folds the whole
    payload: **k = 6, 48 rows** for 1, 2, 3 or 4 records and for `withdraw` (six Null records), in
    both constructions. This is the bare cost of an `emit` of a `Misc` event.
-2. **Any runtime byte costs about 14,000 rows.** As soon as part of the payload is not constant —
-   a `domainSep` read from the ledger or passed in, a runtime `kind`, a value argument — the circuit
-   jumps to **k = 14 (≈ 14,000–14,200 rows)**: runtime `domainSep` + `kind` for `withdraw` 14,132;
-   runtime `domainSep` with literal A1 records 14,117; `domainSep` read from a sealed ledger field
-   14,041. More runtime bytes add rows in steps rather than per byte (`domainSep` + runtime `name`
-   15,169; + `symbol` 20,110; + `decimals` 20,194; + `standards` 25,857, k = 15). Reading `domainSep`
-   from the ledger is the usual way (so it matches the token's mints); if the identity is fixed per
-   contract, writing it as a literal keeps `publishMetadata()` at k = 6.
+2. **Any runtime byte costs about 30,000–35,000 rows.** As soon as part of the payload is not
+   constant — a `domainSep` read from the ledger or passed in, a runtime `kind`, a value argument —
+   the circuit jumps to **k = 15–16**: `domainSep` read from a sealed ledger field with literal records
+   34,530; runtime `domainSep` with literal A1 records 34,605; runtime `domainSep` + `kind` for
+   `withdraw` 34,626 (k = 16). Rows then depend on the runtime records, in steps rather than per byte:
+   runtime `domainSep` + `name` 29,866 (k = 15); + `symbol` 40,663; + `decimals` 42,397; + `standards`
+   54,782 (k = 16). Reading `domainSep` from the ledger is the usual way (so it matches the token's
+   mints); if the identity is fixed per contract, writing it as a literal keeps `publishMetadata()` at k = 6.
 3. **The typed constructor is cheaper than the pure-circuit alternative for runtime values**
-   (`serialize` vs `Bytes[...]` spreads): 1.3–1.5× fewer rows (four runtime common fields: 25,857 vs
-   39,207 rows, k 15 vs 16, proving 3.5 s vs 6.5 s). For constant payloads they are identical.
+   (`serialize` vs `Bytes[...]` spreads): 1.3–1.5× fewer rows (four runtime common fields: 54,782 vs
+   80,325 rows, k 16 vs 17, proving 3.1 s vs 5.9 s). For constant payloads they are identical.
 4. **Access control adds its own cost.** The owner check of `examples/minimal` `OwnerKey` (hash of
-   a witness secret compared with a ledger field) moves the same `publishMetadata()` from 14,041 to
-   17,782 rows and k = 14 → 15 (prover key 14 MB → 45 MB, proving 1.8 s → 4.3 s). The raw emitter
-   (OpenZeppelin `Ownable`, a fully runtime 288-byte event) is k = 16; two events in one call k = 17.
+   a witness secret compared with a ledger field) moves the same `publishMetadata()` from 34,530 to
+   38,363 rows at k = 16 (prover key 56.6 MB → 90.2 MB, proving 3.2 s → 4.0 s). The raw emitter
+   (OpenZeppelin `Ownable`, a fully runtime 288-byte event) is k = 17; two events in one call k = 18.
    The create-and-destroy pattern needs no guard in circuit: the guard is the maintenance authority
    that removes the key.
-5. **Proving time follows k** on this host (16 CPUs): ≈ 45–60 ms at k = 6, ≈ 1.8–1.9 s at k = 14,
-   ≈ 3.3–4.5 s at k = 15, ≈ 6.5–8.5 s at k = 16, ≈ 17.0 s at k = 17 (median of 3; the first proof of a
-   size is slower while the prover loads its parameters). A `withdraw` (six Null records in one event) is 48 rows
-   with a literal header and k = 14 (typed, 14,132 rows) or k = 15 (pure, 18,688 rows) with a runtime one;
-   `OwnerKey.withdrawMetadata` is k = 15, 17,779 rows.
+5. **Proving time follows k** on this host (12 CPUs, Linux arm64): ≈ 110–130 ms at k = 6, ≈ 0.6–0.7 s
+   at k = 13, ≈ 1.5 s at k = 15, ≈ 2.7–4.0 s at k = 16, ≈ 5.9–9.5 s at k = 17, ≈ 21 s at k = 18 (median
+   of 3; the first proof of a size is slower while the prover loads its parameters). A `withdraw` (six
+   Null records in one event) is 48 rows with a literal header and k = 16 with a runtime one (typed
+   34,626 rows, pure 43,523 rows); `OwnerKey.withdrawMetadata` is k = 16, 38,363 rows.
 
 6. **OpenZeppelin examples** ([`examples/openzeppelin`](../examples/openzeppelin/README.md#costs),
    measured with the same method by `examples/openzeppelin/scripts/costs.ts`; raw numbers and
    verifier-key SHA-256s in [`examples/openzeppelin/costs.json`](../examples/openzeppelin/costs.json)).
    With `Ownable`: `publishMetadata()` of the fungible token (literal `domainSep`, `decimals` read from
-   state) k = 13, 6,716 rows, 1.3 s; of the native-shielded and native-unshielded examples (`domainSep` and `decimals` read from state)
-   k = 15, ≈ 20,400 rows, 4.3 s; three events in one call (one asset as kinds 1, 2 and 3) k = 16,
-   56,945 rows, 8.8 s; renames k = 14–15, withdrawals (six Null records) k = 13–14 — the same order as the tokens' own
-   `mint` (k = 13–14) and below OpenZeppelin's shielded `burn` (k = 16).
+   state) k = 14, 12,334 rows, 1.6 s; of the native-shielded and native-unshielded examples (`domainSep` and `decimals` read from state)
+   k = 16, 42,713 rows, 3.8–4.2 s; three events in one call (one asset as kinds 1, 2 and 3) k = 17,
+   123,641 rows, 10.2 s; renames k = 15–16, withdrawals (six Null records) k = 13–16 — above the tokens' own
+   `mint` (k = 13–14) and at most the size of OpenZeppelin's shielded `burn` (k = 16), except the three-event publish.
 
 <!-- costs:begin — generated by `node packages/compact/scripts/costs.ts`; do not edit by hand -->
 
-Measured 2026-10-07 (UTC): Compact 0.35.0 (debb05f94), language 0.27.0, ZKIR v3 (--feature-zkir-v3); proving with midnightntwrk/proof-server 9.0.0-rc.8 (local, 3 runs, median) on linux/x64, 16 CPUs (AMD Ryzen 7 2700X Eight-Core Processor). Raw numbers, verifier-key SHA-256s and per-run proving times: [`costs.json`](costs.json).
+Measured 2026-11-09 (UTC): Compact 0.36.0 (b5d9e4dfc), language 0.28.0, ZKIR v3 (zkir-3.2.0-rc.2); proving with midnightntwrk/proof-server 9.0.1 (local, 3 runs, median) on linux/arm64, 12 CPUs (unknown). Raw numbers, verifier-key SHA-256s and per-run proving times: [`costs.json`](costs.json).
 
 ### typed constructor (default, `Mip0018`)
 
 | Contract · circuit | Shape | k | rows | prover key | verifier key | proving (median) |
 |---|---|---:|---:|---:|---:|---:|
-| `CostsTyped.lit1` | literal: name | 6 | 48 | 58.4 kB | 1.4 kB | 49 ms |
-| `CostsTyped.lit2` | literal: name, symbol | 6 | 48 | 58.4 kB | 1.4 kB | 46 ms |
-| `CostsTyped.lit3` | literal: name, symbol, decimals (`commonFields`) | 6 | 48 | 58.4 kB | 1.4 kB | 45 ms |
-| `CostsTyped.lit4` | literal: + standards (`commonFieldsWithStandards`, A1 shape) | 6 | 48 | 58.5 kB | 1.4 kB | 47 ms |
-| `CostsTyped.arg1` | runtime domainSep + name | 14 | 15,169 | 14.2 MB | 1.4 kB | 1.8 s |
-| `CostsTyped.arg2` | runtime domainSep + name, symbol | 15 | 20,110 | 28.3 MB | 1.4 kB | 3.4 s |
-| `CostsTyped.arg3` | runtime domainSep + 3 common fields | 15 | 20,194 | 28.3 MB | 1.4 kB | 3.3 s |
-| `CostsTyped.arg4` | runtime domainSep + 4 common fields | 15 | 25,857 | 28.3 MB | 1.4 kB | 3.5 s |
-| `CostsTyped.dsArg4` | runtime domainSep, literal A1 records | 14 | 14,117 | 14.2 MB | 1.4 kB | 1.8 s |
-| `CostsTyped.withdrawLit` | `withdraw` (six Null records), literal header | 6 | 48 | 58.5 kB | 1.4 kB | 46 ms |
-| `CostsTyped.withdrawArg` | `withdraw` (six Null records), runtime domainSep and kind | 14 | 14,132 | 14.2 MB | 1.4 kB | 1.8 s |
+| `CostsTyped.lit1` | literal: name | 6 | 48 | 58.4 kB | 1.4 kB | 122 ms |
+| `CostsTyped.lit2` | literal: name, symbol | 6 | 48 | 58.4 kB | 1.4 kB | 120 ms |
+| `CostsTyped.lit3` | literal: name, symbol, decimals (`commonFields`) | 6 | 48 | 58.4 kB | 1.4 kB | 115 ms |
+| `CostsTyped.lit4` | literal: + standards (`commonFieldsWithStandards`, A1 shape) | 6 | 48 | 58.5 kB | 1.4 kB | 111 ms |
+| `CostsTyped.arg1` | runtime domainSep + name | 15 | 29,866 | 28.3 MB | 1.4 kB | 1.5 s |
+| `CostsTyped.arg2` | runtime domainSep + name, symbol | 16 | 40,663 | 56.6 MB | 1.4 kB | 2.8 s |
+| `CostsTyped.arg3` | runtime domainSep + 3 common fields | 16 | 42,397 | 56.6 MB | 1.4 kB | 2.9 s |
+| `CostsTyped.arg4` | runtime domainSep + 4 common fields | 16 | 54,782 | 56.6 MB | 1.4 kB | 3.1 s |
+| `CostsTyped.dsArg4` | runtime domainSep, literal A1 records | 16 | 34,605 | 56.6 MB | 1.4 kB | 3.0 s |
+| `CostsTyped.withdrawLit` | `withdraw` (six Null records), literal header | 6 | 48 | 58.5 kB | 1.4 kB | 125 ms |
+| `CostsTyped.withdrawArg` | `withdraw` (six Null records), runtime domainSep and kind | 16 | 34,626 | 56.6 MB | 1.4 kB | 2.7 s |
 
 ### pure circuits (alternative, `Mip0018Pure`)
 
 | Contract · circuit | Shape | k | rows | prover key | verifier key | proving (median) |
 |---|---|---:|---:|---:|---:|---:|
-| `CostsPure.lit1` | literal: name | 6 | 48 | 58.4 kB | 1.4 kB | 59 ms |
-| `CostsPure.lit2` | literal: name, symbol | 6 | 48 | 58.4 kB | 1.4 kB | 45 ms |
-| `CostsPure.lit3` | literal: name, symbol, decimals (`commonFields`) | 6 | 48 | 58.4 kB | 1.4 kB | 49 ms |
-| `CostsPure.lit4` | literal: + standards (`commonFieldsWithStandards`, A1 shape) | 6 | 48 | 58.5 kB | 1.4 kB | 50 ms |
-| `CostsPure.arg1` | runtime domainSep + name | 15 | 22,120 | 28.3 MB | 1.4 kB | 3.3 s |
-| `CostsPure.arg2` | runtime domainSep + name, symbol | 15 | 28,960 | 28.3 MB | 1.4 kB | 3.4 s |
-| `CostsPure.arg3` | runtime domainSep + 3 common fields | 15 | 30,694 | 28.3 MB | 1.4 kB | 3.5 s |
-| `CostsPure.arg4` | runtime domainSep + 4 common fields | 16 | 39,207 | 56.6 MB | 1.4 kB | 6.5 s |
-| `CostsPure.dsArg4` | runtime domainSep, literal A1 records | 15 | 18,677 | 28.3 MB | 1.4 kB | 3.3 s |
-| `CostsPure.withdrawLit` | `withdraw` (six Null records), literal header | 6 | 48 | 58.5 kB | 1.4 kB | 46 ms |
-| `CostsPure.withdrawArg` | `withdraw` (six Null records), runtime domainSep and kind | 15 | 18,688 | 28.3 MB | 1.4 kB | 3.3 s |
+| `CostsPure.lit1` | literal: name | 6 | 48 | 58.4 kB | 1.4 kB | 109 ms |
+| `CostsPure.lit2` | literal: name, symbol | 6 | 48 | 58.4 kB | 1.4 kB | 128 ms |
+| `CostsPure.lit3` | literal: name, symbol, decimals (`commonFields`) | 6 | 48 | 58.4 kB | 1.4 kB | 118 ms |
+| `CostsPure.lit4` | literal: + standards (`commonFieldsWithStandards`, A1 shape) | 6 | 48 | 58.5 kB | 1.4 kB | 111 ms |
+| `CostsPure.arg1` | runtime domainSep + name | 16 | 43,355 | 56.6 MB | 1.4 kB | 3.2 s |
+| `CostsPure.arg2` | runtime domainSep + name, symbol | 16 | 57,596 | 56.6 MB | 1.4 kB | 2.9 s |
+| `CostsPure.arg3` | runtime domainSep + 3 common fields | 16 | 62,487 | 56.6 MB | 1.4 kB | 3.2 s |
+| `CostsPure.arg4` | runtime domainSep + 4 common fields | 17 | 80,325 | 113.3 MB | 1.4 kB | 5.9 s |
+| `CostsPure.dsArg4` | runtime domainSep, literal A1 records | 16 | 43,502 | 56.6 MB | 1.4 kB | 2.9 s |
+| `CostsPure.withdrawLit` | `withdraw` (six Null records), literal header | 6 | 48 | 58.5 kB | 1.4 kB | 111 ms |
+| `CostsPure.withdrawArg` | `withdraw` (six Null records), runtime domainSep and kind | 16 | 43,523 | 56.6 MB | 1.4 kB | 2.8 s |
 
 ### examples/minimal
 
 | Contract · circuit | Shape | k | rows | prover key | verifier key | proving (median) |
 |---|---|---:|---:|---:|---:|---:|
-| `CreateAndDestroy.publishMetadata` | unguarded; domainSep read from the sealed ledger field, literal records | 14 | 14,041 | 14.2 MB | 1.4 kB | 1.8 s |
-| `CreateAndDestroy.transfer` | normal operation (no metadata) | 13 | 4,078 | 11.3 MB | 2.1 kB | 1.2 s |
-| `OwnerKey.publishMetadata` | owner check + ledger domainSep, literal records | 15 | 17,782 | 45.1 MB | 2.1 kB | 4.3 s |
-| `OwnerKey.setMetadata` | owner check + runtime name, symbol | 15 | 23,865 | 45.1 MB | 2.1 kB | 4.5 s |
-| `OwnerKey.withdrawMetadata` | owner check + `withdraw` (six Null records) | 15 | 17,779 | 45.1 MB | 2.1 kB | 4.3 s |
-| `OwnerKey.mint` | normal operation (no metadata) | 13 | 4,030 | 11.3 MB | 2.1 kB | 1.1 s |
-| `PublishOnce.publishMetadata` | publish-once flag + ledger domainSep, literal records | 14 | 14,065 | 14.2 MB | 1.4 kB | 1.8 s |
+| `CreateAndDestroy.publishMetadata` | unguarded; domainSep read from the sealed ledger field, literal records | 16 | 34,530 | 56.6 MB | 1.4 kB | 3.2 s |
+| `CreateAndDestroy.transfer` | normal operation (no metadata) | 13 | 4,078 | 11.3 MB | 2.1 kB | 614 ms |
+| `OwnerKey.publishMetadata` | owner check + ledger domainSep, literal records | 16 | 38,363 | 90.2 MB | 2.1 kB | 4.0 s |
+| `OwnerKey.setMetadata` | owner check + runtime name, symbol | 16 | 44,420 | 90.2 MB | 2.1 kB | 4.0 s |
+| `OwnerKey.withdrawMetadata` | owner check + `withdraw` (six Null records) | 16 | 38,363 | 90.2 MB | 2.1 kB | 4.0 s |
+| `OwnerKey.mint` | normal operation (no metadata) | 13 | 4,030 | 11.3 MB | 2.1 kB | 680 ms |
+| `PublishOnce.publishMetadata` | publish-once flag + ledger domainSep, literal records | 16 | 34,554 | 56.6 MB | 1.4 kB | 2.9 s |
 
 ### test-contracts/raw-emitter (TEST ONLY)
 
 | Contract · circuit | Shape | k | rows | prover key | verifier key | proving (median) |
 |---|---|---:|---:|---:|---:|---:|
-| `RawEmitter.emitRaw` | Ownable + runtime name and payload | 16 | 44,311 | 90.2 MB | 2.1 kB | 8.5 s |
-| `RawEmitter.emitTwo` | Ownable + two runtime events | 17 | 86,610 | 180.4 MB | 2.1 kB | 17.0 s |
+| `RawEmitter.emitRaw` | Ownable + runtime name and payload | 17 | 82,397 | 180.4 MB | 2.1 kB | 9.5 s |
+| `RawEmitter.emitTwo` | Ownable + two runtime events | 18 | 162,782 | 360.8 MB | 2.1 kB | 21.0 s |
 
 <!-- costs:end -->
 
-## Fees observed on the local stack (S2, 2026-10-01)
+## Fees on the local stack
 
-Local undeployed chain (`docker/local-stack`: node `2.0.0-rc.4` = `2.0.0-d9729c13`, indexer
-`4.4.0-rc.1`, proof servers rc.8 contract / rc.6 DUST), genesis dev wallet, contract
-`examples/minimal` `CreateAndDestroy` (`scripts/create-and-destroy.ts`). 1 DUST = 10^15 SPECK.
+Local undeployed chain (`docker/local-stack`: node 2.1.101 running ledger 9.1.0.1, indexer 4.4.101, one proof
+server 9.0.1; client `ledger-v9` 1.0.1), measured 2026-11-09 by `packages/cli/test/e2e/local-e2e.sh`,
+`packages/cli/test/e2e/examples-e2e.sh`, `examples/upgrade-existing-contract/scripts/local-upgrade.sh` and
+`examples/minimal/scripts/create-and-destroy.ts`: the indexer's `fee` of every included transaction. k from
+`zkir-v3 mock-compile` (the tables above and [`examples/openzeppelin`](../examples/openzeppelin/README.md#costs) list
+most of these circuits). 1 DUST = 10^15 SPECK.
 
-| Transaction | Circuit size | Fee (SPECK) | ≈ DUST | Wall time (prove + submit + include) |
-|---|---|---:|---:|---:|
-| deploy `CreateAndDestroy` (2 circuits) | — | 1,221,179,649,505,304 | 1.221 | 17 s |
-| `publishMetadata()` (A1 payload, ledger `domainSep`) | k = 14 | 145,863,042,885,204 | 0.146 | 24 s |
-| `transfer` (normal operation, no event) | k = 13 | 239,480,966,879,273 | 0.239 | 24 s |
-| `VerifierKeyRemove(publishMetadata, v4)` | — | 39,208,571,663,470 | 0.039 | 17 s |
+| Transaction | k | Txs | Fee (SPECK) | ≈ DUST |
+|---|---:|---:|---:|---:|
+| deploy `MyFungibleToken` (10 circuits) | — | 1 | 5,331,877,054,703,867 | 5.332 |
+| deploy `MyMultiKindToken` (8 circuits) | — | 1 | 5,284,624,117,206,975 | 5.285 |
+| deploy `MyShieldedToken` (9 circuits) | — | 1 | 5,128,213,237,960,190 | 5.128 |
+| deploy `MyTokenFamily` (8 circuits) | — | 1 | 4,933,704,754,274,969 | 4.934 |
+| deploy `MyUnshieldedToken` (8 circuits) | — | 1 | 4,697,973,811,435,351 | 4.698 |
+| deploy `ScannerMints` (3 circuits) | — | 1 | 1,656,179,146,731,531 | 1.656 |
+| deploy `SpikeOzToken` (2 circuits) | — | 1 | 1,581,271,362,039,389 | 1.581 |
+| deploy `CreateAndDestroy` (2 circuits) | — | 2 | 1,325,391,199,461,906 – 1,609,661,282,241,890 | 1.325–1.610 |
+| deploy `LegacyToken` (1 circuit) | — | 1 | 1,111,812,080,600,780 | 1.112 |
+| deploy `SpikeEmitter` (1 circuit) | — | 3 | 497,507,009,354,719 – 510,514,287,563,428 | 0.498–0.511 |
+| `SpikeEmitter.publishMetadata` (literal A1) | 6 | 3 | 150,113,303,896,642 – 151,541,239,893,027 | 0.150–0.152 |
+| `ScannerMints.publishMetadata` | 15 | 1 | 153,154,629,249,343 | 0.153 |
+| `CreateAndDestroy.publishMetadata` | 16 | 2 | 156,159,792,447,634 – 170,661,895,561,601 | 0.156–0.171 |
+| `SpikeOzToken.publishMetadata` | 16 | 1 | 170,214,129,692,866 | 0.170 |
+| `MyFungibleToken.publishMetadata` | 14 | 1 | 173,635,566,051,990 | 0.174 |
+| `MyShieldedToken.publishMetadata` | 16 | 1 | 176,332,895,538,781 | 0.176 |
+| `MyUnshieldedToken.publishMetadata` | 16 | 1 | 178,105,657,072,546 | 0.178 |
+| `MyTokenFamily.publishMetadata` (one identity per call) | 16 | 3 | 181,590,313,792,833 – 181,599,782,625,433 | 0.182 |
+| `LegacyToken.publishMetadata` (upgrade build `LegacyTokenMetadata`) | 16 | 1 | 183,115,382,633,801 | 0.183 |
+| `MyMultiKindToken.publishMetadata` (three events in one call) | 17 | 1 | 196,893,715,044,343 | 0.197 |
+| `MyFungibleToken.setMetadata` (rename) | 15 | 1 | 180,845,607,902,257 | 0.181 |
+| `MyFungibleToken.withdrawMetadata` | 13 | 2 | 181,739,516,972,699 | 0.182 |
+| `MyFungibleToken.publishMetadata` (revive) | 14 | 1 | 181,580,328,088,708 | 0.182 |
+| `ScannerMints.mintUnshielded` | 13 | 3 | 169,582,589,041,430 – 169,611,974,754,092 | 0.170 |
+| `MyUnshieldedToken.mint` | 13 | 1 | 213,546,325,421,568 | 0.214 |
+| `MyMultiKindToken.mintUnshielded` | 13 | 1 | 216,495,298,311,910 | 0.216 |
+| `ScannerMints.mintShielded` | 14 | 1 | 233,080,628,374,217 | 0.233 |
+| `SpikeOzToken.mint` (shielded) | 14 | 1 | 234,292,725,231,560 | 0.234 |
+| `MyShieldedToken.mint` | 14 | 1 | 240,051,964,094,699 | 0.240 |
+| `MyMultiKindToken.mintShielded` | 14 | 1 | 243,862,832,740,399 | 0.244 |
+| `MyMultiKindToken.mintLedger` | 13 | 1 | 244,552,657,481,492 | 0.245 |
+| `MyTokenFamily.mint` | 14 | 2 | 245,086,475,202,264 – 245,387,494,332,224 | 0.245 |
+| `LegacyToken.mint` | 14 | 1 | 253,950,633,801,929 | 0.254 |
+| `CreateAndDestroy.transfer` (normal operation, no event) | 13 | 1 | 286,657,750,884,959 | 0.287 |
+| `VerifierKeyInsert(publishMetadata, v4)` on `LegacyToken` | — | 1 | 703,878,689,988,859 | 0.704 |
+| `VerifierKeyRemove(publishMetadata, v4)` on `SpikeEmitter` and `CreateAndDestroy` | — | 4 | 104,554,980,070,234 – 126,010,376,812,658 | 0.105–0.126 |
 
-For comparison, the toolchain spike's literal `publishMetadata()` (k = 6, case SPIKE) cost 144,627,804,062,124 SPECK
-locally and 169,392,887,855,896 SPECK on Stagenet: the fee is dominated by the transaction, not by
-the circuit size.
+The fee follows the transaction, not the circuit's k: a publish costs 0.150 DUST at k = 6 and 0.153–0.197 DUST at
+k = 14–17; a mint 0.170–0.254 DUST (it also creates the coin, UTXO or ledger balance). A deploy stores every circuit's
+verifier key, so its fee grows with the number of circuits: 0.50–0.51 DUST for one k = 6 circuit, 1.1–1.7 DUST for one
+to three circuits, 4.7–5.3 DUST for the eight to ten circuits of the OpenZeppelin examples. `scripts/create-and-destroy.ts`
+times each of its transactions from proving to finalization: deploy 16 s, `publishMetadata()` 24 s, `transfer` 17 s,
+`VerifierKeyRemove` 17 s.
 
 ## Fees on Stagenet
 

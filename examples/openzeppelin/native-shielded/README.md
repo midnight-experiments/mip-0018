@@ -65,7 +65,7 @@ that holds a coin can find the token's name, symbol and decimals.
   it (instead of a literal) guarantees the event names the `domainSep` every `mint` uses, so the color
   a consumer derives, `tokenType(domainSep, contractAddress)`, is exactly the color of the coins
   (MIP "Token identity and authority": "A color MUST always be computed this way, never read from a
-  value"). Reading state makes the circuit k = 15 instead of 13.
+  value"). Reading state makes the circuit k = 16 instead of 14.
 - **Same literals, `decimals` from state, fixed sizes, no `standards`** — as in
   [`fungible-token`](../fungible-token/README.md): OpenZeppelin's `name`/`symbol` are
   `Opaque<"string">`; pass the same strings to the constructor; `setMetadata` takes an 11-byte name

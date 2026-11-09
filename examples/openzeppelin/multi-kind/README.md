@@ -69,8 +69,8 @@ together because they share the contract and the `symbol` ("Symbol grouping").
 ```
 
 - **One event per identity** — a payload describes exactly one `(domainSep, kind)`, so publishing the
-  asset takes three events; one circuit emits all three in one transaction (k = 16). If that is too
-  big for you, split it into `publishMetadata(kind)` (k = 15, three transactions).
+  asset takes three events; one circuit emits all three in one transaction (k = 17). If that is too
+  big for you, split it into `publishMetadata(kind)` (k = 16, three transactions).
 - **One `domainSep`, one `symbol`** — that is what makes consumers group the three identities. They
   stay separate identities: each has its own fields, and an update to one changes no other.
 - **`setMetadata(kind, …)` and `withdrawMetadata(kind)`** take the kind, so one representation can be
