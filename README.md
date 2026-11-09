@@ -86,8 +86,8 @@ docker/run.sh mip0018 -- vectors run               # the normative vectors again
 docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/C06   # a real case, wallet-free
 ```
 
-A local chain of official `midnightntwrk/*` images (node 2.0.0-rc.4, indexer-standalone 4.4.0-rc.1, the two proof
-servers) runs the issuer side without funds; the full walkthrough is
+A local chain of official `midnightntwrk/*` images (node 2.1.101, indexer-standalone 4.4.101, proof server 9.0.1)
+runs the issuer side without funds; the full walkthrough is
 [`examples/publish-and-emit`](examples/publish-and-emit/README.md):
 
 ```sh
@@ -105,21 +105,29 @@ so teardown removes exactly what it created ([`CONTRIBUTING.md`](CONTRIBUTING.md
 
 MIP-0018 needs MIP-0002 `Misc` events, so it **requires Compact 0.34.0 or later** (language 0.26.0, runtime 0.19.0 or
 later — the MIP's Dependencies line).
-This repository is **built and tested with Compact 0.35.0** (language 0.27.0, runtime 0.20.0) **and ZKIR v3**
-(`--feature-zkir-v3`), pinned with every other version in [`toolchain.json`](toolchain.json). Only official binaries
-are used: the Compact release from `midnightntwrk/compact`, `midnightntwrk/*` Docker images pinned by digest, and
-packages from the `@midnight-ntwrk`, `@midnightntwrk` and `@openzeppelin` npm scopes.
+This repository is **built and tested with Compact 0.36.0** (language 0.28.0, runtime 0.21.0), whose only backend is
+ZKIR v3 (no compiler flag), pinned with every other version in [`toolchain.json`](toolchain.json). Only official
+binaries are used: the Compact release from `midnightntwrk/compact`, `midnightntwrk/*` Docker images pinned by digest,
+and packages from the `@midnight-ntwrk`, `@midnightntwrk` and `@openzeppelin` npm scopes.
 
 | Piece | Version |
 |---|---|
-| Compact | 0.35.0 (`debb05f9`), ZKIR v3 = `zkir-3.1.0-rc.1` |
-| compact-runtime / compact-js / ledger-v9 | 0.20.0 / 3.0.0-rc.3 / 1.0.0-rc.5 |
-| midnight-js | 5.0.0-rc.2 |
-| Wallet SDK | 2.0.0-beta.2 (the 2.0.0-rc line cannot sync against indexer 4.4.0-rc.1, which Stagenet runs) |
-| Local chain | `midnight-node` 2.0.0-rc.4, `indexer-standalone` 4.4.0-rc.1 |
-| Proof servers | `proof-server` 9.0.0-rc.8 for contract circuits (reads ZKIR 3.1) and 9.0.0-rc.6 for wallet DUST spends (the only one whose DUST proofs node 2.0.0-rc.4 accepts) |
-| OpenZeppelin Compact Contracts | 0.4.0-alpha.5 |
+| Compact | 0.36.0 (`b5d9e4df`); its bundled `zkir-v3` is `zkir-3.2.0-rc.2` |
+| compact-runtime / compact-js | 0.21.0 / 3.0.0 |
+| ledger-v9 / onchain-runtime-v4 | 1.0.1 / 4.0.1, by root `overrides` (see below) |
+| midnight-js | 5.0.0 |
+| Wallet SDK | 2.0.0 (facade 5.0.0) |
+| Local chain | `midnight-node` 2.1.101, `indexer-standalone` 4.4.101 |
+| Proof server | `proof-server` 9.0.1, one for contract circuits and the wallet's DUST spends |
+| OpenZeppelin Compact Contracts | 0.5.0-alpha.2 |
 | Node.js | 24 (`node:24-bookworm`, pinned by digest) |
+
+**Ledger override.** midnight-js 5.0.0 declares `@midnightntwrk/ledger-v9` 1.0.0 and `@midnightntwrk/onchain-runtime-v4`
+4.0.0. The root [`package.json`](package.json) `overrides` replace them with **1.0.1 / 4.0.1**: node 2.1.101, which the
+public networks run, runs ledger 9.1.0.1, and that ledger prices transactions above what 1.0.0 computes — a
+`VerifierKeyRemove` balanced with 1.0.0 underpays its DUST fee and the node rejects it (`BalanceCheckOverspend`).
+`npm ls` therefore prints `overridden` for both packages. `npm run check:pins` fails unless the install holds exactly
+one copy of each, at the pinned version (two copies of the ledger WASM make every contract call fail).
 
 Compiled output (`managed/`: keys, ZKIR, generated JavaScript) is not committed: builds are deterministic, and the
 verifier-key SHA-256 of every measured circuit is in [`docs/costs.json`](docs/costs.json).
