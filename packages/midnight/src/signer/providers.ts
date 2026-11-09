@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// midnight-js 5.0.0-rc.2 providers for one compiled contract directory (compactc output: contract/, keys/, zkir/).
+// midnight-js 5.0.0 providers for one compiled contract directory (compactc output: contract/, keys/, zkir/).
 //
 //   * proofs: the official proof server for contract circuits, through midnight-js's HTTP proving provider,
 //     wrapped so at most 4 circuit proofs run at once (the server queues 10 jobs, then answers 429) and 408/429/502/504
@@ -8,16 +8,16 @@
 //   * public data: midnight-js's indexer provider (finalization tracking for deployContract / callTx)
 //   * private state: the signer's 0600 file (maintenance keys + witness private state)
 //   * wallet + submission: the wallet session, with the submission journal hooks
+//   * config: the network id and the TTL (seconds) midnight-js gives the intents it builds
 
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { CompiledContract } from '@midnight-ntwrk/compact-js';
-import { createProofProvider, type MidnightProviders, type ProofProvider } from '@midnight-ntwrk/midnight-js-types';
+import { createLedger9ProofProvider, type MidnightProviders, type ProofProvider } from '@midnight-ntwrk/midnight-js-types';
 import { httpClientProvingProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
 import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
-import { setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
-import type { FinalizedTransaction } from '@midnightntwrk/ledger-v9';
+import type { FinalizedTransaction, ProvingProvider } from '@midnightntwrk/ledger-v9';
 import { WebSocket } from 'ws';
 import type { FilePrivateStateProvider } from './private-state.ts';
 import { midnightJsProviders, type SignerEndpoints, type WalletSession } from './wallet.ts';
@@ -67,14 +67,18 @@ export function boundedProofProvider(
 ): ProofProvider {
   const base = httpClientProvingProvider(url, zkConfigProvider, { timeout: o.timeoutMs ?? 600_000 });
   const limit = limiter(o.concurrency ?? 4);
-  return createProofProvider({
+  const proving: ProvingProvider = {
     check: (preimage: Uint8Array, keyLocation: string) =>
       limit(() => withRetry('proof server /check', () => base.check(preimage, keyLocation))),
     prove: (preimage: Uint8Array, keyLocation: string, overwriteBindingInput?: bigint) =>
       limit(() => withRetry('proof server /prove', () => base.prove(preimage, keyLocation, overwriteBindingInput))),
     lookupKey: (keyLocation: string) => base.lookupKey(keyLocation),
-  } as never);
+  } as ProvingProvider;
+  return createLedger9ProofProvider(proving);
 }
+
+/** The TTL (seconds) midnight-js gives the intents of deploy and call transactions. */
+export const INTENT_TTL_SECONDS = 30 * 60;
 
 export interface CompiledArtifacts {
   /** Contract name (the compactc output's module and the provider tag). */
@@ -108,7 +112,6 @@ export const buildProviders = (
   privateStateProvider: FilePrivateStateProvider,
   hooks: SubmissionHooks = {},
 ): MidnightProviders => {
-  setNetworkId(ep.profile.networkId);
   const zkConfigProvider = new NodeZkConfigProvider<string>(artifacts.managedDir);
   const { walletProvider, midnightProvider } = midnightJsProviders(session, hooks);
   return {
@@ -122,5 +125,6 @@ export const buildProviders = (
     proofProvider: boundedProofProvider(ep.proofServer, zkConfigProvider),
     walletProvider,
     midnightProvider,
-  } as MidnightProviders;
+    config: { networkId: ep.profile.networkId, ttlSeconds: INTENT_TTL_SECONDS },
+  } as unknown as MidnightProviders;
 };

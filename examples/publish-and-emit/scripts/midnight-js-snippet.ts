@@ -7,8 +7,7 @@
 //
 //   . docker/local-stack/ports.env
 //   MIP0018_DOCKER_NETWORK=$MIP0018_STACK_NETWORK MIP0018_DOCKER_ENV="-e MIP0018_INDEXER_URL=$MIP0018_INDEXER_URL_IN_NETWORK \
-//     -e MIP0018_NODE_URL=$MIP0018_NODE_URL_IN_NETWORK -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK \
-//     -e MIP0018_WALLET_PROOF_SERVER_URL=$MIP0018_WALLET_PROOF_SERVER_URL_IN_NETWORK" \
+//     -e MIP0018_NODE_URL=$MIP0018_NODE_URL_IN_NETWORK -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK" \
 //     docker/run.sh exec 'node examples/publish-and-emit/scripts/midnight-js-snippet.ts'
 //
 // The midnight-js providers (wallet, proofs, indexer, private state) come from @mip0018/midnight/signer for brevity;
@@ -40,7 +39,7 @@ const env = (k: string) =>
   })();
 
 const profile = resolveProfile('undeployed');
-const ep = { profile, proofServer: env('MIP0018_PROOF_SERVER_URL'), walletProofServer: env('MIP0018_WALLET_PROOF_SERVER_URL') };
+const ep = { profile, proofServer: env('MIP0018_PROOF_SERVER_URL') };
 const session = await openWallet(ep, Uint8Array.from(Buffer.from(GENESIS_DEV_SEED_HEX, 'hex')));
 try {
   await waitForSync(session);

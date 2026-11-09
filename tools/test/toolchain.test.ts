@@ -15,9 +15,11 @@ describe('toolchain.json', () => {
   });
 
   it('pins one proof server and the ledger node 2.1.101 runs (ledger-v9 1.0.1, onchain-runtime-v4 4.0.1)', () => {
-    expect(Object.keys(toolchain.images).filter((k) => !k.startsWith('$')).sort()).toEqual(
-      ['indexer', 'midnightNode', 'node', 'proofServer'].sort(),
-    );
+    expect(
+      Object.keys(toolchain.images)
+        .filter((k) => !k.startsWith('$'))
+        .sort(),
+    ).toEqual(['indexer', 'midnightNode', 'node', 'proofServer'].sort());
     expect(toolchain.images.midnightNode).toMatch(/^midnightntwrk\/midnight-node:2\.1\.101@/u);
     expect(toolchain.images.indexer).toMatch(/^midnightntwrk\/indexer-standalone:4\.4\.101@/u);
     expect(toolchain.images.proofServer).toMatch(/^midnightntwrk\/proof-server:9\.0\.\d+@/u);

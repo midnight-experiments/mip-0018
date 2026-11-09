@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// examples/minimal in compact-runtime 0.20.0 (no chain):
+// examples/minimal in compact-runtime 0.21.0 (no chain):
 //   * publishMetadata emits exactly the A1 fixture (MIP Appendix A) in all three variants;
 //   * normal token operations (mint, transfer) emit no Misc event (MIP "Publishing");
 //   * OwnerKey: only the owner can publish / rename / withdraw / mint; a non-owner call fails its

@@ -9,7 +9,7 @@ Byte-exact MIP-0018 `TokenMetadata` emission in a few lines of Compact, for the 
 |---|---|
 | [`src/Mip0018.compact`](src/Mip0018.compact) | **Default API** — typed records (`MetadataRecord<#K, #V>`) serialized by Compact (`serialize<[...], 256>`): the compiler checks every size |
 | [`src/Mip0018Pure.compact`](src/Mip0018Pure.compact) | **Alternative API** — individual pure circuits returning bytes, composed with `Bytes[...]` spreads; same bytes, no `serialize` |
-| [`src/testing/`](src/testing) | `@mip0018/compact/testing`: compile with the pinned compiler and run circuits in compact-runtime 0.20.0, capturing the emitted MIP-0018 events |
+| [`src/testing/`](src/testing) | `@mip0018/compact/testing`: compile with the pinned compiler and run circuits in compact-runtime 0.21.0, capturing the emitted MIP-0018 events |
 
 Both APIs are built and tested side by side: they emit identical bytes, equal to
 the repository's vectors and to `@mip0018/codec`.
@@ -72,7 +72,7 @@ padding (`payload4<A, B, C, D, P>` with `33 + A + B + C + D + P = 256`; `imageRe
 `imageSha256Record` is always 47 bytes), because Compact has no
 arithmetic on generic sizes. The compiler checks both. Prefer the default module: it is simpler and
 cheaper for runtime values; the alternative exists because it does not rely on `serialize` for
-non-event types, which Compact 0.35.0 accepts although its standard-library documentation still says
+non-event types, which Compact 0.36.0 accepts although its standard-library documentation still says
 "can only be instantiated for an event type".
 
 ## What the compiler guarantees (and what it cannot)
@@ -103,9 +103,9 @@ Anyone who can call a circuit that reaches `emitPayload` can rename or withdraw 
    can call the circuit (the deploy does not put the circuit's ZKIR on chain — only its verifier key —
    but the artefacts ship with any DApp), so its payload must be constant: a caller can then only
    re-emit the same values. The contract needs a maintenance authority (midnight-js deploys with
-   one), and with ZKIR v3 the key lives in the `v4` slot: midnight-js 5.0.0-rc.2's
-   `removeVerifierKey()` removes `v3` only, so build the `MaintenanceUpdate` with
-   `VerifierKeyRemove(circuit, ContractOperationVersion('v4'))` (helper
+   one), and with ZKIR v3 the key lives in the `v4` slot: midnight-js 5.0.0's
+   `circuitMaintenanceTx.<circuit>.removeVerifierKey()` removes it, and so does a `MaintenanceUpdate` with
+   `VerifierKeyRemove(circuit, ContractOperationVersion('v4'))` signed by any key of the authority (helper
    [`packages/midnight/src/signer/maintenance.ts`](../midnight/src/signer/maintenance.ts)).
 3. **Publish once** — an unguarded constant `publishMetadata()` that sets its own ledger flag
    ([`examples/minimal/contracts/PublishOnce.compact`](../../examples/minimal/contracts/PublishOnce.compact)).
@@ -126,7 +126,7 @@ k = 15. Full table, proving times and fees: [`docs/costs.md`](../../docs/costs.m
 ```ts
 import { ensureCompiled, Simulator } from '@mip0018/compact/testing';
 
-const dir = ensureCompiled('contracts/MyToken.compact', 'managed/MyToken'); // Compact 0.35.0, ZKIR v3, --skip-zk
+const dir = ensureCompiled('contracts/MyToken.compact', 'managed/MyToken'); // Compact 0.36.0, --skip-zk
 const sim = await Simulator.deploy(dir, { args: [domainSep] });
 const { misc } = await sim.call('publishMetadata');
 // misc[0].name / misc[0].payload: zero-extended to 32 / 256 bytes; misc[0].address: the emitting contract
@@ -144,7 +144,7 @@ docker/run.sh exec 'npx vitest run packages/compact -t equivalence'
 
 | Test | What |
 |---|---|
-| [`test/vectors.test.ts`](test/vectors.test.ts) | Both modules, executed in compact-runtime 0.20.0: payload = fixture bytes for A1, A2a/b, A3a/b, A4a/b, A5a–c, A6, S1a/b (inputs taken from the fixtures); round trip through the codec; literal A1; `imageRecord`/`imageSha256Record` = A6; `payload6` with the six common-field builders = codec `commonRecords`; `withdraw` = codec `withdrawRecords()` (six Nulls, content ends at 95) and a single-key `nullRecord` = codec `record.tombstone(key)` for kinds 1/2/3; `commonFields` / URI = codec; kind 0, 4, 255 rejected; constants = codec |
+| [`test/vectors.test.ts`](test/vectors.test.ts) | Both modules, executed in compact-runtime 0.21.0: payload = fixture bytes for A1, A2a/b, A3a/b, A4a/b, A5a–c, A6, S1a/b (inputs taken from the fixtures); round trip through the codec; literal A1; `imageRecord`/`imageSha256Record` = A6; `payload6` with the six common-field builders = codec `commonRecords`; `withdraw` = codec `withdrawRecords()` (six Nulls, content ends at 95) and a single-key `nullRecord` = codec `record.tombstone(key)` for kinds 1/2/3; `commonFields` / URI = codec; kind 0, 4, 255 rejected; constants = codec |
 | [`test/equivalence.test.ts`](test/equivalence.test.ts) | Generated contracts: every value size 1–219 plus random 2–4-record shapes (uint8, uint128, Null), 3 random inputs each: typed = pure = `@mip0018/codec` `encodePayload` |
 | [`test/compile-fail.test.ts`](test/compile-fail.test.ts) | 16 programs the compiler must reject, with the expected message |
 

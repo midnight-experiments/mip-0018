@@ -2,7 +2,7 @@
 
 ## Docker-only workflow
 
-Nothing is installed on the host: every build, compile and test runs in the pinned toolchain image (`docker/Dockerfile`: Node 24 + the official Compact 0.35.0 release, SHA-256 checked).
+Nothing is installed on the host: every build, compile and test runs in the pinned toolchain image (`docker/Dockerfile`: Node 24 + the official Compact 0.36.0 release, SHA-256 checked).
 
 ```sh
 docker/run.sh ci                     # npm ci from package-lock.json

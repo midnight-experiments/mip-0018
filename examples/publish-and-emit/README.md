@@ -24,7 +24,7 @@ NETENV="-e MIP0018_INDEXER_URL=$MIP0018_INDEXER_URL_IN_NETWORK -e MIP0018_NODE_U
 # signing commands: the only container that sees a wallet secret (none here: the local dev wallet is public)
 signer() {
   MIP0018_DOCKER_NETWORK="$MIP0018_STACK_NETWORK" MIP0018_SECRET_DIR="$WALK/secrets" MIP0018_STATE_DIR="$WALK/state" \
-  MIP0018_DOCKER_ENV="$NETENV -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK -e MIP0018_WALLET_PROOF_SERVER_URL=$MIP0018_WALLET_PROOF_SERVER_URL_IN_NETWORK" \
+  MIP0018_DOCKER_ENV="$NETENV -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK" \
   docker/signer.sh mip0018 -- "$@"
 }
 # wallet-free commands
@@ -255,7 +255,7 @@ several-minute sync per command:
 signer() {
   MIP0018_SECRET_DIR="<0700 directory with the mnemonic file>" MIP0018_STATE_DIR="<0700 state directory outside the repo>" \
   MIP0018_DOCKER_NETWORK="<network of your two proof servers>" \
-  MIP0018_DOCKER_ENV="-e MIP0018_PROOF_SERVER_URL=<proof-server 9.0.0-rc.8> -e MIP0018_WALLET_PROOF_SERVER_URL=<proof-server 9.0.0-rc.6>" \
+  MIP0018_DOCKER_ENV="-e MIP0018_PROOF_SERVER_URL=<proof-server 9.0.1>" \
   docker/signer.sh mip0018 -- "$@"
 }
 W="--network stagenet --mnemonic-file /run/mip0018/secrets/<wallet>.mnemonic --wallet-cache /run/mip0018/state/wallet.cache"
@@ -263,8 +263,7 @@ signer deploy $W --example fungible-token --record deployments/stagenet/cases/C0
 signer publish $W --record deployments/stagenet/cases/C01/record.json --circuit publishMetadata --step publish
 ```
 
-Two official proof servers are needed: 9.0.0-rc.8 proves the Compact 0.35.0 / ZKIR v3 contract
-circuits, 9.0.0-rc.6 the wallet's DUST spends. The recorded Stagenet runs — one `mip0018` command per step — are the
+One official proof server (9.0.1) proves the Compact 0.36.0 contract circuits and the wallet's DUST spends. The recorded Stagenet runs — one `mip0018` command per step — are the
 case folders [`deployments/stagenet/cases/`](../../deployments/stagenet/cases/README.md):
 
 | Case | What | Contract | Publish transaction |
@@ -306,8 +305,7 @@ Run on the local chain (2026-10-07), then checked wallet-free with the expected 
 
 ```sh
 MIP0018_DOCKER_NETWORK=$MIP0018_STACK_NETWORK MIP0018_DOCKER_ENV="-e MIP0018_INDEXER_URL=$MIP0018_INDEXER_URL_IN_NETWORK \
-  -e MIP0018_NODE_URL=$MIP0018_NODE_URL_IN_NETWORK -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK \
-  -e MIP0018_WALLET_PROOF_SERVER_URL=$MIP0018_WALLET_PROOF_SERVER_URL_IN_NETWORK" \
+  -e MIP0018_NODE_URL=$MIP0018_NODE_URL_IN_NETWORK -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK" \
   docker/run.sh exec 'node examples/publish-and-emit/scripts/midnight-js-snippet.ts'
 ```
 

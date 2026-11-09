@@ -7,7 +7,7 @@
 //   * k and rows: `zkir-v3 mock-compile` (Compact 0.36.0, full keys);
 //   * prover / verifier key sizes and the verifier key's SHA-256 (keys are deterministic: a deploy
 //     of the same source must carry exactly these verifier keys);
-//   * proving time on this host: each circuit is executed in compact-runtime 0.20.0 and its proof
+//   * proving time on this host: each circuit is executed in compact-runtime 0.21.0 and its proof
 //     preimage proved by the official proof server (`MIP0018_PROOF_SERVER_URL`) PROVE_RUNS times
 //     (median). Skipped when the variable is unset.
 //

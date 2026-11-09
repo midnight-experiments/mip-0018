@@ -100,7 +100,7 @@ A consumer then shows one kind-3 identity with `name` "Acme Gold", `symbol` "AGL
 docker/run.sh exec 'npx vitest run examples/openzeppelin/fungible-token'
 ```
 
-[`test/fungible-token.test.ts`](test/fungible-token.test.ts), in compact-runtime 0.20.0 (no chain):
+[`test/fungible-token.test.ts`](test/fungible-token.test.ts), in compact-runtime 0.21.0 (no chain):
 
 | Test | Shows |
 |---|---|

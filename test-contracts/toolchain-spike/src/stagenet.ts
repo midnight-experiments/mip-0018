@@ -40,7 +40,7 @@ try {
     recordPath,
     privateStatePath,
     secondCall: false,
-    tryMidnightJsRemove: false,
+    removeWithMidnightJs: false,
     expectedUnshieldedAddress: need('MIP0018_EXPECTED_ADDRESS'),
     toolchain: toolchain(CONTRACT),
   });

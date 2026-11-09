@@ -24,8 +24,8 @@ outcome unknown (re-run to reconcile).
 
 Networks: `--network stagenet` uses the pinned public endpoints (rate-bounded) and checks the pinned genesis;
 `--network undeployed` needs `--indexer`/`--rpc` (or `MIP0018_INDEXER_URL` / `MIP0018_NODE_URL`) and refuses public
-hosts. Signing needs the two official proof servers (`--proof-server` for contract circuits, `--wallet-proof-server`
-for DUST spends), a wallet secret file (`--mnemonic-file`; on a local chain also `--seed-file` or
+hosts. Signing needs the official proof server (`--proof-server`, for contract circuits and the wallet's DUST spends),
+a wallet secret file (`--mnemonic-file`; on a local chain also `--seed-file` or
 `--dev-genesis-wallet`) and a private state directory outside the repository (`--state-dir`).
 
 Records are public JSON (contract address, transactions, observations — never a secret). Maintenance keys and

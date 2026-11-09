@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// The upgrade template without a chain (compact-runtime 0.20.0): the deployed LegacyToken creates and changes the
+// The upgrade template without a chain (compact-runtime 0.21.0): the deployed LegacyToken creates and changes the
 // state; the upgrade-only LegacyTokenMetadata.publishMetadata() runs against THAT state and address, as it does on
 // chain after the VerifierKeyInsert.
 //

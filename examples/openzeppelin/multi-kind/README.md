@@ -95,7 +95,7 @@ A consumer then shows three identities in one `ACD` group (`metadata.json` → `
 docker/run.sh exec 'npx vitest run examples/openzeppelin/multi-kind'
 ```
 
-[`test/multi-kind.test.ts`](test/multi-kind.test.ts), in compact-runtime 0.20.0 (no chain), with the
+[`test/multi-kind.test.ts`](test/multi-kind.test.ts), in compact-runtime 0.21.0 (no chain), with the
 reference consumer (`@mip0018/consumer`, MIP vectors S6 and S9 on a real contract):
 
 | Test | Shows |

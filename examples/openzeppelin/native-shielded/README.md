@@ -91,7 +91,7 @@ A wallet holding a coin of that color finds `(contractAddress, domainSep)` throu
 docker/run.sh exec 'npx vitest run examples/openzeppelin/native-shielded'
 ```
 
-[`test/native-shielded.test.ts`](test/native-shielded.test.ts), in compact-runtime 0.20.0 (no chain):
+[`test/native-shielded.test.ts`](test/native-shielded.test.ts), in compact-runtime 0.21.0 (no chain):
 
 | Test | Shows |
 |---|---|

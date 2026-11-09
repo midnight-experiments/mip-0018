@@ -8,8 +8,7 @@
 //   (no verifier key) -> still exactly one Misc event; `transfer` keeps its key.
 //
 // Signs with the local dev chain's genesis wallet, whose seed is public (0x00..01): no secret.
-// The maintenance update uses the `v4` key slot (ZKIR v3): midnight-js 5.0.0-rc.2
-// `removeVerifierKey()` only removes the `v3` slot.
+// The maintenance update uses the `v4` key slot, where the ledger keeps ZKIR v3 verifier keys.
 //
 // Chain helpers come from the toolchain spike (test-contracts/toolchain-spike/src/lib). Run on the stack network, after a full-key compile:
 //
@@ -18,6 +17,7 @@
 //   MIP0018_DOCKER_NETWORK=$MIP0018_STACK_NETWORK docker/run.sh exec 'npm run -w examples/minimal create-and-destroy'
 //   docker/local-stack/down.sh
 
+import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -25,11 +25,11 @@ import { CompiledContract } from '@midnight-ntwrk/compact-js';
 import { deployContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
-import { setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
 import type { MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
 import { ContractState, sampleSigningKey } from '@midnightntwrk/ledger-v9';
 import { classifyEvent, fromHex, toHex } from '@mip0018/codec';
+import { INTENT_TTL_SECONDS } from '@mip0018/midnight/signer';
 import { WebSocket } from 'ws';
 import {
   contractView,
@@ -115,7 +115,6 @@ const operationSizes = async (network: NetworkConfig, address: string) => {
 
 const main = async () => {
   const network = local();
-  setNetworkId(network.networkId);
   record.preflight = await preflight(network);
   save();
 
@@ -130,7 +129,7 @@ const main = async () => {
     record.toolchain = {
       compactCompiler: info['compiler-version'],
       compactLanguage: info['language-version'],
-      zkir: 'v3 (--feature-zkir-v3)',
+      zkir: `v3 (${execFileSync('compact', ['compile', '--ledger-version'], { encoding: 'utf8' }).trim()})`,
     };
     const mod = (await import(pathToFileURL(join(dir, 'contract', 'index.js')).href)) as {
       Contract: new (...a: never[]) => never;
@@ -149,9 +148,10 @@ const main = async () => {
         webSocket: WebSocket as never,
       }),
       zkConfigProvider,
-      proofProvider: httpClientProofProvider(network.proofServer, zkConfigProvider, { timeout: 600_000 }),
+      proofProvider: httpClientProofProvider({ url: network.proofServer, zkConfigProvider, timeout: 600_000 }),
       ...midnightJsProviders(session),
-    } as MidnightProviders;
+      config: { networkId: network.networkId, ttlSeconds: INTENT_TTL_SECONDS },
+    } as unknown as MidnightProviders;
 
     // The token holder (its secret key lives only in this run's memory).
     const holderSk = crypto.getRandomValues(new Uint8Array(32));

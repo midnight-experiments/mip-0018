@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// A minimal compact-runtime 0.20.0 simulator for compiled contracts: deploy (run the constructor),
+// A minimal compact-runtime 0.21.0 simulator for compiled contracts: deploy (run the constructor),
 // call circuits against the current state, and capture the events each call emitted. No chain, no
 // proofs. Every call gets a fresh CircuitContext, so `events` holds exactly that call's events.
 //

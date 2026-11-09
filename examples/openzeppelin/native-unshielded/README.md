@@ -90,7 +90,7 @@ and kind 2 (an unshielded UTXO), whose metadata is this event (`metadata.json` â
 docker/run.sh exec 'npx vitest run examples/openzeppelin/native-unshielded'
 ```
 
-[`test/native-unshielded.test.ts`](test/native-unshielded.test.ts), in compact-runtime 0.20.0 (no chain):
+[`test/native-unshielded.test.ts`](test/native-unshielded.test.ts), in compact-runtime 0.21.0 (no chain):
 
 | Test | Shows |
 |---|---|

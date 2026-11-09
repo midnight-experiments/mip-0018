@@ -32,7 +32,8 @@ Then, at deployment:
    payload = A1).
 3. **Create and destroy only:** remove the circuit with a maintenance update signed by the contract's
    maintenance authority: `VerifierKeyRemove("publishMetadata", ContractOperationVersion("v4"))`
-   (`v4` = the ZKIR-v3 key slot; midnight-js 5.0.0-rc.2's `removeVerifierKey()` removes `v3` only).
+   (`v4` = the ZKIR-v3 key slot, the one midnight-js 5.0.0's `circuitMaintenanceTx.publishMetadata.removeVerifierKey()`
+   removes as well).
 
 Why the payload must be constant when the circuit is unguarded: until its key is removed (or, for
 `PublishOnce`, until it ran), anyone with the compiled artefacts can call it. With constant values they

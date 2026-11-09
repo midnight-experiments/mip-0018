@@ -159,9 +159,8 @@ chain already shows done, and an **after-check** that marks a step completed onl
 events. Re-running a command resumes; it never deploys or publishes twice.
 
 Signing commands run in `docker/signer.sh`, the only container that mounts a wallet secret (read-only, from a 0700
-directory outside the repository). Two official proof servers are needed: `proof-server` 9.0.0-rc.8 for the
-contract circuits (it reads ZKIR v3) and 9.0.0-rc.6 for the wallet's DUST spends (the only one whose DUST proofs node
-2.0.0-rc.4 accepts).
+directory outside the repository). One official proof server (`midnightntwrk/proof-server` 9.0.1) proves both the
+contract circuits and the wallet's DUST spends.
 
 **Local chain first** (official images, no funds needed) — the shell set-up of
 [`examples/publish-and-emit`](../examples/publish-and-emit/README.md#1-local-chain-and-shell-set-up):
@@ -175,7 +174,7 @@ NETENV="-e MIP0018_INDEXER_URL=$MIP0018_INDEXER_URL_IN_NETWORK -e MIP0018_NODE_U
 # signing commands: the only container that sees a wallet secret (none here: the local dev wallet is public)
 signer() {
   MIP0018_DOCKER_NETWORK="$MIP0018_STACK_NETWORK" MIP0018_SECRET_DIR="$WALK/secrets" MIP0018_STATE_DIR="$WALK/state" \
-  MIP0018_DOCKER_ENV="$NETENV -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK -e MIP0018_WALLET_PROOF_SERVER_URL=$MIP0018_WALLET_PROOF_SERVER_URL_IN_NETWORK" \
+  MIP0018_DOCKER_ENV="$NETENV -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK" \
   docker/signer.sh mip0018 -- "$@"
 }
 # wallet-free commands
@@ -214,7 +213,7 @@ file and the two proof servers on a Docker network you run
 signer() {
   MIP0018_SECRET_DIR="<0700 directory with the mnemonic file>" MIP0018_STATE_DIR="<0700 state directory outside the repo>" \
   MIP0018_DOCKER_NETWORK="<network of your two proof servers>" \
-  MIP0018_DOCKER_ENV="-e MIP0018_PROOF_SERVER_URL=<proof-server 9.0.0-rc.8> -e MIP0018_WALLET_PROOF_SERVER_URL=<proof-server 9.0.0-rc.6>" \
+  MIP0018_DOCKER_ENV="-e MIP0018_PROOF_SERVER_URL=<proof-server 9.0.1>" \
   docker/signer.sh mip0018 -- "$@"
 }
 W="--network stagenet --mnemonic-file /run/mip0018/secrets/<wallet>.mnemonic --wallet-cache /run/mip0018/state/wallet.cache"

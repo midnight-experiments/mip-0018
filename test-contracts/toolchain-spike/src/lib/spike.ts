@@ -4,8 +4,9 @@
 //
 //   preflight -> deploy SpikeEmitter (midnight-js deployContract) -> call
 //   publishMetadata (callTx) -> the indexer returns the Misc event with the A1
-//   bytes -> VerifierKeyRemove of publishMetadata (create and destroy) ->
-//   [local only] a second call must fail.
+//   bytes -> VerifierKeyRemove of publishMetadata (create and destroy; midnight-js
+//   `circuitMaintenanceTx` or the package's signed MaintenanceUpdate, both in
+//   the ZKIR v3 'v4' slot) -> [local only] a second call must fail.
 //
 // Chain state is read before and after every transaction; a step is
 // marked done only when its effect is observed. The public record is written
@@ -31,7 +32,7 @@ type TxData = { txId?: unknown; txHash?: unknown; blockHeight?: unknown; status?
 type Handle = {
   deployTxData: { public: TxData };
   callTx: Record<string, () => Promise<{ public: TxData }>>;
-  circuitMaintenanceTx: Record<string, { removeVerifierKey(): Promise<TxData> }>;
+  circuitMaintenanceTx: Record<string, { removeVerifierKey(): Promise<{ public: TxData }> }>;
 };
 
 export type SpikeRecord = {
@@ -81,8 +82,8 @@ export type SpikeOptions = {
   privateStatePath?: string;
   /** Try a second call after the key removal and require it to fail (local only: it costs nothing there). */
   secondCall: boolean;
-  /** First try midnight-js removeVerifierKey() and record its outcome (local only). */
-  tryMidnightJsRemove: boolean;
+  /** Remove the key with midnight-js `circuitMaintenanceTx` instead of the package's MaintenanceUpdate helper. */
+  removeWithMidnightJs: boolean;
   /** Abort unless the wallet's unshielded address equals this (Stagenet: wallet 1). */
   expectedUnshieldedAddress?: string;
   toolchain: Record<string, string>;
@@ -186,37 +187,21 @@ export const runSpike = async (o: SpikeOptions): Promise<SpikeRecord> => {
       providers as never,
       { compiledContract: compiledContract as never, contractAddress: address } as never,
     )) as unknown as Handle;
-    if (o.tryMidnightJsRemove) {
-      // Evidence for the SDK limitation: midnight-js removes the 'v3' slot only.
-      log('removing the verifier key with midnight-js circuitMaintenanceTx (expected to fail for a ZKIR v3 key)');
-      let sdkOutcome: Record<string, unknown>;
-      try {
-        const r = await found.circuitMaintenanceTx[CIRCUIT]!.removeVerifierKey();
-        sdkOutcome = { ...(await txSummary(o.network, r)) };
-      } catch (e) {
-        const err = e as Error & { finalizedTxData?: TxData };
-        const m = /"txHash":\s*"([0-9a-f]+)"/u.exec(err.message);
-        const status = /"status":\s*"([A-Za-z]+)"/u.exec(err.message);
-        sdkOutcome = { error: err.name, status: status?.[1], txHash: m?.[1] };
-        if (m?.[1]) sdkOutcome = { ...sdkOutcome, ...(await txSummary(o.network, { txHash: m[1], status: status?.[1] })) };
-      }
-      const still = await contractView(o.network, address);
-      record.steps.removeVerifierKeyMidnightJs = {
-        ...sdkOutcome,
-        keyStillPresent: still.operations.includes(CIRCUIT),
-        operationBefore: opBefore,
-      };
-      save();
-      log('midnight-js removeVerifierKey', record.steps.removeVerifierKeyMidnightJs);
-    }
-    log('removing the publishMetadata verifier key (MaintenanceUpdate, VerifierKeyRemove v4)');
     t = Date.now();
-    const removed = await removeVerifierKey(providers, o.network, address, CIRCUIT, key, 'v4');
+    let removed: TxData;
+    if (o.removeWithMidnightJs) {
+      log('removing the publishMetadata verifier key (midnight-js circuitMaintenanceTx, v4 slot)');
+      removed = (await found.circuitMaintenanceTx[CIRCUIT]!.removeVerifierKey()).public;
+    } else {
+      log('removing the publishMetadata verifier key (MaintenanceUpdate, VerifierKeyRemove v4)');
+      removed = (await removeVerifierKey(providers, o.network, address, CIRCUIT, key, 'v4')) as unknown as TxData;
+    }
     record.steps.removeVerifierKey = {
-      ...(await txSummary(o.network, removed as unknown as TxData)),
+      ...(await txSummary(o.network, removed)),
       seconds: Math.round((Date.now() - t) / 1000),
       operationBefore: opBefore,
       version: 'v4',
+      by: o.removeWithMidnightJs ? 'midnight-js circuitMaintenanceTx' : '@mip0018/midnight/signer removeVerifierKey',
     };
     save();
     const afterRemove = await waitFor('contract state without publishMetadata', async () => {

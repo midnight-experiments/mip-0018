@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Maintenance updates for circuits compiled with --feature-zkir-v3.
+// Maintenance updates (VerifierKeyInsert / VerifierKeyRemove) signed with a given maintenance key.
 //
-// midnight-js 5.0.0-rc.2 / compact-js 3.0.0-rc.3 build every maintenance update with ContractOperationVersion 'v3'
-// (the ZKIR v2 key slot), so `circuitMaintenanceTx.<circuit>.removeVerifierKey()` cannot remove a ZKIR v3 key, which
-// the ledger keeps in the 'v4' slot: the update is included but its fallible segment fails. These helpers build the
-// same signed MaintenanceUpdate with the version given and submit it through midnight-js `submitTx` (proof provider +
-// wallet balancing + submission), exactly like the SDK path. `insertVerifierKey` is the same for S6's upgrade.
+// Compact 0.36.0 circuits are ZKIR v3, whose verifier keys the ledger keeps in the 'v4' ContractOperationVersion slot
+// (the slot midnight-js 5.0.0's own `circuitMaintenanceTx` writes as well). These helpers build the signed
+// MaintenanceUpdate themselves so that the key can come from a key file and sign at its index in the authority's
+// committee, then submit it through midnight-js `submitTx` (proof provider + wallet balancing + submission), exactly
+// like the SDK path.
 
 import { submitTx } from '@midnight-ntwrk/midnight-js-contracts';
-import type { MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
+import { LedgerTransaction, type MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
 import {
   ContractOperationVersion,
   ContractOperationVersionedVerifierKey,
@@ -121,7 +121,7 @@ const submitUpdate = async (
   const update = build(state.maintenanceAuthority.counter);
   const signed = update.addSignature(signatureIndex, signData(signingKey, update.dataToSign));
   const intent = Intent.new(new Date(Date.now() + 30 * 60_000)).addMaintenanceUpdate(signed);
-  const unprovenTx = Transaction.fromParts(profile.networkId, undefined, undefined, intent);
+  const unprovenTx = LedgerTransaction.seal('v9', 'Unproven', Transaction.fromParts(profile.networkId, undefined, undefined, intent));
   return submitTx(providers as never, { unprovenTx } as never);
 };
 

@@ -13,7 +13,7 @@ Proves the pinned toolchain end to end: Compact **0.36.0** compiles, proves and 
 | `src/lib/` | Thin shims onto `@mip0018/midnight`, which holds the wallet ↔ midnight-js adapter, the chain reads and the `v4` `VerifierKeyRemove` helper; `spike.ts` is the gate's own flow. |
 | `mip0018.adapter.ts`, `spike-oz-token.adapter.ts` | `mip0018` CLI adapters: SpikeEmitter (`deploy-and-publish --example toolchain-spike`) and SpikeOzToken (OZ `Ownable` witness `wit_OwnableSK`, owner secret only in the signer's 0600 private state). |
 
-What the gate shows about the pins: two official proof servers are needed (rc.8 reads ZKIR 3.1 circuits; only rc.6 makes DUST-spend proofs node 2.0.0-rc.4 accepts); the wallet SDK rc line cannot sync against indexer 4.4.0-rc.1; midnight-js maintenance updates use the `v3` key slot while ZKIR-v3 keys live in `v4`.
+What the gate shows about the pins: one official proof server (9.0.1) proves the contract circuits and the wallet's DUST spends; wallet SDK 2.0.0 syncs against indexer 4.4.101; midnight-js 5.0.0's `circuitMaintenanceTx` removes a ZKIR-v3 key from the `v4` slot (`spike:local`), as the package's signed `MaintenanceUpdate` does.
 
 `managed/` (compiler output) is not committed: builds are deterministic, and the verifier-key SHA-256s are recorded in
 [`docs/costs.json`](../../docs/costs.json). The Stagenet run is recorded in

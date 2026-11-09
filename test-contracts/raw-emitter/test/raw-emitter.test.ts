@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// TEST-ONLY raw emitter in compact-runtime 0.20.0: the owner emits exactly the given name/payload
+// TEST-ONLY raw emitter in compact-runtime 0.21.0: the owner emits exactly the given name/payload
 // (negative R-vectors, ignore names, capacity A2, two events in one call for S7); the reference codec
 // classifies each as the vector says; a non-owner call fails its assertion and emits nothing.
 

@@ -116,7 +116,7 @@ docker/run.sh exec 'npm run -w examples/openzeppelin check:readmes'        # REA
 docker/run.sh exec 'node examples/openzeppelin/scripts/payload-hex.ts --fill <example>/metadata.json'
 ```
 
-The tests run the compiled contracts in compact-runtime 0.20.0 with the harness of
+The tests run the compiled contracts in compact-runtime 0.21.0 with the harness of
 `packages/compact` (`@mip0018/compact/testing`), read the minted coins' and UTXOs' colors from the
 call's effects, and apply the emitted events with the reference consumer (`@mip0018/consumer`).
 Shared helpers: [`src/testing.ts`](src/testing.ts), [`src/expect.ts`](src/expect.ts).

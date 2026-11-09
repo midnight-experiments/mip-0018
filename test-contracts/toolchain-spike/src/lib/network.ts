@@ -15,9 +15,8 @@ export type NetworkConfig = {
   readonly indexerWs: string;
   readonly node: string;
   readonly nodeWs: string;
+  /** The proof server: contract circuits and the wallet's DUST spends. */
   readonly proofServer: string;
-  /** Proof server the wallet uses for DUST spends (defaults to proofServer). */
-  readonly walletProofServer: string;
   /** Expected genesis hash (chain_getBlockHash(0)); undefined for a fresh local chain. */
   readonly genesisHash?: string;
 };
@@ -40,7 +39,6 @@ export const stagenet = (): NetworkConfig => ({
   node: 'https://rpc.stagenet.shielded.tools',
   nodeWs: 'wss://rpc.stagenet.shielded.tools',
   proofServer: env('MIP0018_PROOF_SERVER_URL'),
-  walletProofServer: env('MIP0018_WALLET_PROOF_SERVER_URL', env('MIP0018_PROOF_SERVER_URL')),
   genesisHash: STAGENET_GENESIS,
 });
 
@@ -56,7 +54,6 @@ export const local = (): NetworkConfig => {
     node,
     nodeWs: toWs(node),
     proofServer: env('MIP0018_PROOF_SERVER_URL', 'http://proof-server:6300'),
-    walletProofServer: env('MIP0018_WALLET_PROOF_SERVER_URL', 'http://wallet-proof-server:6300'),
   };
 };
 
@@ -69,5 +66,4 @@ export const toProfile = (n: NetworkConfig): NetworkProfile =>
 export const toEndpoints = (n: NetworkConfig): SignerEndpoints => ({
   profile: toProfile(n),
   proofServer: n.proofServer,
-  walletProofServer: n.walletProofServer,
 });

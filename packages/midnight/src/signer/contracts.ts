@@ -3,8 +3,8 @@
 // Deploy, call and maintenance steps with before/after chain checks and a write-ahead submission journal.
 //
 // The transaction path is midnight-js's own: `deployContract`, `findDeployedContract(...).callTx.<circuit>()` and,
-// for ZKIR-v3 maintenance (midnight-js writes only the v3 slot), a ledger-level MaintenanceUpdate submitted with
-// midnight-js `submitTx`. Around it:
+// for maintenance, a ledger-level MaintenanceUpdate signed with the maintenance key (from the private-state file or a
+// key file, at its committee index) and submitted with midnight-js `submitTx`. Around it:
 //
 //   before   the step is skipped when the chain already shows it done (contract at the recorded address; the
 //            circuit's key already removed; the contract's metadata already holding exactly what this publish
@@ -13,7 +13,8 @@
 //            TTL has passed — only then may it be submitted again)
 //   journal  the midnight provider's submit is wrapped: the run record stores the transaction hash, identifiers,
 //            TTL, the deploy's contract address (and the maintenance key + private state go to the 0600 file)
-//            BEFORE the node sees the transaction
+//            BEFORE the node sees the transaction; a refusal raised there is kept by the journal itself, because
+//            midnight-js reports every provider failure as its own error with a rebuilt, redacted cause
 //   after    the step is `completed` only when the expected change is observed through the indexer (contract with
 //            every compiled operation; exactly the expected Misc events in that transaction; key gone)
 
@@ -166,16 +167,29 @@ function crashHook(run: Run, step: StepRecord): void {
   }
 }
 
+interface Journal {
+  onBeforeSubmit(tx: FinalizedTransaction): Promise<void>;
+  onSubmitted(tx: FinalizedTransaction, txId: string): Promise<void>;
+  /** The error the before-submission hook raised, as raised (midnight-js passes on only a rebuilt copy). */
+  failure?: unknown;
+}
+
 /** Journal hooks for one step: write-ahead before the node sees the transaction. */
 function journal(
   run: Run,
   step: StepRecord,
   extra: (tx: FinalizedTransaction, decoded: ReturnType<typeof decodeTransaction>) => Promise<void>,
-) {
-  return {
+): Journal {
+  const j: Journal = {
     onBeforeSubmit: async (tx: FinalizedTransaction) => {
-      const d = decodeTransaction(tx as never);
-      await extra(tx, d);
+      let d: ReturnType<typeof decodeTransaction>;
+      try {
+        d = decodeTransaction(tx as never);
+        await extra(tx, d);
+      } catch (e) {
+        j.failure = e;
+        throw e;
+      }
       const ttl = ttlOf(tx);
       step.tx = { hash: d.hash, identifiers: d.identifiers, ...(ttl ? { ttl } : {}) };
       step.state = 'submitting';
@@ -190,13 +204,10 @@ function journal(
       crashHook(run, step);
     },
   };
+  return j;
 }
 
-function providersFor(
-  run: Run,
-  hooks: ReturnType<typeof journal> | Record<string, never>,
-  artifacts: CompiledArtifacts = run.o.artifacts,
-): MidnightProviders {
+function providersFor(run: Run, hooks: Journal | Record<string, never>, artifacts: CompiledArtifacts = run.o.artifacts): MidnightProviders {
   return buildProviders(run.o.ep, run.o.session, artifacts, run.psp, hooks);
 }
 
@@ -364,7 +375,7 @@ export async function deployStep(
       throw new StepError('midnight-js reports another contract address than the journal', 'failed');
     note(step, `midnight-js: ${p.status} at block ${p.blockHeight}`);
   } catch (e) {
-    onPerformError(run, step, e);
+    onPerformError(run, step, hooks.failure ?? e);
   }
   return afterDeploy(run, step);
 }
@@ -456,8 +467,7 @@ export async function callStep(run: Run, input: CallInput): Promise<StepRecord> 
   const arts = input.artifacts ?? run.o.artifacts;
   const a = input.artifacts ? input.adapter : run.o.adapter;
   const privateStateId = run.record.contract.privateStateId;
-  if (privateStateId !== undefined) run.psp.setContractAddress(address);
-  let privateState = privateStateId !== undefined ? await run.psp.get(privateStateId) : undefined;
+  let privateState = privateStateId !== undefined ? await run.psp.forContract(address).get(privateStateId) : undefined;
   if (privateStateId !== undefined && (privateState === null || privateState === undefined) && a?.initialPrivateState) {
     // This signer has no private state for the contract (it did not deploy it): give it its own, as midnight-js
     // `findDeployedContract({ initialPrivateState })` would. For an Ownable contract that is a different secret,
@@ -494,8 +504,7 @@ export async function callStep(run: Run, input: CallInput): Promise<StepRecord> 
     const r = await fn(...args);
     note(step, `midnight-js: ${r.public.status} at block ${r.public.blockHeight}`);
   } catch (e) {
-    const already =
-      e instanceof AlreadyPresent || String((e as Error)?.message ?? '').includes('already holds exactly what this call would set');
+    const already = hooks.failure instanceof AlreadyPresent || e instanceof AlreadyPresent;
     if (already && !step.tx) {
       step.state = 'completed';
       step.skipped =
@@ -505,7 +514,7 @@ export async function callStep(run: Run, input: CallInput): Promise<StepRecord> 
       run.save();
       return step;
     }
-    onPerformError(run, step, e);
+    onPerformError(run, step, hooks.failure ?? e);
   }
   return afterCall(run, step);
 }
@@ -561,7 +570,7 @@ export async function removeVerifierKeyStep(run: Run, circuit: string, slot: 'v3
     )) as unknown as { status: string; blockHeight: number };
     note(step, `midnight-js submitTx: ${r.status} at block ${r.blockHeight}`);
   } catch (e) {
-    onPerformError(run, step, e);
+    onPerformError(run, step, hooks.failure ?? e);
   }
   return after();
 }
@@ -731,7 +740,7 @@ export async function insertVerifierKeyStep(run: Run, input: InsertInput): Promi
       run.save();
       throw new StepError(`${step.id}: rejected by the node: ${msg.slice(0, 300)}`, 'failed');
     }
-    onPerformError(run, step, e);
+    onPerformError(run, step, hooks.failure ?? e);
   }
   return after();
 }

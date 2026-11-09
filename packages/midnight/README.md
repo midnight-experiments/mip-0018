@@ -28,10 +28,10 @@ Two entry points:
 | Module | What it does |
 |---|---|
 | `secrets.ts` | Secrets only from file paths (regular file, mode ≤ 0600, no symlink); BIP-39 mnemonic → seed; hex seeds for local test wallets |
-| `wallet.ts` | Wallet SDK 2.0.0-beta.2 behind midnight-js 5.0.0-rc.2 providers (the 2.0.0-rc wallet line cannot sync against indexer 4.4.0-rc.1); complete sync (3 consecutive strictly-complete samples); DUST registration without double signing; `feeBlocksMargin` 5 |
+| `wallet.ts` | Wallet SDK 2.0.0 (seeds from `WalletSeeds.fromMasterSeed`) behind midnight-js 5.0.0 providers, transactions crossing as bytes; one proof server for the wallet's proofs; complete sync (3 consecutive strictly-complete samples); DUST registration without double signing; `feeBlocksMargin` 5 |
 | `providers.ts` | midnight-js providers for a compiled contract; the contract-circuit proof server wrapped with ≤ 4 concurrent proofs and retries on 408/429/502/504 |
-| `private-state.ts` | 0600 file for maintenance keys and witness private state (typed JSON for bytes and bigints) |
-| `maintenance.ts` | `VerifierKeyRemove` / `VerifierKeyInsert` in the `v4` slot for ZKIR-v3 circuits (midnight-js 5.0.0-rc.2 writes only `v3`), submitted with midnight-js `submitTx` |
+| `private-state.ts` | 0600 file for maintenance keys and witness private state, per-contract views (`forContract`) (typed JSON for bytes and bigints) |
+| `maintenance.ts` | `VerifierKeyRemove` / `VerifierKeyInsert` in the `v4` slot for ZKIR-v3 circuits, signed with a given maintenance key at its committee index, submitted with midnight-js `submitTx` |
 | `args.ts` | `--args` JSON → runtime values: circuit arguments with the compiler's types (`contract-info.json`), constructor arguments with a typed-JSON convention |
 | `adapter.ts` | Contract adapters (witnesses, private state, argument mapping, publish calls for `deploy-and-publish`) |
 | `records.ts`, `check.ts`, `contracts.ts` | midnight-js `deployContract` / `findDeployedContract().callTx`, a write-ahead journal on submission (hash, identifiers, TTL, contract address before the node sees the transaction), before-checks that skip completed work, reconciliation of an unknown outcome from the chain (never a blind resubmission), after-checks that mark a step completed only when the change is observed |

@@ -182,10 +182,15 @@ describe('private state and secrets', () => {
     await a.setFor('aa', 'Owner', { secretKey: Uint8Array.from([1, 2, 3]), n: 7n, m: new Map([['k', 1n]]) });
     expect((statSync(p).mode & 0o777).toString(8)).toBe('600');
     const b = filePrivateStateProvider(p);
-    b.setContractAddress('aa');
-    expect(await b.get('Owner')).toEqual({ secretKey: Uint8Array.from([1, 2, 3]), n: 7n, m: new Map([['k', 1n]]) });
+    expect(await b.forContract('aa').get('Owner')).toEqual({ secretKey: Uint8Array.from([1, 2, 3]), n: 7n, m: new Map([['k', 1n]]) });
+    // midnight-js compares contract addresses in lower case.
+    expect(await b.forContract('AA').get('Owner')).toEqual({ secretKey: Uint8Array.from([1, 2, 3]), n: 7n, m: new Map([['k', 1n]]) });
+    expect(await b.forContract('bb').get('Owner')).toBeNull();
     expect(await b.getSigningKey('aa')).toBe('deadbeef');
+    expect(await b.getSigningKey('AA')).toBe('deadbeef');
     expect(b.hasSigningKey('aa')).toBe(true);
+    await b.forContract('aa').remove('Owner');
+    expect(await filePrivateStateProvider(p).forContract('aa').get('Owner')).toBeNull();
     expect(decodeTyped(encodeTyped({ x: [1n, Uint8Array.from([255])] }))).toEqual({ x: [1n, Uint8Array.from([255])] });
   });
 

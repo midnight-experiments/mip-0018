@@ -79,7 +79,6 @@ export type Preflight = {
   indexerHash: string;
   proofServerVersion: string;
   proofVersions: string;
-  walletProofServerVersion: string;
   checkedAt: string;
 };
 
@@ -102,7 +101,6 @@ export const preflight = async (network: NetworkConfig): Promise<Preflight> => {
     indexerHash: tip.hash,
     proofServerVersion: (await http.getText(`${network.proofServer}/version`)).text,
     proofVersions: (await http.getText(`${network.proofServer}/proof-versions`)).text,
-    walletProofServerVersion: (await http.getText(`${network.walletProofServer}/version`)).text,
     checkedAt: new Date().toISOString(),
   };
 };

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // Byte equality: the compiled module circuits — default typed builders AND the
-// pure-circuit alternative — are executed in compact-runtime 0.20.0 and the Misc event each emits is
+// pure-circuit alternative — are executed in compact-runtime 0.21.0 and the Misc event each emits is
 // compared with the S1 fixtures (vectors/payload/*.json, vectors/state/S1*.json). Every emitted
 // payload is then decoded by the reference codec (round trip).
 

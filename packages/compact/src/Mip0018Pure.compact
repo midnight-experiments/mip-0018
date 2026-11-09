@@ -8,7 +8,7 @@
 //
 // Prefer the default module `Mip0018` (typed records serialized by Compact). This module
 // produces exactly the same bytes and exists because it does not use `serialize` on
-// non-event types: Compact 0.35.0 accepts that, but its standard-library documentation still
+// non-event types: Compact 0.36.0 accepts that, but its standard-library documentation still
 // says `serialize` "can only be instantiated for an event type". If a later compiler enforces
 // the documentation, this module keeps working. It is self-contained (it does not import
 // `Mip0018`) for the same reason.

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// examples/openzeppelin/multi-kind in compact-runtime 0.20.0 (no chain): one asset as kinds 1, 2
+// examples/openzeppelin/multi-kind in compact-runtime 0.21.0 (no chain): one asset as kinds 1, 2
 // and 3 under one domainSep and one symbol.
 //   * publishMetadata() emits three events in one call (kinds 1, 2, 3), each = metadata.json;
 //   * colors: the shielded coin and the unshielded UTXO have the SAME color,

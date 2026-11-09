@@ -24,7 +24,6 @@ const network: NetworkConfig = {
   node: 'https://rpc.stagenet.shielded.tools',
   nodeWs: 'wss://rpc.stagenet.shielded.tools',
   proofServer: 'unused',
-  walletProofServer: 'unused',
   genesisHash: STAGENET_GENESIS,
 };
 

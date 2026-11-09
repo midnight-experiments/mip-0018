@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Runs compiled contracts in compact-runtime 0.20.0 against ONE shared contract state, as the chain does after a
+// Runs compiled contracts in compact-runtime 0.21.0 against ONE shared contract state, as the chain does after a
 // VerifierKeyInsert: the legacy contract's constructor and circuits create and change the state; a circuit of the
 // upgrade-only source then runs against that same state and address. No chain, no proofs.
 import * as rt from '@midnight-ntwrk/compact-runtime';

@@ -38,7 +38,6 @@ try {
           outputs: [{ amount: night, receiverAddress: await receiver.facade.unshielded.getAddress(), type: nativeToken().raw }],
         },
       ] as never,
-      { shieldedSecretKeys: sender.shieldedSecretKeys, dustSecretKey: sender.dustSecretKey },
       { ttl: new Date(Date.now() + 30 * 60_000) },
     );
     const signed = await sender.facade.signRecipe(recipe, (p) => sender.keystore.signDataAsync(p));

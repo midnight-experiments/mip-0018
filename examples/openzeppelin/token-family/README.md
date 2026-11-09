@@ -87,7 +87,7 @@ group (`metadata.json` → `expected`).
 docker/run.sh exec 'npx vitest run examples/openzeppelin/token-family'
 ```
 
-[`test/token-family.test.ts`](test/token-family.test.ts), in compact-runtime 0.20.0 (no chain), with the
+[`test/token-family.test.ts`](test/token-family.test.ts), in compact-runtime 0.21.0 (no chain), with the
 reference consumer (`@mip0018/consumer`):
 
 | Test | Shows |

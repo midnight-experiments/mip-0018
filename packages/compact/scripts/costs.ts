@@ -6,9 +6,9 @@
 //   * k and rows: `zkir-v3 mock-compile` (Compact 0.36.0, full keys);
 //   * prover / verifier key sizes and the verifier key's SHA-256 (keys are deterministic, so a
 //     rebuild must reproduce them);
-//   * proving time on this host: the circuit is executed in compact-runtime 0.20.0 and its proof
+//   * proving time on this host: the circuit is executed in compact-runtime 0.21.0 and its proof
 //     preimage is proved by the official proof server (`MIP0018_PROOF_SERVER_URL`, e.g. the local
-//     stack's 9.0.0-rc.8) PROVE_RUNS times; the median is reported. Skipped when the variable is unset.
+//     stack's 9.0.1) PROVE_RUNS times; the median is reported. Skipped when the variable is unset.
 //
 //   docker/run.sh exec 'node packages/compact/scripts/costs.ts'                       # sizes only
 //   MIP0018_DOCKER_NETWORK=$MIP0018_STACK_NETWORK MIP0018_DOCKER_ENV="-e MIP0018_PROOF_SERVER_URL=http://proof-server:6300" \

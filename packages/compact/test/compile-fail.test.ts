@@ -40,7 +40,7 @@ const CASES: [fixture: string, message: string | RegExp][] = [
   ],
 ];
 
-describe('compile-time rejection (Compact 0.35.0, ZKIR v3)', () => {
+describe('compile-time rejection (Compact 0.36.0)', () => {
   it.each(CASES)('%s is rejected', (fixture, message) => {
     const out = compileError(join(DIR, `${fixture}.compact`));
     if (typeof message === 'string') expect(out).toContain(message);

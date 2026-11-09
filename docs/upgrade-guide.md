@@ -116,7 +116,7 @@ docker/run.sh exec 'npm run -s check-layout -w examples/upgrade-existing-contrac
 
 [`scripts/check-layout.ts`](../examples/upgrade-existing-contract/scripts/check-layout.ts) compares the
 **compiler's own record of the layout** (`compiler/contract-info.json` → `ledger`: name, index,
-storage, type — compactc 0.35.0 writes it, including imported modules' fields) field by field, and
+storage, type — compactc 0.36.0 writes it, including imported modules' fields) field by field, and
 exits 1 on any difference: reordered, renamed, retyped, missing or extra fields, another storage kind,
 or an imported module that brings ledger fields. `export`/`sealed` are reported but do not change
 places. `mip0018 upgrade` runs the same comparison, plus an on-chain check: it decodes the **deployed
@@ -158,10 +158,10 @@ docker/signer.sh mip0018 -- upgrade --network <id> --record <the contract's run 
 Facts the tool relies on (ledger v9, `midnight-ledger` 9.1.0.0-rc.3):
 
 - **Key versions.** A contract operation keeps verifier keys in versioned slots: `v3` for ZKIR v2
-  circuits (the Compact default) and `v4` for ZKIR v3 circuits (`--feature-zkir-v3`). Insert at the
-  version of the circuit's proving system; a mismatch is included but fails. midnight-js 5.0.0-rc.2's
-  `insertVerifierKey()` / `submitInsertVerifierKeyTx` always write `v3`, so the tool builds the
-  `MaintenanceUpdate` itself with the right version and submits it through midnight-js `submitTx`.
+  circuits and `v4` for ZKIR v3 circuits (Compact 0.36.0's only backend). Insert at the version of the
+  circuit's proving system; a mismatch is included but fails. midnight-js 5.0.0's `insertVerifierKey()`
+  writes `v4`; the tool builds the `MaintenanceUpdate` itself (same `v4` slot) so that it can sign with a
+  key file at the key's committee index, and submits it through midnight-js `submitTx`.
   Existing circuits keep their own slot: ledger v9 verifies both
   generations, so a contract compiled to ZKIR v2 can hold `v3` keys for its original circuits and a `v4`
   key for the new one (not exercised here: the template's `mint` is ZKIR v3 too).
@@ -203,7 +203,7 @@ color), and `lookup` resolves that color to the metadata published after the upg
 | Threshold > 1 | Needs that many committee signatures on one update; `mip0018 upgrade` signs with one key (collect the others with the ledger API) |
 | Ledger layout must be identical | The upgrade source repeats every ledger declaration verbatim; a mismatch is invisible on chain (see Step 2) |
 | No new ledger fields | No publish-once flag; reuse existing access control, or constant payload + remove the key after the call |
-| Key versions | Insert at the slot of the circuit's proving system (`v4` for ZKIR v3); midnight-js 5.0.0-rc.2 writes only `v3` |
+| Key versions | Insert at the slot of the circuit's proving system (`v4` for ZKIR v3, which midnight-js 5.0.0 writes too) |
 | No overwrite | An existing `publishMetadata` must be removed first; the ledger refuses an insert over it (see the run below) |
 | One circuit per run | The tool inserts one circuit per `upgrade` run (the ledger accepts several `SingleUpdate`s in one update); export only inserted circuits from the upgrade source |
 | Trust | The maintenance authority can remove and insert **any** circuit at any time — including `publishMetadata` and the token's own circuits. Whoever holds it controls the token's metadata as much as the owner check does |

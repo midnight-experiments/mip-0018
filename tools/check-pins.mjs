@@ -126,7 +126,8 @@ const installedCopies = (name) => {
   };
   const visitPackage = (pkgDir, pkgName) => {
     const manifest = join(pkgDir, 'package.json');
-    if (pkgName === name && existsSync(manifest)) out.push([relative(repoRoot, pkgDir), JSON.parse(readFileSync(manifest, 'utf8')).version]);
+    if (pkgName === name && existsSync(manifest))
+      out.push([relative(repoRoot, pkgDir), JSON.parse(readFileSync(manifest, 'utf8')).version]);
     visit(join(pkgDir, 'node_modules'));
   };
   visit(nodeModules);
@@ -140,7 +141,9 @@ else {
     if (want === undefined) fail(`toolchain.json npm has no pin for ${name}`);
     const copies = installedCopies(name);
     if (copies.length !== 1)
-      fail(`${name}: ${copies.length} installed copies (${copies.map(([p, v]) => `${p}@${v}`).join(', ') || 'none'}), exactly one required`);
+      fail(
+        `${name}: ${copies.length} installed copies (${copies.map(([p, v]) => `${p}@${v}`).join(', ') || 'none'}), exactly one required`,
+      );
     else if (copies[0][1] !== want) fail(`${name}: installed ${copies[0][1]}, toolchain.json says ${want}`);
     else installChecked++;
   }

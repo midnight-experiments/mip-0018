@@ -64,7 +64,6 @@ import { printCheckEvent } from './wallet-free.ts';
 const SIGNER_OPTIONS = {
   ...NETWORK_OPTIONS,
   'proof-server': { type: 'string' },
-  'wallet-proof-server': { type: 'string' },
   'mnemonic-file': { type: 'string' },
   'seed-file': { type: 'string' },
   'dev-genesis-wallet': { type: 'boolean', default: false },
@@ -78,8 +77,8 @@ Signer options (signer container only):
   --mnemonic-file <path>       BIP-39 mnemonic file, mode 0600 (or MIP0018_MNEMONIC_FILE)
   --seed-file <path>           hex seed file, local undeployed chains only (or MIP0018_SEED_FILE)
   --dev-genesis-wallet         the local dev chain's public genesis wallet (undeployed only)
-  --proof-server <url>         contract circuits (or MIP0018_PROOF_SERVER_URL; official 9.0.0-rc.8)
-  --wallet-proof-server <url>  DUST spends (or MIP0018_WALLET_PROOF_SERVER_URL; official 9.0.0-rc.6)
+  --proof-server <url>         contract circuits and the wallet's DUST spends (or MIP0018_PROOF_SERVER_URL; official
+                               midnightntwrk/proof-server 9.0.1)
   --state-dir <dir>            private state directory outside the repository (or MIP0018_STATE_DIR)
   --private-state <file>       maintenance keys + witness private state (default <state-dir>/mip0018-private-state.json)
   --wallet-cache <file>        optional 0600 wallet sync cache outside the repository (restores the sub-wallets; on a
@@ -89,9 +88,8 @@ Signer options (signer container only):
 function endpoints(v: Values): SignerEndpoints {
   const profile = profileFrom(v);
   const proofServer = str(v, 'proof-server') ?? process.env.MIP0018_PROOF_SERVER_URL;
-  const walletProofServer = str(v, 'wallet-proof-server') ?? process.env.MIP0018_WALLET_PROOF_SERVER_URL ?? proofServer;
   if (!proofServer) throw new UsageError('--proof-server (or MIP0018_PROOF_SERVER_URL) is required: there is no public proof server');
-  return { profile, proofServer, walletProofServer: walletProofServer! };
+  return { profile, proofServer };
 }
 
 async function wallet(v: Values, ep: SignerEndpoints, log: (m: string, x?: unknown) => void): Promise<WalletSession> {

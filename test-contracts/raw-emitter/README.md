@@ -27,7 +27,7 @@ docker/run.sh exec 'npm run -w test-contracts/raw-emitter compile -- --keys'  # 
 docker/run.sh exec 'npx vitest run test-contracts/raw-emitter'
 ```
 
-Tests (`test/raw-emitter.test.ts`, compact-runtime 0.20.0): the owner emits A1, A2a/b, R1–R6 and
+Tests (`test/raw-emitter.test.ts`, compact-runtime 0.21.0): the owner emits A1, A2a/b, R1–R6 and
 I1/I2 vectors byte-for-byte and `@mip0018/codec` classifies each as the vector says; `emitTwo` emits a
 malformed then a valid event (S7); a non-owner call fails with `Ownable: caller is not the owner` and
 emits nothing. Note what the wire does: trailing zero bytes of `name ‖ payload` are trimmed, content
