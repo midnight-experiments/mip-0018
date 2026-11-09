@@ -1,0 +1,51 @@
+{
+  "identities": [
+    {
+      "domainSep": "0x1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "colored": false,
+      "common": {
+        "name": "Acme",
+        "symbol": "ACME",
+        "decimals": 6
+      },
+      "fields": {
+        "73796d626f6c": {
+          "key_text": "symbol",
+          "valType": 1,
+          "value_hex": "41434d45",
+          "usable": true
+        },
+        "646563696d616c73": {
+          "key_text": "decimals",
+          "valType": 2,
+          "value_hex": "06000000000000000000000000000000",
+          "usable": true
+        },
+        "6e616d65": {
+          "key_text": "name",
+          "valType": 1,
+          "value_hex": "41636d65",
+          "usable": true
+        }
+      }
+    }
+  ],
+  "groups": [
+    {
+      "symbol": "ACME",
+      "members": [
+        {
+          "domainSep": "0x1111111111111111111111111111111111111111111111111111111111111111",
+          "kind": 3
+        }
+      ]
+    }
+  ],
+  "counts": {
+    "events": 22,
+    "accepted": 8,
+    "rejected": 10,
+    "ignored": 4
+  }
+}

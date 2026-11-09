@@ -44,7 +44,7 @@ Every MIP section below has code and tests, on a local chain where a chain is in
 | Testing (normative vectors) | [`vectors/`](vectors/README.md): 78 normative + 49 informative, JSON Schemas, independent generator, [runner contract](vectors/README.md#runner-contract) (S8, S9 and S12a as the MIP scopes them: a consumer without display, groups or images passes; S10b–S10e carry the test standard they define) | reference consumer 78/78 ([`vectors.test.ts`](packages/consumer/test/vectors.test.ts)), [runner rules](packages/consumer/test/runner-rules.test.ts); [generator `--check`](vectors/test/generate.test.ts) | done |
 | Implementation Plan 1 — Compact module and example issuers | [`packages/compact`](packages/compact/README.md), [`examples/`](examples/minimal/README.md) | as above | done |
 | Implementation Plan 2 — vectors and a reference decoder; a second reader | [`vectors/`](vectors/README.md), [`packages/codec`](packages/codec/README.md), [`packages/consumer`](packages/consumer/README.md) | as above | done; a second, independent consumer: not provided |
-| Implementation Plan 3 — a publisher on a public test network | network profiles `preview` / `preprod` / `mainnet` in [`packages/midnight`](packages/midnight/README.md); case folders from [`deployments/tools/prepare-cases.ts`](deployments/tools/prepare-cases.ts), network identity from [`deployments/tools/network-identity.ts`](deployments/tools/network-identity.ts) | [profiles and tokens](packages/midnight/test/network.test.ts), [case generator](packages/cli/test/cases.test.ts); local chain: [`token-e2e.sh`](packages/cli/test/e2e/token-e2e.sh); `recheck` per case | done |
+| Implementation Plan 3 — a publisher on a public test network | network profiles `preview` / `preprod` / `mainnet` in [`packages/midnight`](packages/midnight/README.md); case folders from [`deployments/tools/prepare-cases.ts`](deployments/tools/prepare-cases.ts) (preview: [`deployments/preview`](deployments/preview/README.md)), network identity from [`deployments/tools/network-identity.ts`](deployments/tools/network-identity.ts) | [profiles and tokens](packages/midnight/test/network.test.ts), [case generator](packages/cli/test/cases.test.ts); local chain: [`token-e2e.sh`](packages/cli/test/e2e/token-e2e.sh); `recheck` per case | done |
 | Implementation Plan 4 — propose the module to OpenZeppelin | [`examples/openzeppelin`](examples/openzeppelin/README.md) shows the extension | — | not pursued: this repository makes no upstream contributions |
 | Implementation Plan 5 — upgrade template on a public test network | [`examples/upgrade-existing-contract`](examples/upgrade-existing-contract/README.md) | as above | done |
 | Every MUST / SHOULD | [`docs/conformance-matrix.md`](docs/conformance-matrix.md) | `docker/run.sh check:conformance-matrix` | 40 rows: 33 covered, 7 not testable here |
@@ -116,7 +116,8 @@ vectors/           78 normative + 49 informative test vectors, JSON Schemas, gen
 packages/          compact (the Compact module), codec, consumer, midnight (chain access, scanner, signer), cli (mip0018)
 examples/          minimal, openzeppelin/*, upgrade-existing-contract, publish-and-emit, verify
 test-contracts/    toolchain-spike (toolchain gate), raw-emitter (TEST ONLY: malformed and foreign events), scanner-mints
-deployments/       tools/ — case folders per public network (prepare-cases.ts) and network identity (network-identity.ts)
+deployments/       preview/ — the cases on preview (case folders, run records, observations); tools/ — case folders per
+                   public network (prepare-cases.ts) and network identity (network-identity.ts)
 tools/             repository checks (pins, MIP hash, conformance matrix, Markdown links, secrets)
 ```
 
