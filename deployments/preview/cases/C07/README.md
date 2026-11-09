@@ -80,31 +80,34 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/C07
 ```
 
-## Transactions
+## Transactions (Preview, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
-| `deploy` | — | — | — |
-| `A2a` | — | — | — |
-| `R1` | — | — | — |
-| `A2b` | — | — | — |
-| `R2a` | — | — | — |
-| `A3a` | — | — | — |
-| `R3a` | — | — | — |
-| `A3b` | — | — | — |
-| `R3b` | — | — | — |
-| `A3c` | — | — | — |
-| `R4a` | — | — | — |
-| `A4b` | — | — | — |
-| `R5a` | — | — | — |
-| `A5a` | — | — | — |
-| `R5e` | — | — | — |
-| `A5b` | — | — | — |
-| `R5h` | — | — | — |
-| `A5c` | — | — | — |
-| `R6b` | — | — | — |
-| `I1a` | — | — | — |
-| `I1b` | — | — | — |
-| `I2a` | — | — | — |
-| `I2b` | — | — | — |
+Contract `RawEmitter` at `cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9`; signer mn_addr_preview1wlhw0m3nh29lfmk0tj4lvfh2wfsekt8nns9h57gpyfe0az7e9fts2x420z.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `deploy` | deploy | `329c4ef3d6573659e20b67e658758b192ec372fa2fbd6ace21b34f252baac319` | 41777 (`5410c44a866b6cc5…`) | SUCCESS | 2,828,986,057,142,858 | 2.829 |
+| `A2a` | call `emitRaw` | `0f85fd3dec9cd02623eee514365be26f19e5516773ba87497358a37c3797b5b2` | 41785 (`1ac3dbabe406d8a0…`) | SUCCESS | 223,732,114,285,715 | 0.224 |
+| `R1` | call `emitRaw` | `d19121885e8b9b8fd79e4a460bd9b71dbcccee8dadc1e5bae6f3f823a7c6bd20` | 41803 (`17f271a6327c73f1…`) | SUCCESS | 217,344,685,714,286 | 0.217 |
+| `A2b` | call `emitRaw` | `42e4037456a182ecf30a3a7b8978663c3017f546697bb37f98b408ab35c08c82` | 41810 (`0ac7eb040714e2c6…`) | SUCCESS | 223,744,457,142,858 | 0.224 |
+| `R2a` | call `emitRaw` | `27f28a43ba8ab7796d8cce0112efee962d6fcc81c1c94b02b5407069e2453243` | 41817 (`d469f1c5fcd2719c…`) | SUCCESS | 223,738,285,714,286 | 0.224 |
+| `A3a` | call `emitRaw` | `e63e1845bb0ac07672a542a1828cf4ed8541fe6dde6fcfff503b7826027634ec` | 41824 (`1e08d6d3118cfc20…`) | SUCCESS | 217,961,828,571,429 | 0.218 |
+| `R3a` | call `emitRaw` | `a8ed02eff2f68d1610407459ad2abc66eda3a4cc0a9774b4cc89569db01539bd` | 41831 (`804d3f5d37aa2891…`) | SUCCESS | 217,406,400,000,001 | 0.217 |
+| `A3b` | call `emitRaw` | `f4224fa667eb076d5951a0123d2232b18e9177481f306dbe39083c5a5fad5348` | 41838 (`c5b4d2ce2f68cb0d…`) | SUCCESS | 217,388,342,857,143 | 0.217 |
+| `R3b` | call `emitRaw` | `52888af7c5eb9b1e891359bab4b64759619876f6497429313bfef54e2e897b23` | 41846 (`48a92448a0d6b5d6…`) | SUCCESS | 223,744,457,142,858 | 0.224 |
+| `A3c` | call `emitRaw` | `4c21bd502275fe47ccc54dbc9615a43d81a1522f5e757dd7dfa80d84cc2cada4` | 41856 (`c90a25219bc65d49…`) | SUCCESS | 217,400,228,571,429 | 0.217 |
+| `R4a` | call `emitRaw` | `25b4d4b93257aa97791f2b2fbf697deb11be0b7d95fc822695960571d112e0b6` | 41867 (`c197497283a250d2…`) | SUCCESS | 219,097,371,428,572 | 0.219 |
+| `A4b` | call `emitRaw` | `8455e6dbc2c5d9970aaf14f9ebac0c9976bf3b29e7b08ded396c26fd242463ce` | 41875 (`69e292e397eb4400…`) | SUCCESS | 217,875,428,571,429 | 0.218 |
+| `R5a` | call `emitRaw` | `b5d7fd79f6264c96ec732687c13c465a1f5b822264c0e8ea79e3007aa7e27a9c` | 41882 (`aa2aefb748dfc073…`) | SUCCESS | 217,906,285,714,286 | 0.218 |
+| `A5a` | call `emitRaw` | `900f441d5889bdd119af1858d47453fd5d38a3190240414149e5f3d1e375de82` | 41889 (`a0b8381a79f336b0…`) | SUCCESS | 217,906,285,714,286 | 0.218 |
+| `R5e` | call `emitRaw` | `4941d190dea30d5fd17431d53ff27e744e22f28e415c6da34d7e466b6654e43e` | 41896 (`d362809a5a8fce76…`) | SUCCESS | 217,919,085,714,286 | 0.218 |
+| `A5b` | call `emitRaw` | `4c9a087ba4ad134faa2cad67f39d61939772b611962cf62fac8429427d2c5714` | 41903 (`255766e39eb28dfa…`) | SUCCESS | 217,900,114,285,715 | 0.218 |
+| `R5h` | call `emitRaw` | `34c0b6e4a090ffa0422d859b2c5a6da97eaa70e7641371e574ffe6f5e76704fe` | 41910 (`e4b1d56e24ad08e8…`) | SUCCESS | 217,394,514,285,715 | 0.217 |
+| `A5c` | call `emitRaw` | `9619810e46b61ebe03ef84d2959ce40881b811fb6bbe179364f18ee523eb74aa` | 41917 (`d79ec5095500e0a1…`) | SUCCESS | 217,937,142,857,143 | 0.218 |
+| `R6b` | call `emitRaw` | `df5ae918ce72a9ae9dc65406445e5b675593857f131263ecf4db86ccc53b4d62` | 41925 (`2772efd5f1b12178…`) | SUCCESS | 217,875,428,571,429 | 0.218 |
+| `I1a` | call `emitRaw` | `49d62aae90ec0948313e86f3a44be2f60d361049a4bb7c0210cfc1229235bf8e` | 41932 (`0660756139eec368…`) | SUCCESS | 219,131,657,142,858 | 0.219 |
+| `I1b` | call `emitRaw` | `ade1ec0c24fcfaae99c9e9e7018d05e13317d0547ae712ac36a05466a548b04d` | 41939 (`ffe00db8d4e1293b…`) | SUCCESS | 217,338,971,428,572 | 0.217 |
+| `I2a` | call `emitRaw` | `5a0a3da06ae2161c278a083563066b9a3008ff2821b88571e9fd4c637403a281` | 41946 (`d2a8cae1baa7d50f…`) | SUCCESS | 219,097,371,428,572 | 0.219 |
+| `I2b` | call `emitRaw` | `64e92d745579945b6346be7ed9e3991fe39cdd370b418e238ca88f0d0781a304` | 41952 (`cb4267a93b38187a…`) | SUCCESS | 219,091,657,142,858 | 0.219 |
+| **total** | | | | | **7,647,918,171,428,584** | **7.648** |
 
