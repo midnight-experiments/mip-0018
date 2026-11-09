@@ -36,10 +36,13 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/C08
 ```
 
-## Transactions
+## Transactions (Preview, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
-| `deploy` | — | — | — |
-| `emit-two` | — | — | — |
+Contract `RawEmitter` at `252964661b893845299864a5f83b75d5bd2b6d6019a59d0befb6a3ba34a210fd`; signer mn_addr_preview1wlhw0m3nh29lfmk0tj4lvfh2wfsekt8nns9h57gpyfe0az7e9fts2x420z.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `deploy` | deploy | `4b143d5411e3a798e01a9c45d54ecb4dcbb52e9b57218413858e7bca9e74444e` | 41983 (`5cdfae0ed48e31f5…`) | SUCCESS | 2,828,986,057,142,858 | 2.829 |
+| `emit-two` | call `emitTwo` | `fc8be601830183286d6f564ae8d754168cf6032f64099af424396fad6db1fb2c` | 41993 (`6af6764a4edca05b…`) | SUCCESS | 229,810,971,428,572 | 0.230 |
+| **total** | | | | | **3,058,797,028,571,430** | **3.059** |
 
