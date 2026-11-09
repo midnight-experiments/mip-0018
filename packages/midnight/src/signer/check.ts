@@ -11,9 +11,9 @@
 import { ContractState } from '@midnightntwrk/ledger-v9';
 import { MetadataState } from '@mip0018/consumer';
 import { hexToBytes, normHex } from '../hex.ts';
-import { Indexer, type IndexedMiscEvent, type IndexedTransaction } from '../indexer.ts';
+import type { IndexedMiscEvent, IndexedTransaction } from '../indexer.ts';
 import { reduceEvents } from '../list.ts';
-import type { NetworkProfile } from '../network.ts';
+import { indexerFor, type NetworkProfile } from '../network.ts';
 import { classify } from '../check-event.ts';
 import { operationsWithKey } from './maintenance.ts';
 
@@ -23,8 +23,6 @@ export interface ContractView {
   block?: { height: number; hash: string };
   txHash?: string;
 }
-
-export const indexerFor = (p: NetworkProfile) => new Indexer(p.indexer, p.indexerWs);
 
 export async function contractView(profile: NetworkProfile, address: string): Promise<ContractView> {
   const s = await indexerFor(profile).contractState(address);

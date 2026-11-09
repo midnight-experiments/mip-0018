@@ -3,36 +3,13 @@
 // Reading wallet secrets. Secrets are only ever given as file PATHS, read here,
 // and never printed: every error message below names the file, never its content.
 
-import {
-  chmodSync,
-  closeSync,
-  constants,
-  fstatSync,
-  lstatSync,
-  mkdirSync,
-  openSync,
-  readFileSync,
-  renameSync,
-  writeFileSync,
-} from 'node:fs';
+import { chmodSync, mkdirSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { mnemonicToSeedSync, validateMnemonic } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english.js';
+import { readProtectedFile } from '../protected-file.ts';
 
-/** Reads a protected file: a regular file (not a symlink), not readable by group or others. */
-export const readProtectedFile = (path: string): Buffer => {
-  const link = lstatSync(path);
-  if (link.isSymbolicLink()) throw new Error(`${path}: refusing a symbolic link`);
-  const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
-  try {
-    const st = fstatSync(fd);
-    if (!st.isFile()) throw new Error(`${path}: not a regular file`);
-    if ((st.mode & 0o077) !== 0) throw new Error(`${path}: mode must not grant group/other access (chmod 600)`);
-    return readFileSync(fd);
-  } finally {
-    closeSync(fd);
-  }
-};
+export { readProtectedFile };
 
 /**
  * Reads a BIP-39 mnemonic file (12-24 English words) and returns the 64-byte

@@ -14,9 +14,8 @@
 import { MetadataState, type IdentityView, type SymbolGroup } from '@mip0018/consumer';
 import { hexToBytes, normAddress, normHex, zeroExtendHex } from './hex.ts';
 import { HttpClient } from './http.ts';
-import { Indexer, type IndexedMiscEvent } from './indexer.ts';
-import { checkIdentity, type NetworkProfile } from './network.ts';
-import { NodeRpc } from './rpc.ts';
+import type { IndexedMiscEvent } from './indexer.ts';
+import { checkIdentity, httpFor, indexerFor, rpcFor, type NetworkProfile } from './network.ts';
 import { tokenType } from './color.ts';
 import { classify } from './check-event.ts';
 
@@ -100,9 +99,9 @@ export function reduceEvents(
 
 export async function listMetadata(o: ListOptions): Promise<ListReport> {
   const contract = normAddress(o.contract);
-  const http = o.http ?? new HttpClient({ minIntervalMs: o.profile.minIntervalMs });
-  const indexer = new Indexer(o.profile.indexer, o.profile.indexerWs, http);
-  const rpc = new NodeRpc(o.profile.rpc, http);
+  const http = o.http ?? httpFor(o.profile);
+  const indexer = indexerFor(o.profile, http);
+  const rpc = rpcFor(o.profile, http);
   const genesis = await checkIdentity(o.profile, http);
   const tip = await indexer.latestBlock();
   const toBlock = o.toBlock === undefined ? tip.height : Math.min(o.toBlock, tip.height);

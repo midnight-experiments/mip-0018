@@ -14,10 +14,13 @@
 //   failed       included but failed, or the after-check contradicts the expectation
 //
 // Records never contain a secret: no mnemonic, seed, signing key or private state (those stay in the signer's 0600
-// private-state file).
+// private-state file), and no URL with its query string — the endpoint URLs and every message (step errors, skip
+// reasons, attempt notes) go through the redaction of redact.ts on every save, so a library error that quoted a
+// token-bearing URL is written without the token.
 
 import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { toJson } from '../hex.ts';
+import { redactUrl, scrubSecrets } from '../redact.ts';
 
 export type StepState = 'pending' | 'submitting' | 'submitted' | 'unknown' | 'completed' | 'failed';
 export type StepKind = 'deploy' | 'call' | 'verifier-key-remove' | 'verifier-key-insert';
@@ -55,7 +58,15 @@ export interface RunRecord {
   schema: 1;
   createdAt: string;
   updatedAt: string;
-  network: { id: string; networkId: string; genesisHash: string; indexer: string; rpc: string };
+  network: {
+    id: string;
+    networkId: string;
+    genesisHash: string;
+    /** Hash of block 1 when the record was created: a later run on a network re-created from the same genesis is refused. */
+    chainInstance?: string;
+    indexer: string;
+    rpc: string;
+  };
   contract: {
     name: string;
     managedDir: string;
@@ -97,7 +108,19 @@ export function loadRecord(path: string): RunRecord | undefined {
   return r;
 }
 
+/** The record's endpoint URLs and messages redacted (in place). */
+function redactRecord(r: RunRecord): void {
+  r.network.indexer = redactUrl(r.network.indexer);
+  r.network.rpc = redactUrl(r.network.rpc);
+  for (const s of r.steps) {
+    if (s.error !== undefined) s.error = scrubSecrets(s.error);
+    if (s.skipped !== undefined) s.skipped = scrubSecrets(s.skipped);
+    for (const a of s.attempts) a.event = scrubSecrets(a.event);
+  }
+}
+
 export function saveRecord(path: string, r: RunRecord): void {
+  redactRecord(r);
   r.updatedAt = new Date().toISOString();
   const tmp = `${path}.tmp-${process.pid}`;
   writeFileSync(tmp, `${toJson(r)}\n`);

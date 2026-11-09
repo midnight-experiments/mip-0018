@@ -25,8 +25,8 @@ import { EVENT_NAME_TEXT } from '@mip0018/codec';
 import { tokenTypeHex } from './color.ts';
 import { normHex } from './hex.ts';
 import { HttpClient, realSleep } from './http.ts';
-import { Indexer, type ScannedBlock } from './indexer.ts';
-import { checkIdentity, type NetworkProfile } from './network.ts';
+import type { ScannedBlock } from './indexer.ts';
+import { checkIdentity, httpFor, indexerFor, type NetworkProfile } from './network.ts';
 import { applied, decodeTransaction } from './raw.ts';
 import { classify } from './check-event.ts';
 
@@ -253,8 +253,8 @@ export interface ScanResult {
 
 export async function scan(o: ScanOptions): Promise<ScanResult> {
   const log = o.log ?? (() => {});
-  const http = o.http ?? new HttpClient({ minIntervalMs: o.profile.minIntervalMs });
-  const indexer = new Indexer(o.profile.indexer, o.profile.indexerWs, http);
+  const http = o.http ?? httpFor(o.profile);
+  const indexer = indexerFor(o.profile, http);
   const genesis = await checkIdentity(o.profile, http);
   let s = loadState(o.stateDir);
   if (s) {

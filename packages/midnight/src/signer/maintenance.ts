@@ -24,13 +24,12 @@ import {
   type ContractMaintenanceAuthority,
   type SigningKey,
 } from '@midnightntwrk/ledger-v9';
-import { Indexer } from '../indexer.ts';
-import type { NetworkProfile } from '../network.ts';
+import { indexerFor, type NetworkProfile } from '../network.ts';
 
 export type KeySlot = 'v3' | 'v4';
 
 export const currentContractState = async (profile: NetworkProfile, address: string): Promise<ContractState> => {
-  const s = await new Indexer(profile.indexer, profile.indexerWs).contractState(address);
+  const s = await indexerFor(profile).contractState(address);
   if (!s) throw new Error(`contract ${address} not found`);
   return ContractState.deserialize(Buffer.from(s.state, 'hex'));
 };

@@ -2,7 +2,8 @@
 //
 // `mip0018 check-event`: a wallet-free check of one MIP-0018 event emission (network + contract + transaction).
 //
-//  1. identity       node genesis = the profile's (Stagenet pinned)
+//  1. identity       node genesis = the profile's (pinned for the public networks); block 1 = its chain instance
+//                    when the profile has one
 //  2. indexer        the contract's Misc events in that transaction + the transaction (raw bytes, result, block)
 //  3. raw tx         ledger-v9: recomputed hash and identifiers equal the indexer's; every indexed event equals a
 //                    `log` op of the contract in the raw transaction (same segment, same zero-extended name ‖ payload,
@@ -31,10 +32,10 @@ import {
 } from '@mip0018/codec';
 import { bytesToHex, hexToBytes, normAddress, normHex, normTxHash, zeroExtendHex } from './hex.ts';
 import { HttpClient } from './http.ts';
-import { Indexer, type IndexedMiscEvent, type IndexedTransaction, type BlockInfo } from './indexer.ts';
-import { checkIdentity, type NetworkProfile } from './network.ts';
+import type { IndexedMiscEvent, IndexedTransaction, BlockInfo } from './indexer.ts';
+import { checkIdentity, httpFor, indexerFor, rpcFor, type NetworkProfile } from './network.ts';
 import { decodeEventRaw, decodeTransaction, miscLogsOf, partApplied, transactionHashInExtrinsic, type DecodedTransaction } from './raw.ts';
-import { NodeRpc } from './rpc.ts';
+import type { NodeRpc } from './rpc.ts';
 
 export type Outcome = 'ok' | 'mismatch' | 'not-found' | 'not-indexed';
 export const EXIT: Record<Outcome, number> = { ok: 0, mismatch: 1, 'not-found': 3, 'not-indexed': 4 };
@@ -222,9 +223,9 @@ async function findPending(rpc: NodeRpc, txHash: string, finalizedHeight: number
 export async function checkEvent(o: CheckEventOptions): Promise<CheckEventReport> {
   const contract = normAddress(o.contract);
   const txHash = normTxHash(o.tx);
-  const http = o.http ?? new HttpClient({ minIntervalMs: o.profile.minIntervalMs });
-  const indexer = new Indexer(o.profile.indexer, o.profile.indexerWs, http);
-  const rpc = new NodeRpc(o.profile.rpc, http);
+  const http = o.http ?? httpFor(o.profile);
+  const indexer = indexerFor(o.profile, http);
+  const rpc = rpcFor(o.profile, http);
   const sleep = o.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
   const checks: Check[] = [];
   const notes: string[] = [];

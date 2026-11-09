@@ -14,6 +14,10 @@
 //
 // Paths: "record", "wallet", "index" are relative to the OUTPUT directory (--out, default the case directory: where
 // the signer wrote its records); "expect" is relative to the case directory.
+//
+// Identity: every check verifies the node's genesis first. When the case sits in `deployments/<network>/cases/<ID>`
+// and `deployments/<network>/network.json` records the chain instance (block 1 hash) of the run, every check also
+// verifies block 1, so a network re-created from the same genesis is refused instead of reported as a missing case.
 
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -29,12 +33,14 @@ import {
   tokenTypeHex,
   checkEvent,
   type EventExpectation,
+  withChainInstance,
   type ExpectedIdentity,
   type NetworkProfile,
 } from '@mip0018/midnight';
 import {
   EXIT,
   NETWORK_OPTIONS,
+  NETWORK_USAGE,
   UsageError,
   emitJson,
   out,
@@ -47,7 +53,7 @@ import {
 } from './common.ts';
 
 export const RECHECK_USAGE = `
-mip0018 recheck --network <stagenet|undeployed> --case <dir> [--out <dir>] [--json]
+mip0018 recheck --network <undeployed|preview|preprod|mainnet> --case <dir> [--out <dir>] [--json]
 
 Re-checks a recorded case without a wallet: runs every check of <dir>/case.json "recheck" (check-event each recorded
 transaction with its expectation, list the contract's metadata against expected.json, steps that must have no
@@ -57,8 +63,10 @@ transaction, removed verifier keys, colors through the mint scanner table and th
   --out <dir>    where the records and observations are (default: the case folder)
   --wait <s>     check-event: keep polling the indexer for a recorded transaction (default 0)
 
+The node's block 1 must equal the chain instance in <dir>/../../network.json when that file records one.
+
 Exit: 0 every check passes · 1 a check fails · 2 usage · 4 a transaction is not indexed / final yet
-`;
+${NETWORK_USAGE}`;
 
 interface RecheckSpec {
   checkEvent?: { record: string; step: string; expect?: string }[];
@@ -246,10 +254,22 @@ export async function recheckCase(
   return { caseId: c.id, results };
 }
 
+/**
+ * The profile with the chain instance of the case's network file (`<case>/../../network.json`), when it records one
+ * and the profile does not name one already. A network file of another network is refused.
+ */
+export function caseProfile(profile: NetworkProfile, caseDir: string): NetworkProfile {
+  const file = join(caseDir, '..', '..', 'network.json');
+  if (!existsSync(file)) return profile;
+  const n = (JSON.parse(readFileSync(file, 'utf8')) as { network?: { id?: string; chainInstance?: string } }).network;
+  if (n?.id !== undefined && n.id !== profile.id) throw new UsageError(`${file} is for ${n.id}, not ${profile.id}`);
+  return n?.chainInstance !== undefined && profile.chainInstance === undefined ? withChainInstance(profile, n.chainInstance) : profile;
+}
+
 export async function cmdRecheck(argv: string[]): Promise<number> {
   const v = parse(argv, { ...NETWORK_OPTIONS, case: { type: 'string' }, out: { type: 'string' }, wait: { type: 'string' } }, RECHECK_USAGE);
-  const profile = profileFrom(v);
   const caseDir = resolve(str(v, 'case', true)!);
+  const profile = caseProfile(profileFrom(v), caseDir);
   const outDir = resolve(str(v, 'out') ?? caseDir);
   const wait = str(v, 'wait');
   if (wait !== undefined && !/^\d+$/u.test(wait)) throw new UsageError('--wait expects seconds');

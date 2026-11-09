@@ -26,6 +26,7 @@ import {
   EXIT,
   KIND_NAME,
   NETWORK_OPTIONS,
+  NETWORK_USAGE,
   UsageError,
   emitJson,
   int,
@@ -46,7 +47,7 @@ import {
 // ----------------------------------------------------------------------------------------------------- check-event
 
 export const CHECK_EVENT_USAGE = `
-mip0018 check-event --network <stagenet|undeployed> (--contract <address> --tx <hash> | --record <file> [--step <id>]) [options]
+mip0018 check-event --network <undeployed|preview|preprod|mainnet> (--contract <address> --tx <hash> | --record <file> [--step <id>]) [options]
 
 Checks one event emission without a wallet: the contract's Misc event(s) in that transaction (indexer), the event
 name, the contract address from the event record, the decoded payload (accept / reject / ignore with the reason) and
@@ -63,10 +64,9 @@ a standard that defines it (\`list\` shows what is served).
   --wait <seconds>        keep polling the indexer for the transaction (default 0)
   --no-extrinsic-check    skip chain_getBlock
   --json                  JSON report
-  undeployed: --indexer <url> --rpc <url> (or MIP0018_INDEXER_URL / MIP0018_NODE_URL) [--genesis <hash>]
 
 Exit: 0 ok · 1 mismatch · 2 usage · 3 not found · 4 not yet indexed / final
-`;
+${NETWORK_USAGE}`;
 
 /** One line per record of an accepted event: key, value, type, and "not served" for a key that is not a common key. */
 function recordLines(rs: unknown[] | undefined): string[] {
@@ -161,7 +161,7 @@ export async function cmdCheckEvent(argv: string[]): Promise<number> {
 // ------------------------------------------------------------------------------------------------------------ list
 
 export const LIST_USAGE = `
-mip0018 list --network <stagenet|undeployed> (--contract <address> | --record <file>) [options]
+mip0018 list --network <undeployed|preview|preprod|mainnet> (--contract <address> | --record <file>) [options]
 
 Every MIP-0018 event of a contract in chain order and the current metadata per token identity (reference consumer):
 the served fields (the common keys; usable or not; a name/symbol over 64/12 characters shown as its first 64/12),
@@ -179,7 +179,7 @@ finalized one (--finalized is accepted and always true).
   --json                JSON report
 
 Exit: 0 ok · 1 the indexer tip differs from the node, or --expect does not match · 2 usage
-`;
+${NETWORK_USAGE}`;
 
 function fieldText(f: IdentityView['fields'][number]): string {
   const v = Buffer.from(f.value);
@@ -286,20 +286,20 @@ export async function cmdList(argv: string[]): Promise<number> {
 // ----------------------------------------------------------------------------------------------------------- index
 
 export const INDEX_USAGE = `
-mip0018 index --network <stagenet|undeployed> --from-height <h> [--to-height <h> | --follow] --state <dir> [options]
+mip0018 index --network <undeployed|preview|preprod|mainnet> --from-height <h> [--to-height <h> | --follow] --state <dir> [options]
 
 The reference mint scanner: reads every block from the start height (indexer \`blocks\` subscription; polling
 \`block(offset:{height})\` as the fallback or with --poll), decodes each contract call's raw transaction with
 ledger-v9 and, for the parts that took effect, records shielded/unshielded mints as
 color = tokenType(domainSep, contract) → (contract, domainSep, kinds minted, first mint), plus every MIP-0018 event.
 Checkpoint after every block (<state>/index-state.json, atomic); re-run the same command to resume.
-Stagenet: start near the deployments (public endpoints; requests are rate-bounded). Local chain: start at 0 or 1.
+Public networks: start near the deployments (requests are rate-bounded). Local chain: start at 0 or 1.
 
   --to-height <h>   last height (default: the indexer tip when the scan starts)
   --follow          keep following new blocks (Ctrl-C to stop; resumable)
   --poll            no WebSocket subscription
   --json            final state summary as JSON
-`;
+${NETWORK_USAGE}`;
 
 export async function cmdIndex(argv: string[]): Promise<number> {
   const v = parse(
@@ -381,7 +381,7 @@ export async function cmdIndex(argv: string[]): Promise<number> {
 
 export const LOOKUP_USAGE = `
 mip0018 lookup (--color <hex> | (--contract <address> | --record <file>) --domain-sep <hex>) --state <dir>
-               [--kind 1|2] [--network <id> …] [--json]
+               [--kind 1|2] [--network <undeployed|preview|preprod|mainnet> …] [--json]
 
 Resolves a color (the 32-byte token type of a shielded coin or unshielded UTXO) through the scanner's table to the
 token identity (contract, domainSep, kind) and its current metadata: live from the indexer when --network is given
@@ -391,7 +391,7 @@ With --contract/--record and --domain-sep the color is computed (tokenType(domai
 the table must hold exactly that contract and domainSep for it.
 
 Exit: 0 resolved · 2 usage (e.g. --kind 3) · 3 not minted in the scanned range
-`;
+${NETWORK_USAGE}`;
 
 export async function cmdLookup(argv: string[]): Promise<number> {
   const v = parse(

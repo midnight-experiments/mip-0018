@@ -1,11 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // Shared CLI plumbing: option parsing, network profiles, output (fixed-width text or --json), exit codes, logging.
+// Log lines and error messages go through `scrubSecrets` (URLs without their query string, no registered token);
+// `guardOutput` filters everything the process writes through `removeSecrets` (no registered token, nothing else
+// changed — metadata values are printed exactly).
 
 import { readFileSync, realpathSync } from 'node:fs';
 import { isAbsolute, relative, resolve } from 'node:path';
 import { parseArgs, type ParseArgsConfig } from 'node:util';
-import { resolveProfile, toJson, type EndpointOverrides, type NetworkProfile } from '@mip0018/midnight';
+import {
+  PROFILE_IDS,
+  removeSecrets,
+  resolveProfile,
+  scrubSecrets,
+  toJson,
+  type EndpointOverrides,
+  type NetworkProfile,
+} from '@mip0018/midnight';
 
 export class UsageError extends Error {
   override name = 'UsageError';
@@ -32,8 +43,25 @@ export const NETWORK_OPTIONS: Options = {
   rpc: { type: 'string' },
   'rpc-ws': { type: 'string' },
   genesis: { type: 'string' },
+  'chain-instance': { type: 'string' },
+  'blockfrost-token-file': { type: 'string' },
   'min-interval-ms': { type: 'string' },
 };
+
+/** The network options as usage text (every command that takes --network shows it). */
+export const NETWORK_USAGE = `
+network (every command that reads the chain):
+  --network <${PROFILE_IDS.join('|')}>
+      preview     public endpoints (Midnight-hosted), no token
+      preprod     Blockfrost endpoints: the project token of a Midnight Preprod project from MIP0018_BLOCKFROST_PREPROD
+                  or --blockfrost-token-file <0600 file>; without one the command stops before any request
+      mainnet     Blockfrost endpoints: the same with MIP0018_BLOCKFROST_MAINNET
+      undeployed  a local chain: --indexer <url> --rpc <url> (or MIP0018_INDEXER_URL / MIP0018_NODE_URL), optional
+                  --genesis <hash>; public endpoints and public genesis hashes are refused
+  --indexer / --indexer-ws / --rpc / --rpc-ws <url>   other endpoints (no query string; the genesis stays pinned)
+  --chain-instance <hash>   also require this block-1 hash (refuses a network re-created from the same genesis)
+  --min-interval-ms <n>     politeness interval between requests (public networks: 250)
+`;
 
 export const OUTPUT_OPTIONS: Options = {
   json: { type: 'boolean', default: false },
@@ -92,6 +120,8 @@ export function profileFrom(v: Values): NetworkProfile {
   set('rpc', 'rpc');
   set('rpcWs', 'rpc-ws');
   set('genesisHash', 'genesis');
+  set('chainInstance', 'chain-instance');
+  set('tokenFile', 'blockfrost-token-file');
   const mi = int(v, 'min-interval-ms');
   if (mi !== undefined) o.minIntervalMs = mi;
   try {
@@ -115,7 +145,25 @@ export function jsonArg(v: Values, name: string): unknown {
 
 export function logger(v: Values): (msg: string, extra?: unknown) => void {
   if (v.quiet) return () => {};
-  return (msg, extra) => process.stderr.write(`${new Date().toISOString()} ${msg}${extra === undefined ? '' : ` ${toJson(extra, 0)}`}\n`);
+  return (msg, extra) =>
+    process.stderr.write(scrubSecrets(`${new Date().toISOString()} ${msg}${extra === undefined ? '' : ` ${toJson(extra, 0)}`}\n`));
+}
+
+let guarded = false;
+
+/** Filters everything written to stdout / stderr through `removeSecrets` (a registered token never leaves the process). */
+export function guardOutput(): void {
+  if (guarded) return;
+  guarded = true;
+  for (const stream of [process.stdout, process.stderr]) {
+    const write = stream.write.bind(stream) as (chunk: unknown, ...rest: unknown[]) => boolean;
+    stream.write = ((chunk: unknown, ...rest: unknown[]) => {
+      const text = typeof chunk === 'string' ? chunk : chunk instanceof Uint8Array ? Buffer.from(chunk).toString('utf8') : undefined;
+      if (text === undefined) return write(chunk, ...rest);
+      const clean = removeSecrets(text);
+      return write(clean === text ? chunk : clean, ...rest);
+    }) as typeof stream.write;
+  }
 }
 
 export function emitJson(value: unknown): void {

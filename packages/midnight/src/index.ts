@@ -5,6 +5,8 @@
 
 export * from './hex.ts';
 export * from './http.ts';
+export * from './redact.ts';
+export * from './protected-file.ts';
 export * from './network.ts';
 export * from './rpc.ts';
 export * from './indexer.ts';

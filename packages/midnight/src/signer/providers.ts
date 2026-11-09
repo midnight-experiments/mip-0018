@@ -19,6 +19,7 @@ import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-p
 import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
 import type { FinalizedTransaction, ProvingProvider } from '@midnightntwrk/ledger-v9';
 import { WebSocket } from 'ws';
+import { connectUrl } from '../network.ts';
 import type { FilePrivateStateProvider } from './private-state.ts';
 import { midnightJsProviders, type SignerEndpoints, type WalletSession } from './wallet.ts';
 
@@ -117,8 +118,8 @@ export const buildProviders = (
   return {
     privateStateProvider,
     publicDataProvider: indexerPublicDataProvider({
-      queryURL: ep.profile.indexer,
-      subscriptionURL: ep.profile.indexerWs,
+      queryURL: connectUrl(ep.profile, ep.profile.indexer),
+      subscriptionURL: connectUrl(ep.profile, ep.profile.indexerWs),
       webSocket: WebSocket as never,
     }),
     zkConfigProvider,

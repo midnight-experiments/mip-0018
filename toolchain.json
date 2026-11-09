@@ -57,22 +57,43 @@
     "$comment": "midnight-js 5.0.0 declares ledger-v9 1.0.0 and onchain-runtime-v4 4.0.0; the root package.json `overrides` pin ledger-v9 1.0.1 and onchain-runtime-v4 4.0.1 instead, the ledger node 2.1.101 runs (9.1.0.1), because that ledger prices transactions (VerifierKeyRemove among them) above what 1.0.0 computes. `npm run check:pins` asserts that the install holds exactly one copy of each, at these versions."
   },
   "networks": {
-    "stagenet": {
-      "networkId": "stagenet",
-      "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
-      "indexer": "https://indexer.stagenet.shielded.tools/api/v4/graphql",
-      "indexerWs": "wss://indexer.stagenet.shielded.tools/api/v4/graphql/ws",
-      "rpc": "https://rpc.stagenet.shielded.tools",
-      "observed": {
-        "nodeVersion": "2.0.0-d9729c13",
-        "specVersion": 2000000,
-        "indexerSchema": "4.4.0-rc.1",
-        "ledger": "9.1.0.0-rc.3"
-      }
+    "$comment": "Profiles of packages/midnight/src/network.ts (a unit test keeps them equal). preprod and mainnet are served by Blockfrost: every request carries the project token of that network's Blockfrost project as `project_id`, read from the variable named in `token` (or a 0600 file, --blockfrost-token-file). Genesis hashes are pinned; `undeployed` is the local stack.",
+    "preview": {
+      "networkId": "preview",
+      "chain": "Midnight Preview",
+      "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+      "indexer": "https://indexer.preview.midnight.network/api/v4/graphql",
+      "indexerWs": "wss://indexer.preview.midnight.network/api/v4/graphql/ws",
+      "rpc": "https://rpc.preview.midnight.network",
+      "rpcWs": "wss://rpc.preview.midnight.network",
+      "addressPrefixes": { "unshielded": "mn_addr_preview", "shielded": "mn_shield-addr_preview", "dust": "mn_dust_preview" }
     },
-    "local": {
+    "preprod": {
+      "networkId": "preprod",
+      "chain": "Midnight Preprod",
+      "genesisHash": "0xdf831b09a8baa92badf47762ce5ac439b7e47e3ed3d39600cfdd44fad552361b",
+      "indexer": "https://midnight-preprod.blockfrost.io/api/v0",
+      "indexerWs": "wss://midnight-preprod.blockfrost.io/api/v0/ws",
+      "rpc": "https://rpc.midnight-preprod.blockfrost.io",
+      "rpcWs": "wss://rpc.midnight-preprod.blockfrost.io",
+      "token": "MIP0018_BLOCKFROST_PREPROD",
+      "addressPrefixes": { "unshielded": "mn_addr_preprod", "shielded": "mn_shield-addr_preprod", "dust": "mn_dust_preprod" }
+    },
+    "mainnet": {
+      "networkId": "mainnet",
+      "chain": "Midnight Mainnet",
+      "genesisHash": "0x1941ca8e2bb88146c14dea084d3be7eb6e96ca7135429c543848b628124f2854",
+      "indexer": "https://midnight-mainnet.blockfrost.io/api/v0",
+      "indexerWs": "wss://midnight-mainnet.blockfrost.io/api/v0/ws",
+      "rpc": "https://rpc.midnight-mainnet.blockfrost.io",
+      "rpcWs": "wss://rpc.midnight-mainnet.blockfrost.io",
+      "token": "MIP0018_BLOCKFROST_MAINNET",
+      "addressPrefixes": { "unshielded": "mn_addr", "shielded": "mn_shield-addr", "dust": "mn_dust" }
+    },
+    "undeployed": {
       "networkId": "undeployed",
-      "compose": "docker/local-stack/compose.yml"
+      "compose": "docker/local-stack/compose.yml",
+      "addressPrefixes": { "unshielded": "mn_addr_undeployed", "shielded": "mn_shield-addr_undeployed", "dust": "mn_dust_undeployed" }
     }
   }
 }

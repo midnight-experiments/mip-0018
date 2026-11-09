@@ -17,8 +17,8 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { Indexer } from '../indexer.ts';
 import { compareLayouts, decodeDeployedLedger, decodedDifferences, readLayout, type DecodedField } from '../layout.ts';
+import { indexerFor } from '../network.ts';
 import type { ContractAdapter } from './adapter.ts';
 import { StepError, verifierKeyHashes, type Run } from './contracts.ts';
 import { onChainVerifierKey, currentContractState } from './maintenance.ts';
@@ -88,7 +88,7 @@ export async function preflightUpgrade(run: Run, src: UpgradeSource, circuit: st
   const verifierKey = Uint8Array.from(readFileSync(vkFile));
 
   // 2. every other provable circuit of the upgrade build must already be on chain with the same key
-  const stateRow = await new Indexer(run.o.ep.profile.indexer, run.o.ep.profile.indexerWs).contractState(address);
+  const stateRow = await indexerFor(run.o.ep.profile).contractState(address);
   if (!stateRow) throw new StepError(`contract ${address} is not on chain`, 'refused');
   const state = await currentContractState(run.o.ep.profile, address);
   const hashes = verifierKeyHashes(up);

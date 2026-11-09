@@ -32,7 +32,7 @@ import {
   wouldChange,
   type RunRecord,
 } from '../src/signer/index.ts';
-import { undeployedProfile, stagenetProfile } from '../src/network.ts';
+import { undeployedProfile, resolveProfile } from '../src/network.ts';
 import type { IndexedMiscEvent } from '../src/indexer.ts';
 
 const temps: string[] = [];
@@ -218,7 +218,7 @@ describe('private state and secrets', () => {
   it('hex seeds and the dev genesis wallet are refused outside undeployed', () => {
     const local = undeployedProfile({ indexer: 'http://indexer:8088/api/v4/graphql', rpc: 'http://node:9944' });
     expect(masterSeed({ devGenesis: true }, local)[31]).toBe(1);
-    expect(() => masterSeed({ devGenesis: true }, stagenetProfile())).toThrow(/undeployed/);
+    expect(() => masterSeed({ devGenesis: true }, resolveProfile('preview', {}, {}))).toThrow(/undeployed/);
     expect(() => masterSeed({}, local)).toThrow(/exactly one/);
   });
 });

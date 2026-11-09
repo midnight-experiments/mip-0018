@@ -25,8 +25,7 @@ import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-j
 import type { MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
 import { sampleSigningKey, type FinalizedTransaction, type SigningKey } from '@midnightntwrk/ledger-v9';
 import { normHex } from '../hex.ts';
-import { Indexer } from '../indexer.ts';
-import { checkIdentity, IdentityError, normGenesis } from '../network.ts';
+import { checkIdentity, IdentityError, indexerFor, normGenesis, rpcFor } from '../network.ts';
 import { decodeTransaction, miscLogsOf } from '../raw.ts';
 import { circuitArgs, fromJsonLoose, resolvePlaceholders } from './args.ts';
 import type { AdapterContext, ContractAdapter } from './adapter.ts';
@@ -95,12 +94,19 @@ export function verifierKeyHashes(managedDir: string): Record<string, string> {
 export async function openRun(o: RunOptions): Promise<Run> {
   const log = o.log ?? (() => {});
   const genesis = await checkIdentity(o.ep.profile);
+  const blockOne = await rpcFor(o.ep.profile).blockHash(1);
+  const chainInstance = blockOne === null ? undefined : normGenesis(blockOne);
   let record = loadRecord(o.recordPath);
   const keys = verifierKeyHashes(o.artifacts.managedDir);
   if (record) {
     if (normGenesis(record.network.genesisHash) !== genesis || record.network.id !== o.ep.profile.id) {
       throw new IdentityError(
         `${o.recordPath} was made on ${record.network.id} ${record.network.genesisHash}; this node is ${o.ep.profile.id} ${genesis}`,
+      );
+    }
+    if (record.network.chainInstance !== undefined && normGenesis(record.network.chainInstance) !== chainInstance) {
+      throw new IdentityError(
+        `${o.recordPath} was made on another instance of ${record.network.id}: block 1 was ${record.network.chainInstance}, the node has ${chainInstance ?? 'none'} (same genesis ${genesis}; the network was re-created)`,
       );
     }
     if (record.contract.name !== o.artifacts.name)
@@ -118,6 +124,7 @@ export async function openRun(o: RunOptions): Promise<Run> {
         id: o.ep.profile.id,
         networkId: o.ep.profile.networkId,
         genesisHash: genesis,
+        ...(chainInstance !== undefined ? { chainInstance } : {}),
         indexer: o.ep.profile.indexer,
         rpc: o.ep.profile.rpc,
       },
@@ -254,7 +261,7 @@ async function reconcile(run: Run, step: StepRecord): Promise<'included' | 'expi
 
 async function inclusionOf(run: Run, step: StepRecord): Promise<void> {
   if (!step.tx || step.inclusion) return;
-  const t = await new Indexer(run.o.ep.profile.indexer, run.o.ep.profile.indexerWs).waitForTransaction(step.tx.hash, {
+  const t = await indexerFor(run.o.ep.profile).waitForTransaction(step.tx.hash, {
     timeoutMs: run.o.observeTimeoutMs ?? 120_000,
   });
   if (t)
@@ -483,7 +490,7 @@ export async function callStep(run: Run, input: CallInput): Promise<StepRecord> 
   };
   const json = resolvePlaceholders(input.args, { ...signerContext(run), adapter: a?.values?.(ctx) }) as unknown[];
   const args = a?.circuitArgs?.(input.circuit, json, ctx) ?? circuitArgs(arts.managedDir, input.circuit, json);
-  const current = await new Indexer(run.o.ep.profile.indexer, run.o.ep.profile.indexerWs).allContractEvents(address, {});
+  const current = await indexerFor(run.o.ep.profile).allContractEvents(address, {});
   const hooks = journal(run, step, async (_tx, d) => {
     const logs = miscLogsOf(d, address).filter((l) => l.name !== undefined && l.payload !== undefined);
     step.expectedEvents = logs.map((l) => ({ name: l.name!, payload: l.payload! }));

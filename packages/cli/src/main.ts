@@ -8,7 +8,8 @@
 // Run it through npm in the pinned image: `docker/run.sh mip0018 -- <command> …` (wallet-free) or
 // `docker/signer.sh mip0018 -- <command> …` (signing). `<command> --help` prints the details.
 
-import { EXIT, UsageError } from './common.ts';
+import { scrubSecrets } from '@mip0018/midnight';
+import { EXIT, NETWORK_USAGE, UsageError, guardOutput } from './common.ts';
 import { cmdIndex, cmdList, cmdLookup, cmdVectors, cmdCheckEvent } from './wallet-free.ts';
 
 export const USAGE = `
@@ -33,9 +34,10 @@ signer (docker/signer.sh; wallet secret from a file):
   upgrade              add a circuit (publishMetadata) to a deployed contract: VerifierKeyInsert, then call it
 
 Exit codes: 0 ok · 1 mismatch / failed · 2 usage · 3 not found · 4 not yet indexed / outcome unknown
-`;
+${NETWORK_USAGE}`;
 
 export async function main(argv: string[]): Promise<number> {
+  guardOutput();
   const [cmd, ...rest] = argv;
   try {
     switch (cmd) {
@@ -82,10 +84,10 @@ export async function main(argv: string[]): Promise<number> {
     }
   } catch (e) {
     if (e instanceof UsageError) {
-      process.stderr.write(`mip0018: ${e.message}\n`);
+      process.stderr.write(scrubSecrets(`mip0018: ${e.message}\n`));
       return EXIT.usage;
     }
-    process.stderr.write(`mip0018: ${(e as Error)?.name ?? 'Error'}: ${(e as Error)?.message ?? String(e)}\n`);
+    process.stderr.write(scrubSecrets(`mip0018: ${(e as Error)?.name ?? 'Error'}: ${(e as Error)?.message ?? String(e)}\n`));
     return EXIT.failed;
   }
 }

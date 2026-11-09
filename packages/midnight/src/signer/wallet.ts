@@ -35,8 +35,7 @@ import { createLedger9MidnightProvider, createLedger9WalletProvider } from '@mid
 import type { MidnightProvider, WalletProvider } from '@midnight-ntwrk/midnight-js-types';
 import * as Rx from 'rxjs';
 import { normHex } from '../hex.ts';
-import { Indexer } from '../indexer.ts';
-import type { NetworkProfile } from '../network.ts';
+import { connectUrls, indexerFor, type NetworkProfile } from '../network.ts';
 import { existsSync } from 'node:fs';
 import { decodeTyped, encodeTyped } from './private-state.ts';
 import { readProtectedFile, seedFromHexFile, seedFromMnemonicFile, writeProtectedFile } from './secrets.ts';
@@ -87,7 +86,7 @@ export function masterSeed(s: WalletSecret, profile: NetworkProfile): Uint8Array
 
 /** The hash (hex, no 0x) of the indexer's block at a height, or undefined when it has none. */
 const blockHashAt = async (profile: NetworkProfile, height: number): Promise<string | undefined> => {
-  const { block } = await new Indexer(profile.indexer, profile.indexerWs).query<{ block: { hash: string } | null }>(
+  const { block } = await indexerFor(profile).query<{ block: { hash: string } | null }>(
     'query ($h: Int!) { block(offset: { height: $h }) { hash } }',
     { h: height },
   );
@@ -156,12 +155,14 @@ export const openWallet = async (
   }
   // One proof server for both ledger versions' wallet proofs: a chain on ledger 9 never asks the v8 entry.
   const prover = { kind: 'server' as const, url: new URL(ep.proofServer) };
+  // The SDK connects with the token-bearing URLs (preprod, mainnet); they are never logged or recorded.
+  const urls = connectUrls(ep.profile);
   const configuration = {
     networkId: ep.profile.networkId,
     costParameters: { feeBlocksMargin: 5 },
-    relayURL: new URL(ep.profile.rpcWs),
+    relayURL: new URL(urls.rpcWs),
     provers: { v8: prover, v9: prover },
-    indexerClientConnection: { indexerHttpUrl: ep.profile.indexer, indexerWsUrl: ep.profile.indexerWs },
+    indexerClientConnection: { indexerHttpUrl: urls.indexer, indexerWsUrl: urls.indexerWs },
     txHistoryStorage: new InMemoryTransactionHistoryStorage(WalletEntrySchema, mergeWalletEntries),
   };
   const init = (c?: WalletCache) =>
@@ -197,7 +198,7 @@ export const closeWallet = async (session: WalletSession): Promise<void> => {
   if (session.cachePath) {
     try {
       const f = session.facade as unknown as Record<'shielded' | 'unshielded' | 'dust', { serializeState(): Promise<unknown> }>;
-      const tip = await new Indexer(session.profile.indexer, session.profile.indexerWs).latestBlock();
+      const tip = await indexerFor(session.profile).latestBlock();
       const c: WalletCache = {
         kind: 'mip0018-wallet-cache',
         networkId: session.networkId,

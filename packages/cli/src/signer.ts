@@ -43,6 +43,7 @@ import {
 import {
   EXIT,
   NETWORK_OPTIONS,
+  NETWORK_USAGE,
   UsageError,
   emitJson,
   fromPortable,
@@ -83,7 +84,7 @@ Signer options (signer container only):
   --private-state <file>       maintenance keys + witness private state (default <state-dir>/mip0018-private-state.json)
   --wallet-cache <file>        optional 0600 wallet sync cache outside the repository (restores the sub-wallets; on a
                                public network a re-run then syncs only the new blocks)
-`;
+${NETWORK_USAGE}`;
 
 function endpoints(v: Values): SignerEndpoints {
   const profile = profileFrom(v);
@@ -145,8 +146,8 @@ function printRun(run: Run, recordPath: string): void {
 // ---------------------------------------------------------------------------------------------------------- wallet
 
 export const WALLET_USAGE = `
-mip0018 wallet status --network <id> [signer options] [--json]
-mip0018 wallet register-dust --network <id> [--estimate] [signer options] [--json]
+mip0018 wallet status --network <undeployed|preview|preprod|mainnet> [signer options] [--json]
+mip0018 wallet register-dust --network <undeployed|preview|preprod|mainnet> [--estimate] [signer options] [--json]
 
 status: public addresses, NIGHT balance and UTxOs (registered for DUST or not), DUST balance — never a secret.
 register-dust: registers every unregistered NIGHT UTxO for DUST generation (skipped when none; waits until the
@@ -270,7 +271,7 @@ async function withRun<T>(v: Values, recordPath: string, src: ContractSource, f:
 // ---------------------------------------------------------------------------------------------------------- deploy
 
 export const DEPLOY_USAGE = `
-mip0018 deploy --network <id> (--contract <managed dir> | --adapter <file> | --example <name>) --record <file> [--args <json>]
+mip0018 deploy --network <undeployed|preview|preprod|mainnet> (--contract <managed dir> | --adapter <file> | --example <name>) --record <file> [--args <json>]
 
 Deploys a compiled contract with midnight-js deployContract. The record (public JSON) stores the contract address and
 the transaction BEFORE submission; re-running the same command resumes: the before-check finds the contract on chain
@@ -352,7 +353,7 @@ function attachRecord(run: Run, a: { address: string; from: string }, src: Contr
 // --------------------------------------------------------------------------------------------------------- publish
 
 export const PUBLISH_USAGE = `
-mip0018 publish --network <id> --record <file> --circuit <name> [--args <json>] [--step <id>] [--force]
+mip0018 publish --network <undeployed|preview|preprod|mainnet> --record <file> --circuit <name> [--args <json>] [--step <id>] [--force]
 
 Calls an emitting circuit of the recorded contract (midnight-js findDeployedContract(...).callTx.<circuit>()).
 Before: the contract and the circuit's key exist; just before submission the finalized transaction's Misc events are
@@ -423,7 +424,7 @@ export async function cmdPublish(argv: string[]): Promise<number> {
 // -------------------------------------------------------------------------------------------------- remove-circuit
 
 export const REMOVE_USAGE = `
-mip0018 remove-circuit --network <id> --record <file> --circuit <name> [--slot v4|v3]
+mip0018 remove-circuit --network <undeployed|preview|preprod|mainnet> --record <file> --circuit <name> [--slot v4|v3]
 
 Create-and-destroy: removes the circuit's verifier key with a maintenance VerifierKeyRemove signed by the
 contract's maintenance key (from the private-state file). ZKIR-v3 keys live in the v4 slot (default).
@@ -467,7 +468,7 @@ export async function cmdRemoveCircuit(argv: string[]): Promise<number> {
 // -------------------------------------------------------------------------------------------- deploy-and-publish
 
 export const DAP_USAGE = `
-mip0018 deploy-and-publish (--example <name> | --adapter <file>) [--metadata <json>] --network <id> --record <file>
+mip0018 deploy-and-publish (--example <name> | --adapter <file>) [--metadata <json>] --network <undeployed|preview|preprod|mainnet> --record <file>
                            [--compile] [--no-check-event]
 
 The request's "deploy + emit" in one command: compile (with keys, when managed/ has none or --compile) → deploy →
@@ -560,7 +561,7 @@ export async function cmdDeployAndPublish(argv: string[]): Promise<number> {
 // --------------------------------------------------------------------------------------------------------- upgrade
 
 export const UPGRADE_USAGE = `
-mip0018 upgrade --network <id> --record <run record of the deployed contract> --source <dir> --circuit <name>
+mip0018 upgrade --network <undeployed|preview|preprod|mainnet> --record <run record of the deployed contract> --source <dir> --circuit <name>
                 [--args <json>] [--slot v4|v3] [--maintenance-key-file <path>] [--compile] [--no-call] [--step <id>] [--force]
 
 MIP-0018 "Existing contracts": adds <circuit> (e.g. publishMetadata) to an already-deployed contract with a maintenance
