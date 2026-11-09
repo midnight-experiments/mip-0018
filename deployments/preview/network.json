@@ -1,0 +1,57 @@
+{
+  "$comment": "Midnight Preview identity during the case runs (deployments/tools/network-identity.ts --network preview). Public data only; re-run the tool to compare. mip0018 recheck requires chainInstance (block 1) for every case in cases/.",
+  "network": {
+    "id": "preview",
+    "networkId": "preview",
+    "chain": "Midnight Preview",
+    "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+    "chainInstance": "0xee45046d11882c45ee0d468203169afa48f084ffaa380043ab84b1fabf3947fe",
+    "indexer": "https://indexer.preview.midnight.network/api/v4/graphql",
+    "indexerWs": "wss://indexer.preview.midnight.network/api/v4/graphql/ws",
+    "rpc": "https://rpc.preview.midnight.network"
+  },
+  "observations": [
+    {
+      "label": "before the first transaction",
+      "observedAt": "2026-11-09T22:18:04.911Z",
+      "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+      "genesisMatchesPin": true,
+      "chainInstance": "0xee45046d11882c45ee0d468203169afa48f084ffaa380043ab84b1fabf3947fe",
+      "node": {
+        "chain": "Midnight Preview",
+        "name": "Midnight Node",
+        "version": "2.1.101-913ec011",
+        "specName": "midnight",
+        "specVersion": 2001100,
+        "transactionVersion": 4,
+        "stateVersion": 3,
+        "finalizedHead": {
+          "hash": "0x937ab8ab5d2239bbd7ad16672eb89cc5736c02fb5633ed535140e21f8814a717",
+          "height": 41528
+        },
+        "bestHeight": 41530
+      },
+      "indexer": {
+        "latestBlock": {
+          "height": 41528,
+          "hash": "937ab8ab5d2239bbd7ad16672eb89cc5736c02fb5633ed535140e21f8814a717",
+          "timestamp": 1794262668000,
+          "protocolVersion": 2001100
+        }
+      },
+      "proofServer": {
+        "url": "http://proof-server:6300",
+        "health": {
+          "status": "ok",
+          "timestamp": "2026-11-09 22:18:04.915297257 +00:00:00"
+        },
+        "version": "9.0.1",
+        "proofVersions": [
+          "V2",
+          "V3"
+        ]
+      },
+      "requests": 10
+    }
+  ]
+}
