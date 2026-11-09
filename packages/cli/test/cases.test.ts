@@ -14,7 +14,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 const repo = join(import.meta.dirname, '..', '..', '..');
 const tool = join(repo, 'deployments', 'tools', 'prepare-cases.ts');
 const NETWORKS = ['preview', 'preprod', 'mainnet'] as const;
-const IDS = ['C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12', 'IDX', 'U1'];
+const IDS = ['C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C12', 'IDX', 'U1'];
 const prepare = (...args: string[]) => spawnSync(process.execPath, [tool, ...args], { encoding: 'utf8' });
 
 const tmp = mkdtempSync(join(tmpdir(), 'mip0018-cases-'));
@@ -34,7 +34,7 @@ const ids = readdirSync(generated.preview, { withFileTypes: true })
 const cases = generated.preview;
 
 describe('case folders', () => {
-  it('the generator writes C01–C12, IDX, U1 for every public network, deterministically', () => {
+  it('the generator writes C01–C10, C12, IDX, U1 for every public network, deterministically', () => {
     expect(ids).toEqual(IDS);
     for (const n of NETWORKS) {
       const r = prepare('--network', n, '--dir', generated[n], '--check');

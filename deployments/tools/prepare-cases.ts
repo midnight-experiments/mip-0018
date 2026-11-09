@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Prepares the case folders deployments/<network>/cases/<ID>/ (C01–C12, IDX, U1) of one public network BEFORE any
+// Prepares the case folders deployments/<network>/cases/<ID>/ (C01–C10, C12, IDX, U1) of one public network BEFORE any
 // transaction:
 //
 //   case.json        what the case demonstrates, one `mip0018` command per step (placeholders below), the exit code
@@ -31,13 +31,14 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
-import { classifyEvent, commonRecords, decodePayload, encodePayload, fromHex, record, toHex } from '@mip0018/codec';
+import { classifyEvent, commonRecords, decodePayload, encodePayload, fromHex, toHex, withdrawRecords } from '@mip0018/codec';
 import { MetadataState } from '@mip0018/consumer';
 import {
   compareState,
   projectState,
   PUBLIC_NETWORKS,
   tokenType,
+  type ExpectedField,
   type ExpectedIdentity,
   type ExpectedState,
   type PublicNetworkId,
@@ -314,7 +315,7 @@ function build(): { cases: CaseDef[] } {
     '1 kind-3 identity with 3 usable fields (name "Acme Gold", symbol "AGLD", decimals 6); no standards; no color.',
     {
       notes: [
-        `The OpenZeppelin examples publish no \`standards\`: \`standards\` is a self-declaration, and OpenZeppelin Compact Contracts claims no MIP. The A1 shape (with standards) on ${TITLE} is C06, C10 and C11 (examples/minimal).`,
+        `The OpenZeppelin examples publish no \`standards\`: \`standards\` is a self-declaration, and OpenZeppelin Compact Contracts claims no MIP. The A1 shape (with standards) on ${TITLE} is C06 and C10 (examples/minimal).`,
       ],
     },
   );
@@ -361,82 +362,14 @@ function build(): { cases: CaseDef[] } {
     expectedOf[c.def.id] = c.expected;
   }
 
-  // C06 — minimal OwnerKey lifecycle. The deployed contract's withdrawMetadata emits ONE Null record at `name`
-  // (C06_DEPLOYED), so the withdraw steps expect exactly that payload.
+  // C06 — minimal OwnerKey lifecycle: publish (A1), rename, withdraw (one event, a Null record for each of the six
+  // common keys), withdraw again, revive. Every payload is the one examples/minimal/owner-key.metadata.json states for
+  // this tree's contract (examples/minimal/test/adapter.test.ts checks that the contract emits exactly these); the
+  // withdraw payload is also re-built with the codec.
   {
     const meta = minimalMeta('OwnerKey');
     const publish = { ...minimalCallOf(meta.steps[0]!) };
-    const life = minimalLifecycle('OwnerKey').map((c) =>
-      c.circuit === 'withdrawMetadata'
-        ? { ...c, expect: (c.expect ?? []).map((e) => ({ ...e, payload: C06_DEPLOYED.withdrawPayload(e.domainSep!, e.kind!) })) }
-        : c,
-    );
-    const files: Record<string, unknown> = {};
-    const steps: Step[] = [deploy(['--adapter', 'examples/minimal/owner-key.mip0018.adapter.ts'])];
-    const evs: { name: string; payload: string }[][] = [];
-    const checks: Recheck['checkEvent'] = [];
-    const lists: Recheck['list'] = [];
-    for (const c of [publish, ...life]) {
-      const force = c.stepId === 'withdraw-again';
-      steps.push(
-        call(c, {
-          force,
-          ...(force
-            ? { note: 'a repeated Null at `name` changes nothing, so the before-check would skip it: --force emits it anyway (vector S3b)' }
-            : {}),
-        }),
-      );
-      evs.push(eventsOf(c));
-      const state = reduce(evs);
-      sameState(state, C06_EXPECTED[c.stepId!]!, `C06 after ${c.stepId}`);
-      files[`expect/${c.stepId}.json`] = expectOf(c);
-      files[`expected-after-${c.stepId}.json`] = state;
-      steps.push(checkEvent(c.stepId!));
-      steps.push(list(`expected-after-${c.stepId}.json`, `list-after-${c.stepId}`));
-      checks.push({ record: 'record.json', step: c.stepId!, expect: `expect/${c.stepId}.json` });
-      lists.push({ record: 'record.json', expect: `expected-after-${c.stepId}.json`, atStep: c.stepId! });
-    }
-    const final = reduce(evs);
-    files['expected.json'] = final;
-    lists.push({ record: 'record.json', expect: 'expected.json' });
-    expectedOf.C06 = final;
-    cases.push({
-      id: 'C06',
-      title:
-        'Minimal OwnerKey (kind 3, no OpenZeppelin) lifecycle: deploy, publish, rename, withdraw (one Null record at name), withdraw again, revive',
-      demonstrates:
-        'MIP "Applying records" on chain: latest value wins (S2); a Null record at `name` deletes only `name` — the identity keeps symbol, decimals and standards (S3a); a repeated Null at `name` changes nothing (S3b); a later record sets the field again and nothing from before the Null returns (the revive sets name and symbol; decimals and standards were never deleted).',
-      conclusion:
-        'after withdraw (and withdraw again): no name; symbol "ACMP", decimals 6, standards "mip-0004", group "ACMP"; final: name "Acme Again", symbol "ACMA", decimals 6, standards "mip-0004" (group "ACMA"); the A1 publish payload equals MIP Appendix A byte-for-byte.',
-      source: {
-        example: 'examples/minimal',
-        contract: 'examples/minimal/contracts/OwnerKey.compact',
-        metadata: 'examples/minimal/owner-key.metadata.json',
-        deployedFrom: `examples/minimal/contracts/OwnerKey.compact at ${C06_DEPLOYED.commit}: its withdrawMetadata() emits one Null record at name (verifier key ${C06_DEPLOYED.withdrawVerifierKeySha256}, record.json)`,
-      },
-      notes: [
-        `This deployment's withdrawMetadata() emits one Null record at \`name\` (source: examples/minimal/contracts/OwnerKey.compact at ${C06_DEPLOYED.commit.slice(0, 7)}), so the case shows a single-key delete: decimals and standards stay, and the revive sets a name and a new symbol next to them. examples/minimal/contracts/OwnerKey.compact in this tree emits a Null record for each of the six common keys.`,
-        'OwnerKey renames with setMetadata(name, symbol), so the revive sets name and symbol (10- and 4-byte values: "Acme Again"/"ACMA").',
-        "Every intermediate state is re-checkable: `recheck` lists the contract as of each step's block (`list --to-block`).",
-      ],
-      steps,
-      recheck: { checkEvent: checks, list: lists },
-      files,
-    });
-  }
-
-  // C11 — full withdrawal with examples/minimal's OwnerKey. The deployed contract's withdrawMetadata emits Null records
-  // at the four keys the token has (C11_DEPLOYED), so the withdraw steps expect exactly that payload.
-  {
-    const meta = minimalMeta('OwnerKey');
-    const publish = { ...minimalCallOf(meta.steps[0]!) };
-    const life = minimalLifecycle('OwnerKey')
-      .filter((c) => c.stepId !== 'rename') // withdraw, withdraw-again, revive
-      .map((c) =>
-        c.circuit === 'withdrawMetadata'
-          ? { ...c, expect: (c.expect ?? []).map((e) => ({ ...e, payload: C11_DEPLOYED.withdrawPayload(e.domainSep!, e.kind!) })) }
-          : c,
-      );
+    const life = minimalLifecycle('OwnerKey'); // rename, withdraw, withdraw-again, revive
     const files: Record<string, unknown> = {};
     const steps: Step[] = [deploy(['--adapter', 'examples/minimal/owner-key.mip0018.adapter.ts'])];
     const evs: { name: string; payload: string }[][] = [];
@@ -456,10 +389,10 @@ function build(): { cases: CaseDef[] } {
       );
       evs.push(eventsOf(c));
       const state = reduce(evs);
-      sameState(state, C11_EXPECTED[c.stepId!]!, `C11 after ${c.stepId}`);
+      sameState(state, C06_EXPECTED[c.stepId!]!, `C06 after ${c.stepId}`);
       // and the example's own expectation for that step (metadata.json; after a withdrawal it lists no identity)
       const own = c.stepId === 'publish' ? meta.expected : meta.lifecycle.find((l) => l.id === c.stepId)!.expected!;
-      sameState(state, own, `C11 after ${c.stepId} (metadata.json)`);
+      sameState(state, own, `C06 after ${c.stepId} (metadata.json)`);
       files[`expect/${c.stepId}.json`] = expectOf(c);
       files[`expected-after-${c.stepId}.json`] = state;
       steps.push(checkEvent(c.stepId!));
@@ -467,30 +400,35 @@ function build(): { cases: CaseDef[] } {
       checks.push({ record: 'record.json', step: c.stepId!, expect: `expect/${c.stepId}.json` });
       lists.push({ record: 'record.json', expect: `expected-after-${c.stepId}.json`, atStep: c.stepId! });
     }
-    // the withdraw event of the deployed contract: header + the four Null records (39 bytes)
-    const w = expectOf(life.find((c) => c.stepId === 'withdraw')!)[0]!;
-    if (!w.payload.endsWith('046e616d6505000673796d626f6c050008646563696d616c730500097374616e64617264730500' + '00'.repeat(184)))
-      throw new Error('C11: the withdraw payload is not the four Null records');
+    // the withdraw event: header + a Null record for each of the six common keys, as the codec builds it
+    for (const id of ['withdraw', 'withdraw-again']) {
+      const [w, ...more] = expectOf(life.find((c) => c.stepId === id)!);
+      if (more.length || w!.payload !== toHex(encodePayload({ domainSep: fromHex(w!.domainSep!), kind: w!.kind! }, withdrawRecords())))
+        throw new Error(`C06 ${id}: the payload is not one event with the six Null records`);
+    }
     const final = reduce(evs);
     files['expected.json'] = final;
     lists.push({ record: 'record.json', expect: 'expected.json' });
-    expectedOf.C11 = final;
+    expectedOf.C06 = final;
     cases.push({
-      id: 'C11',
-      title: 'Minimal OwnerKey (kind 3) full withdrawal: deploy, publish, withdraw (four Null records, one event), withdraw again, revive',
+      id: 'C06',
+      title:
+        'Minimal OwnerKey (kind 3, no OpenZeppelin) lifecycle: deploy, publish, rename, withdraw (six Null records, one event), withdraw again, revive',
       demonstrates:
-        'MIP "Applying records" on chain: one event with a Null record for each key (name, symbol, decimals, standards) deletes every field, so the token identity is not referenced at all — not listed, in no group, as if it had never been described (S3c); a repeated withdrawal changes nothing (S3b); a later record describes it again with only that field (the revive: name and symbol; decimals and standards do not return, S3d).',
+        'MIP "Applying records" on chain: latest value wins (S2); one event with a Null record for each common key (name, symbol, decimals, standards, image, image_sha256) deletes every field, so the token identity is not referenced at all — not listed, in no group, as if it had never been described (S3c); a repeated withdrawal changes nothing (S3b); a later record describes it again with only that field (the revive: name and symbol; decimals and standards do not return, S3d).',
       conclusion:
-        'after publish: name "Acme Token", symbol "ACME", decimals 6, standards "mip-0004" (group "ACME"); after withdraw and after withdraw again: no identity and no group (`list`: identities none); final: ONLY name "Acme Again" and symbol "ACMA" (group "ACMA"); the withdraw payload = header + the four Null records, the publish payload = MIP Appendix A.',
+        'after publish: name "Acme Token", symbol "ACME", decimals 6, standards "mip-0004" (group "ACME"); after rename: name "Acme Prime", symbol "ACMP", decimals and standards unchanged (group "ACMP"); after withdraw and after withdraw again: no identity and no group (`list`: identities none); final: ONLY name "Acme Again" and symbol "ACMA" (group "ACMA"); the publish payload = MIP Appendix A byte-for-byte, the withdraw payload = header + the six Null records.',
       source: {
         example: 'examples/minimal',
         contract: 'examples/minimal/contracts/OwnerKey.compact',
         metadata: 'examples/minimal/owner-key.metadata.json',
-        deployedFrom: `examples/minimal/contracts/OwnerKey.compact at ${C11_DEPLOYED.commit}: its withdrawMetadata() emits one event with Null records at name, symbol, decimals and standards (verifier key ${C11_DEPLOYED.withdrawVerifierKeySha256}, record.json)`,
       },
       notes: [
+        'withdrawMetadata() emits one event with a Null record for each of the six common keys; the token never had image or image_sha256, and a Null record for a field without a value has no effect.',
         'Kind 3 has no color, so there is no color lookup: per the MIP "Lookup" section a contract token is found by querying the contract\'s kind-3 events, which is `list` — after the withdrawal it must show no identity for (0x11…, 3) and no group.',
-        `This deployment's withdrawMetadata() emits one event with Null records at the four keys the token has: name, symbol, decimals, standards (source: examples/minimal/contracts/OwnerKey.compact at ${C11_DEPLOYED.commit.slice(0, 7)}). examples/minimal/contracts/OwnerKey.compact in this tree also deletes image and image_sha256 (a Null record for a field without a value has no effect).`,
+        'OwnerKey renames with setMetadata(name, symbol), so the revive sets name and symbol (10- and 4-byte values: "Acme Again"/"ACMA").',
+        'A Null record that deletes a single key while the other fields stay is shown on chain by C12 (steps s3a-publish and s3a-delete-name, vector S3a).',
+        "Every intermediate state is re-checkable: `recheck` lists the contract as of each step's block (`list --to-block`).",
       ],
       steps,
       recheck: { checkEvent: checks, list: lists },
@@ -575,7 +513,7 @@ function build(): { cases: CaseDef[] } {
       notes: [
         "--force: accepted vectors are emitted even when they would not change the state (without it, the before-check skips a call whose accepted events leave the contract's state unchanged); rejected and ignored ones are never skipped.",
         'Step ids are the vector ids, except step A3c, which emits the event of vector R5i (key ff 6b 65 79): rejected, because keys MUST be valid UTF-8.',
-        "The contract also carries case C12's events (another domainSep, later blocks): the list check reads the state as of step I2b's block (`list --to-block`).",
+        "The contract also carries case C12's events (later blocks; two more identities: C12's own domainSep with kind 3, and kind 1 under 0x11…): the list check reads the state as of step I2b's block (`list --to-block`).",
       ],
       steps,
       recheck: { checkEvent: checks, list: [{ record: 'record.json', expect: 'expected.json', atStep: 'I2b' }] },
@@ -583,23 +521,47 @@ function build(): { cases: CaseDef[] } {
     });
   }
 
-  // C12 — MIP-0018 PR #372 rules on chain through C07's raw emitter (no deployment): image and image_sha256 (A6), a key
-  // that is not served (S10a), name and symbol over their lengths (S11), a 31-byte image_sha256 (S12b). One identity
-  // under its own domainSep; the contract also holds C07's identity, so every state lists both.
+  // C12 — MIP-0018 PR #372 rules on chain through C07's raw emitter (no deployment). Steps a6–s12b: one identity under
+  // its own domainSep (kind 3), each event carrying the records of the named vector under that header — image and
+  // image_sha256 (A6), a key that is not served (S10a), name and symbol over their lengths (S11), a 31-byte image_sha256
+  // (S12b). Steps s3a-publish and s3a-delete-name: vector S3a's two kind-1 events, byte for byte (domainSep 0x11…,
+  // kind 1) — a Null record at `name` deletes only `name`. The contract also holds C07's identity (0x11…/3), so every
+  // state lists all three.
   {
-    const domainSep = `0x${Buffer.from(C12_DOMAIN).toString('hex').padEnd(64, '0')}`;
+    const domainSep = C12_DS;
     const header = { domainSep: fromHex(domainSep), kind: 3 };
     const files: Record<string, unknown> = {};
     const steps: Step[] = [];
     const checks: Recheck['checkEvent'] = [];
     const lists: Recheck['list'] = [];
     const evs: { name: string; payload: string }[][] = [...c07Events];
-    for (const c of C12_STEPS) {
-      const payload = toHex(encodePayload(header, c.records()));
-      const cl = classifyEvent({ type: 'Misc', name: fromHex(EVENT_NAME_HEX), payload: fromHex(payload) });
-      if (cl.result !== 'accept') throw new Error(`C12 ${c.id}: the codec does not accept the event`);
-      files[`args/${c.id}.json`] = [EVENT_NAME_HEX, payload];
-      files[`expect/${c.id}.json`] = [{ result: 'accept', name: EVENT_NAME_HEX, payload, domainSep, kind: 3 }];
+    /** One identity of a state and the groups it is a member of. */
+    const part = (state: ExpectedState, ds: string, kind: number): ExpectedState => ({
+      identities: state.identities.filter((i) => i.domainSep === ds && i.kind === kind),
+      groups: state.groups.filter((g) => g.members.some((m) => m.domainSep === ds && m.kind === kind)),
+    });
+    const c07Identity = expectedOf.C07!.identities.find((i) => i.domainSep === DS11 && i.kind === 3)!;
+    const all = [
+      ...C12_STEPS.map((c) => ({
+        id: c.id,
+        note: c.note,
+        event: { name: EVENT_NAME_HEX, payload: toHex(encodePayload(header, c.records())) },
+        mine: { domainSep, kind: 3, expected: { identities: [C12_EXPECTED[c.id]!], groups: C12_GROUPS[c.id]! } },
+      })),
+      ...C12_S3A.map((c) => ({
+        id: c.id,
+        note: c.note,
+        event: vectorEvent('state/S3a.json', c.step),
+        mine: { domainSep: DS11, kind: 1, expected: c.expected },
+      })),
+    ];
+    for (const c of all) {
+      const { name, payload } = c.event;
+      const cl = classifyEvent({ type: 'Misc', name: fromHex(name), payload: fromHex(payload) });
+      if (name !== EVENT_NAME_HEX || cl.result !== 'accept') throw new Error(`C12 ${c.id}: the codec does not accept the event`);
+      const { domainSep: ds, kind } = c.mine;
+      files[`args/${c.id}.json`] = [name, payload];
+      files[`expect/${c.id}.json`] = [{ result: 'accept', name, payload, domainSep: ds, kind }];
       steps.push({
         id: c.id,
         runner: 'signer',
@@ -625,42 +587,57 @@ function build(): { cases: CaseDef[] } {
         submits: 'call',
         note: c.note,
       });
-      evs.push([{ name: EVENT_NAME_HEX, payload }]);
+      evs.push([{ name, payload }]);
       const state = reduce(evs, { fields: true, counts: true });
-      const mine = state.identities.find((i) => i.domainSep === domainSep)!;
-      sameState(
-        { identities: [mine], groups: state.groups.filter((g) => g.members.some((m) => m.domainSep === domainSep)) },
-        { identities: [C12_EXPECTED[c.id]!], groups: C12_GROUPS[c.id]! },
-        `C12 after ${c.id}`,
-      );
+      sameState(part(state, ds, kind), c.mine.expected, `C12 after ${c.id}`);
+      // the other identities on the contract stay as the steps before left them
+      if (ds === DS11)
+        sameState(part(state, domainSep, 3), { identities: [C12_EXPECTED.s12b!], groups: C12_GROUPS.s12b! }, `C12 after ${c.id}`);
+      sameState(part(state, DS11, 3), { identities: [c07Identity], groups: part(expectedOf.C07!, DS11, 3).groups }, `C12 after ${c.id}`);
       files[`expected-after-${c.id}.json`] = state;
       checks.push({ record: 'record.json', step: c.id, expect: `expect/${c.id}.json` });
       lists.push({ record: 'record.json', expect: `expected-after-${c.id}.json`, atStep: c.id });
     }
-    for (const c of C12_STEPS) {
+    for (const c of all) {
       steps.push(checkEvent(c.id));
       steps.push(list(`expected-after-${c.id}.json`, `list-after-${c.id}`));
     }
     const final = reduce(evs, { fields: true, counts: true });
+    // the kind-1 identity ends exactly as vector S3a states it (every field: key, value type, value, usability)
+    {
+      const v = JSON.parse(readFileSync(join(REPO, 'vectors', 'state', 'S3a.json'), 'utf8')) as {
+        expect: { identities: { domainSep: string; kind: number; fields: Record<string, ExpectedField> }[] };
+      };
+      const want = v.expect.identities.find((i) => `0x${i.domainSep}` === DS11 && i.kind === 1)!;
+      const got = final.identities.find((i) => i.domainSep === DS11 && i.kind === 1)!;
+      const fields = Object.fromEntries(
+        Object.entries(want.fields).map(([k, f]) => [
+          k,
+          { key_text: f.key_text, valType: f.valType, value_hex: f.value_hex, usable: f.usable },
+        ]),
+      );
+      sameState({ identities: [got], groups: [] }, { identities: [{ ...got, fields }], groups: [] }, 'C12 (0x11…/1) = vector S3a');
+    }
     files['expected.json'] = final;
     lists.push({ record: 'record.json', expect: 'expected.json' });
     expectedOf.C12 = final;
     cases.push({
       id: 'C12',
       title:
-        "Raw emitter (test-only), C07's contract: image and image_sha256, a key that is not served, name and symbol over their lengths, a 31-byte image_sha256",
+        "Raw emitter (test-only), C07's contract: image and image_sha256, a key that is not served, name and symbol over their lengths, a 31-byte image_sha256, a Null record that deletes one key",
       demonstrates:
-        'MIP-0018 PR #372 on chain, one identity (kind 3, its own domainSep) through C07\'s owner-gated raw emitter: A6 image (type 4) and a 32-byte image_sha256 (type 0) in one event, both served and usable; S10a a record foo = "x" is accepted and not served; S11 a 70-character name and a 15-character symbol (grapheme clusters: combining marks, flags, Hangul L+V+T jamo) are usable and served as their first 64 / 12 characters; S12b a 31-byte image_sha256 is unusable.',
+        'MIP-0018 PR #372 on chain through C07\'s owner-gated raw emitter. One identity (kind 3, its own domainSep): A6 image (type 4) and a 32-byte image_sha256 (type 0) in one event, both served and usable; S10a a record foo = "x" is accepted and not served; S11 a 70-character name and a 15-character symbol (grapheme clusters: combining marks, flags, Hangul L+V+T jamo) are usable and served as their first 64 / 12 characters; S12b a 31-byte image_sha256 is unusable. A second identity (kind 1, domainSep 0x11…), vector S3a\'s kind-1 events byte for byte: a Null record at `name` deletes only `name` — the identity keeps symbol, decimals and standards (MIP "Applying records").',
       conclusion:
-        "after a6: image and image_sha256 usable; after s10a: unchanged (foo is not served); after s11: name and symbol served truncated (the stored bytes are unchanged); after s12b: image_sha256 unusable, the other fields unchanged. C07's identity (0x11…/3) is listed unchanged next to it.",
+        'after a6: image and image_sha256 usable; after s10a: unchanged (foo is not served); after s11: name and symbol served truncated (the stored bytes are unchanged); after s12b: image_sha256 unusable, the other fields unchanged; after s3a-publish: a kind-1 identity (0x11…/1) with name "Gold", symbol "GLD", decimals 6, standards "mip-0011" (group "GLD"); after s3a-delete-name: no name, symbol "GLD", decimals 6 and standards "mip-0011" kept (group "GLD"), as vector S3a states for kind 1. C07\'s identity (0x11…/3) is listed unchanged next to them.',
       source: {
         contract: 'test-contracts/raw-emitter',
         contractOf: 'C07',
-        vectors: 'vectors/payload/A6.json, vectors/state/S10a.json, S11a.json, S11b.json, S12b.json',
+        vectors: 'vectors/payload/A6.json, vectors/state/S10a.json, S11a.json, S11b.json, S12b.json, S3a.json',
       },
       dependsOn: ['C07'],
       notes: [
-        `domainSep = pad(32, "${C12_DOMAIN}"); every event carries the records of the named vector under this header.`,
+        `Steps a6, s10a, s11 and s12b: domainSep = pad(32, "${C12_DOMAIN}"), kind 3; each event carries the records of the named vector under this header.`,
+        "Steps s3a-publish and s3a-delete-name emit vector S3a's kind-1 events (its block 1 event 0 and its block 2 event) byte for byte: domainSep 0x11…, kind 1, so a kind-1 identity next to C07's kind-3 one. S3a's kind-3 event is not emitted: C07's identity has that domainSep and kind.",
         "`--attach @{out:C07}/record.json` starts this case's own record for C07's contract (C07's record is not touched); wallet 1 is the raw emitter's owner.",
         '--force: s10a leaves the served state unchanged, so the before-check would skip it; --force emits every step.',
         "C07's identity (0x11…/3) is on the same contract: each expected state lists it as C07 left it, and the counts include C07's 22 events.",
@@ -1064,29 +1041,6 @@ function build(): { cases: CaseDef[] } {
   return { cases };
 }
 
-// C11's contract: examples/minimal/contracts/OwnerKey.compact at 57ce633, whose withdrawMetadata emits ONE event with
-// Null records at name, symbol, decimals and standards. Deployed verifier key from C11/record.json.
-const C11_DEPLOYED = {
-  commit: '57ce63326c231b80dca3efc464c12df599b537ba',
-  withdrawVerifierKeySha256: 'f2273345ed4752c9c31adc7eba502efc7fcddcfb5051581ffe4479aabdc0e871',
-  withdrawPayload: (domainSep: string, kind: number) =>
-    toHex(
-      encodePayload(
-        { domainSep: fromHex(domainSep), kind },
-        ['name', 'symbol', 'decimals', 'standards'].map((k) => record.tombstone(k)),
-      ),
-    ),
-};
-
-// C06's contract: examples/minimal/contracts/OwnerKey.compact at 70b54c6, whose withdrawMetadata emits ONE Null record
-// at `name`. Deployed verifier key from C06/record.json.
-const C06_DEPLOYED = {
-  commit: '70b54c674260b13c0cdbf1df72457f77a3dba2fe',
-  withdrawVerifierKeySha256: 'ba50827a038885613c531250ba02d301c82fe44ed8c555f5c9b36dd3576d1917',
-  withdrawPayload: (domainSep: string, kind: number) =>
-    toHex(encodePayload({ domainSep: fromHex(domainSep), kind }, [record.tombstone('name')])),
-};
-
 const DS11 = `0x${'11'.repeat(32)}`;
 const kind3 = (common: Record<string, unknown>): ExpectedIdentity => ({ domainSep: DS11, kind: 3, colored: false, common });
 const groupOf = (symbol: string) => [{ symbol, members: [{ domainSep: DS11, kind: 3 }] }];
@@ -1095,13 +1049,6 @@ const A1_COMMON = { name: 'Acme Token', symbol: 'ACME', decimals: 6, standards: 
 const C06_EXPECTED: Record<string, ExpectedState> = {
   publish: { identities: [kind3(A1_COMMON)], groups: groupOf('ACME') },
   rename: { identities: [kind3({ ...A1_COMMON, name: 'Acme Prime', symbol: 'ACMP' })], groups: groupOf('ACMP') },
-  withdraw: { identities: [kind3({ symbol: 'ACMP', decimals: 6, standards: 'mip-0004' })], groups: groupOf('ACMP') },
-  'withdraw-again': { identities: [kind3({ symbol: 'ACMP', decimals: 6, standards: 'mip-0004' })], groups: groupOf('ACMP') },
-  revive: { identities: [kind3({ name: 'Acme Again', symbol: 'ACMA', decimals: 6, standards: 'mip-0004' })], groups: groupOf('ACMA') },
-};
-/** C11's states, written by hand from the MIP's "Applying records" text; the generator checks the reducer agrees. */
-const C11_EXPECTED: Record<string, ExpectedState> = {
-  publish: { identities: [kind3(A1_COMMON)], groups: groupOf('ACME') },
   withdraw: { identities: [], groups: [] },
   'withdraw-again': { identities: [], groups: [] },
   revive: { identities: [kind3({ name: 'Acme Again', symbol: 'ACMA' })], groups: groupOf('ACMA') },
@@ -1156,6 +1103,30 @@ const C12_EXPECTED: Record<string, ExpectedIdentity> = {
 };
 const C12_GROUP = [{ symbol: C12_SYMBOL_15, members: [{ domainSep: C12_DS, kind: 3 }] }];
 const C12_GROUPS: Record<string, ExpectedState['groups']> = { a6: [], s10a: [], s11: C12_GROUP, s12b: C12_GROUP };
+
+/** One event of a state vector, byte for byte (its name and its 256-byte payload). */
+function vectorEvent(file: string, step: number): { name: string; payload: string } {
+  const v = JSON.parse(readFileSync(join(REPO, 'vectors', file), 'utf8')) as { steps: { name_hex: string; payload_hex: string }[] };
+  const e = v.steps[step]!;
+  return { name: e.name_hex, payload: e.payload_hex };
+}
+const kind1 = (common: Record<string, unknown>): ExpectedIdentity => ({ domainSep: DS11, kind: 1, colored: true, common });
+const S3A_GROUP = [{ symbol: 'GLD', members: [{ domainSep: DS11, kind: 1 }] }];
+/** C12's kind-1 steps: vector S3a's kind-1 events (steps 0 and 2), and the identity after each, written by hand. */
+const C12_S3A: { id: string; step: number; note: string; expected: ExpectedState }[] = [
+  {
+    id: 's3a-publish',
+    step: 0,
+    note: 'vector S3a, block 1 event 0, byte for byte: kind 1 under 0x11…, name "Gold", symbol "GLD", decimals 6, standards "mip-0011": accept',
+    expected: { identities: [kind1({ name: 'Gold', symbol: 'GLD', decimals: 6, standards: 'mip-0011' })], groups: S3A_GROUP },
+  },
+  {
+    id: 's3a-delete-name',
+    step: 2,
+    note: 'vector S3a, block 2, byte for byte: one Null record at name (kind 1 under 0x11…): accept; deletes name only',
+    expected: { identities: [kind1({ symbol: 'GLD', decimals: 6, standards: 'mip-0011' })], groups: S3A_GROUP },
+  },
+];
 
 const U1_DOMAIN = 'mip-0018:example:upgrade';
 /** Throwaway signing key (not wallet material) in the signer's state directory, written before the case runs. */

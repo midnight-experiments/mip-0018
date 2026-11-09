@@ -5,13 +5,15 @@
 # on the public network (only the placeholders differ):
 #
 #   python3 case.py steps <case.json>                       one line per step: index TAB id TAB runner TAB exit TAB stdout
-#                                                           TAB expected output text (failing steps)
+#                                                           TAB expected output text (failing steps) TAB script (a
+#                                                           wallet-free repository script run with node, else empty)
 #   python3 case.py argv <case.json> <index> <e2e dir>      the step's argv, NUL-separated (container paths)
 #
 # Local values: {net} = --network undeployed (URLs from the container environment); {signer} = the dev chain's
 # public genesis wallet with a 0600 sync cache; {signer2} = the funded local test wallet B with its OWN private-state
 # file; {case} = /e2e/case-defs/<ID>; {out} / {out:<ID>} = /e2e/cases/<ID>; {firstHeight} /
-# {lastHeight} = the lowest inclusion height of every case record minus 10 / the highest one.
+# {lastHeight}: for IDX the lowest inclusion height of every case record minus 10 / the highest one; for any other case
+# (U1) the first inclusion height of its own record minus 1 / the highest one of its own record.
 import glob
 import json
 import os
@@ -28,16 +30,20 @@ LOCAL = {
 }
 
 
-def heights(e2e):
+def heights(e2e, case_id):
+    own = case_id != "IDX"
+    files = [os.path.join(e2e, "cases", case_id, "record.json")] if own else glob.glob(os.path.join(e2e, "cases", "*", "record.json"))
     hs = []
-    for f in glob.glob(os.path.join(e2e, "cases", "*", "record.json")):
+    for f in files:
+        if not os.path.exists(f):
+            continue
         for s in json.load(open(f)).get("steps", []):
             h = (s.get("inclusion") or {}).get("height")
             if h is not None:
                 hs.append(h)
     if not hs:
         raise SystemExit("no inclusion heights in the case records yet")
-    return max(0, min(hs) - 10), max(hs)
+    return max(0, min(hs) - (1 if own else 10)), max(hs)
 
 
 def main():
@@ -46,7 +52,7 @@ def main():
     case_id = c["id"]
     if cmd == "steps":
         for i, s in enumerate(c["steps"]):
-            print("\t".join([str(i), s["id"], s["runner"], str(s["expectExit"]), s.get("stdout", ""), s.get("expectOutput", "")]))
+            print("\t".join([str(i), s["id"], s["runner"], str(s["expectExit"]), s.get("stdout", ""), s.get("expectOutput", ""), s.get("script", "")]))
         return
     if cmd == "argv":
         step = c["steps"][int(sys.argv[3])]
@@ -58,7 +64,7 @@ def main():
                 out.extend(LOCAL[a])
                 continue
             if "{firstHeight}" in a or "{lastHeight}" in a:
-                first, last = heights(e2e)
+                first, last = heights(e2e, case_id)
                 a = a.replace("{firstHeight}", str(first)).replace("{lastHeight}", str(last))
             a = a.replace("{case}", "/e2e/case-defs/" + case_id).replace("{out}", "/e2e/cases/" + case_id)
             while "{out:" in a:
