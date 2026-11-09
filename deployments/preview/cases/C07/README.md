@@ -25,6 +25,8 @@ signer() {
 wallet_free() { docker/run.sh mip0018 -- "$@"; }
 ```
 
+A `list` command with `--to-block` reads the contract as of the inclusion block of the step it checks (from `record.json`), so it shows the state at that step whenever it runs, as `recheck` does.
+
 | # | Step | Wallet | Exit | Command |
 |---|---|---|---|---|
 | 1 | `deploy` — TEST-ONLY contract (NOT FOR PRODUCTION): owner-gated emitRaw / emitTwo | wallet1 | 0 | `signer deploy --network preview --mnemonic-file /run/mip0018/secrets/preview-wallet-1.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --example raw-emitter --record deployments/preview/cases/C07/record.json` |
@@ -72,7 +74,7 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 | 43 | `check-event-I1b` | none | 0 | `wallet_free check-event --network preview --record deployments/preview/cases/C07/record.json --step I1b --expect @deployments/preview/cases/C07/expect/I1b.json --wait 120 --json > deployments/preview/cases/C07/observed-check-event-I1b.json` |
 | 44 | `check-event-I2a` | none | 0 | `wallet_free check-event --network preview --record deployments/preview/cases/C07/record.json --step I2a --expect @deployments/preview/cases/C07/expect/I2a.json --wait 120 --json > deployments/preview/cases/C07/observed-check-event-I2a.json` |
 | 45 | `check-event-I2b` | none | 0 | `wallet_free check-event --network preview --record deployments/preview/cases/C07/record.json --step I2b --expect @deployments/preview/cases/C07/expect/I2b.json --wait 120 --json > deployments/preview/cases/C07/observed-check-event-I2b.json` |
-| 46 | `list` | none | 0 | `wallet_free list --network preview --record deployments/preview/cases/C07/record.json --expect @deployments/preview/cases/C07/expected.json --json > deployments/preview/cases/C07/observed-list.json` |
+| 46 | `list` | none | 0 | `wallet_free list --network preview --record deployments/preview/cases/C07/record.json --expect @deployments/preview/cases/C07/expected.json --to-block 41952 --json > deployments/preview/cases/C07/observed-list.json` |
 
 ## Re-check (wallet-free, one command)
 

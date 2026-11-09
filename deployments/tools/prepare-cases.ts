@@ -1153,9 +1153,36 @@ const EXPANSION: Record<string, string[]> = {
 };
 const quote = (a: string) => (/^[\w@%+=:,./{}-]+$/u.test(a) ? a : `'${a.replace(/'/gu, `'\\''`)}'`);
 
+/**
+ * The block a `list` step reads up to: the inclusion height of the step that its re-check entry names (`atStep`), from
+ * the case's own run record. Undefined before the run and for a `list` of the contract's current state.
+ */
+function listToBlock(c: CaseDef, s: Step): number | undefined {
+  if (s.argv[0] !== 'list') return undefined;
+  const opt = (name: string) => {
+    const i = s.argv.indexOf(name);
+    return i < 0 ? undefined : s.argv[i + 1];
+  };
+  if (opt('--record') !== REC) return undefined;
+  const expect = opt('--expect')?.replace(/^@\{case\}\//u, '');
+  const at = c.recheck.list?.find((l) => l.record === 'record.json' && l.expect === expect)?.atStep;
+  const p = join(CASES, c.id, 'record.json');
+  if (at === undefined || !existsSync(p)) return undefined;
+  const r = JSON.parse(readFileSync(p, 'utf8')) as { steps: { id: string; inclusion?: { height: number } }[] };
+  return r.steps.find((x) => x.id === at)?.inclusion?.height;
+}
+
 function render(c: CaseDef, s: Step): string {
   const dir = `${CASES_REL}/${c.id}`;
-  const argv = s.argv
+  const toBlock = listToBlock(c, s);
+  const json = s.argv.indexOf('--json');
+  const base =
+    toBlock === undefined
+      ? s.argv
+      : json < 0
+        ? [...s.argv, '--to-block', String(toBlock)]
+        : [...s.argv.slice(0, json), '--to-block', String(toBlock), ...s.argv.slice(json)];
+  const argv = base
     .flatMap((a) => EXPANSION[a] ?? [a])
     .map((a) => a.replace(/\{out:(\w+)\}/gu, `${CASES_REL}/$1`).replace(/\{case\}|\{out\}/gu, dir));
   const cmd = s.script
@@ -1193,6 +1220,12 @@ function readme(c: CaseDef): string {
       : 'wallet_free() { docker/run.sh mip0018 -- "$@"; }',
     '```',
     '',
+    ...(c.steps.some((s) => listToBlock(c, s) !== undefined)
+      ? [
+          'A `list` command with `--to-block` reads the contract as of the inclusion block of the step it checks (from `record.json`), so it shows the state at that step whenever it runs, as `recheck` does.',
+          '',
+        ]
+      : []),
     '| # | Step | Wallet | Exit | Command |',
     '|---|---|---|---|---|',
     ...c.steps.map(
