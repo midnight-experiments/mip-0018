@@ -36,10 +36,13 @@ wallet_free() { docker/run.sh mip0018 -- "$@"; }
 docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/C01
 ```
 
-## Transactions
+## Transactions (Preview, from `record.json`)
 
-| Step | Transaction hash | Block | Fee (SPECK) |
-|---|---|---|---|
-| `deploy` | — | — | — |
-| `publish` | — | — | — |
+Contract `MyFungibleToken` at `c135766fdc8ef3ae24fcd1e89bd37f66513a9f5948e7d034567de24aaae9237e`; signer mn_addr_preview1wlhw0m3nh29lfmk0tj4lvfh2wfsekt8nns9h57gpyfe0az7e9fts2x420z.
+
+| Step | What | Transaction hash | Block | Outcome | Fee (SPECK) | ≈ DUST |
+|---|---|---|---|---|---:|---:|
+| `deploy` | deploy | `687bb96b7de5127ee7817b2d4f610826703dd10a98e1a817f7df162941ff0d57` | 41541 (`0d1c6b2efa33bed9…`) | SUCCESS | 10,534,271,771,428,572 | 10.534 |
+| `publish` | call `publishMetadata` | `57f8a00479674d1498b1c2dfa6a3b44f82f6ee822aa8c3c41df6ce1907fb77e7` | 41547 (`83045afdaca03cda…`) | SUCCESS | 218,733,942,857,143 | 0.219 |
+| **total** | | | | | **10,753,005,714,285,715** | **10.753** |
 

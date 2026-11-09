@@ -1,0 +1,163 @@
+{
+  "kind": "mip0018-run-record",
+  "schema": 1,
+  "createdAt": "2026-11-09T22:18:54.612Z",
+  "updatedAt": "2026-11-09T22:19:56.731Z",
+  "network": {
+    "id": "preview",
+    "networkId": "preview",
+    "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+    "chainInstance": "0xee45046d11882c45ee0d468203169afa48f084ffaa380043ab84b1fabf3947fe",
+    "indexer": "https://indexer.preview.midnight.network/api/v4/graphql",
+    "rpc": "https://rpc.preview.midnight.network"
+  },
+  "contract": {
+    "name": "MyFungibleToken",
+    "managedDir": "examples/openzeppelin/fungible-token/managed/MyFungibleToken",
+    "verifierKeySha256": {
+      "balanceOf": "1314444ccfea9eae6918d9b35a3fb9ba23f50b2a30b7171fb3e24a9959b26391",
+      "burn": "fd37e5b4c1a4b04cfbae6a4098dc30a9831b3e713db4d5da412e8d0decc28a04",
+      "decimals": "3cfdfb97570b6be4895e2c940e2764659649a713cd33c09f599e9284d8ebc289",
+      "mint": "a0846beaa9e5ff39340ec47d21c1421e7d8041a989d0f082c87b4e4631b7f522",
+      "name": "57d6b70ed940d572c220d32083e0fd08ca8eea823db81c7632e578176f8b18fa",
+      "publishMetadata": "7f9ed58d29c39b4747f89d1aec3fbde3e2bf82c646c43227622a614860c3eda8",
+      "setMetadata": "5f927834f9a6a6803655abd11020d806869dc16e044e121e1e8ac359895cdbb5",
+      "symbol": "da26d654e5ff20109bb45901865f21c81fc0544a51d48cb00eedad3debe80028",
+      "transfer": "1f323d72002f82ba313e8a3c5c5cef7f918e85de4846d74f81cd3bf18eda7ea8",
+      "withdrawMetadata": "c4ef365704e0a06cb7f33cb0e793a4a48366cb8caa2cfe746bc0a00749ec059e"
+    },
+    "adapter": "examples/openzeppelin/fungible-token/mip0018.adapter.ts",
+    "privateStateId": "MyFungibleToken",
+    "address": "c135766fdc8ef3ae24fcd1e89bd37f66513a9f5948e7d034567de24aaae9237e",
+    "constructorArgs": []
+  },
+  "steps": [
+    {
+      "id": "deploy",
+      "kind": "deploy",
+      "args": [],
+      "state": "completed",
+      "attempts": [
+        {
+          "at": "2026-11-09T22:19:02.635Z",
+          "event": "submitting 687bb96b7de5127ee7817b2d4f610826703dd10a98e1a817f7df162941ff0d57"
+        },
+        {
+          "at": "2026-11-09T22:19:19.194Z",
+          "event": "node accepted 00b2547e14d9c6e60337ac327a0cc542e07732babecafeae95245229d290b49183"
+        },
+        {
+          "at": "2026-11-09T22:19:20.165Z",
+          "event": "midnight-js: SucceedEntirely at block 41541"
+        },
+        {
+          "at": "2026-11-09T22:19:20.910Z",
+          "event": "completed: contract c135766fdc8ef3ae24fcd1e89bd37f66513a9f5948e7d034567de24aaae9237e on chain with balanceOf, burn, decimals, mint, name, publishMetadata, setMetadata, symbol, transfer, withdrawMetadata"
+        }
+      ],
+      "startedAt": "2026-11-09T22:19:00.690Z",
+      "tx": {
+        "hash": "687bb96b7de5127ee7817b2d4f610826703dd10a98e1a817f7df162941ff0d57",
+        "identifiers": [
+          "0063e4ec7119b08bcf11097d7d90fb7f4a89d083528511f9fbec3a91a5a5a4efd5",
+          "00b2547e14d9c6e60337ac327a0cc542e07732babecafeae95245229d290b49183"
+        ],
+        "ttl": "2026-11-09T22:49:01.000Z",
+        "txId": "00b2547e14d9c6e60337ac327a0cc542e07732babecafeae95245229d290b49183"
+      },
+      "inclusion": {
+        "height": 41541,
+        "hash": "0d1c6b2efa33bed95bfc0625debde0171f9af7490e7224724c6698be94e68808",
+        "status": "SUCCESS",
+        "fee": "10534271771428572"
+      },
+      "observed": {
+        "exists": true,
+        "operations": [
+          "balanceOf",
+          "burn",
+          "decimals",
+          "mint",
+          "name",
+          "publishMetadata",
+          "setMetadata",
+          "symbol",
+          "transfer",
+          "withdrawMetadata"
+        ],
+        "block": {
+          "height": 41541,
+          "hash": "0d1c6b2efa33bed95bfc0625debde0171f9af7490e7224724c6698be94e68808"
+        },
+        "txHash": "687bb96b7de5127ee7817b2d4f610826703dd10a98e1a817f7df162941ff0d57"
+      },
+      "completedAt": "2026-11-09T22:19:20.910Z"
+    },
+    {
+      "id": "publish",
+      "kind": "call",
+      "circuit": "publishMetadata",
+      "args": [],
+      "state": "completed",
+      "attempts": [
+        {
+          "at": "2026-11-09T22:19:36.496Z",
+          "event": "submitting 57f8a00479674d1498b1c2dfa6a3b44f82f6ee822aa8c3c41df6ce1907fb77e7"
+        },
+        {
+          "at": "2026-11-09T22:19:55.222Z",
+          "event": "node accepted 0011fff33adadc0ba5178d3550d29264c92163f8bd3d185900549eddd3e8d0f795"
+        },
+        {
+          "at": "2026-11-09T22:19:55.974Z",
+          "event": "midnight-js: SucceedEntirely at block 41547"
+        },
+        {
+          "at": "2026-11-09T22:19:56.731Z",
+          "event": "completed: 1 expected Misc event(s) observed in 57f8a00479674d1498b1c2dfa6a3b44f82f6ee822aa8c3c41df6ce1907fb77e7"
+        }
+      ],
+      "startedAt": "2026-11-09T22:19:31.620Z",
+      "expectedEvents": [
+        {
+          "name": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+          "payload": "6d69702d303031383a6578616d706c653a66756e6769626c650000000000000003046e616d65010941636d6520476f6c640673796d626f6c010441474c4408646563696d616c730201060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "tx": {
+        "hash": "57f8a00479674d1498b1c2dfa6a3b44f82f6ee822aa8c3c41df6ce1907fb77e7",
+        "identifiers": [
+          "004884057e983768453c9757e76b3717c0eb9975fc89772fce491848313f2624d6",
+          "0011fff33adadc0ba5178d3550d29264c92163f8bd3d185900549eddd3e8d0f795"
+        ],
+        "ttl": "2026-11-09T22:49:35.000Z",
+        "txId": "0011fff33adadc0ba5178d3550d29264c92163f8bd3d185900549eddd3e8d0f795"
+      },
+      "inclusion": {
+        "height": 41547,
+        "hash": "83045afdaca03cda82a9ae8b769726b28217ecbc004e6e01e6320f392bde2335",
+        "status": "SUCCESS",
+        "fee": "218733942857143"
+      },
+      "observed": {
+        "inclusion": {
+          "height": 41547,
+          "hash": "83045afdaca03cda82a9ae8b769726b28217ecbc004e6e01e6320f392bde2335",
+          "status": "SUCCESS",
+          "fee": "218733942857143"
+        },
+        "events": [
+          {
+            "id": 13238,
+            "name": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+            "payload": "6d69702d303031383a6578616d706c653a66756e6769626c650000000000000003046e616d65010941636d6520476f6c640673796d626f6c010441474c4408646563696d616c730201060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      "completedAt": "2026-11-09T22:19:56.731Z"
+    }
+  ],
+  "signer": {
+    "unshieldedAddress": "mn_addr_preview1wlhw0m3nh29lfmk0tj4lvfh2wfsekt8nns9h57gpyfe0az7e9fts2x420z"
+  }
+}
