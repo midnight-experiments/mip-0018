@@ -2,7 +2,7 @@
   "name": "mip-0018",
   "private": true,
   "version": "0.0.0",
-  "description": "Reference implementation of MIP-0018 (on-chain token metadata): vectors, Compact module, examples, scripts and Stagenet cases",
+  "description": "Reference implementation of MIP-0018 (on-chain token metadata): vectors, Compact module, examples, scripts and cases on a public Midnight network",
   "license": "Apache-2.0",
   "type": "module",
   "engines": {
@@ -29,9 +29,7 @@
     "check:example-readmes": "npm run -s check:readmes -w examples/openzeppelin",
     "compile:spike": "npm run compile -w test-contracts/toolchain-spike --",
     "spike:local": "npm run local -w test-contracts/toolchain-spike --",
-    "spike:stagenet": "npm run stagenet -w test-contracts/toolchain-spike --",
     "local:fund": "npm run fund -w test-contracts/toolchain-spike --",
-    "spike:check": "npm run check -w test-contracts/toolchain-spike --",
     "check:secrets": "node tools/secret-scan.mjs --self-test && node tools/secret-scan.mjs --history",
     "vectors:generate": "npm run generate -w vectors --",
     "vectors:validate": "npm run validate -w vectors",

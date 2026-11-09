@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// The toolchain gate, shared by the local stack and Stagenet:
+// The toolchain gate on the local stack:
 //
 //   preflight -> deploy SpikeEmitter (midnight-js deployContract) -> call
 //   publishMetadata (callTx) -> the indexer returns the Misc event with the A1
@@ -84,7 +84,7 @@ export type SpikeOptions = {
   secondCall: boolean;
   /** Remove the key with midnight-js `circuitMaintenanceTx` instead of the package's MaintenanceUpdate helper. */
   removeWithMidnightJs: boolean;
-  /** Abort unless the wallet's unshielded address equals this (Stagenet: wallet 1). */
+  /** Abort unless the wallet's unshielded address equals this. */
   expectedUnshieldedAddress?: string;
   toolchain: Record<string, string>;
 };

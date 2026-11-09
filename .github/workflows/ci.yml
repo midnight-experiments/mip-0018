@@ -74,7 +74,7 @@ jobs:
           tags: ${{ env.MIP0018_IMAGE }}
           load: true
           cache-from: type=gha,scope=toolchain
-      - name: Check the MIP-0018 text at the pinned commit (toolchain.json), that README, vectors, schemas and Stagenet cases cite it, and that no tracked file cites another MIP commit
+      - name: Check the MIP-0018 text at the pinned commit (toolchain.json), that README, vectors, schemas and the committed cases cite it, and that no tracked file cites another MIP commit
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: docker/run.sh check:mip-pin

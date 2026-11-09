@@ -9,8 +9,8 @@ Considerations — Spam and cost".
 - **Verifier key**: what the contract stores on chain per circuit (the deployed operation holds only
   this key: observed 1,353-byte key → 1,362-byte operation, no ZKIR).
 - **Proving time**: one proof of the circuit by the official proof server on this host (median).
-- **Fees (DUST)**: paid per transaction; local-stack fees below, Stagenet fees from the real receipts of
-  the Stagenet cases ([Fees on Stagenet](#fees-on-stagenet)).
+- **Fees (DUST)**: paid per transaction; measured on the local stack
+  ([Fees on the local stack](#fees-on-the-local-stack)).
 
 Reproduce (Docker; the proving column needs a proof server, e.g. the local stack's):
 
@@ -172,69 +172,3 @@ verifier key, so its fee grows with the number of circuits: 0.50–0.51 DUST for
 to three circuits, 4.7–5.3 DUST for the eight to ten circuits of the OpenZeppelin examples. `scripts/create-and-destroy.ts`
 times each of its transactions from proving to finalization: deploy 16 s, `publishMetadata()` 24 s, `transfer` 17 s,
 `VerifierKeyRemove` 17 s.
-
-## Fees on Stagenet
-
-Real receipts of the Stagenet cases ([`deployments/stagenet/`](../deployments/stagenet/README.md), run 2026-10-02 (C11: 2026-10-03; C12: 2026-10-07),
-node `2.0.0-d9729c13`, ledger 9.1.0.0-rc.3, proof servers rc.8 contract / rc.6 DUST): the indexer's `fee` of every
-included transaction, as each case's `record.json` holds it. k from the tables above. 1 DUST = 10^15 SPECK.
-
-| Case | Transaction (circuit shape) | k | Txs | Fee (SPECK) | ≈ DUST |
-|---|---|---:|---:|---:|---:|
-| SPIKE | `SpikeEmitter.publishMetadata` (literal A1) | 6 | 1 | 169,392,887,855,896 | 0.169 |
-| C01 | deploy `MyFungibleToken` (10 circuits) | — | 1 | 6,967,424,959,418,516 | 6.967 |
-| C01 | `MyFungibleToken.publishMetadata` | 13 | 1 | 170,964,821,521,367 | 0.171 |
-| C02 | deploy `MyShieldedToken` (9 circuits) | — | 1 | 6,684,990,545,016,109 | 6.685 |
-| C02 | `MyShieldedToken.mint` | 14 | 1 | 207,554,021,072,761 | 0.208 |
-| C02 | `MyShieldedToken.publishMetadata` | 15 | 1 | 173,910,877,652,190 | 0.174 |
-| C03 | deploy `MyUnshieldedToken` (8 circuits) | — | 1 | 6,114,710,014,147,492 | 6.115 |
-| C03 | `MyUnshieldedToken.mint` | 13 | 1 | 220,552,661,229,721 | 0.221 |
-| C03 | `MyUnshieldedToken.publishMetadata` | 15 | 1 | 175,585,860,553,067 | 0.176 |
-| C04 | deploy `MyMultiKindToken` (8 circuits) | — | 1 | 6,862,539,443,348,953 | 6.863 |
-| C04 | `MyMultiKindToken.mintShielded` | 14 | 1 | 211,121,297,175,009 | 0.211 |
-| C04 | `MyMultiKindToken.mintUnshielded` | 13 | 1 | 222,971,902,036,569 | 0.223 |
-| C04 | `MyMultiKindToken.mintLedger` | 13 | 1 | 268,203,515,612,567 | 0.268 |
-| C04 | `MyMultiKindToken.publishMetadata` | 16 | 1 | 192,837,905,228,409 | 0.193 |
-| C05 | deploy `MyTokenFamily` (8 circuits) | — | 1 | 6,380,287,536,036,953 | 6.380 |
-| C05 | `MyTokenFamily.mint` | 14 | 2 | 210,787,300,549,442 – 210,866,712,090,850 | 0.211 |
-| C05 | `MyTokenFamily.publishMetadata` | 15 | 3 | 176,205,117,075,003 | 0.176 |
-| C06 | deploy `OwnerKey` (5 circuits) | — | 1 | 4,672,892,956,309,085 | 4.673 |
-| C06 | `OwnerKey.publishMetadata` | 15 | 1 | 174,323,270,749,595 | 0.174 |
-| C06 | `OwnerKey.setMetadata` | 15 | 2 | 173,921,391,761,418 – 174,135,957,735,567 | 0.174 |
-| C06 | `OwnerKey.withdrawMetadata` (this deployment: one Null record at `name`) | 15 | 2 | 173,510,273,470,794 – 173,908,517,361,446 | 0.174 |
-| C07, C08 | deploy `RawEmitter` (2 circuits) | — | 2 | 2,140,013,597,148,026 – 2,144,366,292,780,833 | 2.140–2.144 |
-| C07 | `RawEmitter.emitRaw` | 16 | 22 | 175,690,178,994,563 – 178,207,494,451,490 | 0.176–0.178 |
-| C08 | `RawEmitter.emitTwo` | 17 | 1 | 181,140,518,274,496 | 0.181 |
-| C10 | deploy `CreateAndDestroy` (2 circuits) | — | 1 | 2,024,952,380,274,544 | 2.025 |
-| C10 | `CreateAndDestroy.publishMetadata` | 14 | 1 | 174,756,276,986,532 | 0.175 |
-| C10 | `VerifierKeyRemove(publishMetadata, v4)` on `CreateAndDestroy` | — | 1 | 38,781,766,700,352 | 0.039 |
-| U1 | deploy `LegacyToken` (1 circuit) | — | 1 | 1,455,940,559,672,381 | 1.456 |
-| U1 | `LegacyToken.mint` | 14 | 1 | 218,844,261,128,440 | 0.219 |
-| U1 | `VerifierKeyInsert(publishMetadata, v4)` on `LegacyToken` (2,121-byte key) | — | 1 | 911,152,349,650,192 | 0.911 |
-| U1 | `LegacyToken.publishMetadata` (upgrade build `LegacyTokenMetadata`) | 15 | 1 | 176,285,080,555,533 | 0.176 |
-| C11 | deploy `OwnerKey` (5 circuits; this deployment's `withdrawMetadata`: four Null records) | — | 1 | 4,256,585,107,462,945 | 4.257 |
-| C11 | `OwnerKey.publishMetadata` | 15 | 1 | 177,637,726,570,864 | 0.178 |
-| C11 | `OwnerKey.withdrawMetadata` (four Null records in one event) | 15 | 2 | 177,262,764,778,656 – 177,305,324,270,339 | 0.177 |
-| C11 | `OwnerKey.setMetadata` (revive) | 15 | 1 | 177,069,017,822,064 | 0.177 |
-| C12 | `RawEmitter.emitRaw` (C07's contract, four events) | 16 | 4 | 191,448,731,211,198 – 192,497,557,487,295 | 0.191–0.192 |
-
-What the receipts show:
-
-- **A metadata transaction costs ≈ 0.17–0.19 DUST on Stagenet whatever its circuit size**: k = 6 (literal A1,
-  SPIKE) 0.169, k = 13–15 publishes, renames and withdrawals 0.171–0.176, k = 16 (three events in one call, C04)
-  0.193, k = 16–17 raw emitter 0.176–0.181. The fee follows the transaction (its proof, inputs and DUST spend), not
-  the circuit's k; k costs the issuer proving time and prover-key size instead (tables above). A mint costs a little
-  more (0.21–0.27 DUST: it also creates the coin / UTXO / ledger balance).
-- **Deploys dominate**: a deploy stores every circuit's verifier key, so its fee grows with the number of circuits —
-  1.5 DUST for 1 circuit (`LegacyToken`, U1), 2.0–2.1 DUST for 2 circuits (raw emitter, create-and-destroy), 4.7 for 5 (`OwnerKey`), 6.1–7.0 for the 8–10 circuit
-  OpenZeppelin examples. Adding metadata circuits to a token therefore costs mostly at deployment (≈ 0.6–0.9 DUST
-  per additional verifier key here), and an existing contract can add one later with a `VerifierKeyInsert` (case U1).
-- **Removing a key is cheap** (`VerifierKeyRemove`, 0.039 DUST — create-and-destroy, C10); **inserting one costs
-  about a deploy's share per key** (`VerifierKeyInsert` of a 2,121-byte key, 0.911 DUST — the existing-contract
-  upgrade, U1; ≈ 0.59 DUST locally).
-- Stagenet fees are ≈ 1.17× the local chain's for the same matrix (C01–C10: 51.93 DUST over 53 transactions on
-  Stagenet vs ≈ 44.4 DUST locally; U1 2.76 DUST over 4 transactions). Builds are deterministic: every deployed
-  verifier key equals, byte for byte, the SHA-256 in a `costs.json`, except `withdrawMetadata`: in the contracts of
-  C01–C06 it was compiled from sources where it emits one Null record at `name` (only C06 calls it), and in C11's from
-  a source where it emits Null records at `name`, `symbol`, `decimals` and `standards` (each key is in the case's
-  `record.json`).

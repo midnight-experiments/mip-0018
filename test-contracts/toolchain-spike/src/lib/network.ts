@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Network endpoints. Stagenet values are pinned (toolchain.json); the local
-// stack's come from docker/local-stack/ports.env through the environment.
-// The chain clients themselves live in @mip0018/midnight; `toProfile` /
-// `toEndpoints` map this spike configuration onto them.
+// Network endpoints of the local stack: from docker/local-stack/ports.env through the environment. The chain clients
+// themselves live in @mip0018/midnight; `toProfile` / `toEndpoints` map this spike configuration onto them.
 
-import { STAGENET as PINNED, stagenetProfile, undeployedProfile, type NetworkProfile } from '@mip0018/midnight';
+import { undeployedProfile, type NetworkProfile } from '@mip0018/midnight';
 import type { SignerEndpoints } from '@mip0018/midnight/signer';
 
 export type NetworkConfig = {
-  readonly name: 'local' | 'stagenet';
+  readonly name: 'local';
   readonly networkId: string;
   readonly indexer: string;
   readonly indexerWs: string;
@@ -29,19 +27,6 @@ const env = (name: string, fallback?: string): string => {
 
 const toWs = (url: string) => url.replace(/^http/u, 'ws');
 
-export const STAGENET_GENESIS = PINNED.genesisHash;
-
-export const stagenet = (): NetworkConfig => ({
-  name: 'stagenet',
-  networkId: 'stagenet',
-  indexer: 'https://indexer.stagenet.shielded.tools/api/v4/graphql',
-  indexerWs: 'wss://indexer.stagenet.shielded.tools/api/v4/graphql/ws',
-  node: 'https://rpc.stagenet.shielded.tools',
-  nodeWs: 'wss://rpc.stagenet.shielded.tools',
-  proofServer: env('MIP0018_PROOF_SERVER_URL'),
-  genesisHash: STAGENET_GENESIS,
-});
-
 /** The local stack, reached from a container on its Docker network. */
 export const local = (): NetworkConfig => {
   const indexer = env('MIP0018_INDEXER_URL', 'http://indexer:8088/api/v4/graphql');
@@ -59,9 +44,7 @@ export const local = (): NetworkConfig => {
 
 /** The package's network profile + signer endpoints for a spike NetworkConfig. */
 export const toProfile = (n: NetworkConfig): NetworkProfile =>
-  n.name === 'stagenet'
-    ? stagenetProfile({ indexer: n.indexer, indexerWs: n.indexerWs, rpc: n.node, rpcWs: n.nodeWs })
-    : undeployedProfile({ indexer: n.indexer, indexerWs: n.indexerWs, rpc: n.node, rpcWs: n.nodeWs });
+  undeployedProfile({ indexer: n.indexer, indexerWs: n.indexerWs, rpc: n.node, rpcWs: n.nodeWs });
 
 export const toEndpoints = (n: NetworkConfig): SignerEndpoints => ({
   profile: toProfile(n),

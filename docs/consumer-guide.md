@@ -19,7 +19,7 @@ its test is in the [conformance matrix](conformance-matrix.md).
 ## 1. Fetch the events
 
 MIP-0018 metadata travels in MIP-0002 `Misc` events, bound to the contract that emitted them. The Midnight indexer
-(GraphQL v4; Stagenet serves schema 4.4.0-rc.1) returns a contract's events with `contractEvents`, a surface the schema
+(GraphQL v4; preview, preprod and mainnet serve schema 4.4.101, Blockfrost the same API for preprod and mainnet) returns a contract's events with `contractEvents`, a surface the schema
 marks `@beta`:
 
 - Filter `{ contractAddress, types: [MISC] }` (optionally `fromBlock`, `toBlock`, `transactionHash`); `limit` is capped
@@ -33,22 +33,21 @@ marks `@beta`:
   Zero-extend a short `name` or `payload` (`classifyEvent` and `decodePayload` do it; `zeroExtend` on its own); for
   raw ledger data, which is `name ‖ payload` trimmed as one item, zero-extend it to 288 bytes before splitting
   (`splitMiscData`). A payload longer than 256 bytes is rejected; a name longer than 32 bytes is another name. The
-  A1 event of Stagenet case [C10](../deployments/stagenet/cases/C10/README.md) is 127 bytes in the ledger's raw data
-  (32 name + 95 content bytes). Informative vectors: `vectors/informative/zero-extension/`.
+  A1 event is 127 bytes in the ledger's raw data (32 name + 95 content bytes). Informative vectors: `vectors/informative/zero-extension/`.
 - Order the events of one transaction as the ledger executes them (MIP "Applying records"; step 4).
 - Completeness (MIP "Consuming"): a verified event does not prove that no later update or tombstone exists. Read every
   event of the contract, not a filtered subset.
 
-A complete minimal consumer — fetch, apply in chain order, present — for the Stagenet case
-[C04](../deployments/stagenet/cases/C04/README.md) (one asset as kinds 1, 2 and 3):
+A complete minimal consumer — fetch, apply in chain order, present — for one contract on preview (the contract address
+is its argument):
 
 ```ts
 import { fromHex, toHex } from '@mip0018/codec';
 import { MetadataState, formatAmount } from '@mip0018/consumer';
 import { tokenType } from '@mip0018/midnight'; // ledger-v9 rawTokenType; any equal implementation works
 
-const INDEXER = 'https://indexer.stagenet.shielded.tools/api/v4/graphql';
-const CONTRACT = '86acf80ff386abb610aadbea0406039e7fe39893f440794c3c2bad86dd48570f'; // Stagenet case C04
+const INDEXER = 'https://indexer.preview.midnight.network/api/v4/graphql';
+const CONTRACT = process.argv[2]; // 64 hex digits
 
 const query = `query ($filter: ContractEventFilter!, $limit: Int!, $offset: Int!) {
   contractEvents(filter: $filter, limit: $limit, offset: $offset) {
@@ -76,7 +75,7 @@ events.sort((a, b) => a.transaction.block.height - b.transaction.block.height ||
 const state = new MetadataState({ tokenType });
 for (const e of events) {
   const r = state.apply({
-    network: 'stagenet',
+    network: 'preview',
     contractAddress: e.contractAddress, // from the event record, never from the payload
     block: e.transaction.block.height,
     tx: e.transaction.id,
@@ -97,27 +96,14 @@ for (const id of state.identities()) { // only identities that have at least one
 for (const g of state.groups()) console.log(`group "${new TextDecoder().decode(g.symbol)}": ${g.members.length} identities`);
 ```
 
-Saved as `consumer-example.ts` at the repository root and run with `docker/run.sh exec 'node consumer-example.ts'`
-(2026-10-07):
-
-```text
-event 53453: accept
-event 53454: accept
-event 53455: accept
-kind 1 Acme Dollar (ACD) decimals 2 color 042399246139df031a4780c684df8eaecd48b7e03a195bfe986cf22766bcbc16
-  123456 base units = 1234.56 ACD
-kind 2 Acme Dollar (ACD) decimals 2 color 042399246139df031a4780c684df8eaecd48b7e03a195bfe986cf22766bcbc16
-  123456 base units = 1234.56 ACD
-kind 3 Acme Dollar (ACD) decimals 2 color -
-  123456 base units = 1234.56 ACD
-group "ACD": 3 identities
-```
+Saved as `consumer-example.ts` at the repository root and run with
+`docker/run.sh exec 'node consumer-example.ts <contract address>'`.
 
 The same with the CLI, which also cross-checks the indexer's tip against the node and prints every served field, the groups
 and the source events ([`examples/verify`](../examples/verify/README.md#2-everything-a-contract-published-list)):
 
 ```sh
-docker/run.sh mip0018 -- list --network stagenet --contract 86acf80ff386abb610aadbea0406039e7fe39893f440794c3c2bad86dd48570f
+docker/run.sh mip0018 -- list --network preview --contract <contract address>
 ```
 
 ## 2. Classify: is it a MIP-0018 v1 event?
@@ -134,8 +120,7 @@ const c = classifyEvent({ type: 'Misc', name, payload });
 // { result: 'accept', header, records, contentEnd } | { result: 'reject', reason, offset } | { result: 'ignore', reason }
 ```
 
-Vectors: `I1a`, `I1b`, `I2a`, `I2b`, `I3`. On Stagenet: [C07](../deployments/stagenet/cases/C07/README.md) carries
-`[v2]` and foreign names next to valid events.
+Vectors: `I1a`, `I1b`, `I2a`, `I2b`, `I3`.
 
 ## 3. Decode and validate
 
@@ -150,8 +135,7 @@ MIP says:
 3. at least one record.
 
 **Any failure rejects the whole event**: apply none of its records, not even the valid ones before the bad one
-(vectors `R6a`, `R6b`). Rejecting one event never affects another, even in the same transaction (`S7a`, `S7b`;
-Stagenet [C08](../deployments/stagenet/cases/C08/README.md)).
+(vectors `R6a`, `R6b`). Rejecting one event never affects another, even in the same transaction (`S7a`, `S7b`).
 
 | `valType` | Rule as implemented here |
 |---:|---|
@@ -164,8 +148,7 @@ Stagenet [C08](../deployments/stagenet/cases/C08/README.md)).
 | 6–255 | reserved: reject the event |
 
 Keys are exact bytes: case-sensitive, no trimming or normalisation, zero bytes significant (`symbol` and `symbol\0`
-are different keys). **Keys MUST be valid UTF-8**: a key that is not rejects the whole event (vector `R5i`; Stagenet
-[C07](../deployments/stagenet/cases/C07/README.md) step `A3c`). Empty strings, empty bytes, zero bytes and JSON `null` are
+are different keys). **Keys MUST be valid UTF-8**: a key that is not rejects the whole event (vector `R5i`). Empty strings, empty bytes, zero bytes and JSON `null` are
 ordinary values, not tombstones. `decodePayload(bytes)` in `@mip0018/codec` applies all of this and never throws.
 
 ## 4. Apply in chain order
@@ -340,30 +323,16 @@ Kind 3 has no color: list the contract's kind-3 events instead (`mip0018 list --
 
 The reference scanner reads every block from a start height — near the deployments on a public network, 0 or 1 on a
 local chain — keeps a resumable checkpoint (re-run the same command to resume; `--follow` keeps following new
-blocks), and `lookup` resolves a color through it. On Stagenet ([`examples/verify`](../examples/verify/README.md#3-from-a-coin-to-its-metadata-index-and-lookup),
-case [IDX](../deployments/stagenet/cases/IDX/README.md)):
+blocks), and `lookup` resolves a color through it:
 
 ```sh
-docker/run.sh mip0018 -- index --network stagenet --from-height 714485 --to-height 715183 \
-  --state deployments/stagenet/cases/IDX/index
-docker/run.sh mip0018 -- lookup --network stagenet --state deployments/stagenet/cases/IDX/index \
-  --color 8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484
-```
-
-```text
-color       8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484
-table       contract a3df52605d8b7210aa3e5cdc82de4bb2911975bc42c1a68be77044723b705f21  domainSep 6d69702d303031383a6578616d706c653a756e736869656c6465640000000000
-minted      unshielded ×1 first at 714617
-metadata    live indexer at block 793992
-  identity  domainSep 6d69702d303031383a6578616d706c653a756e736869656c6465640000000000  kind 2 (unshielded UTXO)  color 8e01e39293a9e21ee2685da06ce487fffafbc1a982d53fcb1a72520f18518484
-    name         "Acme Public"                            type 1  usable
-    symbol       "APUB"                                   type 1  usable
-    decimals     6                                        type 2  usable
-    display      1 base unit = 0.000001 APUB
+docker/run.sh mip0018 -- index --network preview --from-height <height before the first mint> --to-height <height> \
+  --state <state directory>
+docker/run.sh mip0018 -- lookup --network preview --state <state directory> --color <color>
 ```
 
 A color that was never minted in the scanned range is reported as such (exit 3) — a published identity is not proof
-that coins of its color exist (C05's bronze type). A color whose identity was withdrawn (every field deleted) resolves
+that coins of its color exist. A color whose identity was withdrawn (every field deleted) resolves
 to its contract and `domainSep` but shows no metadata, exactly like a token that was never described.
 
 ## 9. Test your consumer with the vectors
@@ -398,5 +367,4 @@ provides the reference and the runner, not a second consumer).
 | [`@mip0018/consumer`](../packages/consumer/README.md) | `MetadataState` (`apply`, `rollbackTo`, `identities`, `groups`, `display`, `history`, `imageContentAllowed`; `definedKeys`), `formatAmount`, `parseStandards`, `characters` |
 | [`@mip0018/midnight`](../packages/midnight/README.md) | indexer and node access, `tokenType`, raw-transaction decoding, `checkEvent`, `list`, the mint scanner |
 | [`mip0018` CLI](../packages/cli/README.md) | `check-event`, `list`, `index`, `lookup`, `recheck`, `vectors run` — no wallet |
-| [`examples/verify`](../examples/verify/README.md) | the wallet-free walkthrough on the real Stagenet cases |
-| [`deployments/stagenet`](../deployments/stagenet/README.md) | 14 recorded cases, each re-checkable with one command |
+| [`examples/verify`](../examples/verify/README.md) | the wallet-free walkthrough |

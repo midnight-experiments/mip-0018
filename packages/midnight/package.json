@@ -18,7 +18,7 @@
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "fixtures:stagenet": "node test/fixtures/record-stagenet.ts"
+    "fixtures:local": "node test/fixtures/record-local.ts"
   },
   "dependencies": {
     "@midnight-ntwrk/compact-js": "3.0.0",

@@ -3,7 +3,8 @@
 This walkthrough takes a token that already has the MIP-0018 lines in its contract (the
 [OpenZeppelin fungible token](../openzeppelin/fungible-token/README.md) and the
 [minimal create-and-destroy contract](../minimal/README.md)), deploys it, publishes its metadata right after the
-deployment, renames and withdraws it, and shows create-and-destroy — first on a local chain, then on Stagenet.
+deployment, renames and withdraws it, and shows create-and-destroy on a local chain; §8 runs the same commands on a
+public network.
 Every command below was run by the local end-to-end test (`packages/cli/test/e2e/examples-e2e.sh`, parts A and B;
 it keeps its records under `/e2e/dap/` instead of `/walk/` and adds `--expect` and `--to-block` to some `list` calls);
 the outputs are excerpts of that run (2026-10-07), with `/e2e/dap/` shown as `/walk/`.
@@ -95,8 +96,7 @@ steps
 ```
 
 The fees are in SPECK (10^15 SPECK = 1 DUST): about 4.94 DUST for deploying the token with the verifier keys of all
-its circuits, 0.16 DUST for the publish (local chain). On Stagenet the same token cost 6.967 DUST to deploy and
-0.171 DUST to publish (case C01; all Stagenet fees in [`docs/costs.md`](../../docs/costs.md#fees-on-stagenet)).
+its circuits, 0.16 DUST for the publish (local chain).
 
 Re-running the same command changes nothing: every step is already completed on chain. Passing `--metadata` other
 than what the contract emits (its values are compiled in) is refused before anything is built.
@@ -189,8 +189,7 @@ steps
   withdraw-again-skipped             completed  no tx  (skipped: the contract metadata already holds exactly these values (before-check on the finalized transaction; nothing submitted))
 ```
 
-(`withdraw-again-skipped` is the same command without `--force`; with `--force` the second withdrawal is emitted, as
-the Stagenet cases C06 and C11 do on purpose.) After the revive, `list`:
+(`withdraw-again-skipped` is the same command without `--force`; with `--force` the second withdrawal is emitted.) After the revive, `list`:
 
 ```text
 contract    787ce186ec75dc471d7c44ac7e64d423cad0a05d3bdb5393c2ae59b0c4fed602  network undeployed
@@ -215,8 +214,7 @@ source events
 The history is empty: the withdrawal at block 123 deleted every field, so the identity and its history are gone, and
 nothing from before it comes back (MIP "Applying records"; vectors S3c, S3d). `list --to-block 118` (after the rename)
 shows "Acme Bars"/"ABAR"; at blocks 123 and 130 (after each withdrawal) `list` reports
-`identities  none: no token identity of this contract has a field with a value`. The same lifecycle on Stagenet:
-case [C11](../../deployments/stagenet/cases/C11/README.md).
+`identities  none: no token identity of this contract has a field with a value`.
 
 ## 7. Create and destroy
 
@@ -245,36 +243,27 @@ still shows it after the removal. The removal is a maintenance `VerifierKeyRemov
 keys live), signed with the maintenance key midnight-js generated at deployment and the CLI kept in the
 private-state file.
 
-## 8. Stagenet
+## 8. Public networks
 
-The same commands with `--network stagenet` and a wallet secret file instead of `--dev-genesis-wallet`. The secret
-directory is mounted read-only into the signer container only; the wallet sync cache (`--wallet-cache`) avoids a
-several-minute sync per command:
+The same commands with `--network preview` (or `preprod` / `mainnet`) and a wallet secret file instead of
+`--dev-genesis-wallet`. The secret directory is mounted read-only into the signer container only; the wallet sync cache
+(`--wallet-cache`) avoids a several-minute sync per command. `preprod` and `mainnet` are served by Blockfrost: the
+project token of that network's Blockfrost project is read from `MIP0018_BLOCKFROST_PREPROD` / `MIP0018_BLOCKFROST_MAINNET`
+(or a 0600 file, `--blockfrost-token-file`), passed to the containers by name, and appears in no output or record:
 
 ```sh
 signer() {
   MIP0018_SECRET_DIR="<0700 directory with the mnemonic file>" MIP0018_STATE_DIR="<0700 state directory outside the repo>" \
-  MIP0018_DOCKER_NETWORK="<network of your two proof servers>" \
-  MIP0018_DOCKER_ENV="-e MIP0018_PROOF_SERVER_URL=<proof-server 9.0.1>" \
+  MIP0018_DOCKER_NETWORK="<Docker network of your proof server>" \
+  MIP0018_DOCKER_ENV="-e MIP0018_PROOF_SERVER_URL=<proof-server 9.0.1 URL on that network>" \
   docker/signer.sh mip0018 -- "$@"
 }
-W="--network stagenet --mnemonic-file /run/mip0018/secrets/<wallet>.mnemonic --wallet-cache /run/mip0018/state/wallet.cache"
-signer deploy $W --example fungible-token --record deployments/stagenet/cases/C01/record.json
-signer publish $W --record deployments/stagenet/cases/C01/record.json --circuit publishMetadata --step publish
+W="--network preview --mnemonic-file /run/mip0018/secrets/<wallet>.mnemonic --wallet-cache /run/mip0018/state/wallet.cache"
+signer deploy $W --example fungible-token --record /run/mip0018/state/fungible-token.json
+signer publish $W --record /run/mip0018/state/fungible-token.json --circuit publishMetadata --step publish
 ```
 
-One official proof server (9.0.1) proves the Compact 0.36.0 contract circuits and the wallet's DUST spends. The recorded Stagenet runs — one `mip0018` command per step — are the
-case folders [`deployments/stagenet/cases/`](../../deployments/stagenet/cases/README.md):
-
-| Case | What | Contract | Publish transaction |
-|---|---|---|---|
-| [C01](../../deployments/stagenet/cases/C01/README.md) | OpenZeppelin fungible token: deploy, publish | `98a90519419e2ebb514b7c6ce87ee7f6f4f9753d9ee6f533c5d1c25b9d437dcf` | `a6fff9fb3f034aea393ff37fcd4343c418c3bfcc7cb22c502c1c1a6ffbc55dfd` (block 714501) |
-| [C06](../../deployments/stagenet/cases/C06/README.md) | minimal OwnerKey (this deployment's `withdrawMetadata` emits one Null record at `name`): publish, rename, withdraw ×2, revive | `9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3` | `71fb2c2d9ade1a3906ad92b3d245e6578478d58cac52d4f3f4c01fdbea2fc7e2` (block 714796; then rename 714804, withdraw 714813, withdraw again 714827, revive 714835) |
-| [C11](../../deployments/stagenet/cases/C11/README.md) | minimal OwnerKey (this deployment's `withdrawMetadata` emits four Null records: `name`, `symbol`, `decimals`, `standards`): publish, withdraw ×2, revive | `b05ee03f0e0f0edb6b3097d68c26a9c198365fe4900df493467d606738db6141` | `054ecbd532d6a4dc997269f147be7930726e7c434d5fc26f60e53df840563dd6` (block 724896; then withdraw 724916, withdraw again 724940, revive 724957) |
-| [C10](../../deployments/stagenet/cases/C10/README.md) | minimal create-and-destroy | `048ec49aacdde9ef2fee1bd51c651df46d3224578e36a1e89bdbb88842edf0f6` | `85d6f8a241ceff9935dc1aec51e5c5c1c51818dd0a41ebf7b850e2ff413a5b4d` (block 715177; key removed in 715183) |
-
-Run on 2026-10-02 (C11: 2026-10-03) with wallet 1 of this repository's test wallets; every case re-checks wallet-free with
-`docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/<ID>`.
+One official proof server (9.0.1) proves the Compact 0.36.0 contract circuits and the wallet's DUST spends.
 
 ## Appendix: the same with plain midnight-js
 

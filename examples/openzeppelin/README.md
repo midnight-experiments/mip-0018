@@ -123,7 +123,7 @@ Shared helpers: [`src/testing.ts`](src/testing.ts), [`src/expect.ts`](src/expect
 
 ## metadata.json
 
-One file per example: what to deploy and publish (used by the Stagenet cases) and what a conforming
+One file per example: what to deploy and publish (used by the case folders) and what a conforming
 consumer must conclude. The tests check every byte and every state in it against the contract.
 
 | Field | Content |
@@ -198,5 +198,5 @@ Measured 2026-11-09 (UTC): Compact 0.36.0 (b5d9e4dfc), language 0.28.0, ZKIR v3 
 
 - Nothing is proposed or contributed to OpenZeppelin from this repository.
 - Conversion between representations (OpenZeppelin's `NativeTokenConverter` is not on `main`).
-- Deploying: see [`examples/publish-and-emit`](../publish-and-emit) and the Stagenet cases in
-  [`deployments/stagenet`](../../deployments/stagenet).
+- Deploying: see [`examples/publish-and-emit`](../publish-and-emit) and the case generator
+  [`deployments/tools/prepare-cases.ts`](../../deployments/tools/prepare-cases.ts).

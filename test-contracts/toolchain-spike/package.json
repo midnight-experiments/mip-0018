@@ -2,15 +2,13 @@
   "name": "@mip-0018/toolchain-spike",
   "private": true,
   "version": "0.0.0",
-  "description": "Toolchain gate: Compact 0.36.0 compile, local-chain deploy/call/VerifierKeyRemove, one Stagenet call",
+  "description": "Toolchain gate: Compact 0.36.0 compile, local-chain deploy/call/VerifierKeyRemove",
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "compile": "bash scripts/compile.sh",
     "local": "tsx src/local.ts",
-    "stagenet": "tsx src/stagenet.ts",
-    "fund": "tsx src/fund.ts",
-    "check": "tsx src/check.ts"
+    "fund": "tsx src/fund.ts"
   },
   "dependencies": {
     "@midnight-ntwrk/compact-js": "3.0.0",

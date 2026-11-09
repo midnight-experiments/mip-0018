@@ -11,7 +11,8 @@
 //
 // Detectors: a run of >= 12 BIP-39 English words (a mnemonic); a 64-hex value
 // labelled seed/secret/private/mnemonic/signing key; a {tag:"schnorr"|"ecdsa", value}
-// signing key object; PEM private keys; secret-looking file names.
+// signing key object; PEM private keys; a Blockfrost project token in a URL (`project_id` with a
+// token-shaped value); secret-looking file names.
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -24,6 +25,9 @@ const loadWordlist = async () => {
   const url = require.resolve('@scure/bip39/wordlists/english.js');
   return new Set((await import(url)).wordlist);
 };
+
+/** `project_id` (the query parameter Blockfrost reads its project token from) followed by a token-shaped value. */
+const TOKEN_IN_URL = new RegExp(`${'project'}_id=[A-Za-z0-9]{16,}`, 'u');
 
 export const detect = (text, words) => {
   const hits = [];
@@ -44,6 +48,7 @@ export const detect = (text, words) => {
     if (/"?tag"?\s*:\s*["'](schnorr|ecdsa)["'][^\n]{0,20}"?value"?\s*:\s*["'][0-9a-f]{32,}/iu.test(line))
       hits.push({ line: i + 1, detector: 'signing-key-object' });
     if (/-----BEGIN [A-Z ]*PRIVATE KEY-----/u.test(line)) hits.push({ line: i + 1, detector: 'pem-private-key' });
+    if (TOKEN_IN_URL.test(line)) hits.push({ line: i + 1, detector: 'url-token' });
   });
   return hits;
 };
@@ -62,6 +67,7 @@ if (process.argv.includes('--self-test')) {
     [`seed = ${'ab'.repeat(32)}`, 'labelled-64-hex'],
     [`{"tag":"schnorr","value":"${'cd'.repeat(32)}"}`, 'signing-key-object'],
     ['-----BEGIN OPENSSH PRIVATE KEY-----', 'pem-private-key'],
+    [`wss://rpc.example/?${'project'}_id=${'Ab1'.repeat(8)}`, 'url-token'],
   ];
   let ok = true;
   for (const [text, want] of cases) {
@@ -72,7 +78,7 @@ if (process.argv.includes('--self-test')) {
   const clean = detect('The transaction hash 0123abcd and sha256 ' + 'ef'.repeat(32) + ' are public.', words);
   console.log(`${clean.length === 0 ? 'OK  ' : 'FAIL'} a plain hash is not flagged`);
   ok &&= clean.length === 0;
-  const named = badName('x/stagenet-wallet.mnemonic') && badName('cache/spike-private-state.json') && !badName('src/lib/private-state.ts');
+  const named = badName('x/preview-wallet-1.mnemonic') && badName('cache/spike-private-state.json') && !badName('src/lib/private-state.ts');
   const devSeed = detect(`const GENESIS_DEV_SEED = Buffer.from('${'0'.repeat(63)}1', 'hex');`, words).length === 0;
   console.log(`${devSeed ? 'OK  ' : 'FAIL'} the public dev genesis seed is allowed`);
   ok &&= devSeed;

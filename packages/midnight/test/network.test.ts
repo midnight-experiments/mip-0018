@@ -115,8 +115,8 @@ describe('network profiles', () => {
     expect(resolveProfile('preview', {}, {}).tokenSource).toBeUndefined();
   });
 
-  it('stagenet and other ids are unknown; the error lists the valid ids', () => {
-    for (const id of ['stagenet', 'local', 'testnet', '']) {
+  it('any other id is unknown; the error lists the valid ids', () => {
+    for (const id of ['testnet-02', 'local', 'devnet', '']) {
       expect(() => resolveProfile(id, {}, tokenEnv)).toThrow(ProfileError);
       expect(() => resolveProfile(id, {}, tokenEnv)).toThrow(/expected one of: undeployed, preview, preprod, mainnet/);
     }
