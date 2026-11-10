@@ -27,26 +27,36 @@ signer() {
 wallet_free() { docker/run.sh mip0018 -- "$@"; }
 ```
 
-A `list` command with `--to-block` reads the contract as of the inclusion block of the step it checks (from `record.json`), so it shows the state at that step whenever it runs, as `recheck` does.
-
 | # | Step | Wallet | Exit | Command |
 |---|---|---|---|---|
 | 1 | `deploy` | wallet1 | 0 | `signer deploy --network preview --mnemonic-file /run/mip0018/secrets/preview-wallet-1.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --adapter examples/minimal/owner-key.mip0018.adapter.ts --record deployments/preview/cases/C06/record.json` |
 | 2 | `publish` | wallet1 | 0 | `signer publish --network preview --mnemonic-file /run/mip0018/secrets/preview-wallet-1.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --record deployments/preview/cases/C06/record.json --circuit publishMetadata --step publish` |
 | 3 | `check-event-publish` | none | 0 | `wallet_free check-event --network preview --record deployments/preview/cases/C06/record.json --step publish --expect @deployments/preview/cases/C06/expect/publish.json --wait 120 --json > deployments/preview/cases/C06/observed-check-event-publish.json` |
-| 4 | `list-after-publish` | none | 0 | `wallet_free list --network preview --record deployments/preview/cases/C06/record.json --expect @deployments/preview/cases/C06/expected-after-publish.json --to-block 41728 --json > deployments/preview/cases/C06/observed-list-after-publish.json` |
+| 4 | `list-after-publish` | none | 0 | `wallet_free list --network preview --record deployments/preview/cases/C06/record.json --expect @deployments/preview/cases/C06/expected-after-publish.json --json > deployments/preview/cases/C06/observed-list-after-publish.json` |
 | 5 | `rename` | wallet1 | 0 | `signer publish --network preview --mnemonic-file /run/mip0018/secrets/preview-wallet-1.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --record deployments/preview/cases/C06/record.json --circuit setMetadata --args '[{"$utf8":"Acme Prime"},{"$utf8":"ACMP"}]' --step rename` |
 | 6 | `check-event-rename` | none | 0 | `wallet_free check-event --network preview --record deployments/preview/cases/C06/record.json --step rename --expect @deployments/preview/cases/C06/expect/rename.json --wait 120 --json > deployments/preview/cases/C06/observed-check-event-rename.json` |
-| 7 | `list-after-rename` | none | 0 | `wallet_free list --network preview --record deployments/preview/cases/C06/record.json --expect @deployments/preview/cases/C06/expected-after-rename.json --to-block 41736 --json > deployments/preview/cases/C06/observed-list-after-rename.json` |
+| 7 | `list-after-rename` | none | 0 | `wallet_free list --network preview --record deployments/preview/cases/C06/record.json --expect @deployments/preview/cases/C06/expected-after-rename.json --json > deployments/preview/cases/C06/observed-list-after-rename.json` |
 | 8 | `withdraw` | wallet1 | 0 | `signer publish --network preview --mnemonic-file /run/mip0018/secrets/preview-wallet-1.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --record deployments/preview/cases/C06/record.json --circuit withdrawMetadata --step withdraw` |
 | 9 | `check-event-withdraw` | none | 0 | `wallet_free check-event --network preview --record deployments/preview/cases/C06/record.json --step withdraw --expect @deployments/preview/cases/C06/expect/withdraw.json --wait 120 --json > deployments/preview/cases/C06/observed-check-event-withdraw.json` |
-| 10 | `list-after-withdraw` | none | 0 | `wallet_free list --network preview --record deployments/preview/cases/C06/record.json --expect @deployments/preview/cases/C06/expected-after-withdraw.json --to-block 41744 --json > deployments/preview/cases/C06/observed-list-after-withdraw.json` |
+| 10 | `list-after-withdraw` | none | 0 | `wallet_free list --network preview --record deployments/preview/cases/C06/record.json --expect @deployments/preview/cases/C06/expected-after-withdraw.json --json > deployments/preview/cases/C06/observed-list-after-withdraw.json` |
 | 11 | `withdraw-again` — the identity is already gone, so the before-check sees no change and would skip it: --force emits it anyway (vector S3b) | wallet1 | 0 | `signer publish --network preview --mnemonic-file /run/mip0018/secrets/preview-wallet-1.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --record deployments/preview/cases/C06/record.json --circuit withdrawMetadata --step withdraw-again --force` |
 | 12 | `check-event-withdraw-again` | none | 0 | `wallet_free check-event --network preview --record deployments/preview/cases/C06/record.json --step withdraw-again --expect @deployments/preview/cases/C06/expect/withdraw-again.json --wait 120 --json > deployments/preview/cases/C06/observed-check-event-withdraw-again.json` |
-| 13 | `list-after-withdraw-again` | none | 0 | `wallet_free list --network preview --record deployments/preview/cases/C06/record.json --expect @deployments/preview/cases/C06/expected-after-withdraw-again.json --to-block 41752 --json > deployments/preview/cases/C06/observed-list-after-withdraw-again.json` |
+| 13 | `list-after-withdraw-again` | none | 0 | `wallet_free list --network preview --record deployments/preview/cases/C06/record.json --expect @deployments/preview/cases/C06/expected-after-withdraw-again.json --json > deployments/preview/cases/C06/observed-list-after-withdraw-again.json` |
 | 14 | `revive` | wallet1 | 0 | `signer publish --network preview --mnemonic-file /run/mip0018/secrets/preview-wallet-1.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --record deployments/preview/cases/C06/record.json --circuit setMetadata --args '[{"$utf8":"Acme Again"},{"$utf8":"ACMA"}]' --step revive` |
 | 15 | `check-event-revive` | none | 0 | `wallet_free check-event --network preview --record deployments/preview/cases/C06/record.json --step revive --expect @deployments/preview/cases/C06/expect/revive.json --wait 120 --json > deployments/preview/cases/C06/observed-check-event-revive.json` |
-| 16 | `list-after-revive` | none | 0 | `wallet_free list --network preview --record deployments/preview/cases/C06/record.json --expect @deployments/preview/cases/C06/expected-after-revive.json --to-block 41760 --json > deployments/preview/cases/C06/observed-list-after-revive.json` |
+| 16 | `list-after-revive` | none | 0 | `wallet_free list --network preview --record deployments/preview/cases/C06/record.json --expect @deployments/preview/cases/C06/expected-after-revive.json --json > deployments/preview/cases/C06/observed-list-after-revive.json` |
+
+### The state at each `list` step
+
+A `list` step runs right after its step and reads the contract at the indexer tip of that moment; its observation records that block (`snapshot.toBlock`). The re-read command adds `--to-block` with the inclusion block of the step it checks (from `record.json`), so it shows the state at that step whenever it runs, as `recheck` does (it prints to stdout and leaves the committed observation as it is).
+
+| Step | Observation (read at block) | Step included at block | Re-read the state at the step |
+|---|---|---|---|
+| `list-after-publish` | [`observed-list-after-publish.json`](observed-list-after-publish.json) (41729) | 41728 | `wallet_free list --network preview --record deployments/preview/cases/C06/record.json --expect @deployments/preview/cases/C06/expected-after-publish.json --to-block 41728 --json` |
+| `list-after-rename` | [`observed-list-after-rename.json`](observed-list-after-rename.json) (41737) | 41736 | `wallet_free list --network preview --record deployments/preview/cases/C06/record.json --expect @deployments/preview/cases/C06/expected-after-rename.json --to-block 41736 --json` |
+| `list-after-withdraw` | [`observed-list-after-withdraw.json`](observed-list-after-withdraw.json) (41745) | 41744 | `wallet_free list --network preview --record deployments/preview/cases/C06/record.json --expect @deployments/preview/cases/C06/expected-after-withdraw.json --to-block 41744 --json` |
+| `list-after-withdraw-again` | [`observed-list-after-withdraw-again.json`](observed-list-after-withdraw-again.json) (41753) | 41752 | `wallet_free list --network preview --record deployments/preview/cases/C06/record.json --expect @deployments/preview/cases/C06/expected-after-withdraw-again.json --to-block 41752 --json` |
+| `list-after-revive` | [`observed-list-after-revive.json`](observed-list-after-revive.json) (41761) | 41760 | `wallet_free list --network preview --record deployments/preview/cases/C06/record.json --expect @deployments/preview/cases/C06/expected-after-revive.json --to-block 41760 --json` |
 
 ## Re-check (wallet-free, one command)
 

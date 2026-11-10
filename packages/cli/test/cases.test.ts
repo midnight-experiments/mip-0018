@@ -6,7 +6,7 @@
 // mip0018 command.
 
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -58,6 +58,48 @@ describe('case folders', () => {
     const r = prepare('--network', 'undeployed', '--dir', join(tmp, 'x'));
     expect(r.status).toBe(2);
     expect(r.stderr).toMatch(/--network <preview\|preprod\|mainnet>/u);
+  });
+
+  it('a case README shows each list command as it ran, the block its observation was read at, and the --to-block re-read', () => {
+    const preview = join(repo, 'deployments', 'preview', 'cases');
+    if (!existsSync(preview)) return;
+    // Regenerate a copy of the committed folders (records and observations included) and read what the generator writes.
+    const copy = join(tmp, 'readme-copy');
+    cpSync(preview, copy, { recursive: true });
+    const r = prepare('--network', 'preview', '--dir', copy);
+    expect(r.status).toBe(0);
+    let checked = 0;
+    for (const id of ids) {
+      const c = JSON.parse(readFileSync(join(copy, id, 'case.json'), 'utf8')) as {
+        steps: { id: string; argv: string[]; stdout?: string }[];
+        recheck: { list?: { record: string; expect: string; atStep?: string }[] };
+      };
+      const readme = readFileSync(join(copy, id, 'README.md'), 'utf8').split('\n');
+      const rec = existsSync(join(copy, id, 'record.json'))
+        ? (JSON.parse(readFileSync(join(copy, id, 'record.json'), 'utf8')) as { steps: { id: string; inclusion?: { height: number } }[] })
+        : undefined;
+      for (const s of c.steps) {
+        if (s.argv[0] !== 'list' || s.stdout === undefined || !existsSync(join(copy, id, s.stdout))) continue;
+        const expectFile = s.argv[s.argv.indexOf('--expect') + 1]?.replace(/^@\{case\}\//u, '');
+        const at = c.recheck.list?.find((l) => l.record === 'record.json' && l.expect === expectFile)?.atStep;
+        if (at === undefined) continue;
+        const height = rec?.steps.find((x) => x.id === at)?.inclusion?.height;
+        const readAt = (JSON.parse(readFileSync(join(copy, id, s.stdout), 'utf8')) as { snapshot: { toBlock: number } }).snapshot.toBlock;
+        // the steps table: the command as it ran (case.json has no --to-block), writing the committed observation
+        const row = readme.find((l) => l.match(new RegExp(`^\\| \\d+ \\| \`${s.id}\``, 'u')));
+        expect(row, `${id} ${s.id}`).toBeDefined();
+        expect(row).toContain(`> deployments/preview/cases/${id}/${s.stdout}`);
+        expect(row).not.toContain('--to-block');
+        // the re-read table: the block the observation was read at, the step's block, and --to-block <that block>
+        const reread = readme.find((l) => l.startsWith(`| \`${s.id}\` |`));
+        expect(reread, `${id} ${s.id}`).toBeDefined();
+        expect(reread).toContain(`(${readAt})`);
+        expect(reread).toContain(`| ${height} |`);
+        expect(reread).toContain(`--to-block ${height} --json\``);
+        checked++;
+      }
+    }
+    expect(checked).toBe(12); // C06: 5, C07: 1, C12: 6
   });
 
   it('committed case folders equal the generator', () => {

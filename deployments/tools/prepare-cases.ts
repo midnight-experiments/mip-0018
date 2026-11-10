@@ -1172,23 +1172,44 @@ function listToBlock(c: CaseDef, s: Step): number | undefined {
   return r.steps.find((x) => x.id === at)?.inclusion?.height;
 }
 
-function render(c: CaseDef, s: Step): string {
+/** A step's command for the README: its argv expanded for this network (as the case runs it). */
+function command(c: CaseDef, s: Step, argvIn: readonly string[]): string {
   const dir = `${CASES_REL}/${c.id}`;
-  const toBlock = listToBlock(c, s);
-  const json = s.argv.indexOf('--json');
-  const base =
-    toBlock === undefined
-      ? s.argv
-      : json < 0
-        ? [...s.argv, '--to-block', String(toBlock)]
-        : [...s.argv.slice(0, json), '--to-block', String(toBlock), ...s.argv.slice(json)];
-  const argv = base
+  const argv = argvIn
     .flatMap((a) => EXPANSION[a] ?? [a])
     .map((a) => a.replace(/\{out:(\w+)\}/gu, `${CASES_REL}/$1`).replace(/\{case\}|\{out\}/gu, dir));
-  const cmd = s.script
+  return s.script
     ? `docker/run.sh exec ${quote(`node ${s.script} ${argv.map(quote).join(' ')}`)}`
     : `${s.runner === 'signer' ? 'signer' : 'wallet_free'} ${argv.map(quote).join(' ')}`;
-  return s.stdout ? `${cmd} > ${dir}/${s.stdout}` : cmd;
+}
+
+/** The command exactly as the step ran (its stdout saved to the step's observation file). */
+function render(c: CaseDef, s: Step): string {
+  const cmd = command(c, s, s.argv);
+  return s.stdout ? `${cmd} > ${CASES_REL}/${c.id}/${s.stdout}` : cmd;
+}
+
+/**
+ * The `list` steps that check the state at a step: the block their committed observation was read at (its
+ * `snapshot.toBlock`; undefined before the run) and the command that re-reads the state as of the step's inclusion
+ * block (`--to-block`; printed to stdout, so the committed observation is left as it is).
+ */
+function listReads(c: CaseDef): { step: Step; readAt?: number; toBlock: number; reread: string }[] {
+  return c.steps.flatMap((s) => {
+    const toBlock = listToBlock(c, s);
+    if (toBlock === undefined) return [];
+    const obs = s.stdout === undefined ? undefined : join(CASES, c.id, s.stdout);
+    const readAt =
+      obs !== undefined && existsSync(obs)
+        ? (JSON.parse(readFileSync(obs, 'utf8')) as { snapshot?: { toBlock?: number } }).snapshot?.toBlock
+        : undefined;
+    const json = s.argv.indexOf('--json');
+    const argv =
+      json < 0
+        ? [...s.argv, '--to-block', String(toBlock)]
+        : [...s.argv.slice(0, json), '--to-block', String(toBlock), ...s.argv.slice(json)];
+    return [{ step: s, ...(readAt !== undefined ? { readAt } : {}), toBlock, reread: command(c, s, argv) }];
+  });
 }
 
 function readme(c: CaseDef): string {
@@ -1220,12 +1241,6 @@ function readme(c: CaseDef): string {
       : 'wallet_free() { docker/run.sh mip0018 -- "$@"; }',
     '```',
     '',
-    ...(c.steps.some((s) => listToBlock(c, s) !== undefined)
-      ? [
-          'A `list` command with `--to-block` reads the contract as of the inclusion block of the step it checks (from `record.json`), so it shows the state at that step whenever it runs, as `recheck` does.',
-          '',
-        ]
-      : []),
     '| # | Step | Wallet | Exit | Command |',
     '|---|---|---|---|---|',
     ...c.steps.map(
@@ -1233,6 +1248,7 @@ function readme(c: CaseDef): string {
         `| ${i + 1} | \`${s.id}\`${s.note ? ` — ${s.note}` : ''} | ${s.wallet ?? 'none'} | ${s.expectExit}${s.expectOutput ? ` (output contains \`${s.expectOutput}\`)` : ''} | \`${render(c, s).replace(/\|/gu, '\\|')}\` |`,
     ),
     '',
+    ...listReadsSection(c),
     '## Re-check (wallet-free, one command)',
     '',
     '```sh',
@@ -1242,6 +1258,25 @@ function readme(c: CaseDef): string {
     ...recorded(c),
   ];
   return `${lines.join('\n')}\n`;
+}
+
+/** The README section on the `list` steps that check the state at a step (none when the case has no such step). */
+function listReadsSection(c: CaseDef): string[] {
+  const reads = listReads(c);
+  if (reads.length === 0) return [];
+  return [
+    '### The state at each `list` step',
+    '',
+    'A `list` step runs right after its step and reads the contract at the indexer tip of that moment; its observation records that block (`snapshot.toBlock`). The re-read command adds `--to-block` with the inclusion block of the step it checks (from `record.json`), so it shows the state at that step whenever it runs, as `recheck` does (it prints to stdout and leaves the committed observation as it is).',
+    '',
+    '| Step | Observation (read at block) | Step included at block | Re-read the state at the step |',
+    '|---|---|---|---|',
+    ...reads.map(
+      (r) =>
+        `| \`${r.step.id}\` | ${r.readAt === undefined ? `\`${r.step.stdout}\` (not read yet)` : `[\`${r.step.stdout}\`](${r.step.stdout}) (${r.readAt})`} | ${r.toBlock} | \`${r.reread.replace(/\|/gu, '\\|')}\` |`,
+    ),
+    '',
+  ];
 }
 
 /** Thousands separators for a SPECK amount; ≈ DUST with 3 decimals (1 DUST = 10^15 SPECK). */
