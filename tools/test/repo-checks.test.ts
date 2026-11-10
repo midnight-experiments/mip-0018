@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // check-pins.mjs and secret-scan.mjs run against small fixture repositories (temporary directories with a copy of the
-// tool): an image without a digest in a compose file (in any YAML notation) or Dockerfile anywhere in the repository
-// fails check-pins, and so does a YAML file it cannot parse; a mnemonic wrapped over several lines fails the secret
-// scan; the clean fixtures pass.
+// tool): an image without a digest in a compose file (in any YAML notation, or written as JSON), a Dockerfile or a
+// GitHub Actions workflow (job container, job service, docker:// step) anywhere in the repository fails check-pins,
+// and so does a YAML file or a compose-named JSON file it cannot parse; a mnemonic wrapped over several lines fails the
+// secret scan; the clean fixtures pass.
 
 import { spawnSync } from 'node:child_process';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
@@ -108,6 +109,54 @@ describe('check-pins: every image in every compose file and Dockerfile is pinned
       'services:\n  db: [\n    image: postgres:16\n',
       /deployments\/broken\/compose\.yaml:\d+: cannot be read as YAML/u,
     ],
+    [
+      'a compose file written as JSON (compose.json)',
+      'examples/json/compose.json',
+      '{\n  "services": {\n    "db": {\n      "image": "postgres:16"\n    }\n  }\n}\n',
+      /examples\/json\/compose\.json:4: image postgres:16 is not pinned by digest/u,
+    ],
+    [
+      'a JSON file of any name whose top-level services carry an image',
+      'deployments/x/stack.json',
+      '{"services": {"cache": {"image": "${CACHE_IMAGE:-redis:7}"}, "db": {"build": "."}}}\n',
+      /deployments\/x\/stack\.json:1: image redis:7 is not pinned by digest/u,
+    ],
+    [
+      'a compose-named JSON file that does not parse',
+      'packages/x/docker-compose.json',
+      '{"services": {"db": [\n',
+      /packages\/x\/docker-compose\.json:\d+: cannot be read as YAML/u,
+    ],
+    [
+      'a GitHub Actions job service image without a digest',
+      '.github/workflows/ci.yml',
+      'on: push\njobs:\n  test:\n    runs-on: ubuntu-24.04\n    services:\n      db:\n        image: postgres:16\n    steps:\n      - run: "true"\n',
+      /\.github\/workflows\/ci\.yml:7: image postgres:16 is not pinned by digest/u,
+    ],
+    [
+      'a GitHub Actions job container written as an image',
+      '.github/workflows/build.yaml',
+      'on: push\njobs:\n  build:\n    runs-on: ubuntu-24.04\n    container: node:24-bookworm\n    steps:\n      - run: "true"\n',
+      /\.github\/workflows\/build\.yaml:5: image node:24-bookworm is not pinned by digest/u,
+    ],
+    [
+      'a GitHub Actions job container mapping',
+      '.github/workflows/ci.yml',
+      'on: push\njobs:\n  test:\n    runs-on: ubuntu-24.04\n    container:\n      image: "node:24"\n      options: --cpus 1\n    steps:\n      - run: "true"\n',
+      /\.github\/workflows\/ci\.yml:6: image node:24 is not pinned by digest/u,
+    ],
+    [
+      'a GitHub Actions step that runs a docker:// image',
+      '.github/workflows/ci.yml',
+      'on: push\njobs:\n  test:\n    runs-on: ubuntu-24.04\n    steps:\n      - uses: docker://alpine:3.20\n',
+      /\.github\/workflows\/ci\.yml:6: image alpine:3\.20 is not pinned by digest/u,
+    ],
+    [
+      'a GitHub Actions job container given by an expression',
+      '.github/workflows/ci.yml',
+      'on: push\njobs:\n  test:\n    runs-on: ubuntu-24.04\n    container: ${{ vars.IMAGE }}\n    steps:\n      - run: "true"\n',
+      /\.github\/workflows\/ci\.yml:5: image \$\{\{ vars\.IMAGE \}\} has a variable without a pinned default/u,
+    ],
   ])('%s fails', (_name, path, text, message) => {
     put(root, path, text);
     try {
@@ -124,6 +173,52 @@ describe('check-pins: every image in every compose file and Dockerfile is pinned
     const r = node(root, 'check-pins.mjs');
     expect(r.stderr).toBe('');
     expect(r.status).toBe(0);
+  });
+
+  const references = (r: { stdout: string }) => Number(/\((\d+) references in /u.exec(r.stdout)?.[1]);
+  const pinnedFiles = (): Record<string, string> => ({
+    'examples/json/compose.json': JSON.stringify({ services: { build: { image: node24 } } }, null, 2),
+    'deployments/x/endpoints.json': JSON.stringify({ services: { indexer: 'https://indexer.example/api/v4/graphql' } }),
+    '.github/workflows/ci.yml': [
+      'on: push',
+      'jobs:',
+      '  test:',
+      '    runs-on: ubuntu-24.04',
+      `    container: ${node24}`,
+      '    services:',
+      '      tools:',
+      `        image: ${node24}`,
+      '    steps:',
+      `      - uses: docker://${node24}`,
+      '      - run: "true"',
+      '',
+    ].join('\n'),
+  });
+
+  it('a digest-pinned image listed in toolchain.json passes in a JSON compose file and in a workflow', () => {
+    const files = pinnedFiles();
+    for (const [path, text] of Object.entries(files)) put(root, path, text);
+    try {
+      const r = node(root, 'check-pins.mjs');
+      expect(r.stderr).toBe('');
+      expect(r.status).toBe(0);
+    } finally {
+      for (const path of Object.keys(files)) rmSync(join(root, path));
+    }
+  });
+
+  it('the images of a JSON compose file and of a workflow are read: four more references, none from a JSON file without images', () => {
+    const before = references(node(root, 'check-pins.mjs'));
+    const files = pinnedFiles();
+    for (const [path, text] of Object.entries(files)) put(root, path, text);
+    try {
+      const r = node(root, 'check-pins.mjs');
+      expect(r.status).toBe(0);
+      expect(before).toBeGreaterThan(0);
+      expect(references(r)).toBe(before + 4);
+    } finally {
+      for (const path of Object.keys(files)) rmSync(join(root, path));
+    }
   });
 });
 
