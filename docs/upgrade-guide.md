@@ -15,7 +15,10 @@ deployed without any MIP-0018 circuit, and the upgrade-only source that adds `pu
 tool is `mip0018 upgrade` ([`packages/cli`](../packages/cli)). Everything below was run on the local
 chain (official images, [`docker/local-stack`](../docker/local-stack)): deploy, mint, foreign-key insert refused and
 rejected, `VerifierKeyInsert` + `publishMetadata()`, same address and color
-([`scripts/local-upgrade.sh`](../examples/upgrade-existing-contract/scripts/local-upgrade.sh)).
+([`scripts/local-upgrade.sh`](../examples/upgrade-existing-contract/scripts/local-upgrade.sh)); and on preview: case
+[U1](../deployments/preview/cases/U1/README.md) (2026-11-09, contract `783fd16b…453a`: deploy, mint, an insert signed by
+a key outside the committee refused and, forced, rejected by the node, `VerifierKeyInsert` + `publishMetadata()`, same
+address and color; re-check with `docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/U1`).
 
 ## What changes and what does not
 
@@ -154,7 +157,7 @@ docker/signer.sh mip0018 -- upgrade --network <id> --record <the contract's run 
    with the before/after checks of `mip0018 publish`. Later `mip0018 publish --record … --circuit
    publishMetadata` calls find the upgrade build in the record.
 
-Facts the tool relies on (ledger v9, `midnight-ledger` 9.1.0.0-rc.3):
+Facts the tool relies on (ledger v9: `midnight-ledger` 9.1.0.0 source; observed with node 2.1.101, ledger 9.1.0.1):
 
 - **Key versions.** A contract operation keeps verifier keys in versioned slots: `v3` for ZKIR v2
   circuits and `v4` for ZKIR v3 circuits (Compact 0.36.0's only backend). Insert at the version of the
@@ -166,8 +169,9 @@ Facts the tool relies on (ledger v9, `midnight-ledger` 9.1.0.0-rc.3):
   key for the new one (not exercised here: the template's `mint` is ZKIR v3 too).
 - **Authority and counter.** The update carries the authority's current counter and enough committee
   signatures (each at its committee index); an applied update increments the counter. A signature by a
-  key that is not the authority's is refused by the node before inclusion — no fee (observed on the local chain:
-  `1010: Invalid Transaction: Custom error: 135`, `MalformedError::InvalidCommitteeSignature`).
+  key that is not the authority's is refused by the node before inclusion — no fee (observed on the local chain and on
+  preview, case U1: `1010: Invalid Transaction: Custom error: 135`,
+  `MalformedTransaction::InvalidCommitteeSignature`).
 - **Fallible segment.** Maintenance updates apply only in a fallible segment: an update the ledger
   refuses is still included (`PARTIAL_SUCCESS`) and its whole fee paid.
 - **No overwrite.** `VerifierKeyInsert` never replaces a key already present in that slot
@@ -175,8 +179,9 @@ Facts the tool relies on (ledger v9, `midnight-ledger` 9.1.0.0-rc.3):
   a `VerifierKeyRemove` and then an insert. Observed: both attempts `PARTIAL_SUCCESS`, key and counter
   unchanged.
 - **Cost.** An insert writes the verifier key (2,121 bytes here) into the contract state: **0.704 DUST** on the
-  local chain, against 0.105–0.126 DUST for a `VerifierKeyRemove` and 0.183 DUST for the `publishMetadata()` call
-  ([`docs/costs.md`](costs.md#fees-on-the-local-stack)).
+  local chain and **1.167 DUST on preview** (case U1), against 0.105–0.126 DUST (local) / 0.175 DUST (preview, case
+  C10) for a `VerifierKeyRemove` and 0.183 DUST (local) / 0.219 DUST (preview) for the `publishMetadata()` call
+  ([`docs/costs.md`](costs.md#fees-on-the-local-stack), [Fees on preview](costs.md#fees-on-preview)).
 - **Insert before anything touches it.** Until the key is on chain, `findDeployedContract` with the
   upgrade build refuses the contract (the circuit is missing).
 
@@ -206,7 +211,7 @@ color), and `lookup` resolves that color to the metadata published after the upg
 | No overwrite | An existing `publishMetadata` must be removed first; the ledger refuses an insert over it (see the run below) |
 | One circuit per run | The tool inserts one circuit per `upgrade` run (the ledger accepts several `SingleUpdate`s in one update); export only inserted circuits from the upgrade source |
 | Trust | The maintenance authority can remove and insert **any** circuit at any time — including `publishMetadata` and the token's own circuits. Whoever holds it controls the token's metadata as much as the owner check does |
-| Contracts deployed under ledger 8 (before Midnight 2.x) | Not exercised here: the local chain runs ledger v9 from genesis. midnight-js 5 has a separate pipeline for such ("retained era") contracts; whether they accept a `v4` (ZKIR v3) key insert and call is unverified |
+| Contracts deployed under ledger 8 (before Midnight 2.x) | Not exercised here: the local chain runs ledger v9 from genesis, and U1 was deployed on preview under ledger v9. midnight-js 5 has a separate pipeline for such ("retained era") contracts; whether they accept a `v4` (ZKIR v3) key insert and call is unverified |
 
 ## Run the template locally
 

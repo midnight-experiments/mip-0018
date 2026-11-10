@@ -3,10 +3,10 @@
 How a token contract publishes its name, symbol and decimals as MIP-0018 events
 ([MIP-0018 @ `338ea194`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/338ea194bbe7c4e5d1829234a503b7c1b11ebf0f/mips/mip-0018-on-chain-token-metadata.md)):
 what to emit, the Compact lines to add, who may call them, and how to deploy, publish, rename and withdraw with the
-`mip0018` CLI. Everything shown was run on a local chain; the commands are copied from the walkthroughs
+`mip0018` CLI. Everything shown was run on a local chain and on preview; the commands are copied from the walkthroughs
 [`examples/publish-and-emit`](../examples/publish-and-emit/README.md) and
-[`examples/verify`](../examples/verify/README.md). The reader side is the
-[consumer guide](consumer-guide.md).
+[`examples/verify`](../examples/verify/README.md) or from the
+[preview case folders](../deployments/preview/README.md). The reader side is the [consumer guide](consumer-guide.md).
 
 Toolchain: MIP-0018 needs MIP-0002 `Misc` events, so **Compact 0.34.0 or later**; this repository builds and tests with
 **Compact 0.36.0** ([`toolchain.json`](../toolchain.json)), all inside the pinned Docker image.
@@ -215,11 +215,17 @@ signer deploy $W --adapter examples/minimal/owner-key.mip0018.adapter.ts --recor
 signer publish $W --record /run/mip0018/state/owner-key.json --circuit publishMetadata --step publish
 ```
 
-**Check what consumers see**, wallet-free (any network; the public profiles carry their endpoints):
+Case [C06](../deployments/preview/cases/C06/README.md) ran these two steps on preview with wallet 1 (its README lists
+every command; its run record is `deployments/preview/cases/C06/record.json`).
+
+**Check what consumers see**, wallet-free (any network; the public profiles carry their endpoints) — here the publish
+of case [C01](../deployments/preview/cases/C01/README.md) and the three identities of case
+[C04](../deployments/preview/cases/C04/README.md) on preview; for your contract, your record and expectation:
 
 ```sh
-docker/run.sh mip0018 -- check-event --network preview --record <record file> --step publish --expect @<expectation file>
-docker/run.sh mip0018 -- list --network preview --record <record file> --expect @<metadata.json or expected state>
+docker/run.sh mip0018 -- check-event --network preview --record deployments/preview/cases/C01/record.json --step publish \
+  --expect @deployments/preview/cases/C01/expect/publish.json
+docker/run.sh mip0018 -- list --network preview --record deployments/preview/cases/C04/record.json --expect @deployments/preview/cases/C04/expected.json
 ```
 
 `check-event` checks the one emission end to end (event name, binding to your contract, decode result and every
@@ -230,7 +236,8 @@ record, raw transaction, block, finality, the expected payload); `list` shows th
 
 Call the owner-only circuits with `publish`. Arguments are converted with the compiler's types; `{"$utf8": "…"}` must be
 exactly the circuit's `Bytes<N>` length — a shorter text is refused rather than zero-padded (add `"pad": true` only
-when you really want zero padding, e.g. a `pad(32, "…")` domain separator). With the owner-key contract above:
+when you really want zero padding, e.g. a `pad(32, "…")` domain separator). With the owner-key contract above (case
+[C06](../deployments/preview/cases/C06/README.md) on preview):
 
 ```sh
 signer publish $W --record /run/mip0018/state/owner-key.json --circuit setMetadata --args '[{"$utf8":"Acme Prime"},{"$utf8":"ACMP"}]' --step rename
@@ -239,12 +246,15 @@ signer publish $W --record /run/mip0018/state/owner-key.json --circuit setMetada
 ```
 
 What consumers then show: after the rename "Acme Prime"/"ACMP" (the replaced name only as marked history).
-`OwnerKey`'s `withdrawMetadata` emits Null records at the four keys the token has (`name`, `symbol`, `decimals`,
-`standards`): after it the token is not listed at all and has no group; after the revive it has **only** `name` and
-`symbol` — `decimals` and `standards` do not come back, so republish every field you want shown.
+`OwnerKey`'s `withdrawMetadata` emits one event with a Null record at each of the six common keys (`name`, `symbol`,
+`decimals`, `standards`, `image`, `image_sha256`): after it the token is not listed at all and has no group; after the
+revive it has **only** `name` and `symbol` — `decimals` and `standards` do not come back, so republish every field you
+want shown. To delete one field and keep the others, emit a Null record at that key only (vector `S3a`; on preview
+case [C12](../deployments/preview/cases/C12/README.md), step `s3a-delete-name`).
 
 A publish that would change nothing (the same values again, a second withdrawal) is skipped by the before-check; pass
-`--force` to emit it anyway. A non-owner's call is refused before anything is submitted.
+`--force` to emit it anyway. A non-owner's call is refused before anything is submitted
+([C09](../deployments/preview/cases/C09/README.md)).
 
 **Create and destroy** with the CLI (local chain, [`examples/publish-and-emit` §7](../examples/publish-and-emit/README.md#7-create-and-destroy)):
 
@@ -254,19 +264,24 @@ signer remove-circuit $A --record /walk/minimal.json --circuit publishMetadata
 signer publish $A --record /walk/minimal.json --circuit publishMetadata --step publish-again --force   # exit 1
 ```
 
-The last command is refused (`publishMetadata has no verifier key`): the circuit cannot be called.
+The last command is refused (`publishMetadata has no verifier key`): the circuit cannot be called. On preview:
+[C10](../deployments/preview/cases/C10/README.md).
 
 ## 6. Costs
 
-From the local-stack receipts ([`docs/costs.md`](costs.md#fees-on-the-local-stack)):
+From the receipts of the local stack and of the preview cases ([`docs/costs.md`](costs.md#fees-on-the-local-stack),
+[Fees on preview](costs.md#fees-on-preview)):
 
-- **A metadata transaction costs ≈ 0.15–0.20 DUST**, whatever the circuit size (publish, rename and withdraw alike).
-- **The deploy dominates**: it stores every circuit's verifier key — 1.1 DUST for one circuit (`LegacyToken`); the
-  OpenZeppelin examples with three metadata circuits (eight to ten circuits in all) cost 4.7–5.3 DUST to deploy.
+- **A metadata transaction costs ≈ 0.15–0.20 DUST on the local stack and 0.210–0.245 DUST on preview**, whatever the
+  circuit size (publish, rename and withdraw alike).
+- **The deploy dominates**: it stores every circuit's verifier key — for one circuit (`LegacyToken`) 1.1 DUST locally
+  and 1.892 DUST on preview; the OpenZeppelin examples with three metadata circuits (eight to ten circuits in all)
+  4.7–5.3 DUST locally and 8.731–10.534 DUST on preview.
 - **Circuit size costs proving time, not fees**: a fully constant payload compiles to k = 6 (the bare `emit`); any
   runtime byte, even a `domainSep` read from the ledger, gives k = 15–16; four runtime fields k = 16 (typed) — about
   1.5–4 s per proof on a 12-CPU host.
-- `VerifierKeyRemove` (create-and-destroy) ≈ 0.11–0.13 DUST; `VerifierKeyInsert` (upgrade) ≈ 0.70 DUST.
+- `VerifierKeyRemove` (create-and-destroy) ≈ 0.11–0.13 DUST locally, 0.175 DUST on preview; `VerifierKeyInsert`
+  (upgrade) ≈ 0.70 DUST locally, 1.167 DUST on preview.
 
 ## 7. Existing contracts
 
@@ -274,7 +289,24 @@ A token deployed without an emitting circuit does not need a redeployment if it 
 (the MIP notes that "a valid maintenance authority is required"):
 compile an upgrade-only `publishMetadata()` against its exact ledger layout, insert its verifier key with
 `VerifierKeyInsert`, call it — address, `domainSep` and color stay the same. See the
-[upgrade guide](upgrade-guide.md) (`mip0018 upgrade`).
+[upgrade guide](upgrade-guide.md) (`mip0018 upgrade`) and preview case [U1](../deployments/preview/cases/U1/README.md).
+
+## 8. Preview cases to look at
+
+| Case | Shows |
+|---|---|
+| [C01](../deployments/preview/cases/C01/README.md) | OpenZeppelin `FungibleToken` (kind 3): deploy, publish three fields |
+| [C02](../deployments/preview/cases/C02/README.md), [C03](../deployments/preview/cases/C03/README.md) | shielded / unshielded UTXO (OpenZeppelin native shielded token; the standard library's unshielded mint): the minted coin's color = the identity's color |
+| [C04](../deployments/preview/cases/C04/README.md) | one asset as kinds 1, 2, 3 from one publish: one symbol group |
+| [C05](../deployments/preview/cases/C05/README.md) | token family: three `domainSep`, three identities |
+| [C06](../deployments/preview/cases/C06/README.md) | lifecycle: publish (Appendix A bytes), rename, full withdrawal (one event, a Null record at each of the six common keys: the token disappears from `list`), withdraw again (no change), revive with only `name` and `symbol` |
+| [C12](../deployments/preview/cases/C12/README.md) | `image` + `image_sha256`, a key that is not served, a name and a symbol over their lengths (served truncated), a 31-byte `image_sha256` (unusable), a Null record that deletes only `name` |
+| [C09](../deployments/preview/cases/C09/README.md) | a non-owner's rename refused |
+| [C10](../deployments/preview/cases/C10/README.md) | create and destroy |
+| [U1](../deployments/preview/cases/U1/README.md) | adding `publishMetadata()` to a deployed token |
+
+Re-check any of them without a wallet: `docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/<ID>`
+(all cases, addresses and fees: [`deployments/preview`](../deployments/preview/README.md)).
 
 ## Checklist
 

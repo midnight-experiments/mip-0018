@@ -10,7 +10,8 @@ Considerations — Spam and cost".
   this key: observed 1,353-byte key → 1,362-byte operation, no ZKIR).
 - **Proving time**: one proof of the circuit by the official proof server on this host (median).
 - **Fees (DUST)**: paid per transaction; measured on the local stack
-  ([Fees on the local stack](#fees-on-the-local-stack)).
+  ([Fees on the local stack](#fees-on-the-local-stack)) and taken from the real receipts of the preview cases
+  ([Fees on preview](#fees-on-preview)).
 
 Reproduce (Docker; the proving column needs a proof server, e.g. the local stack's):
 
@@ -172,3 +173,66 @@ verifier key, so its fee grows with the number of circuits: 0.50–0.51 DUST for
 to three circuits, 4.7–5.3 DUST for the eight to ten circuits of the OpenZeppelin examples. `scripts/create-and-destroy.ts`
 times each of its transactions from proving to finalization: deploy 16 s, `publishMetadata()` 24 s, `transfer` 17 s,
 `VerifierKeyRemove` 17 s.
+
+## Fees on preview
+
+Receipts of the cases in [`deployments/preview/`](../deployments/preview/README.md) (2026-11-09, blocks 41,541–42,153;
+node `2.1.101-913ec011`, one proof server 9.0.1, client `ledger-v9` 1.0.1): the indexer's `fee` of every included
+transaction, as each case's `record.json` holds it. k from the tables above and
+[`examples/openzeppelin`](../examples/openzeppelin/README.md#costs). 1 DUST = 10^15 SPECK.
+
+| Case | Transaction (circuit shape) | k | Txs | Fee (SPECK) | ≈ DUST |
+|---|---|---:|---:|---:|---:|
+| C01 | deploy `MyFungibleToken` (10 circuits) | — | 1 | 10,534,271,771,428,572 | 10.534 |
+| C01 | `MyFungibleToken.publishMetadata` | 14 | 1 | 218,733,942,857,143 | 0.219 |
+| C02 | deploy `MyShieldedToken` (9 circuits) | — | 1 | 9,842,614,628,571,429 | 9.843 |
+| C02 | `MyShieldedToken.mint` | 14 | 1 | 271,284,800,000,001 | 0.271 |
+| C02 | `MyShieldedToken.publishMetadata` | 16 | 1 | 219,220,359,550,024 | 0.219 |
+| C03 | deploy `MyUnshieldedToken` (8 circuits) | — | 1 | 8,770,524,625,067,304 | 8.771 |
+| C03 | `MyUnshieldedToken.mint` | 13 | 1 | 279,378,971,428,572 | 0.279 |
+| C03 | `MyUnshieldedToken.publishMetadata` | 16 | 1 | 219,152,000,000,001 | 0.219 |
+| C04 | deploy `MyMultiKindToken` (8 circuits) | — | 1 | 9,612,568,914,285,715 | 9.613 |
+| C04 | `MyMultiKindToken.mintShielded` | 14 | 1 | 271,341,942,857,143 | 0.271 |
+| C04 | `MyMultiKindToken.mintUnshielded` | 13 | 1 | 279,478,127,477,932 | 0.279 |
+| C04 | `MyMultiKindToken.mintLedger` | 13 | 1 | 333,465,177,730,732 | 0.333 |
+| C04 | `MyMultiKindToken.publishMetadata` (three events in one call) | 17 | 1 | 245,127,307,764,472 | 0.245 |
+| C05 | deploy `MyTokenFamily` (8 circuits) | — | 1 | 8,731,094,106,068,636 | 8.731 |
+| C05 | `MyTokenFamily.mint` | 14 | 2 | 270,896,228,571,429 – 271,065,653,974,818 | 0.271 |
+| C05 | `MyTokenFamily.publishMetadata` (one identity per call) | 16 | 3 | 218,752,000,000,001 – 218,907,204,211,280 | 0.219 |
+| C06 | deploy `OwnerKey` (5 circuits) | — | 1 | 6,311,986,057,142,858 | 6.312 |
+| C06 | `OwnerKey.publishMetadata` | 16 | 1 | 219,297,371,428,572 | 0.219 |
+| C06 | `OwnerKey.setMetadata` (rename, revive) | 16 | 2 | 218,163,657,142,858 | 0.218 |
+| C06 | `OwnerKey.withdrawMetadata` (six Null records in one event) | 16 | 2 | 219,296,914,285,715 | 0.219 |
+| C07, C08 | deploy `RawEmitter` (2 circuits) | — | 2 | 2,828,986,057,142,858 | 2.829 |
+| C07 | `RawEmitter.emitRaw` | 17 | 22 | 217,338,971,428,572 – 223,744,457,142,858 | 0.217–0.224 |
+| C08 | `RawEmitter.emitTwo` | 18 | 1 | 229,810,971,428,572 | 0.230 |
+| C10 | deploy `CreateAndDestroy` (2 circuits) | — | 1 | 2,640,528,914,285,715 | 2.641 |
+| C10 | `CreateAndDestroy.publishMetadata` | 16 | 1 | 209,925,942,857,143 | 0.210 |
+| C10 | `VerifierKeyRemove(publishMetadata, v4)` on `CreateAndDestroy` | — | 1 | 174,816,000,000,001 | 0.175 |
+| C12 | `RawEmitter.emitRaw` (C07's contract) | 17 | 6 | 217,381,714,285,715 – 222,596,571,428,572 | 0.217–0.223 |
+| U1 | deploy `LegacyToken` (1 circuit) | — | 1 | 1,892,168,914,285,715 | 1.892 |
+| U1 | `LegacyToken.mint` | 14 | 1 | 282,254,628,571,429 | 0.282 |
+| U1 | `VerifierKeyInsert(publishMetadata, v4)` on `LegacyToken` (2,121-byte key) | — | 1 | 1,166,898,514,285,715 | 1.167 |
+| U1 | `LegacyToken.publishMetadata` (upgrade build `LegacyTokenMetadata`) | 16 | 1 | 218,666,742,857,143 | 0.219 |
+
+All 13 cases: 63 transactions, 77,039,598,874,026,371 SPECK ≈ **77.040 DUST** (C09 and IDX submit nothing; U1's
+insert signed by a key outside the committee was rejected by the node at submission: no fee).
+
+What the receipts show:
+
+- **A metadata transaction costs 0.210–0.245 DUST on preview whatever its circuit size**: k = 14–18 publishes,
+  renames, withdrawals and raw emits 0.217–0.230, the create-and-destroy publish 0.210, three events in one call
+  (C04) 0.245. The fee follows the transaction (its proof, inputs and DUST spend), not the circuit's k; k costs the
+  issuer proving time and prover-key size instead (tables above). A mint costs a little more (0.271–0.333 DUST: it
+  also creates the coin, UTXO or ledger balance).
+- **Deploys dominate**: a deploy stores every circuit's verifier key, so its fee grows with the number of circuits —
+  1.892 DUST for 1 circuit (`LegacyToken`, U1), 2.641–2.829 DUST for 2 circuits (create-and-destroy, raw emitter),
+  6.312 for 5 (`OwnerKey`), 8.731–10.534 for the 8–10 circuit OpenZeppelin examples. Adding metadata circuits to a
+  token therefore costs mostly at deployment, and an existing contract can add one later with a `VerifierKeyInsert`
+  (case U1, 1.167 DUST for a 2,121-byte key).
+- **Removing a key is cheap** (`VerifierKeyRemove`, 0.175 DUST — create-and-destroy, C10).
+- **Preview's fees are above the local stack's** for the same transactions ([Fees on the local stack](#fees-on-the-local-stack)):
+  deploys 1.6–2.0× (`MyFungibleToken` 10.534 vs 5.332 DUST), calls 1.1–1.4× (`MyFungibleToken.publishMetadata` 0.219
+  vs 0.174), `VerifierKeyInsert` 1.7× (1.167 vs 0.704), `VerifierKeyRemove` 1.4–1.7× (0.175 vs 0.105–0.126). Builds
+  are deterministic: every verifier key a case deployed equals, byte for byte, the SHA-256 in a `costs.json`
+  (`LegacyToken.mint`, which no cost table measures, equals the upgrade template's local build).
