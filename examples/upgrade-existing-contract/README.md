@@ -11,7 +11,7 @@ procedure, its checks and its limits: **[`docs/upgrade-guide.md`](../../docs/upg
 | [`upgrade/LegacyTokenMetadata.compact`](upgrade/LegacyTokenMetadata.compact) | the **upgrade-only source**: the same four ledger declarations verbatim + `publishMetadata()` (owner check reused; typed constructor `commonFields<12, 4>(domain, KIND_SHIELDED_UTXO, "Legacy Token", "LGCY", 6)`) — compiled only for its verifier key, never deployed |
 | [`legacy/`, `upgrade/mip0018.adapter.ts`](src/adapters.ts) | `mip0018` adapters: witnesses and the owner secret (kept only in the signer's 0600 private-state file) |
 | [`scripts/check-layout.ts`](scripts/check-layout.ts) | compares the compiler's ledger layouts of the two sources field by field; exit 1 on any difference |
-| [`scripts/inspect.ts`](scripts/inspect.ts) | wallet-free view of a deployed contract: entry points + verifier-key hashes, maintenance authority, ledger-data hash, decoded fields |
+| [`scripts/inspect.ts`](scripts/inspect.ts) | wallet-free view of a deployed contract: entry points + verifier-key hashes, maintenance authority, ledger-data hash, decoded fields; checks the node's genesis first (and, with `--record`, the chain instance the record and its case folder name) |
 | [`scripts/local-upgrade.sh`](scripts/local-upgrade.sh) | the local end-to-end proof (below) |
 | [`test/`](test) | layout check (12 cases) and the upgrade against the deployed state in compact-runtime (9 cases) |
 

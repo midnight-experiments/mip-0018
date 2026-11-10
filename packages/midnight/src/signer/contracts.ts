@@ -25,7 +25,7 @@ import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-j
 import type { MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
 import { sampleSigningKey, type FinalizedTransaction, type SigningKey } from '@midnightntwrk/ledger-v9';
 import { normHex } from '../hex.ts';
-import { checkIdentity, IdentityError, indexerFor, normGenesis, rpcFor } from '../network.ts';
+import { bindRecordedNetworks, checkChainIdentity, IdentityError, indexerFor, normGenesis } from '../network.ts';
 import { decodeTransaction, miscLogsOf } from '../raw.ts';
 import { ScrubbedError, scrubSecrets } from '../redact.ts';
 import { circuitArgs, fromJsonLoose, resolvePlaceholders } from './args.ts';
@@ -91,13 +91,18 @@ export function verifierKeyHashes(managedDir: string): Record<string, string> {
   );
 }
 
-/** Opens (or creates) the run record and checks the chain identity before anything else. */
+/**
+ * Opens (or creates) the run record and checks the chain identity before anything else: an existing record binds the
+ * profile to the genesis and chain instance it recorded (`bindRecordedNetworks`), so another network or a network
+ * re-created from the same genesis is refused before the wallet syncs or anything is built.
+ */
 export async function openRun(o: RunOptions): Promise<Run> {
   const log = o.log ?? (() => {});
-  const genesis = await checkIdentity(o.ep.profile);
-  const blockOne = await rpcFor(o.ep.profile).blockHash(1);
-  const chainInstance = blockOne === null ? undefined : normGenesis(blockOne);
   let record = loadRecord(o.recordPath);
+  const profile = record ? bindRecordedNetworks(o.ep.profile, [{ source: o.recordPath, network: record.network }]) : o.ep.profile;
+  const identity = await checkChainIdentity(profile);
+  const genesis = identity.genesisHash;
+  const chainInstance = identity.chainInstance ?? undefined;
   const keys = verifierKeyHashes(o.artifacts.managedDir);
   if (record) {
     if (normGenesis(record.network.genesisHash) !== genesis || record.network.id !== o.ep.profile.id) {

@@ -11,7 +11,7 @@ prints the details; every command has `--json`.
 | `index --network <id> --from-height <h> [--to-height <h> \| --follow] --state <dir>` | no | The mint scanner: color → (contract, domainSep, kinds, first mint), MIP-0018 events and deploys of the range; resumable |
 | `lookup --color <hex> --state <dir> [--kind 1\|2] [--network <id>]` | no | Color → identity → metadata (live with `--network`, otherwise from the scan); "not minted in the scanned range [from, to]" otherwise; kind 3 has no color |
 | `vectors run [--consumer "<cmd>"]` | no | The language-neutral vector runner (default: the reference consumer) |
-| `recheck --network <id> --case <dir>` | no | Re-checks a recorded case folder from its `case.json`: `check-event` of each transaction with its expectation, `list` against `expected.json`, refused steps, removed keys, colors; the chain instance of `deployments/<network>/network.json` when it records one ([`deployments/tools/prepare-cases.ts`](../../deployments/tools/prepare-cases.ts) writes the folders; the cases on preview: [`deployments/preview`](../../deployments/preview/README.md)) |
+| `recheck --network <id> --case <dir>` | no | Re-checks a recorded case folder from its `case.json`: `check-event` of each transaction with its expectation, `list` against `expected.json`, refused steps, removed keys, colors; the node must have the genesis and block 1 of `deployments/<network>/network.json` and of the case's run records, checked once before the first check (a wrong chain ends the case with one failed `identity` result) ([`deployments/tools/prepare-cases.ts`](../../deployments/tools/prepare-cases.ts) writes the folders; the cases on preview: [`deployments/preview`](../../deployments/preview/README.md)) |
 | `wallet status` · `wallet register-dust [--estimate]` | yes | Public addresses and balances · DUST registration (skipped when already registered) |
 | `deploy (--contract <managed dir> \| --adapter <file> \| --example <name>) --record <file> [--args <json>]` | yes | midnight-js `deployContract` with a run record and before/after checks |
 | `publish --record <file> --circuit <name> [--args <json>] [--step <id>] [--force]` (`call` = alias) | yes | `findDeployedContract().callTx.<circuit>()`; skipped when the metadata already holds exactly what it would set |
@@ -29,7 +29,10 @@ and read the project token of that network's Blockfrost project from `MIP0018_BL
 request and names the variable. The token is added to the request URLs as `project_id` only when connecting: every URL
 written (logs, errors, run records, reports) has no query string, and a 401/403 is reported as a refused token, a 429
 pauses the client and retries. `--chain-instance <hash>` also requires that block 1 (a network re-created from the same
-genesis is refused). `--network undeployed` needs `--indexer`/`--rpc` (or `MIP0018_INDEXER_URL` / `MIP0018_NODE_URL`)
+genesis is refused). A command given a run record (`--record`, `--attach @<record>`), a scanner state (`--state`) or a
+case folder also requires the genesis and block 1 they record and those of the case folder's network file
+(`deployments/<network>/network.json`); a record of another network and a `--genesis` / `--chain-instance` that
+contradicts them are refused (exit 2) before any request, and signer commands check them before a wallet is opened. `--network undeployed` needs `--indexer`/`--rpc` (or `MIP0018_INDEXER_URL` / `MIP0018_NODE_URL`)
 and refuses the public networks' hosts and genesis hashes. Signing needs the official proof server (`--proof-server`, for contract circuits and the wallet's DUST spends),
 a wallet secret file (`--mnemonic-file`; on a local chain also `--seed-file` or
 `--dev-genesis-wallet`) and a private state directory outside the repository (`--state-dir`).

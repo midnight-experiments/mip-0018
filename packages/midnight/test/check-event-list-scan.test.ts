@@ -22,6 +22,7 @@ const meta = JSON.parse(readFileSync(join(dir, 'meta.json'), 'utf8')) as {
   indexer: string;
   rpc: string;
   genesisHash: string;
+  chainInstance: string;
   emitter: {
     address: string;
     deploy: { tx: string; height: number };
@@ -38,6 +39,20 @@ const { from: FROM, to: TO } = meta.emitter.scan;
 const A1_META = { domainSep: '11'.repeat(32), kind: 3, name: 'Acme Token', symbol: 'ACME', decimals: 6, standards: ['mip-0004'] };
 
 const replay = (name: string) => new HttpClient({ fetch: replayFetch(loadTape(join(dir, `${name}.tape.json`))), attempts: 1 });
+/**
+ * The replay of a scan tape plus the node's block 1, which a new scanner state records (its chain instance): the tape
+ * predates that read, and meta.json holds block 1 of the chain it was recorded on.
+ */
+const replayWithBlockOne = (name: string) => {
+  const tape = replayFetch(loadTape(join(dir, `${name}.tape.json`)));
+  const f = (async (input: string | URL | Request, init?: RequestInit) => {
+    const b = init?.body ? (JSON.parse(String(init.body)) as { method?: string; params?: unknown[] }) : {};
+    if (String(input) === meta.rpc && b.method === 'chain_getBlockHash' && b.params?.[0] === 1)
+      return new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, result: meta.chainInstance }), { status: 200 });
+    return tape(input, init);
+  }) as typeof fetch;
+  return new HttpClient({ fetch: f, attempts: 1 });
+};
 const temps: string[] = [];
 afterEach(() => {
   for (const t of temps.splice(0)) rmSync(t, { recursive: true, force: true });
@@ -190,9 +205,11 @@ describe('scanner', () => {
   it('replays the recorded block range (polling) to the recorded state', async () => {
     const t = mkdtempSync(join(tmpdir(), 'scan-'));
     temps.push(t);
-    const r = await scan({ profile, stateDir: t, fromHeight: FROM, toHeight: TO, poll: true, http: replay('scan-emitter') });
+    const r = await scan({ profile, stateDir: t, fromHeight: FROM, toHeight: TO, poll: true, http: replayWithBlockOne('scan-emitter') });
     const recorded = JSON.parse(readFileSync(join(dir, 'scan-emitter.result.json'), 'utf8')) as ScanState;
+    recorded.network.chainInstance ??= meta.chainInstance;
     const strip = (s: ScanState) => ({ ...s, updatedAt: '' });
+    expect(r.state.network.chainInstance).toBe(meta.chainInstance);
     expect(strip(r.state)).toEqual(strip(recorded));
     expect(r.state.events[SPIKE]).toHaveLength(1);
     expect(r.state.events[SPIKE]![0]).toMatchObject({ result: 'accept', kind: 3, block: { height: meta.emitter.publish.height } });

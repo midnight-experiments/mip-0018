@@ -45,8 +45,9 @@ Check the deployed contract first (wallet-free):
 docker/run.sh exec 'node examples/upgrade-existing-contract/scripts/inspect.ts --network preview --contract <address>'
 ```
 
-It prints the entry points (with the SHA-256 of each verifier key), the maintenance authority
-(committee size, threshold, counter) and the SHA-256 of the ledger data.
+After checking the node's genesis (with `--record <run record>`, also the chain instance the record names), it prints
+the entry points (with the SHA-256 of each verifier key), the maintenance authority (committee size, threshold,
+counter) and the SHA-256 of the ledger data.
 
 1. **A usable maintenance authority** (the MIP's "valid maintenance authority"). The committee must not be empty and its threshold must be
    reachable (≤ committee size, and you must hold that many keys; `mip0018 upgrade` signs with one key,

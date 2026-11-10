@@ -19,7 +19,9 @@
 //
 // Identity (before the first request that changes state or checks a case): `chain_getBlockHash(0)` must equal the
 // profile's genesis, and `chain_getBlockHash(1)` its chain instance when one is known (a case's network.json, a run
-// record, or --chain-instance): a network re-created from the same genesis has another block 1.
+// record, a scanner state, or --chain-instance): a network re-created from the same genesis has another block 1.
+// `bindRecordedNetworks` is the one place a profile takes the identity a file recorded: every command that reads or
+// writes on behalf of a recorded file binds its profile through it before its first request.
 
 import { HttpClient } from './http.ts';
 import { Indexer } from './indexer.ts';
@@ -318,11 +320,66 @@ export function normGenesis(hash: string): string {
   return `0x${normHexBytes(hash, 32, 'block hash')}`;
 }
 
-/** A copy of the profile that also checks block 1 against `chainInstance` (keeps the profile's token). */
-export function withChainInstance(profile: NetworkProfile, chainInstance: string): NetworkProfile {
-  const p: NetworkProfile = { ...profile, addressPrefixes: { ...profile.addressPrefixes }, chainInstance: normGenesis(chainInstance) };
+/** A copy of the profile (keeps the profile's token). */
+function copyProfile(profile: NetworkProfile): NetworkProfile {
+  const p: NetworkProfile = { ...profile, addressPrefixes: { ...profile.addressPrefixes } };
   const token = TOKENS.get(profile);
   if (token !== undefined) TOKENS.set(p, token);
+  return p;
+}
+
+/** A copy of the profile that also checks block 1 against `chainInstance` (keeps the profile's token). */
+export function withChainInstance(profile: NetworkProfile, chainInstance: string): NetworkProfile {
+  const p = copyProfile(profile);
+  p.chainInstance = normGenesis(chainInstance);
+  return p;
+}
+
+/** The network identity a file recorded: a run record's or a scanner state's `network`, a case's network.json. */
+export interface RecordedNetwork {
+  id: string;
+  genesisHash?: string;
+  chainInstance?: string;
+}
+
+/** A recorded network and the file it was read from (named in errors). */
+export interface RecordedSource {
+  source: string;
+  network: RecordedNetwork;
+}
+
+/**
+ * The profile bound to the networks that files recorded, for a command that reads or writes on their behalf: every
+ * file must be of the profile's network; each recorded genesis and chain instance must equal the profile's (the pinned
+ * genesis, --genesis, --chain-instance) and every other file's; what the profile lacks is taken from the files. The
+ * identity check before the first request then verifies the genesis and block 1 the files name. A conflict is a
+ * `ProfileError` naming both values and where they come from. Endpoint URLs are not identity (a mirror or a stub is
+ * allowed); the genesis and block 1 decide which chain is read.
+ */
+export function bindRecordedNetworks(profile: NetworkProfile, recorded: readonly RecordedSource[]): NetworkProfile {
+  const p = copyProfile(profile);
+  let genesisFrom = `the ${p.id} profile${p.public ? ' (pinned)' : ' (--genesis)'}`;
+  let instanceFrom = `the ${p.id} profile (--chain-instance)`;
+  for (const { source, network: n } of recorded) {
+    if (n.id !== p.id) throw new ProfileError(`${source} is for ${n.id}, not ${p.id}`);
+    if (n.genesisHash !== undefined) {
+      const g = normGenesis(n.genesisHash);
+      if (p.genesisHash === undefined) {
+        const known = p.id === 'undeployed' ? publicNetworkOfGenesis(g) : undefined;
+        if (known) throw new ProfileError(`undeployed: ${source} records the ${known} genesis ${g}; refusing`);
+        p.genesisHash = g;
+        genesisFrom = source;
+      } else if (p.genesisHash !== g) throw new ProfileError(`${source} records genesis ${g}, but ${genesisFrom} has ${p.genesisHash}`);
+    }
+    if (n.chainInstance !== undefined) {
+      const c = normGenesis(n.chainInstance);
+      if (p.chainInstance === undefined) {
+        p.chainInstance = c;
+        instanceFrom = source;
+      } else if (p.chainInstance !== c)
+        throw new ProfileError(`${source} records chain instance (block 1) ${c}, but ${instanceFrom} has ${p.chainInstance}`);
+    }
+  }
   return p;
 }
 
@@ -390,4 +447,41 @@ export async function checkIdentity(profile: NetworkProfile, http?: HttpClient):
       );
   }
   return genesis;
+}
+
+/**
+ * `checkIdentity`, and the node's chain instance (block 1) for a file that records it: the profile's own when it has
+ * one (then verified), otherwise read from the node (null while the node has no block 1).
+ */
+export async function checkChainIdentity(
+  profile: NetworkProfile,
+  http?: HttpClient,
+): Promise<{ genesisHash: string; chainInstance: string | null }> {
+  const genesisHash = await checkIdentity(profile, http);
+  if (profile.chainInstance !== undefined) return { genesisHash, chainInstance: profile.chainInstance };
+  const one = await rpcFor(profile, http).blockHash(1);
+  return { genesisHash, chainInstance: one === null ? null : normGenesis(one) };
+}
+
+/**
+ * Checks that several recorded networks are the same chain (one id; equal genesis and chain instance wherever two of
+ * them record one), e.g. a run record against the scanner state it is looked up in. Throws `ProfileError` otherwise.
+ */
+export function agreeRecordedNetworks(recorded: readonly RecordedSource[]): void {
+  const seen: { id?: RecordedSource; genesisHash?: RecordedSource; chainInstance?: RecordedSource } = {};
+  for (const r of recorded) {
+    if (seen.id !== undefined && seen.id.network.id !== r.network.id)
+      throw new ProfileError(`${r.source} is for ${r.network.id}, but ${seen.id.source} is for ${seen.id.network.id}`);
+    seen.id ??= r;
+    for (const k of ['genesisHash', 'chainInstance'] as const) {
+      const v = r.network[k];
+      if (v === undefined) continue;
+      const prev = seen[k];
+      if (prev === undefined) seen[k] = r;
+      else if (normGenesis(prev.network[k]!) !== normGenesis(v))
+        throw new ProfileError(
+          `${r.source} records ${k === 'genesisHash' ? 'genesis' : 'chain instance (block 1)'} ${normGenesis(v)}, but ${prev.source} has ${normGenesis(prev.network[k]!)}`,
+        );
+    }
+  }
 }

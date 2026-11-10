@@ -292,9 +292,10 @@ mip0018 recheck --network preview --case deployments/preview/cases/C02
 `recheck` runs every check the case lists in its `case.json`: `check-event` of each recorded transaction with its
 expectation, `list` against `expected.json` (and, for C06 and C12, the state after every step with `--to-block`; C07
 as of its last step), steps that had to be refused (no transaction), removed verifier keys, and colors (the scanner's
-table, the wallet's recorded balances, the live identity). Every check also requires the node's genesis and its block
-1 to be those `deployments/preview/network.json` records: a network re-created from the same genesis is refused
-instead of reported as missing data.
+table, the wallet's recorded balances, the live identity). The node's genesis and its block 1 must be those
+`deployments/preview/network.json` and the case's run records record, checked once before the first check: on a
+network re-created from the same genesis the case ends with one failed `identity` result instead of reporting missing
+data.
 
 Preview:
 

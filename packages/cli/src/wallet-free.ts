@@ -20,6 +20,7 @@ import {
   type EventExpectation,
   type ListReport,
   type CheckEventReport,
+  type RecordedSource,
 } from '@mip0018/midnight';
 import { characters, formatAmount, type IdentityView } from '@mip0018/consumer';
 import {
@@ -28,6 +29,8 @@ import {
   NETWORK_OPTIONS,
   NETWORK_USAGE,
   UsageError,
+  agreeingFiles,
+  boundProfile,
   emitJson,
   int,
   jsonArg,
@@ -37,8 +40,9 @@ import {
   parse,
   profileFrom,
   readRecord,
-  recordContract,
+  recordSource,
   recordStep,
+  recordTarget,
   repoRoot,
   short,
   str,
@@ -132,14 +136,14 @@ export async function cmdCheckEvent(argv: string[]): Promise<number> {
     },
     CHECK_EVENT_USAGE,
   );
-  const profile = profileFrom(v);
+  let profile = profileFrom(v);
   let contract = str(v, 'contract');
   let tx = str(v, 'tx');
   const recordPath = str(v, 'record');
   if (recordPath !== undefined) {
     if (contract !== undefined || tx !== undefined) throw new UsageError('--record excludes --contract and --tx');
     const r = readRecord(recordPath);
-    contract = recordContract(r, profile);
+    ({ profile, address: contract } = recordTarget(r, profile));
     tx = recordStep(r, str(v, 'step')).tx;
   } else if (str(v, 'step') !== undefined) throw new UsageError('--step needs --record');
   if (contract === undefined) throw new UsageError('--contract (or --record) is required');
@@ -251,12 +255,12 @@ export async function cmdList(argv: string[]): Promise<number> {
     },
     LIST_USAGE,
   );
-  const profile = profileFrom(v);
+  let profile = profileFrom(v);
   let contract = str(v, 'contract');
   const recordPath = str(v, 'record');
   if (recordPath !== undefined) {
     if (contract !== undefined) throw new UsageError('--record excludes --contract');
-    contract = recordContract(readRecord(recordPath), profile);
+    ({ profile, address: contract } = recordTarget(readRecord(recordPath), profile));
   }
   if (contract === undefined) throw new UsageError('--contract (or --record) is required');
   const expectJson = jsonArg(v, 'expect');
@@ -314,11 +318,13 @@ export async function cmdIndex(argv: string[]): Promise<number> {
     },
     INDEX_USAGE,
   );
-  const profile = profileFrom(v);
   const from = int(v, 'from-height', true)!;
   const to = int(v, 'to-height');
   if (v.follow && to !== undefined) throw new UsageError('--follow and --to-height exclude each other');
   const stateDir = str(v, 'state', true)!;
+  // The state's own network is bound by the scanner when it resumes; a state inside a case folder also takes the
+  // folder's network file.
+  const profile = boundProfile(profileFrom(v), [stateDir]);
   const log = logger(v);
   const ac = new AbortController();
   process.once('SIGINT', () => ac.abort());
@@ -414,6 +420,8 @@ export async function cmdLookup(argv: string[]): Promise<number> {
   const stateDir = str(v, 'state', true)!;
   const s = loadState(stateDir);
   if (!s) throw new UsageError(`no index state in ${stateDir} (run mip0018 index first)`);
+  // The networks recorded by the state and the run record: one chain, checked offline and bound for a live read.
+  const recorded: RecordedSource[] = [{ source: statePath(stateDir), network: s.network }];
   let color = str(v, 'color');
   let computedFrom: { contract: string; domainSep: string } | undefined;
   const ds = str(v, 'domain-sep');
@@ -423,8 +431,8 @@ export async function cmdLookup(argv: string[]): Promise<number> {
     const recordPath = str(v, 'record');
     if (recordPath !== undefined) {
       const rec = readRecord(recordPath);
-      if (rec.network.id !== s.network.id)
-        throw new UsageError(`${recordPath} is for ${rec.network.id}; the index state for ${s.network.id}`);
+      recorded.push(recordSource(rec));
+      agreeingFiles(recorded);
       if (!rec.contract.address) throw new UsageError(`${recordPath} has no contract address`);
       contract = rec.contract.address;
     }
@@ -453,8 +461,7 @@ export async function cmdLookup(argv: string[]): Promise<number> {
   let identities: IdentityView[];
   let source: string;
   if (live) {
-    const profile = profileFrom(v);
-    if (profile.id !== s.network.id) throw new UsageError(`the index state is for ${s.network.id}, not ${profile.id}`);
+    const profile = boundProfile(profileFrom(v), [stateDir, ...recorded.slice(1).map((x) => x.source)], recorded);
     const l = await listMetadata({ profile, contract: r.entry!.contractAddress });
     identities = l.identities;
     source = `live indexer at block ${l.snapshot.indexerTip.height}`;

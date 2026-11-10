@@ -8,7 +8,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
-import { checkIdentity, normAddress, checkEvent, type EventExpectation } from '@mip0018/midnight';
+import { checkIdentity, normAddress, checkEvent, type EventExpectation, type RecordedSource } from '@mip0018/midnight';
 import {
   StepError,
   callStep,
@@ -45,6 +45,7 @@ import {
   NETWORK_OPTIONS,
   NETWORK_USAGE,
   UsageError,
+  boundProfile,
   emitJson,
   fromPortable,
   jsonArg,
@@ -239,12 +240,23 @@ function requireKeys(src: ContractSource): void {
   throw new UsageError(`${src.artifacts.managedDir} has no keys/ (a --skip-zk build?): compile with keys first: ${how}`);
 }
 
-async function withRun<T>(v: Values, recordPath: string, src: ContractSource, f: (run: Run) => Promise<T>): Promise<T> {
+async function withRun<T>(
+  v: Values,
+  recordPath: string,
+  src: ContractSource,
+  f: (run: Run) => Promise<T>,
+  also: readonly RecordedSource[] = [],
+): Promise<T> {
   requireKeys(src);
   const log = logger(v);
-  const ep = endpoints(v);
+  const given = endpoints(v);
   const ps = privateStatePath(v);
-  // Chain identity first: a wrong network aborts before any wallet is opened or anything is built.
+  // The identity the run must be on: the record's (when it exists), any other record it names (--attach @record) and
+  // the network file of the case folder the record lies in. Checked first: a wrong network, or a network re-created
+  // from the same genesis, aborts before any wallet is opened or anything is built.
+  const existing = loadRecord(recordPath);
+  const recorded = [...(existing ? [{ source: recordPath, network: existing.network }] : []), ...also];
+  const ep: SignerEndpoints = { ...given, profile: boundProfile(given.profile, [recordPath], recorded) };
   await checkIdentity(ep.profile);
   const session = await wallet(v, ep, log);
   try {
@@ -316,14 +328,14 @@ export async function cmdDeploy(argv: string[]): Promise<number> {
 
 // ---------------------------------------------------------------------------------------------------------- attach
 
-/** `--attach <address|@record>` → the contract address (normalized). */
-function attachAddress(v: Values): { address: string; from: string } | undefined {
+/** `--attach <address|@record>` → the contract address (normalized), and the network a record names. */
+function attachAddress(v: Values): { address: string; from: string; recorded?: RecordedSource } | undefined {
   const a = str(v, 'attach');
   if (a === undefined) return undefined;
   if (a.startsWith('@')) {
     const r = readRecord(a.slice(1));
     if (!r.contract.address) throw new UsageError(`${a.slice(1)} has no contract address`);
-    return { address: normAddress(r.contract.address), from: portablePath(a.slice(1)) };
+    return { address: normAddress(r.contract.address), from: portablePath(a.slice(1)), recorded: { source: r.path, network: r.network } };
   }
   try {
     return { address: normAddress(a), from: 'command line' };
@@ -398,27 +410,33 @@ export async function cmdPublish(argv: string[]): Promise<number> {
   if (attach && !str(v, 'example') && !str(v, 'adapter') && !str(v, 'contract'))
     throw new UsageError('--attach needs --example, --adapter or --contract (what the contract is)');
   const src = await contractSource(v, attach ? undefined : recordPath);
-  return withRun(v, recordPath, src, async (run) => {
-    try {
-      if (attach) attachRecord(run, attach, src);
-      // A circuit added later with `mip0018 upgrade` is called through the upgrade-only build it was compiled in.
-      const up = upgradeFor(run, circuit);
-      const via = up && !provableCircuits(run.o.artifacts.managedDir).includes(circuit) ? await upgradeSourceOf(up) : undefined;
-      await callStep(run, {
-        circuit,
-        args,
-        ...(str(v, 'step') ? { stepId: str(v, 'step')! } : {}),
-        ...(via ? { artifacts: via.artifacts, ...(via.adapter ? { adapter: via.adapter } : {}) } : {}),
-      });
-      return EXIT.ok;
-    } catch (e) {
-      logger(v)(`publish: ${(e as Error).message}`);
-      return exitFor(e);
-    } finally {
-      if (v.json) emitJson(run.record);
-      else printRun(run, recordPath);
-    }
-  });
+  return withRun(
+    v,
+    recordPath,
+    src,
+    async (run) => {
+      try {
+        if (attach) attachRecord(run, attach, src);
+        // A circuit added later with `mip0018 upgrade` is called through the upgrade-only build it was compiled in.
+        const up = upgradeFor(run, circuit);
+        const via = up && !provableCircuits(run.o.artifacts.managedDir).includes(circuit) ? await upgradeSourceOf(up) : undefined;
+        await callStep(run, {
+          circuit,
+          args,
+          ...(str(v, 'step') ? { stepId: str(v, 'step')! } : {}),
+          ...(via ? { artifacts: via.artifacts, ...(via.adapter ? { adapter: via.adapter } : {}) } : {}),
+        });
+        return EXIT.ok;
+      } catch (e) {
+        logger(v)(`publish: ${(e as Error).message}`);
+        return exitFor(e);
+      } finally {
+        if (v.json) emitJson(run.record);
+        else printRun(run, recordPath);
+      }
+    },
+    attach?.recorded ? [attach.recorded] : [],
+  );
 }
 
 // -------------------------------------------------------------------------------------------------- remove-circuit
