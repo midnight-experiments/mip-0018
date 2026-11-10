@@ -2,21 +2,15 @@
 //
 // Shared CLI plumbing: option parsing, network profiles, output (fixed-width text or --json), exit codes, logging.
 // Log lines and error messages go through `scrubSecrets` (URLs without their query string, no registered token);
-// `guardOutput` filters everything the process writes through `removeSecrets` (no registered token, nothing else
-// changed — metadata values are printed exactly).
+// `guardOutput` (@mip0018/midnight) filters everything the process writes through `removeSecrets` (no registered
+// token, nothing else changed — metadata values are printed exactly).
 
 import { readFileSync, realpathSync } from 'node:fs';
 import { isAbsolute, relative, resolve } from 'node:path';
 import { parseArgs, type ParseArgsConfig } from 'node:util';
-import {
-  PROFILE_IDS,
-  removeSecrets,
-  resolveProfile,
-  scrubSecrets,
-  toJson,
-  type EndpointOverrides,
-  type NetworkProfile,
-} from '@mip0018/midnight';
+import { PROFILE_IDS, resolveProfile, scrubSecrets, toJson, type EndpointOverrides, type NetworkProfile } from '@mip0018/midnight';
+
+export { guardOutput } from '@mip0018/midnight';
 
 export class UsageError extends Error {
   override name = 'UsageError';
@@ -147,23 +141,6 @@ export function logger(v: Values): (msg: string, extra?: unknown) => void {
   if (v.quiet) return () => {};
   return (msg, extra) =>
     process.stderr.write(scrubSecrets(`${new Date().toISOString()} ${msg}${extra === undefined ? '' : ` ${toJson(extra, 0)}`}\n`));
-}
-
-let guarded = false;
-
-/** Filters everything written to stdout / stderr through `removeSecrets` (a registered token never leaves the process). */
-export function guardOutput(): void {
-  if (guarded) return;
-  guarded = true;
-  for (const stream of [process.stdout, process.stderr]) {
-    const write = stream.write.bind(stream) as (chunk: unknown, ...rest: unknown[]) => boolean;
-    stream.write = ((chunk: unknown, ...rest: unknown[]) => {
-      const text = typeof chunk === 'string' ? chunk : chunk instanceof Uint8Array ? Buffer.from(chunk).toString('utf8') : undefined;
-      if (text === undefined) return write(chunk, ...rest);
-      const clean = removeSecrets(text);
-      return write(clean === text ? chunk : clean, ...rest);
-    }) as typeof stream.write;
-  }
 }
 
 export function emitJson(value: unknown): void {

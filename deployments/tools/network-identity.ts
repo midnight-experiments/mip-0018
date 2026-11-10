@@ -18,6 +18,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import {
+  guardOutput,
   httpFor,
   indexerFor,
   normGenesis,
@@ -29,6 +30,7 @@ import {
   type PublicNetworkId,
 } from '@mip0018/midnight';
 
+guardOutput();
 const { values: v } = parseArgs({
   options: {
     network: { type: 'string' },
