@@ -1,28 +1,35 @@
 #!/usr/bin/env node
 // SPDX-License-Identifier: Apache-2.0
 //
-// Official binaries only (Midnight releases and midnightntwrk images). Checks that:
-//   1. every container image referenced in docker/, test-contracts/ and .github/
-//      is pinned by digest, comes from `midnightntwrk/*` or the official `node`
-//      image, and is listed in toolchain.json;
+// Official binaries only (Midnight releases and midnightntwrk images). Checks, over every file of the repository
+// (node_modules, compiler output, local state and caches excluded):
+//   1. images: in every compose file (a YAML file with a top-level `services:`) and every Dockerfile, each `image:` and
+//      `FROM` reference (ARG and `${VAR:-default}` defaults resolved; `scratch` and earlier stages excepted) is pinned
+//      by digest; in every .sh/.yml/.yaml/.mjs/.ts/.json file and Dockerfile, each digest-pinned reference comes from
+//      `midnightntwrk/*` or the official `node` image and is listed in toolchain.json, and each tagged
+//      `midnightntwrk/<name>:<tag>` carries its digest. An untagged `midnightntwrk/<name>` outside a compose file or
+//      Dockerfile is a repository or product name (prose, a GitHub path), not an image reference, and is not checked;
 //   2. docker/Dockerfile's ARG pins (node image, Compact release and devtool,
 //      versions and SHA-256s) equal toolchain.json, and its downloads come from
 //      the official midnightntwrk/compact releases;
 //   3. the npm pins in toolchain.json equal package.json overrides and the
 //      workspace manifests that use them;
-//   4. no file in those places mentions a non-official binary source;
+//   4. no file outside tools/ mentions a non-official binary source;
 //   5. the install (node_modules) holds exactly one copy of each single-copy
 //      package (@midnightntwrk/ledger-v9, @midnightntwrk/onchain-runtime-v4), at
 //      the pinned version, and the top-level copy of every other npm pin is the
-//      pinned version. Two copies of the ledger WASM make contract calls fail.
+//      pinned version (nested copies that dependencies bring are not checked). Two copies of the ledger WASM make
+//      contract calls fail.
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { basename, join, relative } from 'node:path';
 import { repoRoot, toolchain } from './lib/mip.mjs';
 
 const tc = toolchain();
 const problems = [];
 const fail = (msg) => problems.push(msg);
+
+const isDockerfile = (f) => /^(Dockerfile|Containerfile)(\..+)?$|\.(Dockerfile|Containerfile)$/u.test(basename(f));
 
 const walk = (dir, out = []) => {
   let entries;
@@ -35,11 +42,48 @@ const walk = (dir, out = []) => {
     if (['node_modules', 'managed', '.state', '.git', '.cache', 'records'].includes(e)) continue;
     const p = join(dir, e);
     if (statSync(p).isDirectory()) walk(p, out);
-    else if (/\.(sh|ya?ml|mjs|ts|json)$|Dockerfile$/u.test(e)) out.push(p);
+    else if (/\.(sh|ya?ml|mjs|ts|json)$/u.test(e) || isDockerfile(e)) out.push(p);
   }
   return out;
 };
-const files = ['docker', 'test-contracts', '.github', 'tools'].flatMap((d) => walk(join(repoRoot, d)));
+const files = walk(repoRoot);
+
+const isCompose = (f, text) => /\.ya?ml$/u.test(f) && /^services:\s*(#.*)?$/mu.test(text);
+const DIGEST = /@sha256:[0-9a-f]{64}$/u;
+
+/** `${VAR:-default}` / `${VAR-default}` / `${VAR}` / `$VAR` resolved from `vars`; undefined when a variable has no value. */
+const resolveVars = (ref, vars) => {
+  let unresolved = false;
+  const out = ref.replace(/\$\{(\w+)(?::?-([^}]*))?\}|\$(\w+)/gu, (_m, a, def, b) => {
+    const v = vars[a ?? b] ?? def;
+    if (v === undefined) unresolved = true;
+    return v ?? '';
+  });
+  return unresolved ? undefined : out;
+};
+
+/** Every image a compose file or Dockerfile references: [line, reference as written, resolved reference or undefined]. */
+const imagesOf = (f, text) => {
+  const out = [];
+  const lines = text.split('\n');
+  if (isDockerfile(f)) {
+    const args = {};
+    const stages = new Set();
+    lines.forEach((line, i) => {
+      const a = /^\s*ARG\s+(\w+)=(\S+)/u.exec(line);
+      if (a) args[a[1]] = a[2].replace(/^["']|["']$/gu, '');
+      const m = /^\s*FROM\s+(?:--platform=\S+\s+)?(\S+)(?:\s+AS\s+(\S+))?/iu.exec(line);
+      if (!m) return;
+      if (m[1] !== 'scratch' && !stages.has(m[1].toLowerCase())) out.push([i + 1, m[1], resolveVars(m[1], args)]);
+      if (m[2]) stages.add(m[2].toLowerCase());
+    });
+  } else
+    lines.forEach((line, i) => {
+      const m = /^\s*-?\s*image:\s*["']?([^"'\s#]+)/u.exec(line);
+      if (m) out.push([i + 1, m[1], resolveVars(m[1], {})]);
+    });
+  return out;
+};
 
 // 1. images
 const allowed = new Set(
@@ -49,9 +93,17 @@ const allowed = new Set(
 );
 const imageRef = /\b((?:midnightntwrk|[a-z0-9-]+\/[a-z0-9-]+|node)(?::[\w.-]+)?@sha256:[0-9a-f]{64})/gu;
 const anyMidnightImage = /\bmidnightntwrk\/[a-z0-9-]+(?::[\w.-]+)?(@sha256:[0-9a-f]{64})?/gu;
+let imageRefs = 0;
 for (const f of files) {
   const text = readFileSync(f, 'utf8');
   const rel = relative(repoRoot, f);
+  if (isDockerfile(f) || isCompose(f, text))
+    for (const [line, written, ref] of imagesOf(f, text)) {
+      imageRefs++;
+      if (ref === undefined) fail(`${rel}:${line}: image ${written} has a variable without a pinned default`);
+      else if (!DIGEST.test(ref)) fail(`${rel}:${line}: image ${ref} is not pinned by digest`);
+      else if (!allowed.has(ref)) fail(`${rel}:${line}: image ${ref} is not pinned in toolchain.json`);
+    }
   for (const m of text.matchAll(imageRef)) {
     const ref = m[1];
     if (!ref.startsWith('midnightntwrk/') && !ref.startsWith('node:'))
@@ -164,5 +216,5 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  `OK ${allowed.size} images, Compact ${tc.compact.version} release + devtool ${tc.compact.devtool.version}, ${Object.keys(tc.npm).filter((k) => !k.startsWith('$')).length} npm pins (${installChecked} installed as pinned; one copy each of ${SINGLE_COPY.join(', ')}); official sources only`,
+  `OK ${allowed.size} images (${imageRefs} references in compose files and Dockerfiles, each pinned by digest), Compact ${tc.compact.version} release + devtool ${tc.compact.devtool.version}, ${Object.keys(tc.npm).filter((k) => !k.startsWith('$')).length} npm pins (${installChecked} installed as pinned; one copy each of ${SINGLE_COPY.join(', ')}); official sources only`,
 );

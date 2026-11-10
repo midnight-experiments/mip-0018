@@ -9,7 +9,8 @@
 //   node tools/secret-scan.mjs --history    # plus every blob in the history
 //   node tools/secret-scan.mjs --self-test  # positive control: planted secrets must be found
 //
-// Detectors: a run of >= 12 BIP-39 English words (a mnemonic); a 64-hex value
+// Detectors: a run of >= 12 BIP-39 English words (a mnemonic), counted across line breaks so a wrapped
+// mnemonic is found too; a 64-hex value
 // labelled seed/secret/private/mnemonic/signing key; a {tag:"schnorr"|"ecdsa", value}
 // signing key object; PEM private keys; a Blockfrost project token in a URL (`project_id` with a
 // token-shaped value); secret-looking file names.
@@ -31,17 +32,26 @@ const TOKEN_IN_URL = new RegExp(`${'project'}_id=[A-Za-z0-9]{16,}`, 'u');
 
 export const detect = (text, words) => {
   const hits = [];
+  // BIP-39 runs over the whole text: letters-only tokens, a line break is a separator like any other; one hit per run,
+  // at the line of its first word.
+  const lower = text.toLowerCase();
+  let run = 0;
+  let lineNo = 1;
+  let runLine = 1;
+  let last = 0;
+  for (const m of lower.matchAll(/[a-z]+/gu)) {
+    for (let i = last; i < m.index; i++) if (lower.charCodeAt(i) === 10) lineNo++;
+    last = m.index;
+    if (!words.has(m[0])) {
+      run = 0;
+      continue;
+    }
+    if (run === 0) runLine = lineNo;
+    run++;
+    if (run === 12) hits.push({ line: runLine, detector: 'bip39-run' });
+  }
   const lines = text.split('\n');
   lines.forEach((line, i) => {
-    let run = 0;
-    for (const t of line.toLowerCase().split(/[^a-z]+/u)) {
-      if (!t) continue;
-      run = words.has(t) ? run + 1 : 0;
-      if (run >= 12) {
-        hits.push({ line: i + 1, detector: 'bip39-run' });
-        break;
-      }
-    }
     // The dev chain's genesis seed (0x00..01) is public and allowed.
     if (/(seed|secret|private|mnemonic|signing.?key)[^\n]{0,40}?\b(?!0{63}1\b)[0-9a-f]{64}\b/iu.test(line))
       hits.push({ line: i + 1, detector: 'labelled-64-hex' });
@@ -64,6 +74,7 @@ if (process.argv.includes('--self-test')) {
   const fakeMnemonic = Array.from({ length: 24 }, (_, i) => pick[(i * 97 + 13) % pick.length]).join(' ');
   const cases = [
     [`phrase: ${fakeMnemonic}`, 'bip39-run'],
+    [`phrase:\n${fakeMnemonic.split(' ').reduce((a, w, i) => a + w + (i % 4 === 3 ? '\n' : ' '), '')}`, 'bip39-run'],
     [`seed = ${'ab'.repeat(32)}`, 'labelled-64-hex'],
     [`{"tag":"schnorr","value":"${'cd'.repeat(32)}"}`, 'signing-key-object'],
     ['-----BEGIN OPENSSH PRIVATE KEY-----', 'pem-private-key'],
