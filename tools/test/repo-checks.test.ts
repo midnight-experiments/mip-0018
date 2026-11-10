@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // check-pins.mjs and secret-scan.mjs run against small fixture repositories (temporary directories with a copy of the
-// tool): an image without a digest in a compose file or Dockerfile anywhere in the repository fails check-pins, and a
-// mnemonic wrapped over several lines fails the secret scan; the clean fixtures pass.
+// tool): an image without a digest in a compose file (in any YAML notation) or Dockerfile anywhere in the repository
+// fails check-pins, and so does a YAML file it cannot parse; a mnemonic wrapped over several lines fails the secret
+// scan; the clean fixtures pass.
 
 import { spawnSync } from 'node:child_process';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
@@ -46,6 +47,8 @@ describe('check-pins: every image in every compose file and Dockerfile is pinned
   };
   for (const [name, version] of Object.entries(tc.npm))
     if (!name.startsWith('$')) put(root, join('node_modules', name, 'package.json'), JSON.stringify({ name, version }));
+  // the YAML parser the tool reads compose files with
+  symlinkSync(join(repo, 'node_modules', 'yaml'), join(root, 'node_modules', 'yaml'));
   const node24 = tc.images.node!;
   // The image namespace, spelled so this file holds no image reference itself (check-pins scans tools/ too).
   const NS = ['midnight', 'ntwrk'].join('');
@@ -86,6 +89,24 @@ describe('check-pins: every image in every compose file and Dockerfile is pinned
       'test-contracts/x/Dockerfile.tools',
       'ARG BASE=node:24\nFROM ${BASE}\n',
       /test-contracts\/x\/Dockerfile\.tools:2: image node:24 is not pinned by digest/u,
+    ],
+    [
+      'a quoted "image" key in a compose file',
+      'examples/quoted/compose.yml',
+      `services:\n  prover:\n    "image": ${NS}/proof-server\n`,
+      /examples\/quoted\/compose\.yml:3: image midnightntwrk\/proof-server is not pinned by digest/u,
+    ],
+    [
+      'a flow-style services mapping',
+      'packages/flow/stack.yaml',
+      '{"services": {"db": {"image": "postgres:16"}}}\n',
+      /packages\/flow\/stack\.yaml:1: image postgres:16 is not pinned by digest/u,
+    ],
+    [
+      'a YAML file that does not parse',
+      'deployments/broken/compose.yaml',
+      'services:\n  db: [\n    image: postgres:16\n',
+      /deployments\/broken\/compose\.yaml:\d+: cannot be read as YAML/u,
     ],
   ])('%s fails', (_name, path, text, message) => {
     put(root, path, text);

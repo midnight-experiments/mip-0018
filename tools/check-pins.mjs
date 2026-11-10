@@ -3,9 +3,11 @@
 //
 // Official binaries only (Midnight releases and midnightntwrk images). Checks, over every file of the repository
 // (node_modules, compiler output, local state and caches excluded):
-//   1. images: in every compose file (a YAML file with a top-level `services:`) and every Dockerfile, each `image:` and
-//      `FROM` reference (ARG and `${VAR:-default}` defaults resolved; `scratch` and earlier stages excepted) is pinned
-//      by digest; in every .sh/.yml/.yaml/.mjs/.ts/.json file and Dockerfile, each digest-pinned reference comes from
+//   1. images: every .yml / .yaml file is parsed as YAML (a file that does not parse fails the check); a document whose
+//      top-level mapping has a `services` key is a compose file, in any YAML notation (block or flow style, quoted
+//      keys, anchors and merge keys). Each service's `image` in a compose file and each `FROM` of a Dockerfile (ARG and
+//      `${VAR:-default}` defaults resolved; `scratch` and the file's own build stages excepted) is pinned by digest and listed in
+//      toolchain.json; in every .sh/.yml/.yaml/.mjs/.ts/.json file and Dockerfile, each digest-pinned reference comes from
 //      `midnightntwrk/*` or the official `node` image and is listed in toolchain.json, and each tagged
 //      `midnightntwrk/<name>:<tag>` carries its digest. An untagged `midnightntwrk/<name>` outside a compose file or
 //      Dockerfile is a repository or product name (prose, a GitHub path), not an image reference, and is not checked;
@@ -23,6 +25,7 @@
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { basename, join, relative } from 'node:path';
+import { LineCounter, parseAllDocuments } from 'yaml';
 import { repoRoot, toolchain } from './lib/mip.mjs';
 
 const tc = toolchain();
@@ -48,7 +51,7 @@ const walk = (dir, out = []) => {
 };
 const files = walk(repoRoot);
 
-const isCompose = (f, text) => /\.ya?ml$/u.test(f) && /^services:\s*(#.*)?$/mu.test(text);
+const isYaml = (f) => /\.ya?ml$/u.test(f);
 const DIGEST = /@sha256:[0-9a-f]{64}$/u;
 
 /** `${VAR:-default}` / `${VAR-default}` / `${VAR}` / `$VAR` resolved from `vars`; undefined when a variable has no value. */
@@ -62,27 +65,69 @@ const resolveVars = (ref, vars) => {
   return unresolved ? undefined : out;
 };
 
-/** Every image a compose file or Dockerfile references: [line, reference as written, resolved reference or undefined]. */
-const imagesOf = (f, text) => {
+/** Every image a Dockerfile references: [line, reference as written, resolved reference or undefined]. */
+const dockerfileImages = (text) => {
   const out = [];
-  const lines = text.split('\n');
-  if (isDockerfile(f)) {
-    const args = {};
-    const stages = new Set();
-    lines.forEach((line, i) => {
-      const a = /^\s*ARG\s+(\w+)=(\S+)/u.exec(line);
-      if (a) args[a[1]] = a[2].replace(/^["']|["']$/gu, '');
-      const m = /^\s*FROM\s+(?:--platform=\S+\s+)?(\S+)(?:\s+AS\s+(\S+))?/iu.exec(line);
-      if (!m) return;
-      if (m[1] !== 'scratch' && !stages.has(m[1].toLowerCase())) out.push([i + 1, m[1], resolveVars(m[1], args)]);
-      if (m[2]) stages.add(m[2].toLowerCase());
-    });
-  } else
-    lines.forEach((line, i) => {
-      const m = /^\s*-?\s*image:\s*["']?([^"'\s#]+)/u.exec(line);
-      if (m) out.push([i + 1, m[1], resolveVars(m[1], {})]);
-    });
+  const args = {};
+  const stages = new Set();
+  text.split('\n').forEach((line, i) => {
+    const a = /^\s*ARG\s+(\w+)=(\S+)/u.exec(line);
+    if (a) args[a[1]] = a[2].replace(/^["']|["']$/gu, '');
+    const m = /^\s*FROM\s+(?:--platform=\S+\s+)?(\S+)(?:\s+AS\s+(\S+))?/iu.exec(line);
+    if (!m) return;
+    if (m[1] !== 'scratch' && !stages.has(m[1].toLowerCase())) out.push([i + 1, m[1], resolveVars(m[1], args)]);
+    if (m[2]) stages.add(m[2].toLowerCase());
+  });
   return out;
+};
+
+const isMapping = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+
+/**
+ * The images of a YAML file's compose documents: [line, reference as written, resolved reference or undefined], or a
+ * problem. The documents are parsed (any notation; merge keys resolved); a document is a compose file when its
+ * top-level mapping has a `services` key. A file that does not parse, or a compose document whose `services` or a
+ * service is not a mapping or whose `image` is not a string, is a problem: an image the check cannot read is not
+ * accepted.
+ */
+const composeImages = (text) => {
+  const out = [];
+  const problems = [];
+  const lc = new LineCounter();
+  const docs = parseAllDocuments(text, { lineCounter: lc, merge: true });
+  const lineOf = (node) => (node?.range ? lc.linePos(node.range[0]).line : 1);
+  for (const doc of Array.isArray(docs) ? docs : []) {
+    if (doc.errors.length > 0) {
+      problems.push([lineOf({ range: doc.errors[0].pos }), `cannot be read as YAML (${doc.errors[0].message.split('\n')[0]})`]);
+      continue;
+    }
+    let js;
+    try {
+      js = doc.toJS({ maxAliasCount: 1000 });
+    } catch (e) {
+      problems.push([1, `cannot be read as YAML (${e.message.split('\n')[0]})`]);
+      continue;
+    }
+    if (!isMapping(js) || !Object.hasOwn(js, 'services')) continue;
+    if (!isMapping(js.services)) {
+      problems.push([lineOf(doc.get('services', true)), 'services is not a mapping']);
+      continue;
+    }
+    for (const [name, svc] of Object.entries(js.services)) {
+      const at = lineOf(doc.getIn(['services', name, 'image'], true) ?? doc.getIn(['services', name], true));
+      if (!isMapping(svc)) {
+        problems.push([at, `service ${name} is not a mapping`]);
+        continue;
+      }
+      if (!Object.hasOwn(svc, 'image')) continue;
+      if (typeof svc.image !== 'string') {
+        problems.push([at, `service ${name}: image is not a string`]);
+        continue;
+      }
+      out.push([at, svc.image, resolveVars(svc.image, {})]);
+    }
+  }
+  return { images: out, problems };
 };
 
 // 1. images
@@ -97,8 +142,10 @@ let imageRefs = 0;
 for (const f of files) {
   const text = readFileSync(f, 'utf8');
   const rel = relative(repoRoot, f);
-  if (isDockerfile(f) || isCompose(f, text))
-    for (const [line, written, ref] of imagesOf(f, text)) {
+  const found = isDockerfile(f) ? { images: dockerfileImages(text), problems: [] } : isYaml(f) ? composeImages(text) : undefined;
+  for (const [line, why] of found?.problems ?? []) fail(`${rel}:${line}: ${why}`);
+  if (found)
+    for (const [line, written, ref] of found.images) {
       imageRefs++;
       if (ref === undefined) fail(`${rel}:${line}: image ${written} has a variable without a pinned default`);
       else if (!DIGEST.test(ref)) fail(`${rel}:${line}: image ${ref} is not pinned by digest`);
