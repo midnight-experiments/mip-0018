@@ -82,9 +82,15 @@ commands. Fees and circuit sizes: [`docs/costs.md`](docs/costs.md) (a metadata t
 
 `--network <undeployed|preview|preprod|mainnet>` selects a profile of [`packages/midnight`](packages/midnight/README.md)
 (network id, pinned genesis hash, endpoints, address prefixes; the constants are in [`toolchain.json`](toolchain.json)
-`networks`). Every tool, the example scripts included, checks the node's genesis before its first request that reads a
-case or changes state, and block 1 (the chain instance) too when a run record, a scanner state, the `network.json` of
-a case folder or `--chain-instance` names one; a record or state of another network or chain is refused.
+`networks`). Every tool checks the node's genesis before its first request that reads a case or changes state, and
+block 1 (the chain instance) too when a run record, a scanner state, the `network.json` of a case folder or
+`--chain-instance` names one; a record or state of another network or chain is refused. The tools: the `mip0018` CLI,
+[`inspect.ts`](examples/upgrade-existing-contract/scripts/inspect.ts),
+[`midnight-js-snippet.ts`](examples/publish-and-emit/scripts/midnight-js-snippet.ts),
+[`create-and-destroy.ts`](examples/minimal/scripts/create-and-destroy.ts) and the toolchain spike's `spike:local` and
+`local:fund` ([`test-contracts/toolchain-spike`](test-contracts/toolchain-spike)); a wallet starts only through
+`openWallet`, which checks the identity before it connects. [`network-identity.ts`](deployments/tools/network-identity.ts)
+records the identity it reads and appends to a network file only on the pinned genesis and the file's block 1.
 
 | Profile | Endpoints | Token | Exercised in this repository |
 |---|---|---|---|

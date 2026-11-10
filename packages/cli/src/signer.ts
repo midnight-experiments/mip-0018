@@ -8,7 +8,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
-import { checkIdentity, normAddress, checkEvent, type EventExpectation } from '@mip0018/midnight';
+import { normAddress, checkEvent, type EventExpectation } from '@mip0018/midnight';
 import {
   StepError,
   callStep,
@@ -107,7 +107,7 @@ async function wallet(v: Values, ep: SignerEndpoints, log: (m: string, x?: unkno
   const cache = str(v, 'wallet-cache');
   if (cache !== undefined && !relative(repoRoot(), resolve(cache)).startsWith('..'))
     throw new UsageError(`${cache} is inside the repository; the wallet cache holds secrets`);
-  log('opening the wallet and syncing (minutes on a public network)');
+  // openWallet checks the network identity before it opens anything, then logs that the wallet opens.
   return openWallet(ep, seed, { ...(cache ? { cachePath: resolve(cache) } : {}), log });
 }
 
@@ -162,7 +162,6 @@ export async function cmdWallet(argv: string[]): Promise<number> {
   const v = parse(argv.slice(1), { ...SIGNER_OPTIONS, estimate: { type: 'boolean', default: false } }, WALLET_USAGE);
   const log = logger(v);
   const ep = endpoints(v);
-  await checkIdentity(ep.profile);
   const session = await wallet(v, ep, log);
   try {
     if (sub === 'status') {
@@ -253,10 +252,9 @@ async function withRun<T>(
   const given = endpoints(v);
   const ps = privateStatePath(v);
   // The identity the run must be on: every identity source of the record (its own network when it exists, the network
-  // file of the case folder it lies in) and of every other record it names (--attach @record), checked before the
-  // wallet opens: a wrong network, or one re-created from the same genesis, aborts before anything is built.
+  // file of the case folder it lies in) and of every other record it names (--attach @record). The wallet checks it
+  // before it opens: a wrong network, or one re-created from the same genesis, aborts before anything is built.
   const ep: SignerEndpoints = { ...given, profile: boundProfile(given.profile, [recordPath, ...also]) };
-  await checkIdentity(ep.profile);
   const session = await wallet(v, ep, log);
   try {
     const run = await openRun({

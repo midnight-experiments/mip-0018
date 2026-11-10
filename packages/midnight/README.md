@@ -33,7 +33,7 @@ Two entry points:
 | Module | What it does |
 |---|---|
 | `secrets.ts` | Secrets only from file paths (regular file, mode ≤ 0600, no symlink); BIP-39 mnemonic → seed; hex seeds for local test wallets |
-| `wallet.ts` | Wallet SDK 2.0.0 (seeds from `WalletSeeds.fromMasterSeed`) behind midnight-js 5.0.0 providers, transactions crossing as bytes; one proof server for the wallet's proofs; complete sync (3 consecutive strictly-complete samples); DUST registration without double signing; `feeBlocksMargin` 5 |
+| `wallet.ts` | `openWallet`, the one way a wallet starts: the network identity check first (genesis; block 1 when the profile has a chain instance; an undeployed profile refuses a public genesis), before any other request or connection. Wallet SDK 2.0.0 (seeds from `WalletSeeds.fromMasterSeed`) behind midnight-js 5.0.0 providers, transactions crossing as bytes; one proof server for the wallet's proofs; complete sync (3 consecutive strictly-complete samples); DUST registration without double signing; `feeBlocksMargin` 5 |
 | `providers.ts` | midnight-js providers for a compiled contract; the contract-circuit proof server wrapped with ≤ 4 concurrent proofs and retries on 408/429/502/504 |
 | `private-state.ts` | 0600 file for maintenance keys and witness private state, per-contract views (`forContract`) (typed JSON for bytes and bigints) |
 | `maintenance.ts` | `VerifierKeyRemove` / `VerifierKeyInsert` in the `v4` slot for ZKIR-v3 circuits, signed with a given maintenance key at its committee index, submitted with midnight-js `submitTx` |

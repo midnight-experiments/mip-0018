@@ -287,8 +287,8 @@ stub).
 ## Appendix: the same with plain midnight-js
 
 [`scripts/midnight-js-snippet.ts`](scripts/midnight-js-snippet.ts) is what `mip0018 deploy-and-publish` does underneath,
-without the record and the checks: `deployContract` with the owner secret as private state, then
-`callTx.publishMetadata()` right after the deployment.
+without the record and the before/after checks (the wallet checks the node's identity before it opens):
+`deployContract` with the owner secret as private state, then `callTx.publishMetadata()` right after the deployment.
 
 The core of it (the providers are built with `@mip0018/midnight/signer` for brevity; any midnight-js
 `MidnightProviders` work):

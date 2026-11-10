@@ -2,6 +2,10 @@
 //
 // Wallet session: wallet SDK 2.0.0 (facade 5.0.0) behind midnight-js 5.0.0 providers.
 //
+//   * `openWallet` is the one way a wallet starts, and it checks the network identity first (`checkIdentity`: the
+//     node's genesis against the profile, block 1 against the profile's chain instance when it has one; an undeployed
+//     profile refuses a public network's genesis), before it reads a cache anchor or connects anything, so no caller
+//     (the CLI, the example scripts, the local test wallets) can start a wallet on another chain
 //   * opened from a protected secret FILE (BIP-39 mnemonic → 64-byte seed, or — local test wallets only — a hex
 //     seed); `WalletSeeds.fromMasterSeed`: HD account 0, index 0, roles Zswap / NightExternal / Dust
 //     (Lace-compatible); the master seed is zeroed after derivation, the three wallet seeds when the session closes
@@ -35,7 +39,7 @@ import { createLedger9MidnightProvider, createLedger9WalletProvider } from '@mid
 import type { MidnightProvider, WalletProvider } from '@midnight-ntwrk/midnight-js-types';
 import * as Rx from 'rxjs';
 import { normHex } from '../hex.ts';
-import { connectUrls, indexerFor, type NetworkProfile } from '../network.ts';
+import { checkIdentity, connectUrls, indexerFor, type NetworkProfile } from '../network.ts';
 import { ScrubbedError } from '../redact.ts';
 import { existsSync } from 'node:fs';
 import { decodeTyped, encodeTyped } from './private-state.ts';
@@ -111,9 +115,10 @@ type WalletCache = {
 };
 
 /**
- * Opens the wallet of a BIP-32 master seed (the seed buffer is zeroed). With `cachePath` (a 0600 file in the signer's
- * private state directory) the three sub-wallets are restored from their serialized states and only sync the rest;
- * a cache of another wallet or network, or one that does not restore, is ignored (fresh sync). The cache holds
+ * Opens the wallet of a BIP-32 master seed (the seed buffer is zeroed) after the network identity check (an
+ * `IdentityError` on another chain, before any other request or connection). With `cachePath` (a 0600 file in the
+ * signer's private state directory) the three sub-wallets are restored from their serialized states and only sync the
+ * rest; a cache of another wallet or network, or one that does not restore, is ignored (fresh sync). The cache holds
  * wallet secrets: it is written with mode 0600 and never printed.
  */
 export const openWallet = async (
@@ -121,6 +126,13 @@ export const openWallet = async (
   seed: Uint8Array,
   o: { cachePath?: string; log?: (m: string) => void } = {},
 ): Promise<WalletSession> => {
+  try {
+    await checkIdentity(ep.profile);
+  } catch (e) {
+    seed.fill(0);
+    throw e;
+  }
+  o.log?.('opening the wallet and syncing (minutes on a public network)');
   let seeds: WalletSeeds;
   try {
     seeds = WalletSeeds.fromMasterSeed(seed);
