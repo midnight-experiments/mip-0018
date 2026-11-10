@@ -5,19 +5,24 @@
 // A Blockfrost project token travels in the query string of every preprod / mainnet request (`project_id`), so no
 // endpoint URL is ever written with its query string: every log line, error message and report that shows an endpoint
 // goes through `redactUrl` (one URL) or `redactUrls` (every URL inside a text, e.g. an error message from a library).
-// Both cut the query string, the fragment and any `user:password@` part, and empty every `project_id` value written in
-// any form (`project_id=…`, `project_id%3D…`, `"project_id": "…"`, `project_id: …`, `'project_id' => '…'`).
+// Both cut the query string, the fragment and any `user:password@` part of a URL's authority, and empty every
+// `project_id` value written in any form (`project_id=…`, `project_id%3D…`, `"project_id": "…"`, `project_id: …`,
+// `'project_id' => '…'`).
 //
 // `removeSecrets` replaces the literal value of every token registered with `registerSecret` (a profile registers the
 // token it read), so a token that reached a text by any path is not written. `scrubSecrets` = both, for messages.
 //
-// Two structural boundaries use them:
+// Three structural boundaries use them:
 //   - `ScrubbedError`: every error class of this package that can carry server or transport text extends it; its
 //     message (and its cause, kept only as a scrubbed description) is scrubbed when the error is built, so no caller,
 //     log or record receives an echoed token or token-bearing URL through one of them;
-//   - `scrubDeep`: a value written to a file (a run record) has every string scrubbed with `scrubValue`, which keeps
-//     data such as a metadata URL with its own query string but removes credentials, `project_id` values and
-//     registered tokens, so a new field cannot carry a secret to disk.
+//   - `publicCopy` (and `writePublicJson`, public-file.ts, the one writer of every public JSON file): a copy of the
+//     value in which published values (the paths a file names `exact`, e.g. circuit arguments) keep every byte but a
+//     registered token, messages and endpoint URLs go through `scrubSecrets`, and every other string and key through
+//     `scrubValue` (credentials in a URL's authority, `project_id` values and registered tokens removed); the value
+//     itself is never changed;
+//   - `guardOutput`: once a secret is registered, everything the process writes to stdout / stderr goes through
+//     `removeSecrets` (installed by `registerSecret`, so a process holding a token cannot print it).
 
 /** The query parameter Blockfrost reads the project token from. */
 export const TOKEN_PARAM = 'project_id';
@@ -25,14 +30,15 @@ export const TOKEN_PARAM = 'project_id';
 const SCHEME_URL = /\b(?:https?|wss?):\/\/[^\s"'<>`]+/giu;
 /** `project_id` followed by `=`, `%3D`, `:` or `=>` (optionally quoted on either side) and a value. */
 const TOKEN_ASSIGNMENT = new RegExp(`(["']?${TOKEN_PARAM}["']?\\s*(?:=>|=|%3D|:)\\s*["']?)([^&#\\s"'<>\`,;)}[\\]]+)`, 'giu');
-const URL_CREDENTIALS = /\b((?:https?|wss?):\/\/)[^/\s"'<>`@]*@/giu;
+/** The `user:password@` part of a URL's authority: up to the last `@` before the path, query or fragment. */
+const URL_CREDENTIALS = /\b((?:https?|wss?):\/\/)[^/?#\s"'<>`]*@/giu;
 const REDACTED = '[redacted]';
 
 /** One URL without its query string, fragment and credentials (unchanged otherwise). */
 export function redactUrl(url: string): string {
   const cut = url.search(/[?#]/u);
   const base = cut === -1 ? url : url.slice(0, cut);
-  return base.replace(/^([a-z][a-z0-9+.-]*:\/\/)[^/@]*@/iu, '$1');
+  return base.replace(/^([a-z][a-z0-9+.-]*:\/\/)[^/]*@/iu, '$1');
 }
 
 /** Every `project_id` value of a text emptied, whatever the notation (nothing else changes). */
@@ -47,9 +53,34 @@ export function redactUrls(text: string): string {
 
 const secrets = new Set<string>();
 
-/** Registers a secret value (e.g. a Blockfrost project token) that `scrubSecrets` removes from any text. */
+/**
+ * Registers a secret value (e.g. a Blockfrost project token) that `removeSecrets` / `scrubSecrets` remove from any
+ * text, and installs `guardOutput`, so the process never writes it to stdout or stderr.
+ */
 export function registerSecret(value: string): void {
-  if (value.length >= 8) secrets.add(value);
+  if (value.length < 8) return;
+  secrets.add(value);
+  guardOutput();
+}
+
+let guarded = false;
+
+/**
+ * Filters everything written to stdout / stderr through `removeSecrets` (installed once per process; `registerSecret`
+ * installs it). Nothing else changes, so metadata values are printed exactly.
+ */
+export function guardOutput(): void {
+  if (guarded) return;
+  guarded = true;
+  for (const stream of [process.stdout, process.stderr]) {
+    const write = stream.write.bind(stream) as (chunk: unknown, ...rest: unknown[]) => boolean;
+    stream.write = ((chunk: unknown, ...rest: unknown[]) => {
+      const text = typeof chunk === 'string' ? chunk : chunk instanceof Uint8Array ? Buffer.from(chunk).toString('utf8') : undefined;
+      if (text === undefined) return write(chunk, ...rest);
+      const clean = removeSecrets(text);
+      return write(clean === text ? chunk : clean, ...rest);
+    }) as typeof stream.write;
+  }
 }
 
 /** Every registered secret value replaced (nothing else changes: safe on any output). */
@@ -65,45 +96,64 @@ export function scrubSecrets(text: string): string {
 }
 
 /**
- * A data string (a value in a written file): URL credentials, `project_id` values and registered secrets removed; a
- * URL keeps its path and any other query parameter, so published values (e.g. an image URL) stay exact.
+ * A data string of a public file: credentials in a URL's authority, `project_id` values and registered secrets
+ * removed; a URL keeps its path, query and fragment. Idempotent.
  */
 export function scrubValue(text: string): string {
   return removeSecrets(redactTokenAssignments(text.replace(URL_CREDENTIALS, '$1')));
 }
 
-const isContainer = (v: unknown): v is Record<string, unknown> | unknown[] =>
-  Array.isArray(v) || (v !== null && typeof v === 'object' && [Object.prototype, null].includes(Object.getPrototypeOf(v) as object | null));
+/** A path into a JSON value: object keys and array indices (as strings); `*` matches any one of them. */
+export type JsonPathPattern = readonly string[];
+
+/** Where a public file holds published values and messages (see `publicCopy`). */
+export interface PublicFileRules {
+  /** Published values (e.g. circuit arguments, decoded ledger state): every string and key keeps every byte but a registered secret. A pattern covers its whole subtree. */
+  exact?: readonly JsonPathPattern[];
+  /** Messages and endpoint URLs (one string each): `scrubSecrets`. */
+  messages?: readonly JsonPathPattern[];
+}
+
+const matchesAt = (pattern: JsonPathPattern, path: readonly string[]): boolean => pattern.every((p, i) => p === '*' || p === path[i]);
 
 /**
- * Scrubs a JSON-like value IN PLACE (objects keep their identity, so holders of a nested object see the result):
- * every string and every object key through `scrubValue`, and the value of a `project_id` key replaced whole.
- * Returns the same value; a bare string is returned scrubbed.
+ * A copy of a JSON-like value for a public file; the value is never changed. Strings and object keys under an `exact`
+ * pattern go through `removeSecrets` (published values stay byte for byte), strings at a `messages` pattern through
+ * `scrubSecrets`, and every other string and key through `scrubValue`, with the value of a `project_id` key replaced
+ * whole. Byte arrays, bigints and other non-plain values are kept as they are (the serialiser writes them). Applying it
+ * to its own result changes nothing.
  */
-export function scrubDeep<T>(value: T): T {
-  if (typeof value === 'string') return scrubValue(value) as T;
-  const seen = new Set<unknown>();
-  const walk = (v: unknown): void => {
-    if (!isContainer(v) || seen.has(v)) return;
-    seen.add(v);
-    if (Array.isArray(v)) {
-      v.forEach((x, i) => {
-        if (typeof x === 'string') v[i] = scrubValue(x);
-        else walk(x);
-      });
-      return;
+export function publicCopy<T>(value: T, rules: PublicFileRules = {}): T {
+  const exact = rules.exact ?? [];
+  const messages = rules.messages ?? [];
+  const walk = (v: unknown, path: string[], inExact: boolean): unknown => {
+    if (typeof v === 'string') {
+      if (inExact) return removeSecrets(v);
+      if (messages.some((m) => m.length === path.length && matchesAt(m, path))) return scrubSecrets(v);
+      return scrubValue(v);
     }
-    for (const k of Object.keys(v)) {
-      const x = v[k];
-      const key = scrubValue(k);
-      const next = k.toLowerCase() === TOKEN_PARAM && typeof x === 'string' ? REDACTED : typeof x === 'string' ? scrubValue(x) : x;
-      if (key !== k) delete v[k];
-      v[key] = next;
-      walk(next);
+    if (v === null || typeof v !== 'object' || ArrayBuffer.isView(v)) return v;
+    if (Array.isArray(v)) return v.map((x, i) => walk(x, [...path, String(i)], inExact));
+    const proto = Object.getPrototypeOf(v) as object | null;
+    if (proto !== Object.prototype && proto !== null) {
+      const json = (v as { toJSON?: () => unknown }).toJSON;
+      if (typeof json === 'function') return walk(json.call(v), path, inExact);
+      if (v instanceof Map) return walk(Object.fromEntries(v), path, inExact);
     }
+    const out: Record<string, unknown> = {};
+    for (const [k, x] of Object.entries(v)) {
+      const p = [...path, k];
+      const under = inExact || exact.some((e) => e.length <= p.length && matchesAt(e, p));
+      out[under ? removeSecrets(k) : scrubValue(k)] =
+        !under && k.toLowerCase() === TOKEN_PARAM && typeof x === 'string' ? REDACTED : walk(x, p, under);
+    }
+    return out;
   };
-  walk(value);
-  return value;
+  return walk(
+    value,
+    [],
+    exact.some((e) => e.length === 0),
+  ) as T;
 }
 
 /** The text of an error and its causes (name: message <- cause …), for a scrubbed cause. */

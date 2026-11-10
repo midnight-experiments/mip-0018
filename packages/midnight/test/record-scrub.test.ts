@@ -2,7 +2,7 @@
 //
 // A run record on disk never holds the project token, a `project_id` value or URL credentials, in whichever field a
 // diagnostic lands (the node-rejection diagnostic of a step, or a field nobody scrubs by name), while published values
-// such as a metadata URL with its own query string are written exactly. The node-rejection diagnostic is built from a
+// such as a metadata URL with its own query string are written exactly (record-published-values.test.ts). The node-rejection diagnostic is built from a
 // wallet-SDK-shaped error chain whose node-client error quotes its token-bearing, authenticated endpoint.
 
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
@@ -49,12 +49,12 @@ function record(diagnostic: string): RunRecord {
       {
         id: 'insert',
         kind: 'verifier-key-insert',
-        args: { image: 'https://example.org/acme.png?size=2', note: `see ${ENDPOINT}` },
+        args: { image: 'https://example.org/acme.png?size=2' },
         state: 'failed',
         error: diagnostic,
         observed: {
           rejectedByNode: diagnostic,
-          nested: { later: [{ copy: diagnostic, [`project_id`]: TOKEN }] },
+          nested: { later: [{ copy: diagnostic, note: `see ${ENDPOINT}`, [`project_id`]: TOKEN }] },
         },
         attempts: [{ at: '2026-01-01T00:00:00.000Z', event: `REJECTED: ${diagnostic}` }],
         startedAt: '2026-01-01T00:00:00.000Z',
@@ -82,7 +82,5 @@ describe('run records never carry a token or URL credentials', () => {
     const back = JSON.parse(text) as RunRecord;
     expect(back.steps[0]!.args).toMatchObject({ image: 'https://example.org/acme.png?size=2' });
     expect(JSON.stringify(back.steps[0]!.observed)).toMatch(/1010: Invalid Transaction/u);
-    // the in-memory record is the one written (a later --json print shows the same)
-    expect(JSON.stringify(r)).not.toContain(TOKEN);
   });
 });

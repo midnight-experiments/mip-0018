@@ -27,6 +27,7 @@ import {
   masterSeed,
   openRun,
   openWallet,
+  publicRecord,
   registerDust,
   removeVerifierKeyStep,
   signerContext,
@@ -320,7 +321,7 @@ export async function cmdDeploy(argv: string[]): Promise<number> {
       logger(v)(`deploy: ${(e as Error).message}`);
       return exitFor(e);
     } finally {
-      if (v.json) emitJson(run.record);
+      if (v.json) emitJson(publicRecord(run.record));
       else printRun(run, recordPath);
     }
   });
@@ -431,7 +432,7 @@ export async function cmdPublish(argv: string[]): Promise<number> {
         logger(v)(`publish: ${(e as Error).message}`);
         return exitFor(e);
       } finally {
-        if (v.json) emitJson(run.record);
+        if (v.json) emitJson(publicRecord(run.record));
         else printRun(run, recordPath);
       }
     },
@@ -477,7 +478,7 @@ export async function cmdRemoveCircuit(argv: string[]): Promise<number> {
       logger(v)(`remove-circuit: ${(e as Error).message}`);
       return exitFor(e);
     } finally {
-      if (v.json) emitJson(run.record);
+      if (v.json) emitJson(publicRecord(run.record));
       else printRun(run, recordPath);
     }
   });
@@ -569,7 +570,7 @@ export async function cmdDeployAndPublish(argv: string[]): Promise<number> {
       log(`deploy-and-publish: ${(e as Error).message}`);
       code = exitFor(e);
     } finally {
-      if (v.json) emitJson({ record: run.record, checked });
+      if (v.json) emitJson({ record: publicRecord(run.record), checked });
       else printRun(run, recordPath);
     }
     return code;
@@ -724,7 +725,7 @@ export async function cmdUpgrade(argv: string[]): Promise<number> {
       log(`upgrade: ${(e as Error).message}`);
       return exitFor(e);
     } finally {
-      if (v.json) emitJson(run.record);
+      if (v.json) emitJson(publicRecord(run.record));
       else printRun(run, recordPath);
     }
   });

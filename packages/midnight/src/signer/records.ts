@@ -14,14 +14,16 @@
 //   failed       included but failed, or the after-check contradicts the expectation
 //
 // Records never contain a secret: no mnemonic, seed, signing key or private state (those stay in the signer's 0600
-// private-state file), and no token. Every save (redact.ts) cuts the query string of the endpoint URLs, scrubs every
-// message field (step errors, skip reasons, attempt notes) with `scrubSecrets`, and then walks EVERY string and key of
-// the record with `scrubDeep` (URL credentials, `project_id` values and registered tokens removed; other values kept
-// exactly), so a library error quoted in any field, present or added later, is written without the token.
+// private-state file), and no token. Every save writes `publicRecord` of the record through `writePublicJson`
+// (public-file.ts; the record in memory is not changed): the published values (`RUN_RECORD_RULES.exact`: circuit and
+// constructor arguments, the upgrade pre-checks with the decoded ledger state) keep every byte but a registered token;
+// the endpoint URLs and the messages (step errors, skip reasons, attempt notes, the node's rejection) go through
+// `scrubSecrets`; every other string and key, present or added later, through `scrubValue` (credentials in a URL's
+// authority, `project_id` values and registered tokens removed). Saving a saved record writes the same bytes.
 
-import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
-import { toJson } from '../hex.ts';
-import { redactUrl, ScrubbedError, scrubDeep, scrubSecrets } from '../redact.ts';
+import { existsSync, readFileSync } from 'node:fs';
+import { writePublicJson } from '../public-file.ts';
+import { publicCopy, ScrubbedError, type PublicFileRules } from '../redact.ts';
 
 export type StepState = 'pending' | 'submitting' | 'submitted' | 'unknown' | 'completed' | 'failed';
 export type StepKind = 'deploy' | 'call' | 'verifier-key-remove' | 'verifier-key-insert';
@@ -109,24 +111,32 @@ export function loadRecord(path: string): RunRecord | undefined {
   return r;
 }
 
-/** The record's endpoint URLs and messages redacted, then every string and key scrubbed (in place). */
-function redactRecord(r: RunRecord): void {
-  r.network.indexer = redactUrl(r.network.indexer);
-  r.network.rpc = redactUrl(r.network.rpc);
-  for (const s of r.steps) {
-    if (s.error !== undefined) s.error = scrubSecrets(s.error);
-    if (s.skipped !== undefined) s.skipped = scrubSecrets(s.skipped);
-    for (const a of s.attempts) a.event = scrubSecrets(a.event);
-  }
-  scrubDeep(r);
+/** Where a run record holds published values and messages (`publicCopy`). */
+export const RUN_RECORD_RULES: PublicFileRules = {
+  exact: [
+    ['steps', '*', 'args'],
+    ['contract', 'constructorArgs'],
+    ['contract', 'upgrades', '*', 'checks'],
+  ],
+  messages: [
+    ['network', 'indexer'],
+    ['network', 'rpc'],
+    ['steps', '*', 'error'],
+    ['steps', '*', 'skipped'],
+    ['steps', '*', 'attempts', '*', 'event'],
+    ['steps', '*', 'observed', 'rejectedByNode'],
+  ],
+};
+
+/** The record as it is written and printed (a copy; see the header). */
+export function publicRecord(r: RunRecord): RunRecord {
+  return publicCopy(r, RUN_RECORD_RULES);
 }
 
+/** Stamps `updatedAt` and writes `publicRecord(r)` atomically. */
 export function saveRecord(path: string, r: RunRecord): void {
-  redactRecord(r);
   r.updatedAt = new Date().toISOString();
-  const tmp = `${path}.tmp-${process.pid}`;
-  writeFileSync(tmp, `${toJson(r)}\n`);
-  renameSync(tmp, path);
+  writePublicJson(path, r, RUN_RECORD_RULES);
 }
 
 export function findStep(r: RunRecord, id: string): StepRecord | undefined {

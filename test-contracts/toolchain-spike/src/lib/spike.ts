@@ -10,12 +10,12 @@
 //
 // Chain state is read before and after every transaction; a step is
 // marked done only when its effect is observed. The public record is written
-// after every step and never contains a secret.
+// after every step through `writePublicJson` (no registered token, `project_id`
+// value or URL credentials; error messages through `scrubSecrets`).
 
-import { mkdirSync, renameSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { sampleSigningKey } from '@midnightntwrk/ledger-v9';
+import { scrubSecrets, writePublicJson, type PublicFileRules } from '@mip0018/midnight';
 import { contractView, miscEvents, preflight, transactionByHash, waitFor } from './chain.js';
 import type { NetworkConfig } from './network.js';
 import { A1_PAYLOAD_HEX, EVENT_NAME_HEX } from './expected.js';
@@ -50,13 +50,20 @@ export type SpikeRecord = {
 
 const json = (v: unknown) => JSON.stringify(v, (_k, x) => (typeof x === 'bigint' ? x.toString() : x), 2);
 
-export const recorder = (path: string, record: SpikeRecord) => (patch?: (r: SpikeRecord) => void) => {
-  patch?.(record);
-  mkdirSync(dirname(path), { recursive: true });
-  const tmp = `${path}.tmp-${process.pid}`;
-  writeFileSync(tmp, `${json(record)}\n`);
-  renameSync(tmp, path);
-};
+/** Where a local tool's record holds messages (`publicCopy`): its error and each step's. */
+export const LOCAL_RECORD_RULES: PublicFileRules = { messages: [['error'], ['steps', '*', 'error']] };
+
+/** A record writer: applies `patch`, then writes the record through `writePublicJson`. */
+export const recorder =
+  <T extends object>(path: string, record: T, rules: PublicFileRules = LOCAL_RECORD_RULES) =>
+  (patch?: (r: T) => void) => {
+    patch?.(record);
+    writePublicJson(path, record, rules);
+  };
+
+/** An error as one line for a record: scrubbed (`scrubSecrets`) before it is cut to `max` characters. */
+export const errorText = (e: unknown, max: number): string =>
+  scrubSecrets(`${(e as Error)?.name ?? 'Error'}: ${(e as Error)?.message ?? String(e)}`).slice(0, max);
 
 const log = (msg: string, extra?: unknown) =>
   process.stderr.write(`${new Date().toISOString()} ${msg}${extra === undefined ? '' : ` ${json(extra)}`}\n`);
@@ -219,7 +226,7 @@ export const runSpike = async (o: SpikeOptions): Promise<SpikeRecord> => {
       try {
         await deployed.callTx[CIRCUIT]!();
       } catch (e) {
-        failure = `${(e as Error).name}: ${(e as Error).message}`.slice(0, 600);
+        failure = errorText(e, 600);
       }
       const eventsAfter = await miscEvents(o.network, address);
       record.steps.secondCall = {
@@ -244,7 +251,7 @@ export const runSpike = async (o: SpikeOptions): Promise<SpikeRecord> => {
     return record;
   } catch (e) {
     record.result = 'failed';
-    record.error = `${(e as Error).name}: ${(e as Error).message}`.slice(0, 2000);
+    record.error = errorText(e, 2000);
     save();
     throw e;
   }

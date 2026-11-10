@@ -9,13 +9,15 @@
 //                                                                                            append it to a network file
 //
 // preprod / mainnet read their Blockfrost project token like the CLI (MIP0018_BLOCKFROST_PREPROD / _MAINNET or
-// --blockfrost-token-file); every URL written is the profile's, without a query string.
+// --blockfrost-token-file); every URL written is the profile's, without a query string. The network file is written
+// through `writePublicJson` (no registered token, `project_id` value or URL credentials, whatever the node or indexer
+// answered), and stdout / stderr through the output guard.
 //
 // The network file (deployments/<network>/network.json) pins the chain instance of its first observation; `mip0018
 // recheck` then requires that block 1 for every case of the folder. Exit 1 (nothing appended) when the node's genesis
 // is not the pinned one, or its block 1 differs from the chain instance the file already holds.
 
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import {
   guardOutput,
@@ -27,6 +29,7 @@ import {
   resolveProfile,
   rpcFor,
   scrubSecrets,
+  writePublicJson,
   type PublicNetworkId,
 } from '@mip0018/midnight';
 
@@ -157,7 +160,13 @@ try {
       observations: [],
     };
     out.observations.push(observation);
-    writeFileSync(v.append, `${JSON.stringify(out, null, 2)}\n`);
+    writePublicJson(v.append, out, {
+      messages: [
+        ['network', 'indexer'],
+        ['network', 'indexerWs'],
+        ['network', 'rpc'],
+      ],
+    });
   }
   process.stdout.write(`${JSON.stringify(observation, null, 2)}\n`);
 } catch (e) {

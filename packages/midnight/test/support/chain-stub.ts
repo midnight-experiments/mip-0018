@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // A local node + indexer stub on 127.0.0.1 for identity tests: the node answers `chain_getBlockHash(0)` with a given
-// genesis and `chain_getBlockHash(1)` with a given block 1 (the chain instance); the indexer answers every query with
-// an empty-but-valid body (or a given handler's). Every request is counted per endpoint, so a test can assert that a
-// command refused the chain before it read anything from the indexer. WebSocket upgrades are counted and closed.
+// genesis and `chain_getBlockHash(1)` with a given block 1 (the chain instance), any other method with a given
+// handler's answer when it has one; the indexer answers every query with an empty-but-valid body (or a given
+// handler's). Every request is counted per endpoint, so a test can assert that a command refused the chain before it
+// read anything from the indexer, and the query string of each request is kept. WebSocket upgrades are counted and
+// closed.
 
 import { createServer, type IncomingMessage, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -15,6 +17,8 @@ export interface ChainStub {
   counts: { rpc: number; indexer: number; upgrades: number };
   /** JSON-RPC methods (with their first parameter) in the order they arrived. */
   rpcCalls: string[];
+  /** The query string of every request, in the order they arrived. */
+  queries: string[];
   close(): Promise<void>;
 }
 
@@ -24,20 +28,27 @@ export async function chainStub(o: {
   genesis: string;
   blockOne: string;
   indexer?: (body: { query?: string; variables?: unknown }, req: IncomingMessage) => unknown;
+  /** The result of an RPC method (undefined: the stub's own answer). */
+  rpc?: (method: string, params: unknown[]) => unknown;
 }): Promise<ChainStub> {
   const counts = { rpc: 0, indexer: 0, upgrades: 0 };
   const rpcCalls: string[] = [];
+  const queries: string[] = [];
   const server: Server = createServer((req, res) => {
     let body = '';
     req.on('data', (c: Buffer) => (body += c.toString()));
     req.on('end', () => {
       const ok = (v: unknown) => res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify(v));
-      const path = new URL(req.url ?? '/', 'http://stub').pathname;
+      const u = new URL(req.url ?? '/', 'http://stub');
+      const path = u.pathname;
+      queries.push(u.search);
       const b = JSON.parse(body || '{}') as { method?: string; params?: unknown[]; query?: string; variables?: unknown };
       if (path.startsWith('/rpc')) {
         counts.rpc++;
         rpcCalls.push(`${b.method}${b.params?.length ? `(${String(b.params[0])})` : ''}`);
+        const custom = o.rpc?.(b.method ?? '', b.params ?? []);
         const result = (() => {
+          if (custom !== undefined) return custom;
           switch (b.method) {
             case 'chain_getBlockHash': {
               const h = Number(b.params?.[0]);
@@ -81,6 +92,7 @@ export async function chainStub(o: {
     indexer: `${url}/idx`,
     counts,
     rpcCalls,
+    queries,
     close: () => new Promise<void>((r) => server.close(() => r())),
   };
 }

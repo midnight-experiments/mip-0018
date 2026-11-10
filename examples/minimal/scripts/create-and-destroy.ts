@@ -18,8 +18,8 @@
 //   docker/local-stack/down.sh
 
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { CompiledContract } from '@midnight-ntwrk/compact-js';
 import { deployContract } from '@midnight-ntwrk/midnight-js-contracts';
@@ -42,6 +42,7 @@ import {
 import { removeVerifierKey } from '../../../test-contracts/toolchain-spike/src/lib/maintenance.js';
 import { local, type NetworkConfig } from '../../../test-contracts/toolchain-spike/src/lib/network.js';
 import { filePrivateStateProvider } from '../../../test-contracts/toolchain-spike/src/lib/private-state.js';
+import { errorText, recorder } from '../../../test-contracts/toolchain-spike/src/lib/spike.js';
 import {
   closeWallet,
   describe,
@@ -69,11 +70,9 @@ const record: Record<string, unknown> & { steps: Record<string, unknown> } = {
   steps: {},
 };
 const json = (v: unknown) => JSON.stringify(v, (_k, x) => (typeof x === 'bigint' ? x.toString() : x), 2);
-const save = () => {
-  mkdirSync(dirname(recordPath), { recursive: true });
-  writeFileSync(`${recordPath}.tmp`, `${json(record)}\n`);
-  renameSync(`${recordPath}.tmp`, recordPath);
-};
+// The public record, written through the package's public-file writer (no registered token, `project_id` value or URL
+// credentials; error messages scrubbed).
+const save = recorder(recordPath, record);
 const log = (msg: string, extra?: unknown) =>
   process.stderr.write(`${new Date().toISOString()} ${msg}${extra === undefined ? '' : ` ${json(extra)}`}\n`);
 
@@ -247,7 +246,7 @@ const main = async () => {
     try {
       await deployed.callTx[CIRCUIT]!();
     } catch (e) {
-      failure = `${(e as Error).name}: ${(e as Error).message}`.slice(0, 600);
+      failure = errorText(e, 600);
     }
     const all = await miscEvents(network, address);
     record.steps.secondCall = { refused: failure !== undefined, error: failure, miscEventsTotal: all.length };
@@ -265,7 +264,7 @@ const main = async () => {
 
 main().catch((e: unknown) => {
   record.result = 'failed';
-  record.error = `${(e as Error).name}: ${(e as Error).message}`.slice(0, 2000);
+  record.error = errorText(e, 2000);
   save();
   process.stderr.write(`create-and-destroy failed: ${(e as Error).stack ?? String(e)}\nrecord: ${recordPath}\n`);
   process.exitCode = 1;

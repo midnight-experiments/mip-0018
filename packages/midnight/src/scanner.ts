@@ -15,14 +15,15 @@
 // another query.
 //
 // State: ONE JSON file (`<state dir>/index-state.json`) rewritten atomically (temp file, fsync, rename) after every
-// block, so a killed scan resumes at `nextHeight` with an identical table. Heights must be consecutive and each
+// block through `writePublicJson` (public-file.ts: no registered token, `project_id` value or URL credentials; the
+// decode errors' messages through `scrubSecrets`), so a killed scan resumes at `nextHeight` with an identical table. Heights must be consecutive and each
 // block's parent must be the previous block (the indexer serves finalized blocks only, so a mismatch is an error).
 // One scanner per state directory. The state records the network's genesis and chain instance (block 1); a resume
 // binds the profile to them (`bindRecordedNetworks`), so the identity check refuses a network re-created from the same
 // genesis before any block is read. A state that records no chain instance is resumed only when the node has
 // the state's last scanned block at its height (the same chain); it then takes the node's block 1.
 
-import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, writeSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { EVENT_NAME_TEXT } from '@mip0018/codec';
 import { tokenTypeHex } from './color.ts';
@@ -30,8 +31,9 @@ import { normHex } from './hex.ts';
 import { HttpClient, realSleep } from './http.ts';
 import type { ScannedBlock } from './indexer.ts';
 import { bindRecordedNetworks, checkChainIdentity, httpFor, indexerFor, rpcFor, type NetworkProfile } from './network.ts';
+import { writePublicJson } from './public-file.ts';
 import { applied, decodeTransaction } from './raw.ts';
-import { ScrubbedError } from './redact.ts';
+import { ScrubbedError, scrubSecrets, type PublicFileRules } from './redact.ts';
 import { classify } from './check-event.ts';
 
 export const STATE_FILE = 'index-state.json';
@@ -121,20 +123,13 @@ export function loadState(dir: string): ScanState | undefined {
   return s;
 }
 
-/** Atomic write: temp file in the same directory, fsync, rename. */
+/** Where a scanner state holds messages (`publicCopy`). */
+export const SCAN_STATE_RULES: PublicFileRules = { messages: [['errors', '*', 'message']] };
+
+/** Stamps `updatedAt` and writes the state through `writePublicJson` (temp file in the same directory, fsync, rename). */
 export function saveState(dir: string, s: ScanState): void {
-  mkdirSync(dir, { recursive: true });
   s.updatedAt = new Date().toISOString();
-  const p = statePath(dir);
-  const tmp = `${p}.tmp-${process.pid}`;
-  const fd = openSync(tmp, 'w', 0o644);
-  try {
-    writeSync(fd, `${JSON.stringify(s, null, 1)}\n`);
-    fsyncSync(fd);
-  } finally {
-    closeSync(fd);
-  }
-  renameSync(tmp, p);
+  writePublicJson(statePath(dir), s, { ...SCAN_STATE_RULES, indent: 1, fsync: true });
 }
 
 export function newState(profile: NetworkProfile, genesisHash: string, fromHeight: number, chainInstance?: string): ScanState {
@@ -182,7 +177,7 @@ export function applyBlock(s: ScanState, b: ScannedBlock): { mints: number; even
       if (d.hash !== normHex(tx.hash)) throw new Error(`recomputed hash ${d.hash} differs from the indexer's ${tx.hash}`);
     } catch (e) {
       s.stats.decodeErrors++;
-      s.errors.push({ height: b.height, txHash: tx.hash, message: (e as Error).message });
+      s.errors.push({ height: b.height, txHash: tx.hash, message: scrubSecrets((e as Error).message) });
       return;
     }
     const ok = applied(d, tx.transactionResult);
