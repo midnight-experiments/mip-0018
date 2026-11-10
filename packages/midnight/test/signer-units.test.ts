@@ -62,14 +62,18 @@ const ev = (id: number, height: number, p: string): IndexedMiscEvent => ({
 
 describe('argument conversion', () => {
   const spikeManaged = join(import.meta.dirname, '..', '..', '..', 'test-contracts', 'toolchain-spike', 'managed', 'SpikeOzToken');
-  const haveSpike = (() => {
-    try {
-      statSync(join(spikeManaged, 'compiler', 'contract-info.json'));
-      return true;
-    } catch {
-      return false;
-    }
-  })();
+  // The two tests below need the compiled toolchain spike (`npm run compile:spike`). CI compiles it before the unit
+  // tests and sets CI, so there they always run (a missing spike fails them); elsewhere they run once it is compiled.
+  const haveSpike =
+    (process.env.CI ?? '') !== '' ||
+    (() => {
+      try {
+        statSync(join(spikeManaged, 'compiler', 'contract-info.json'));
+        return true;
+      } catch {
+        return false;
+      }
+    })();
 
   it('converts typed values and refuses wrong sizes/ranges', () => {
     expect(fromJsonTyped({ $utf8: 'ACME' }, { 'type-name': 'Bytes', length: 4 })).toEqual(new TextEncoder().encode('ACME'));

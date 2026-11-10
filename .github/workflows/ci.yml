@@ -46,6 +46,8 @@ jobs:
         run: docker/run.sh lint
       - name: Typecheck
         run: docker/run.sh typecheck
+      - name: Compile the toolchain spike (Compact 0.36.0; the signer unit tests load its output)
+        run: docker/run.sh compile:spike -- --skip-zk
       - name: Unit tests
         run: docker/run.sh test
       - name: Official binaries only
@@ -56,8 +58,6 @@ jobs:
         run: docker/run.sh check:conformance-matrix
       - name: Relative links and anchors in the Markdown files resolve
         run: docker/run.sh check:md-links
-      - name: Compile the toolchain spike (Compact 0.36.0)
-        run: docker/run.sh compile:spike -- --skip-zk
 
   mip-pin:
     name: pinned MIP text hash
