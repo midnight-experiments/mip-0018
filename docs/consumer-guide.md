@@ -39,7 +39,8 @@ marks `@beta`:
   event of the contract, not a filtered subset.
 
 A complete minimal consumer — fetch, apply in chain order, present — for one contract on preview (the contract address
-is its argument):
+is its argument; below, the contract of preview case [C04](../deployments/preview/cases/C04/README.md): one asset as
+kinds 1, 2 and 3):
 
 ```ts
 import { fromHex, toHex } from '@mip0018/codec';
@@ -97,13 +98,27 @@ for (const g of state.groups()) console.log(`group "${new TextDecoder().decode(g
 ```
 
 Saved as `consumer-example.ts` at the repository root and run with
-`docker/run.sh exec 'node consumer-example.ts <contract address>'`.
+`docker/run.sh exec 'node consumer-example.ts 63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93'`
+(2026-11-09):
+
+```text
+event 13263: accept
+event 13264: accept
+event 13265: accept
+kind 1 Acme Dollar (ACD) decimals 2 color 056c310ebcb469c9c5b8974842104ada748a84c2c42824be0f1ed165e3d81b2a
+  123456 base units = 1234.56 ACD
+kind 2 Acme Dollar (ACD) decimals 2 color 056c310ebcb469c9c5b8974842104ada748a84c2c42824be0f1ed165e3d81b2a
+  123456 base units = 1234.56 ACD
+kind 3 Acme Dollar (ACD) decimals 2 color -
+  123456 base units = 1234.56 ACD
+group "ACD": 3 identities
+```
 
 The same with the CLI, which also cross-checks the indexer's tip against the node and prints every served field, the groups
 and the source events ([`examples/verify`](../examples/verify/README.md#2-everything-a-contract-published-list)):
 
 ```sh
-docker/run.sh mip0018 -- list --network preview --contract <contract address>
+docker/run.sh mip0018 -- list --network preview --contract 63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93
 ```
 
 ## 2. Classify: is it a MIP-0018 v1 event?
@@ -120,7 +135,8 @@ const c = classifyEvent({ type: 'Misc', name, payload });
 // { result: 'accept', header, records, contentEnd } | { result: 'reject', reason, offset } | { result: 'ignore', reason }
 ```
 
-Vectors: `I1a`, `I1b`, `I2a`, `I2b`, `I3`.
+Vectors: `I1a`, `I1b`, `I2a`, `I2b`, `I3`. On preview: [C07](../deployments/preview/cases/C07/README.md) carries
+`[v2]` and foreign names next to valid events.
 
 ## 3. Decode and validate
 
@@ -135,7 +151,8 @@ MIP says:
 3. at least one record.
 
 **Any failure rejects the whole event**: apply none of its records, not even the valid ones before the bad one
-(vectors `R6a`, `R6b`). Rejecting one event never affects another, even in the same transaction (`S7a`, `S7b`).
+(vectors `R6a`, `R6b`). Rejecting one event never affects another, even in the same transaction (`S7a`, `S7b`;
+preview [C08](../deployments/preview/cases/C08/README.md)).
 
 | `valType` | Rule as implemented here |
 |---:|---|
@@ -148,7 +165,8 @@ MIP says:
 | 6–255 | reserved: reject the event |
 
 Keys are exact bytes: case-sensitive, no trimming or normalisation, zero bytes significant (`symbol` and `symbol\0`
-are different keys). **Keys MUST be valid UTF-8**: a key that is not rejects the whole event (vector `R5i`). Empty strings, empty bytes, zero bytes and JSON `null` are
+are different keys). **Keys MUST be valid UTF-8**: a key that is not rejects the whole event (vector `R5i`; preview
+[C07](../deployments/preview/cases/C07/README.md) step `A3c`). Empty strings, empty bytes, zero bytes and JSON `null` are
 ordinary values, not tombstones. `decodePayload(bytes)` in `@mip0018/codec` applies all of this and never throws.
 
 ## 4. Apply in chain order
@@ -323,16 +341,31 @@ Kind 3 has no color: list the contract's kind-3 events instead (`mip0018 list --
 
 The reference scanner reads every block from a start height — near the deployments on a public network, 0 or 1 on a
 local chain — keeps a resumable checkpoint (re-run the same command to resume; `--follow` keeps following new
-blocks), and `lookup` resolves a color through it:
+blocks), and `lookup` resolves a color through it. On preview
+([`examples/verify`](../examples/verify/README.md#3-from-a-coin-to-its-metadata-index-and-lookup), case
+[IDX](../deployments/preview/cases/IDX/README.md)):
 
 ```sh
-docker/run.sh mip0018 -- index --network preview --from-height <height before the first mint> --to-height <height> \
-  --state <state directory>
-docker/run.sh mip0018 -- lookup --network preview --state <state directory> --color <color>
+docker/run.sh mip0018 -- index --network preview --from-height 41531 --to-height 42095 \
+  --state deployments/preview/cases/IDX/index
+docker/run.sh mip0018 -- lookup --network preview --state deployments/preview/cases/IDX/index \
+  --color 651ab6b0dd7ccb521586f3c14e235842171cbf27ba43ad5d3ac52aa991ce77d0
+```
+
+```text
+color       651ab6b0dd7ccb521586f3c14e235842171cbf27ba43ad5d3ac52aa991ce77d0
+table       contract f6e2fac7659ec945494ceaed8c17c5f6cc88af9e6d7f83c9f88f6c9f33b42a1c  domainSep 6d69702d303031383a6578616d706c653a756e736869656c6465640000000000
+minted      unshielded ×1 first at 41605
+metadata    live indexer at block 42469
+  identity  domainSep 6d69702d303031383a6578616d706c653a756e736869656c6465640000000000  kind 2 (unshielded UTXO)  color 651ab6b0dd7ccb521586f3c14e235842171cbf27ba43ad5d3ac52aa991ce77d0
+    name         "Acme Public"                            type 1  usable
+    symbol       "APUB"                                   type 1  usable
+    decimals     6                                        type 2  usable
+    display      1 base unit = 0.000001 APUB
 ```
 
 A color that was never minted in the scanned range is reported as such (exit 3) — a published identity is not proof
-that coins of its color exist. A color whose identity was withdrawn (every field deleted) resolves
+that coins of its color exist (C05's bronze type). A color whose identity was withdrawn (every field deleted) resolves
 to its contract and `domainSep` but shows no metadata, exactly like a token that was never described.
 
 ## 9. Test your consumer with the vectors
@@ -367,4 +400,5 @@ provides the reference and the runner, not a second consumer).
 | [`@mip0018/consumer`](../packages/consumer/README.md) | `MetadataState` (`apply`, `rollbackTo`, `identities`, `groups`, `display`, `history`, `imageContentAllowed`; `definedKeys`), `formatAmount`, `parseStandards`, `characters` |
 | [`@mip0018/midnight`](../packages/midnight/README.md) | indexer and node access, `tokenType`, raw-transaction decoding, `checkEvent`, `list`, the mint scanner |
 | [`mip0018` CLI](../packages/cli/README.md) | `check-event`, `list`, `index`, `lookup`, `recheck`, `vectors run` — no wallet |
-| [`examples/verify`](../examples/verify/README.md) | the wallet-free walkthrough |
+| [`examples/verify`](../examples/verify/README.md) | the wallet-free walkthrough on the preview cases |
+| [`deployments/preview`](../deployments/preview/README.md) | 13 recorded cases, each re-checkable with one command |
