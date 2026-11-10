@@ -26,7 +26,7 @@ Two entry points:
 | `color.ts` | `tokenType(domainSep, contractAddress)` with ledger-v9 `rawTokenType` (+ an independent SHA-256 derivation used in tests) |
 | `check-event.ts` | One event emission (`mip0018 check-event`): indexer event, name, binding from the event record, classification (accept / reject / ignore + reason), raw-transaction cross-check, node block hash, finality, extrinsic presence, optional expectation. Outcomes ok / mismatch / not-found / not-indexed |
 | `list.ts` | All MIP-0018 events of a contract reduced with `@mip0018/consumer` (colors injected for kinds 1 and 2) |
-| `scanner.ts` | The mint scanner (MIP "Lookup"): from a start height, every block → contract calls' raw transactions → applied `shieldedMints` / `unshieldedMints` → `color → (contract, domainSep, kinds, first mint)`, plus every MIP-0018 event and every deploy; atomic checkpoint after each block; resumable; the state records the chain instance (block 1) and a resume is bound to it (a state without one resumes only where the node has its last scanned block at that height); `lookupColor` |
+| `scanner.ts` | The mint scanner (MIP "Lookup"): from a start height, every block → contract calls' raw transactions → applied `shieldedMints` / `unshieldedMints` → `color → (contract, domainSep, kinds, first mint)`, plus every MIP-0018 event and every deploy; atomic checkpoint after each block; resumable; the state records the chain instance (block 1) and every read on its behalf (a resume, a live `lookup`) is bound to it first (`bindScanState`; a state without one is read only where the node has its last scanned block at that height, and a resume then records the node's block 1 in the file at once); `lookupColor` |
 
 ## Signer (`src/signer/`)
 
