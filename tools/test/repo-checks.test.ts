@@ -208,14 +208,14 @@ describe('check-pins: every image in every compose file and Dockerfile is pinned
   });
 
   it('the images of a JSON compose file and of a workflow are read: four more references, none from a JSON file without images', () => {
-    const before = references(node(root, 'check-pins.mjs'));
+    const baseline = references(node(root, 'check-pins.mjs'));
     const files = pinnedFiles();
     for (const [path, text] of Object.entries(files)) put(root, path, text);
     try {
       const r = node(root, 'check-pins.mjs');
       expect(r.status).toBe(0);
-      expect(before).toBeGreaterThan(0);
-      expect(references(r)).toBe(before + 4);
+      expect(baseline).toBeGreaterThan(0);
+      expect(references(r)).toBe(baseline + 4);
     } finally {
       for (const path of Object.keys(files)) rmSync(join(root, path));
     }

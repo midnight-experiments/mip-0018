@@ -3,7 +3,7 @@
 // A run record is written with its published values exactly as the signer sent them (circuit and constructor
 // arguments, the decoded ledger state of an upgrade's pre-checks): an `@` in a query string, credentials in a URL or
 // `project_id` text in a published value are data, and only a registered token is removed from them. A JSON key named
-// `__proto__`, `constructor` or `prototype` is data too, in a published value and elsewhere: it is written as it was
+// `__proto__`, `constructor` or `prototype` is data too, in a published value and elsewhere: it is written exactly as
 // given, and no copy gets another prototype. Saving changes none of the caller's objects, and saving a saved record
 // writes the same bytes, including every committed preview record.
 
