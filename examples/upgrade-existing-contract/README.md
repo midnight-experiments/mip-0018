@@ -56,3 +56,19 @@ The local chain is discarded after the run; the script writes every identifier (
 colors, key hashes) to `$MIP0018_E2E_DIR/summary.json` and its checks to `results.txt`. Unit and runtime tests:
 `docker/run.sh exec 'npx vitest run examples/upgrade-existing-contract packages/midnight/test/upgrade-units.test.ts'`
 (21 + 9).
+
+## Preview run (case U1)
+
+The same steps on preview, 2026-11-09, wallet 1 of this repository (only the free negatives: the paid overwrite
+attempts above are not repeated there). Commands, record and observations:
+[`deployments/preview/cases/U1`](../../deployments/preview/cases/U1/README.md); re-check without a wallet:
+`docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/U1`.
+
+| Step | Result | Fee (DUST) |
+|---|---|---:|
+| deploy `LegacyToken` (domainSep `pad(32, "mip-0018:example:upgrade")`) | contract `783fd16b82e6ce98381bf7a19d458f8bb179b6612984ef6f64c5cfbf2eab453a`, tx `46d13d03…720b32f6`, block 42130; entry points `{mint}` (key `b1dbe2b7…e53d`), authority 1 key / threshold 1 / counter 0 | 1.892 |
+| owner `mint` 1000 to wallet 1 | tx `90a07830…94e6392a`, block 42136; wallet 1 holds 1000 of color `110b4cf8aad92cebf85555196c46dfc1ac8ca15698ec77d2ab198cf0633b704a` | 0.282 |
+| insert signed by a key outside the committee | refused before submission (no transaction); forced: **rejected by the node** (`1010: Invalid Transaction: Custom error: 135`), not included | 0 |
+| **`VerifierKeyInsert(publishMetadata, v4)`** | tx `bf66f3f1…b5a91ec6`, block 42148, `SUCCESS`; entry points `{mint, publishMetadata}` (key `fd630482…e1fc`), mint key unchanged, counter 1, **ledger data hash unchanged** (`9ca152f8…2e07`) | 1.167 |
+| **`publishMetadata()`** through the upgrade build | tx `48f5a1ac…6d4883e3`, block 42153; one event bound to the original address; `check-event` exit 0; `list`: identity color = the held coins' color | 0.219 |
+| holder's view | wallet 1 still holds 1000 of that color; the scanner (blocks 42129–42153) shows it minted at 42136, before the insert; `lookup` → "Legacy Token" / "LGCY" / 6 | — |
