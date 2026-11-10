@@ -1,11 +1,13 @@
 # MIP-0018 reference implementation
 
 Reference implementation of **MIP-0018: On-chain token metadata** for Midnight: test vectors, a Compact module that
-emits the metadata event, OpenZeppelin-based examples, a reference consumer, and wallet-free tools to check events, list and
-look up metadata on a local chain or on the public networks (`preview`, `preprod`, `mainnet`).
+emits the metadata event, OpenZeppelin-based examples, a reference consumer, wallet-free tools to check events, list and
+look up metadata on a local chain or on the public networks (`preview`, `preprod`, `mainnet`), and real cases on
+preview.
 
-Every MIP section below has code and tests, on a local chain where a chain is involved; every MUST and SHOULD is in the
-[conformance matrix](docs/conformance-matrix.md), with its tests or the reason it is not testable here.
+Every MIP section below has code, tests and, where a chain is involved, a local-chain run and a recorded preview case;
+every MUST and SHOULD is in the [conformance matrix](docs/conformance-matrix.md), with its tests or the reason it is
+not testable here.
 
 ## Where to start
 
@@ -14,7 +16,7 @@ Every MIP section below has code and tests, on a local chain where a chain is in
 | A token issuer adding metadata to a contract | [Issuer guide](docs/issuer-guide.md), then [`examples/publish-and-emit`](examples/publish-and-emit/README.md) |
 | A wallet, explorer or indexer developer | [Consumer guide](docs/consumer-guide.md), then [`examples/verify`](examples/verify/README.md) and the [vectors](vectors/README.md) |
 | The maintainer of an already-deployed token | [Upgrade guide](docs/upgrade-guide.md) |
-| A MIP reviewer | [conformance matrix](docs/conformance-matrix.md), [costs](docs/costs.md) |
+| A MIP reviewer | [preview cases](deployments/preview/README.md), [conformance matrix](docs/conformance-matrix.md), [costs](docs/costs.md) |
 
 ## The MIP this repository implements
 
@@ -27,27 +29,74 @@ Every MIP section below has code and tests, on a local chain where a chain is in
 
 ## MIP section → repository
 
-| MIP section | Implementation | Tests | Status |
+| MIP section | Implementation | Tests | Preview | Status |
+|---|---|---|---|---|
+| Event (name, "must ignore") | [`packages/codec`](packages/codec/README.md) `classifyEvent` | vectors `I1a`–`I3` ([codec](packages/codec/test/vectors.test.ts), [consumer](packages/consumer/test/vectors.test.ts)) | [C07](deployments/preview/cases/C07/README.md) (`[v2]` and foreign names) | done |
+| Payload (layout, the three checks, whole-event rejection) | [`packages/codec`](packages/codec/README.md) `decodePayload`, `encodePayload` | vectors `A1`–`A6`, `R1`–`R6`; [fuzz](packages/codec/test/fuzz.test.ts); [rule mutations](packages/consumer/test/mutations.test.ts) | [C07](deployments/preview/cases/C07/README.md), [C08](deployments/preview/cases/C08/README.md) | done |
+| Payload — Compact emitter ("exactly these bytes") | [`packages/compact`](packages/compact/README.md): typed constructor (default) + pure-circuit alternative | [byte equality with the vectors](packages/compact/test/vectors.test.ts), [729 generated payloads](packages/compact/test/equivalence.test.ts), [16 compile errors](packages/compact/test/compile-fail.test.ts) | [C06](deployments/preview/cases/C06/README.md), [C10](deployments/preview/cases/C10/README.md) (Appendix A bytes on chain) | done |
+| Value types (incl. the RFC 3986 `URI` rule; JSON checked with the platform's JSON parser) | [`packages/codec`](packages/codec/README.md) `checkValue`, `isRfc3986Uri` | [values](packages/codec/test/values.test.ts), [URI](packages/codec/test/uri.test.ts); vectors `R5a`–`R5h`, [26 informative URI cases](vectors/informative/uri/README.md) | [C07](deployments/preview/cases/C07/README.md) | done |
+| Token identity and authority; Lookup | [`packages/consumer`](packages/consumer/README.md) (identity), [`packages/midnight`](packages/midnight/README.md) (`tokenType`, mint scanner), CLI `index` / `lookup` | [colors and raw mints](packages/midnight/test/raw-color.test.ts), [scanner](packages/midnight/test/check-event-list-scan.test.ts); vectors `S6a`, `S6b`; the color tests of the shielded/unshielded examples | [C02](deployments/preview/cases/C02/README.md)–[C05](deployments/preview/cases/C05/README.md), [IDX](deployments/preview/cases/IDX/README.md), [U1](deployments/preview/cases/U1/README.md) | done |
+| Keys (valid UTF-8; only the common keys and the keys of declared standards are served), Applying records (a Null record deletes its field; an identity with no field left is not referenced), Common fields (incl. `image`, `image_sha256`; `name`/`symbol` truncated to 64/12 characters), Symbol grouping | [`packages/consumer`](packages/consumer/README.md) `MetadataState` (`definedKeys`, `imageContentAllowed`), `formatAmount`, `parseStandards`, `characters`; `withdraw`, `imageRecord`, `imageSha256Record` in [`packages/compact`](packages/compact/README.md), `withdrawRecords()` and `record.image`/`imageSha256` in [`packages/codec`](packages/codec/README.md) | vector `R5i`; state vectors `S1`–`S12` ([consumer](packages/consumer/test/vectors.test.ts)), [state](packages/consumer/test/state.test.ts), [served keys, lengths, image](packages/consumer/test/served.test.ts), [common fields](packages/consumer/test/common.test.ts), [rule mutations](packages/consumer/test/mutations.test.ts) | [C04](deployments/preview/cases/C04/README.md) (group), [C05](deployments/preview/cases/C05/README.md), [C06](deployments/preview/cases/C06/README.md) (lifecycle; full withdrawal), [C07](deployments/preview/cases/C07/README.md) (a non-UTF-8 key rejected; served keys), [C12](deployments/preview/cases/C12/README.md) (image, a key not served, lengths, a Null record that deletes only `name`) | done |
+| Publishing (no events in normal operation; access control; few events) | [`packages/compact`](packages/compact/README.md), [`examples/minimal`](examples/minimal/README.md), [`examples/openzeppelin`](examples/openzeppelin/README.md), CLI `deploy` / `publish` / `remove-circuit` / `deploy-and-publish` | [minimal](examples/minimal/test/minimal.test.ts), OpenZeppelin examples' tests, [signer units](packages/midnight/test/signer-units.test.ts); local chain: [`examples-e2e.sh`](packages/cli/test/e2e/examples-e2e.sh), [`local-e2e.sh`](packages/cli/test/e2e/local-e2e.sh) | [C01](deployments/preview/cases/C01/README.md)–[C06](deployments/preview/cases/C06/README.md), [C09](deployments/preview/cases/C09/README.md) (non-owner refused), [C10](deployments/preview/cases/C10/README.md) (create and destroy) | done |
+| Consuming (reading events, including zero-extending a short `name`/`payload`; completeness; untrusted input) | [`packages/codec`](packages/codec/README.md) `zeroExtend`, `classifyEvent`; [`packages/midnight`](packages/midnight/README.md) `checkEvent`, `list`; CLI `check-event` / `list` / `recheck` | [zero extension](packages/codec/test/zero-extension.test.ts) and informative vectors `INF-ZEXT-*`, [check-event and list](packages/midnight/test/check-event-list-scan.test.ts), [CLI](packages/cli/test/cli.test.ts), [fuzz](packages/codec/test/fuzz.test.ts) | every case: `recheck` | done |
+| Limitations (219-byte value, one identity per event) | [`packages/compact`](packages/compact/README.md) (size errors at compile time) | vectors `A2a`, `A2b`, `R2a`–`R2f` | [C07](deployments/preview/cases/C07/README.md) (`A2a`, `A2b`) | done |
+| Off-chain content (`image` + `image_sha256` follow it) | [`packages/consumer`](packages/consumer/README.md) `imageContentAllowed` | vectors `A6`, `S12a`, `S12b`; the requirement on future MIPs is not testable here ([C-035](docs/conformance-matrix.md)) | [C12](deployments/preview/cases/C12/README.md) | done |
+| Backwards compatibility — Existing contracts | [`examples/upgrade-existing-contract`](examples/upgrade-existing-contract/README.md), CLI `upgrade`, [upgrade guide](docs/upgrade-guide.md) | [upgrade](examples/upgrade-existing-contract/test/upgrade.test.ts), [layout](examples/upgrade-existing-contract/test/layout.test.ts); local chain: [`local-upgrade.sh`](examples/upgrade-existing-contract/scripts/local-upgrade.sh) | [U1](deployments/preview/cases/U1/README.md) | done |
+| Security Considerations | [consumer guide §6–7](docs/consumer-guide.md#6-untrusted-input), [`SECURITY.md`](SECURITY.md) | matrix rows C-036–C-039 | [C09](deployments/preview/cases/C09/README.md) | done (curation and image rendering: not testable here) |
+| Testing (normative vectors) | [`vectors/`](vectors/README.md): 78 normative + 49 informative, JSON Schemas, independent generator, [runner contract](vectors/README.md#runner-contract) (S8, S9 and S12a as the MIP scopes them: a consumer without display, groups or images passes; S10b–S10e carry the test standard they define) | reference consumer 78/78 ([`vectors.test.ts`](packages/consumer/test/vectors.test.ts)), [runner rules](packages/consumer/test/runner-rules.test.ts); [generator `--check`](vectors/test/generate.test.ts) | [C07](deployments/preview/cases/C07/README.md) (22 vector events on chain), [C12](deployments/preview/cases/C12/README.md) (A6, S10a, S11, S12b, S3a) | done |
+| Implementation Plan 1 — Compact module and example issuers | [`packages/compact`](packages/compact/README.md), [`examples/`](examples/minimal/README.md) | as above | [C01](deployments/preview/cases/C01/README.md)–[C06](deployments/preview/cases/C06/README.md), [C10](deployments/preview/cases/C10/README.md) | done |
+| Implementation Plan 2 — vectors and a reference decoder; a second reader | [`vectors/`](vectors/README.md), [`packages/codec`](packages/codec/README.md), [`packages/consumer`](packages/consumer/README.md) | as above | — | done; a second, independent consumer: not provided |
+| Implementation Plan 3 — a publisher on a public test network | network profiles `preview` / `preprod` / `mainnet` in [`packages/midnight`](packages/midnight/README.md); case folders from [`deployments/tools/prepare-cases.ts`](deployments/tools/prepare-cases.ts) (preview: [`deployments/preview`](deployments/preview/README.md)), network identity from [`deployments/tools/network-identity.ts`](deployments/tools/network-identity.ts) | [profiles and tokens](packages/midnight/test/network.test.ts), [case generator](packages/cli/test/cases.test.ts); local chain: [`token-e2e.sh`](packages/cli/test/e2e/token-e2e.sh); `recheck` per case | [13 cases](deployments/preview/README.md) | done |
+| Implementation Plan 4 — propose the module to OpenZeppelin | [`examples/openzeppelin`](examples/openzeppelin/README.md) shows the extension | — | — | not pursued: this repository makes no upstream contributions |
+| Implementation Plan 5 — upgrade template on a public test network | [`examples/upgrade-existing-contract`](examples/upgrade-existing-contract/README.md) | as above | [U1](deployments/preview/cases/U1/README.md) | done |
+| Every MUST / SHOULD | [`docs/conformance-matrix.md`](docs/conformance-matrix.md) | `docker/run.sh check:conformance-matrix` | — | 40 rows: 33 covered, 7 not testable here |
+
+## Cases on preview
+
+Thirteen cases deployed and emitted on Midnight preview (63 transactions, 77.04 DUST, 2026-11-09), each recorded in
+its folder with the consumer state it must produce — computed from the case definition with the reference consumer and
+committed before the case's first transaction — and each re-checkable by anyone with one wallet-free command (no wallet,
+account or token):
+
+```sh
+docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/C06
+```
+
+| Case | Shows |
+|---|---|
+| [C01](deployments/preview/cases/C01/README.md)–[C03](deployments/preview/cases/C03/README.md) | OpenZeppelin fungible token (kind 3, contract token), native shielded (kind 1, shielded UTXO), native unshielded (kind 2, unshielded UTXO); colors equal the minted coins' |
+| [C04](deployments/preview/cases/C04/README.md), [C05](deployments/preview/cases/C05/README.md) | one asset as kinds 1, 2, 3 (one symbol group); a token family (three `domainSep`) |
+| [C06](deployments/preview/cases/C06/README.md) | lifecycle: publish (Appendix A bytes), rename, withdraw (one event with a Null record at each of the six common keys: the token is not listed), withdraw again, revive with only `name` and `symbol` |
+| [C07](deployments/preview/cases/C07/README.md), [C08](deployments/preview/cases/C08/README.md) | test-only raw emitter: 22 vector events accepted / rejected / ignored on chain (incl. a key that is not valid UTF-8); two events in one transaction |
+| [C12](deployments/preview/cases/C12/README.md) | C07's raw emitter: `image` + `image_sha256`, a key that is not served, a name and a symbol over their lengths, a 31-byte `image_sha256`, a Null record that deletes only `name` (vector S3a) |
+| [C09](deployments/preview/cases/C09/README.md), [C10](deployments/preview/cases/C10/README.md) | a non-owner refused; create and destroy |
+| [IDX](deployments/preview/cases/IDX/README.md), [U1](deployments/preview/cases/U1/README.md) | mint scanner + color lookup; adding `publishMetadata()` to a deployed token |
+
+Network identity, contracts, transactions, fees and limitations: [`deployments/preview/README.md`](deployments/preview/README.md).
+Every tool checks preview's genesis and block 1 against [`deployments/preview/network.json`](deployments/preview/network.json)
+before it reads a case: after a reset of preview the cases cannot be re-checked on chain (the tools refuse the new
+chain), their folders keep the expectations, run records and observations, and they can be run again with the same
+commands. Fees and circuit sizes: [`docs/costs.md`](docs/costs.md) (a metadata transaction ≈ 0.21–0.25 DUST on preview).
+
+## Networks
+
+`--network <undeployed|preview|preprod|mainnet>` selects a profile of [`packages/midnight`](packages/midnight/README.md)
+(network id, pinned genesis hash, endpoints, address prefixes; the constants are in [`toolchain.json`](toolchain.json)
+`networks`). Every tool checks the node's genesis before its first request that reads a case or changes state.
+
+| Profile | Endpoints | Token | Exercised in this repository |
 |---|---|---|---|
-| Event (name, "must ignore") | [`packages/codec`](packages/codec/README.md) `classifyEvent` | vectors `I1a`–`I3` ([codec](packages/codec/test/vectors.test.ts), [consumer](packages/consumer/test/vectors.test.ts)) | done |
-| Payload (layout, the three checks, whole-event rejection) | [`packages/codec`](packages/codec/README.md) `decodePayload`, `encodePayload` | vectors `A1`–`A6`, `R1`–`R6`; [fuzz](packages/codec/test/fuzz.test.ts); [rule mutations](packages/consumer/test/mutations.test.ts) | done |
-| Payload — Compact emitter ("exactly these bytes") | [`packages/compact`](packages/compact/README.md): typed constructor (default) + pure-circuit alternative | [byte equality with the vectors](packages/compact/test/vectors.test.ts), [729 generated payloads](packages/compact/test/equivalence.test.ts), [16 compile errors](packages/compact/test/compile-fail.test.ts) | done |
-| Value types (incl. the RFC 3986 `URI` rule; JSON checked with the platform's JSON parser) | [`packages/codec`](packages/codec/README.md) `checkValue`, `isRfc3986Uri` | [values](packages/codec/test/values.test.ts), [URI](packages/codec/test/uri.test.ts); vectors `R5a`–`R5h`, [26 informative URI cases](vectors/informative/uri/README.md) | done |
-| Token identity and authority; Lookup | [`packages/consumer`](packages/consumer/README.md) (identity), [`packages/midnight`](packages/midnight/README.md) (`tokenType`, mint scanner), CLI `index` / `lookup` | [colors and raw mints](packages/midnight/test/raw-color.test.ts), [scanner](packages/midnight/test/check-event-list-scan.test.ts); vectors `S6a`, `S6b`; the color tests of the shielded/unshielded examples | done |
-| Keys (valid UTF-8; only the common keys and the keys of declared standards are served), Applying records (a Null record deletes its field; an identity with no field left is not referenced), Common fields (incl. `image`, `image_sha256`; `name`/`symbol` truncated to 64/12 characters), Symbol grouping | [`packages/consumer`](packages/consumer/README.md) `MetadataState` (`definedKeys`, `imageContentAllowed`), `formatAmount`, `parseStandards`, `characters`; `withdraw`, `imageRecord`, `imageSha256Record` in [`packages/compact`](packages/compact/README.md), `withdrawRecords()` and `record.image`/`imageSha256` in [`packages/codec`](packages/codec/README.md) | vector `R5i`; state vectors `S1`–`S12` ([consumer](packages/consumer/test/vectors.test.ts)), [state](packages/consumer/test/state.test.ts), [served keys, lengths, image](packages/consumer/test/served.test.ts), [common fields](packages/consumer/test/common.test.ts), [rule mutations](packages/consumer/test/mutations.test.ts) | done |
-| Publishing (no events in normal operation; access control; few events) | [`packages/compact`](packages/compact/README.md), [`examples/minimal`](examples/minimal/README.md), [`examples/openzeppelin`](examples/openzeppelin/README.md), CLI `deploy` / `publish` / `remove-circuit` / `deploy-and-publish` | [minimal](examples/minimal/test/minimal.test.ts), OpenZeppelin examples' tests, [signer units](packages/midnight/test/signer-units.test.ts); local chain: [`examples-e2e.sh`](packages/cli/test/e2e/examples-e2e.sh), [`local-e2e.sh`](packages/cli/test/e2e/local-e2e.sh) | done |
-| Consuming (reading events, including zero-extending a short `name`/`payload`; completeness; untrusted input) | [`packages/codec`](packages/codec/README.md) `zeroExtend`, `classifyEvent`; [`packages/midnight`](packages/midnight/README.md) `checkEvent`, `list`; CLI `check-event` / `list` / `recheck` | [zero extension](packages/codec/test/zero-extension.test.ts) and informative vectors `INF-ZEXT-*`, [check-event and list](packages/midnight/test/check-event-list-scan.test.ts), [CLI](packages/cli/test/cli.test.ts), [fuzz](packages/codec/test/fuzz.test.ts) | done |
-| Limitations (219-byte value, one identity per event) | [`packages/compact`](packages/compact/README.md) (size errors at compile time) | vectors `A2a`, `A2b`, `R2a`–`R2f` | done |
-| Off-chain content (`image` + `image_sha256` follow it) | [`packages/consumer`](packages/consumer/README.md) `imageContentAllowed` | vectors `A6`, `S12a`, `S12b`; the requirement on future MIPs is not testable here ([C-035](docs/conformance-matrix.md)) | done |
-| Backwards compatibility — Existing contracts | [`examples/upgrade-existing-contract`](examples/upgrade-existing-contract/README.md), CLI `upgrade`, [upgrade guide](docs/upgrade-guide.md) | [upgrade](examples/upgrade-existing-contract/test/upgrade.test.ts), [layout](examples/upgrade-existing-contract/test/layout.test.ts); local chain: [`local-upgrade.sh`](examples/upgrade-existing-contract/scripts/local-upgrade.sh) | done |
-| Security Considerations | [consumer guide §6–7](docs/consumer-guide.md#6-untrusted-input), [`SECURITY.md`](SECURITY.md) | matrix rows C-036–C-039 | done (curation and image rendering: not testable here) |
-| Testing (normative vectors) | [`vectors/`](vectors/README.md): 78 normative + 49 informative, JSON Schemas, independent generator, [runner contract](vectors/README.md#runner-contract) (S8, S9 and S12a as the MIP scopes them: a consumer without display, groups or images passes; S10b–S10e carry the test standard they define) | reference consumer 78/78 ([`vectors.test.ts`](packages/consumer/test/vectors.test.ts)), [runner rules](packages/consumer/test/runner-rules.test.ts); [generator `--check`](vectors/test/generate.test.ts) | done |
-| Implementation Plan 1 — Compact module and example issuers | [`packages/compact`](packages/compact/README.md), [`examples/`](examples/minimal/README.md) | as above | done |
-| Implementation Plan 2 — vectors and a reference decoder; a second reader | [`vectors/`](vectors/README.md), [`packages/codec`](packages/codec/README.md), [`packages/consumer`](packages/consumer/README.md) | as above | done; a second, independent consumer: not provided |
-| Implementation Plan 3 — a publisher on a public test network | network profiles `preview` / `preprod` / `mainnet` in [`packages/midnight`](packages/midnight/README.md); case folders from [`deployments/tools/prepare-cases.ts`](deployments/tools/prepare-cases.ts) (preview: [`deployments/preview`](deployments/preview/README.md)), network identity from [`deployments/tools/network-identity.ts`](deployments/tools/network-identity.ts) | [profiles and tokens](packages/midnight/test/network.test.ts), [case generator](packages/cli/test/cases.test.ts); local chain: [`token-e2e.sh`](packages/cli/test/e2e/token-e2e.sh); `recheck` per case | done |
-| Implementation Plan 4 — propose the module to OpenZeppelin | [`examples/openzeppelin`](examples/openzeppelin/README.md) shows the extension | — | not pursued: this repository makes no upstream contributions |
-| Implementation Plan 5 — upgrade template on a public test network | [`examples/upgrade-existing-contract`](examples/upgrade-existing-contract/README.md) | as above | done |
-| Every MUST / SHOULD | [`docs/conformance-matrix.md`](docs/conformance-matrix.md) | `docker/run.sh check:conformance-matrix` | 40 rows: 33 covered, 7 not testable here |
+| `undeployed` | the local stack ([`docker/local-stack`](docker/local-stack)); `--indexer` / `--rpc` or `MIP0018_INDEXER_URL` / `MIP0018_NODE_URL`, never a default | — | every local-chain test; public hosts and genesis hashes are refused |
+| `preview` | `https://rpc.preview.midnight.network`, `https://indexer.preview.midnight.network/api/v4/graphql` | — | the real cases and every wallet-free check |
+| `preprod` | Blockfrost: `https://rpc.midnight-preprod.blockfrost.io`, `https://midnight-preprod.blockfrost.io/api/v0` | the project token of a preprod Blockfrost project in `MIP0018_BLOCKFROST_PREPROD` (or a 0600 file, `--blockfrost-token-file`) | against a local stub only: not exercised against live endpoints |
+| `mainnet` | Blockfrost: `https://rpc.midnight-mainnet.blockfrost.io`, `https://midnight-mainnet.blockfrost.io/api/v0` | `MIP0018_BLOCKFROST_MAINNET` (or `--blockfrost-token-file`) | against a local stub only: not exercised against live endpoints |
+
+The token is passed to the containers by name (`MIP0018_DOCKER_ENV="-e MIP0018_BLOCKFROST_PREPROD"`), added to the
+request URLs as `project_id` only when connecting, and written nowhere: every URL in output, errors and run records
+has no query string. Without a token a `preprod` / `mainnet` command stops before any request and names the variable.
+The `preprod` and `mainnet` profiles (pinned genesis, Blockfrost URL shape, token handling, 403 and 429 answers) are
+tested against a local stub that requires `project_id` ([`network.test.ts`](packages/midnight/test/network.test.ts),
+[`token-e2e.sh`](packages/cli/test/e2e/token-e2e.sh)); no request of this repository's tests reaches them.
 
 ## Quickstart (Docker only)
 
@@ -59,6 +108,7 @@ docker/run.sh ci                                   # builds the pinned image (fi
 docker/run.sh lint typecheck test                  # static checks and every unit/runtime test (no chain)
 docker/run.sh check:pins check:mip-pin check:conformance-matrix check:md-links
 docker/run.sh mip0018 -- vectors run               # the normative vectors against the reference consumer
+docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/C06   # a real case, wallet-free
 ```
 
 A local chain of official `midnightntwrk/*` images (node 2.1.101, indexer-standalone 4.4.101, proof server 9.0.1)
@@ -120,6 +170,18 @@ deployments/       preview/ — the cases on preview (case folders, run records,
                    public network (prepare-cases.ts) and network identity (network-identity.ts)
 tools/             repository checks (pins, MIP hash, conformance matrix, Markdown links, secrets)
 ```
+
+## TODO
+
+OpenZeppelin Compact Contracts 0.5.0-alpha.2 token modules that have no MIP-0018 example in this repository yet
+([`examples/openzeppelin`](examples/openzeppelin/README.md) covers `FungibleToken`, `NativeShieldedToken` and
+`NativeShieldedTokenFamily`):
+
+- the `ZOwnableNativeShieldedToken` preset (`token/presets/ZOwnableNativeShieldedToken.compact`);
+- `ConfidentialFungibleToken` (`token/ConfidentialFungibleToken.compact`);
+- `ConfidentialNoteFungibleToken` (`token/ConfidentialNoteFungibleToken.compact`);
+- the `NativeShieldedTokenPublicSupply`, `NativeShieldedTokenFamilyPublicSupply` and `NativeShieldedTokenDerivedNonce`
+  extensions (`token/extensions/`).
 
 ## Contributing, security, licence
 
