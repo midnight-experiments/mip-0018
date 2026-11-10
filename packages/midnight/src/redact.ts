@@ -120,8 +120,10 @@ const matchesAt = (pattern: JsonPathPattern, path: readonly string[]): boolean =
  * A copy of a JSON-like value for a public file; the value is never changed. Strings and object keys under an `exact`
  * pattern go through `removeSecrets` (published values stay byte for byte), strings at a `messages` pattern through
  * `scrubSecrets`, and every other string and key through `scrubValue`, with the value of a `project_id` key replaced
- * whole. Byte arrays, bigints and other non-plain values are kept as they are (the serialiser writes them). Applying it
- * to its own result changes nothing.
+ * whole. Every key is copied as an own data property of a plain object, so a JSON key such as `__proto__`,
+ * `constructor` or `prototype` is data in the copy and the copy's prototype is `Object.prototype`. Byte arrays, bigints
+ * and other non-plain values are kept as they are (the serialiser writes them). Applying it to its own result changes
+ * nothing.
  */
 export function publicCopy<T>(value: T, rules: PublicFileRules = {}): T {
   const exact = rules.exact ?? [];
@@ -144,8 +146,14 @@ export function publicCopy<T>(value: T, rules: PublicFileRules = {}): T {
     for (const [k, x] of Object.entries(v)) {
       const p = [...path, k];
       const under = inExact || exact.some((e) => e.length <= p.length && matchesAt(e, p));
-      out[under ? removeSecrets(k) : scrubValue(k)] =
-        !under && k.toLowerCase() === TOKEN_PARAM && typeof x === 'string' ? REDACTED : walk(x, p, under);
+      // An own data property for every key: an assignment to a key named `__proto__` would call the inherited
+      // setter (changing the copy's prototype) instead of copying the key.
+      Object.defineProperty(out, under ? removeSecrets(k) : scrubValue(k), {
+        value: !under && k.toLowerCase() === TOKEN_PARAM && typeof x === 'string' ? REDACTED : walk(x, p, under),
+        enumerable: true,
+        writable: true,
+        configurable: true,
+      });
     }
     return out;
   };

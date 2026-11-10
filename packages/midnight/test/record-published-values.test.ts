@@ -2,16 +2,17 @@
 //
 // A run record is written with its published values exactly as the signer sent them (circuit and constructor
 // arguments, the decoded ledger state of an upgrade's pre-checks): an `@` in a query string, credentials in a URL or
-// `project_id` text in a published value are data, and only a registered token is removed from them. Saving changes
-// none of the caller's objects, and saving a saved record writes the same bytes, including every committed preview
-// record.
+// `project_id` text in a published value are data, and only a registered token is removed from them. A JSON key named
+// `__proto__`, `constructor` or `prototype` is data too, in a published value and elsewhere: it is written as it was
+// given, and no copy gets another prototype. Saving changes none of the caller's objects, and saving a saved record
+// writes the same bytes, including every committed preview record.
 
 import { copyFileSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { resolveProfile } from '../src/network.ts';
-import { loadRecord, saveRecord, type RunRecord } from '../src/signer/index.ts';
+import { loadRecord, publicRecord, saveRecord, type RunRecord } from '../src/signer/index.ts';
 
 const TOKEN = 'FakeTokenPublished0123456789';
 // Registers the token, as every preprod / mainnet run does when it reads it.
@@ -141,5 +142,53 @@ describe('run records keep published values exactly', () => {
       saveRecord(copy, loadRecord(copy)!);
       expect(withoutUpdatedAt(readFileSync(copy, 'utf8')), p).toBe(withoutUpdatedAt(readFileSync(p, 'utf8')));
     }
+  });
+});
+
+describe('keys named like Object.prototype members are data', () => {
+  const ARGS = '[{"__proto__":"published"}]';
+  const NESTED = '[{"__proto__":{"polluted":true},"constructor":"c","prototype":{"p":1}}]';
+  const OBSERVED = '{"__proto__":{"note":"https://u@h.example/x"},"constructor":{"a":1},"prototype":"p"}';
+  const own = (o: unknown, k: string) => typeof o === 'object' && o !== null && Object.hasOwn(o, k);
+
+  it('a published __proto__ key survives in publicRecord and in the written file byte for byte', () => {
+    const r = record({ args: JSON.parse(ARGS) as unknown });
+    const copy = publicRecord(r);
+    expect(JSON.stringify(copy.steps[0]!.args)).toBe(ARGS);
+    const arg = (copy.steps[0]!.args as object[])[0]!;
+    expect(own(arg, '__proto__')).toBe(true);
+    expect(Object.getPrototypeOf(arg)).toBe(Object.prototype);
+    const p = join(dir, 'proto-args.json');
+    const text = save('proto-args.json', r);
+    expect(text).toBe(`${JSON.stringify(r, null, 2)}\n`);
+    expect(JSON.stringify((JSON.parse(text) as RunRecord).steps[0]!.args)).toBe(ARGS);
+    saveRecord(p, loadRecord(p)!);
+    expect(withoutUpdatedAt(readFileSync(p, 'utf8'))).toBe(withoutUpdatedAt(text));
+  });
+
+  it('an object under a __proto__ key is copied as data: no copy gets it as its prototype', () => {
+    const r = record({ args: JSON.parse(NESTED) as unknown });
+    r.contract.constructorArgs = JSON.parse(NESTED) as unknown;
+    const copy = publicRecord(r);
+    for (const v of [copy.steps[0]!.args, copy.contract.constructorArgs]) {
+      expect(JSON.stringify(v)).toBe(NESTED);
+      const arg = (v as object[])[0]!;
+      expect(Object.getPrototypeOf(arg)).toBe(Object.prototype);
+      expect((arg as { polluted?: unknown }).polluted).toBeUndefined();
+      expect(own(arg, '__proto__') && own(arg, 'constructor') && own(arg, 'prototype')).toBe(true);
+    }
+    expect(({} as { polluted?: unknown }).polluted).toBeUndefined();
+    expect(JSON.stringify((JSON.parse(save('proto-nested.json', r)) as RunRecord).contract.constructorArgs)).toBe(NESTED);
+  });
+
+  it('outside the published values the keys are data as well (only the values are scrubbed)', () => {
+    const r = record({ observed: JSON.parse(OBSERVED) as unknown });
+    const copy = publicRecord(r);
+    const observed = copy.steps[0]!.observed as object;
+    expect(JSON.stringify(observed)).toBe('{"__proto__":{"note":"https://h.example/x"},"constructor":{"a":1},"prototype":"p"}');
+    expect(Object.getPrototypeOf(observed)).toBe(Object.prototype);
+    expect((observed as { note?: unknown }).note).toBeUndefined();
+    const back = JSON.parse(save('proto-observed.json', r)) as RunRecord;
+    expect(JSON.stringify(back.steps[0]!.observed)).toBe(JSON.stringify(observed));
   });
 });
