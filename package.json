@@ -2,7 +2,7 @@
   "name": "mip-0018",
   "private": true,
   "version": "0.0.0",
-  "description": "Reference implementation of MIP-0018 (on-chain token metadata): vectors, Compact module, examples, scripts and Stagenet cases",
+  "description": "Reference implementation of MIP-0018 (on-chain token metadata): vectors, Compact module, examples, scripts and cases on a public Midnight network",
   "license": "Apache-2.0",
   "type": "module",
   "engines": {
@@ -29,9 +29,7 @@
     "check:example-readmes": "npm run -s check:readmes -w examples/openzeppelin",
     "compile:spike": "npm run compile -w test-contracts/toolchain-spike --",
     "spike:local": "npm run local -w test-contracts/toolchain-spike --",
-    "spike:stagenet": "npm run stagenet -w test-contracts/toolchain-spike --",
     "local:fund": "npm run fund -w test-contracts/toolchain-spike --",
-    "spike:check": "npm run check -w test-contracts/toolchain-spike --",
     "check:secrets": "node tools/secret-scan.mjs --self-test && node tools/secret-scan.mjs --history",
     "vectors:generate": "npm run generate -w vectors --",
     "vectors:validate": "npm run validate -w vectors",
@@ -48,12 +46,13 @@
     "tsx": "4.23.15",
     "typescript": "6.0.3",
     "typescript-eslint": "8.71.0",
-    "vitest": "5.0.3"
+    "vitest": "5.0.3",
+    "yaml": "2.9.1"
   },
   "overrides": {
-    "@midnight-ntwrk/compact-runtime": "0.20.0",
-    "@midnightntwrk/onchain-runtime-v4": "4.0.0-rc.3",
-    "@midnightntwrk/ledger-v9": "1.0.0-rc.5",
-    "@midnightntwrk/wallet-sdk-address-format": "4.0.0-beta.2"
+    "@midnight-ntwrk/compact-runtime": "0.21.0",
+    "@midnightntwrk/onchain-runtime-v4": "4.0.1",
+    "@midnightntwrk/ledger-v9": "1.0.1",
+    "@midnightntwrk/wallet-sdk-address-format": "4.0.0"
   }
 }

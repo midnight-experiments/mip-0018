@@ -3,6 +3,7 @@
 // The toolchain a spike run actually used, read from the installed packages and
 // the compiler output (not from what we think we pinned).
 
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
@@ -28,7 +29,7 @@ export const toolchain = (contract: string): Record<string, string> => {
     compactCompiler: `${info['compiler-version']} (${String(info['compiler-commit']).slice(0, 9)})`,
     compactLanguage: String(info['language-version']),
     compactRuntime: pkgVersion('@midnight-ntwrk/compact-runtime'),
-    zkir: 'v3 (--feature-zkir-v3)',
+    zkir: `v3 (${execFileSync('compact', ['compile', '--ledger-version'], { encoding: 'utf8' }).trim()})`,
     ledgerV9: pkgVersion('@midnightntwrk/ledger-v9'),
     compactJs: pkgVersion('@midnight-ntwrk/compact-js'),
     midnightJs: pkgVersion('@midnight-ntwrk/midnight-js-contracts'),

@@ -1,0 +1,28 @@
+{
+ "$comment": "What the tapes in this folder were recorded from: a local stack (docker/local-stack, official images) after packages/cli/test/e2e/local-e2e.sh and examples-e2e.sh ran on it. URLs are the in-network ones every container uses.",
+ "recordedAt": "2026-11-09T20:46:47.601Z",
+ "node": "2.1.101-86774edf",
+ "indexer": "http://indexer:8088/api/v4/graphql",
+ "rpc": "http://node:9944",
+ "genesisHash": "0x823383ec0302be8417cfcbcc62f21df08f4047bca37aaea89e3f54b550ebae1d",
+ "chainInstance": "0xbb3431dc5181729496df815821de14cd6becd25a2d2dde7137086179ee89b783",
+ "emitter": {
+  "address": "ae4c5f2d80f1d474850135364c72dd17be0f8da2991ab7ed139efea9e1ff087b",
+  "deploy": {
+   "tx": "dffc4f546e32358981d96d6df14107623b00820069b1273a4696ffbc37b4c0bc",
+   "height": 27
+  },
+  "publish": {
+   "tx": "b8f4443cdb1da751f575877aba757812131373e6d48e4f863c60dedf86839a4a",
+   "height": 32
+  },
+  "remove": {
+   "tx": "5d6b206780bc5e43f21ef22bc0c9d0d2f814d55d19fad0588cb2584a4fedb819",
+   "height": 37
+  },
+  "scan": {
+   "from": 25,
+   "to": 39
+  }
+ }
+}

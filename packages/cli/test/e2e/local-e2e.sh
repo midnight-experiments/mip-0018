@@ -71,7 +71,7 @@ fi
 NET="$MIP0018_STACK_NETWORK"
 IDX="http://127.0.0.1:$MIP0018_INDEXER_PORT/api/v4/graphql"
 ENV_NET="-e MIP0018_INDEXER_URL=$MIP0018_INDEXER_URL_IN_NETWORK -e MIP0018_NODE_URL=$MIP0018_NODE_URL_IN_NETWORK -v $E2E:/e2e"
-ENV_SIGN="$ENV_NET -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK -e MIP0018_WALLET_PROOF_SERVER_URL=$MIP0018_WALLET_PROOF_SERVER_URL_IN_NETWORK"
+ENV_SIGN="$ENV_NET -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK"
 pass "stack up ($MIP0018_STACK_PROJECT)"
 
 cli() { # cli <log name> <mip0018 args...> — wallet-free container
@@ -281,8 +281,14 @@ rc=0; signer guard-genesis deploy $A --contract "$EM" --record /e2e/records/guar
 expect_rc "wrong genesis aborts before any wallet or submission" 1 "$rc"
 check "wrong-genesis run created no record" test ! -e "$RECORDS/guard.json"
 check "wrong-genesis error names the chain mismatch" grep -q "wrong chain" "$LOGS/guard-genesis.err"
-rc=0; cli guard-public check-event --network undeployed --indexer https://indexer.stagenet.shielded.tools/api/v4/graphql --rpc http://node:9944 --contract "$EM_ADDR" --tx "$PUB_TX" || rc=$?
-expect_rc "undeployed profile refuses a Stagenet URL (usage)" 2 "$rc"
+rc=0; cli guard-public check-event --network undeployed --indexer https://indexer.preview.midnight.network/api/v4/graphql --rpc http://node:9944 --contract "$EM_ADDR" --tx "$PUB_TX" || rc=$?
+expect_rc "undeployed profile refuses a preview URL (usage)" 2 "$rc"
+rc=0; cli guard-unknown check-event --network testnet-02 --contract "$EM_ADDR" --tx "$PUB_TX" || rc=$?
+expect_rc "an unknown network id is a usage error" 2 "$rc"
+check "the unknown-network error lists the valid ids" grep -q "expected one of: undeployed, preview, preprod, mainnet" "$LOGS/guard-unknown.err"
+rc=0; cli guard-no-token list --network preprod --contract "$EM_ADDR" || rc=$?
+expect_rc "preprod without a Blockfrost token stops before any request (usage)" 2 "$rc"
+check "the missing-token error names the variable" grep -q "MIP0018_BLOCKFROST_PREPROD" "$LOGS/guard-no-token.err"
 rc=0; signer guard-usage publish $B --record /e2e/records/emitter.json --bogus || rc=$?
 expect_rc "unknown option rejected before anything runs (usage)" 2 "$rc"
 

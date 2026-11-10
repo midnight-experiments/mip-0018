@@ -1,0 +1,113 @@
+{
+  "kind": "mip0018-case",
+  "schema": 1,
+  "id": "C01",
+  "title": "OpenZeppelin FungibleToken (kind 3): deploy, publish",
+  "demonstrates": "The common fields in one event from an OpenZeppelin token; kind 3 has no color.",
+  "conclusion": "1 kind-3 identity with 3 usable fields (name \"Acme Gold\", symbol \"AGLD\", decimals 6); no standards; no color.",
+  "mip": {
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
+    "eventName": "mip-0018:token-metadata[v1]"
+  },
+  "source": {
+    "example": "examples/openzeppelin/fungible-token",
+    "metadata": "examples/openzeppelin/fungible-token/metadata.json"
+  },
+  "notes": [
+    "The OpenZeppelin examples publish no `standards`: `standards` is a self-declaration, and OpenZeppelin Compact Contracts claims no MIP. The A1 shape (with standards) on Preview is C06 and C10 (examples/minimal)."
+  ],
+  "placeholders": {
+    "{net}": "network options (Preview: --network preview)",
+    "{signer}": "wallet 1's signer options (mnemonic file, wallet cache)",
+    "{signer2}": "wallet 2's signer options, with its OWN private-state file",
+    "{case}": "this case folder",
+    "{out}": "where records and observations are written (Preview: this case folder)",
+    "{out:<ID>}": "another case's output folder"
+  },
+  "steps": [
+    {
+      "id": "deploy",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "deploy",
+        "{net}",
+        "{signer}",
+        "--example",
+        "fungible-token",
+        "--record",
+        "{out}/record.json"
+      ],
+      "expectExit": 0,
+      "submits": "deploy"
+    },
+    {
+      "id": "publish",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "publishMetadata",
+        "--step",
+        "publish"
+      ],
+      "expectExit": 0,
+      "submits": "call"
+    },
+    {
+      "id": "check-event-publish",
+      "runner": "wallet-free",
+      "argv": [
+        "check-event",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "publish",
+        "--expect",
+        "@{case}/expect/publish.json",
+        "--wait",
+        "120",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "observed-check-event-publish.json"
+    },
+    {
+      "id": "list",
+      "runner": "wallet-free",
+      "argv": [
+        "list",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--expect",
+        "@{case}/expected.json",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "observed-list.json"
+    }
+  ],
+  "expected": "expected.json",
+  "recheck": {
+    "checkEvent": [
+      {
+        "record": "record.json",
+        "step": "publish",
+        "expect": "expect/publish.json"
+      }
+    ],
+    "list": [
+      {
+        "record": "record.json",
+        "expect": "expected.json"
+      }
+    ]
+  }
+}

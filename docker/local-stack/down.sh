@@ -16,12 +16,12 @@ fi
 # shellcheck disable=SC1090
 . "$state"
 # Ports only matter for `up`; give compose placeholders so an older ports.env still tears down.
-: "${MIP0018_NODE_PORT:=0}" "${MIP0018_INDEXER_PORT:=0}" "${MIP0018_PROOF_PORT:=0}" "${MIP0018_WALLET_PROOF_PORT:=0}"
-export MIP0018_DOCKER_PREFIX MIP0018_STACK_PROJECT MIP0018_NODE_PORT MIP0018_INDEXER_PORT MIP0018_PROOF_PORT MIP0018_WALLET_PROOF_PORT
+: "${MIP0018_NODE_PORT:=0}" "${MIP0018_INDEXER_PORT:=0}" "${MIP0018_PROOF_PORT:=0}"
+export MIP0018_DOCKER_PREFIX MIP0018_STACK_PROJECT MIP0018_NODE_PORT MIP0018_INDEXER_PORT MIP0018_PROOF_PORT
 
 if [ -n "${MIP0018_KEEP_LOGS:-}" ]; then
   mkdir -p "$here/.state/$MIP0018_STACK_PROJECT"
-  for s in node indexer proof-server wallet-proof-server; do
+  for s in node indexer proof-server; do
     docker compose -f "$here/compose.yml" logs --no-color "$s" >"$here/.state/$MIP0018_STACK_PROJECT/$s.log" 2>&1 || true
   done
   echo "logs saved in $here/.state/$MIP0018_STACK_PROJECT/" >&2

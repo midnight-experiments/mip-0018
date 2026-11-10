@@ -1,0 +1,218 @@
+{
+  "kind": "mip0018-run-record",
+  "schema": 1,
+  "createdAt": "2026-11-09T22:24:10.479Z",
+  "updatedAt": "2026-11-09T22:26:27.775Z",
+  "network": {
+    "id": "preview",
+    "networkId": "preview",
+    "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+    "chainInstance": "0xee45046d11882c45ee0d468203169afa48f084ffaa380043ab84b1fabf3947fe",
+    "indexer": "https://indexer.preview.midnight.network/api/v4/graphql",
+    "rpc": "https://rpc.preview.midnight.network"
+  },
+  "contract": {
+    "name": "MyUnshieldedToken",
+    "managedDir": "examples/openzeppelin/native-unshielded/managed/MyUnshieldedToken",
+    "verifierKeySha256": {
+      "decimals": "6ea8e1a4cd9dac4c35bde15b66cbfc838d1473ba723f4c24f8561e04de15f367",
+      "mint": "8507615ed375717750258fcf5d16047d60d577db02a2d486df00ed3c607cc9b4",
+      "name": "739203add92bf9cd18b0f996a9fcbce3860fc92ea25def743deee73d458505eb",
+      "publishMetadata": "af93274f4f0597e6ec8643d1cdbb1e89d4168d5c734c7dffa25bdadb7747bae8",
+      "setMetadata": "971bf4d73782715d5b087d62cea61bc74748e6bc36976bcdb5fc172a067e98c4",
+      "symbol": "129b249eeffeda61ab3a8a44b0f5e114309e5fd601b936e48ba7957669cc4fa0",
+      "tokenColor": "86799647a20f5c1fa1d1dd924516ffa39f728c1c30db740b474e409020a33ea9",
+      "withdrawMetadata": "ff83ac7ad68f3ceba2cf32a896d9bc3b58c6dc762a90ada2bd1da08b2f8439e8"
+    },
+    "adapter": "examples/openzeppelin/native-unshielded/mip0018.adapter.ts",
+    "privateStateId": "MyUnshieldedToken",
+    "address": "f6e2fac7659ec945494ceaed8c17c5f6cc88af9e6d7f83c9f88f6c9f33b42a1c",
+    "constructorArgs": []
+  },
+  "steps": [
+    {
+      "id": "deploy",
+      "kind": "deploy",
+      "args": [],
+      "state": "completed",
+      "attempts": [
+        {
+          "at": "2026-11-09T22:24:18.382Z",
+          "event": "submitting 657463586c9b51b77e2f982cd3bffec67e093facc6c68c498cd1fa5c5c17b9b6"
+        },
+        {
+          "at": "2026-11-09T22:24:38.155Z",
+          "event": "node accepted 0028fb91212330aef680679a7e55a13097046b99925450b34d129038a09ca20917"
+        },
+        {
+          "at": "2026-11-09T22:24:39.144Z",
+          "event": "midnight-js: SucceedEntirely at block 41594"
+        },
+        {
+          "at": "2026-11-09T22:25:10.861Z",
+          "event": "completed: contract f6e2fac7659ec945494ceaed8c17c5f6cc88af9e6d7f83c9f88f6c9f33b42a1c on chain with decimals, mint, name, publishMetadata, setMetadata, symbol, tokenColor, withdrawMetadata"
+        }
+      ],
+      "startedAt": "2026-11-09T22:24:16.536Z",
+      "tx": {
+        "hash": "657463586c9b51b77e2f982cd3bffec67e093facc6c68c498cd1fa5c5c17b9b6",
+        "identifiers": [
+          "006db581ba30d9f7ffe257b522f93b2b1e9b24c8e666c004197a46f97996f08f1c",
+          "0028fb91212330aef680679a7e55a13097046b99925450b34d129038a09ca20917"
+        ],
+        "ttl": "2026-11-09T22:54:17.000Z",
+        "txId": "0028fb91212330aef680679a7e55a13097046b99925450b34d129038a09ca20917"
+      },
+      "inclusion": {
+        "height": 41594,
+        "hash": "9dcccec55ca7fff89ed77c7b0608f3546b6be125fea3b9cacf2155e72faab17c",
+        "status": "SUCCESS",
+        "fee": "8770524625067304"
+      },
+      "observed": {
+        "exists": true,
+        "operations": [
+          "decimals",
+          "mint",
+          "name",
+          "publishMetadata",
+          "setMetadata",
+          "symbol",
+          "tokenColor",
+          "withdrawMetadata"
+        ],
+        "block": {
+          "height": 41594,
+          "hash": "9dcccec55ca7fff89ed77c7b0608f3546b6be125fea3b9cacf2155e72faab17c"
+        },
+        "txHash": "657463586c9b51b77e2f982cd3bffec67e093facc6c68c498cd1fa5c5c17b9b6"
+      },
+      "completedAt": "2026-11-09T22:25:10.861Z"
+    },
+    {
+      "id": "mint",
+      "kind": "call",
+      "circuit": "mint",
+      "args": [
+        {
+          "bytes": {
+            "$signer": "unshieldedAddress"
+          }
+        },
+        "1000000"
+      ],
+      "state": "completed",
+      "attempts": [
+        {
+          "at": "2026-11-09T22:25:28.514Z",
+          "event": "submitting d5b92529fa800139015de6a802d1a498c1d989118c71d29ddafd9b438b5c907d"
+        },
+        {
+          "at": "2026-11-09T22:25:43.559Z",
+          "event": "node accepted 00f7e78f83d70be937f0ebbaf46f63df0b93eabc649aa61048a102d97a01f19f0c"
+        },
+        {
+          "at": "2026-11-09T22:25:44.315Z",
+          "event": "midnight-js: SucceedEntirely at block 41605"
+        },
+        {
+          "at": "2026-11-09T22:25:44.891Z",
+          "event": "completed: 0 expected Misc event(s) observed in d5b92529fa800139015de6a802d1a498c1d989118c71d29ddafd9b438b5c907d"
+        }
+      ],
+      "startedAt": "2026-11-09T22:25:23.974Z",
+      "expectedEvents": [],
+      "tx": {
+        "hash": "d5b92529fa800139015de6a802d1a498c1d989118c71d29ddafd9b438b5c907d",
+        "identifiers": [
+          "0040c0bbb16d33fafeaba81606c5502d990d77567f7131856ba4861015e9b8d18a",
+          "00f7e78f83d70be937f0ebbaf46f63df0b93eabc649aa61048a102d97a01f19f0c"
+        ],
+        "ttl": "2026-11-09T22:55:27.000Z",
+        "txId": "00f7e78f83d70be937f0ebbaf46f63df0b93eabc649aa61048a102d97a01f19f0c"
+      },
+      "inclusion": {
+        "height": 41605,
+        "hash": "26f7bc46a0149279ad3d423844e0285e130c3f22ab864b1cf5f31855bab8cb39",
+        "status": "SUCCESS",
+        "fee": "279378971428572"
+      },
+      "observed": {
+        "inclusion": {
+          "height": 41605,
+          "hash": "26f7bc46a0149279ad3d423844e0285e130c3f22ab864b1cf5f31855bab8cb39",
+          "status": "SUCCESS",
+          "fee": "279378971428572"
+        },
+        "events": []
+      },
+      "completedAt": "2026-11-09T22:25:44.891Z"
+    },
+    {
+      "id": "publish",
+      "kind": "call",
+      "circuit": "publishMetadata",
+      "args": [],
+      "state": "completed",
+      "attempts": [
+        {
+          "at": "2026-11-09T22:26:05.516Z",
+          "event": "submitting a2d3462dc4ee331d4f851c6c38cf2b4025bf0dc51574b5f1c48c04e5142fa19f"
+        },
+        {
+          "at": "2026-11-09T22:26:26.270Z",
+          "event": "node accepted 00cfaa4766d2a147f621ac599e767644afb9ca3bc7b5e8ce3c70ed3dab0939c481"
+        },
+        {
+          "at": "2026-11-09T22:26:27.009Z",
+          "event": "midnight-js: SucceedEntirely at block 41612"
+        },
+        {
+          "at": "2026-11-09T22:26:27.775Z",
+          "event": "completed: 1 expected Misc event(s) observed in a2d3462dc4ee331d4f851c6c38cf2b4025bf0dc51574b5f1c48c04e5142fa19f"
+        }
+      ],
+      "startedAt": "2026-11-09T22:25:56.015Z",
+      "expectedEvents": [
+        {
+          "name": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+          "payload": "6d69702d303031383a6578616d706c653a756e736869656c646564000000000002046e616d65010b41636d65205075626c69630673796d626f6c01044150554208646563696d616c73020106000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "tx": {
+        "hash": "a2d3462dc4ee331d4f851c6c38cf2b4025bf0dc51574b5f1c48c04e5142fa19f",
+        "identifiers": [
+          "002fae91c18c2840031d2f60b5d480f0a6e16c430725cf8b15b7e49e6ce4d487c2",
+          "00cfaa4766d2a147f621ac599e767644afb9ca3bc7b5e8ce3c70ed3dab0939c481"
+        ],
+        "ttl": "2026-11-09T22:56:04.000Z",
+        "txId": "00cfaa4766d2a147f621ac599e767644afb9ca3bc7b5e8ce3c70ed3dab0939c481"
+      },
+      "inclusion": {
+        "height": 41612,
+        "hash": "cf9463bbd37c1f5202314f3b216d87da8ddc7ba1339d850b19af0a2a395a4d47",
+        "status": "SUCCESS",
+        "fee": "219152000000001"
+      },
+      "observed": {
+        "inclusion": {
+          "height": 41612,
+          "hash": "cf9463bbd37c1f5202314f3b216d87da8ddc7ba1339d850b19af0a2a395a4d47",
+          "status": "SUCCESS",
+          "fee": "219152000000001"
+        },
+        "events": [
+          {
+            "id": 13255,
+            "name": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+            "payload": "6d69702d303031383a6578616d706c653a756e736869656c646564000000000002046e616d65010b41636d65205075626c69630673796d626f6c01044150554208646563696d616c73020106000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      "completedAt": "2026-11-09T22:26:27.775Z"
+    }
+  ],
+  "signer": {
+    "unshieldedAddress": "mn_addr_preview1wlhw0m3nh29lfmk0tj4lvfh2wfsekt8nns9h57gpyfe0az7e9fts2x420z"
+  }
+}

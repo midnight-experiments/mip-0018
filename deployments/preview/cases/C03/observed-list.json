@@ -1,0 +1,117 @@
+{
+  "network": {
+    "id": "preview",
+    "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+    "indexer": "https://indexer.preview.midnight.network/api/v4/graphql"
+  },
+  "contract": "f6e2fac7659ec945494ceaed8c17c5f6cc88af9e6d7f83c9f88f6c9f33b42a1c",
+  "snapshot": {
+    "indexerTip": {
+      "height": 41613,
+      "hash": "fbcd6e5778f3116d08c0788220a7192a3edba67d68467a35bdb0dfa7ebdd7ea2"
+    },
+    "toBlock": 41613,
+    "nodeHashAtTip": "0xfbcd6e5778f3116d08c0788220a7192a3edba67d68467a35bdb0dfa7ebdd7ea2",
+    "tipMatchesNode": true,
+    "finalizedHeight": 41613
+  },
+  "pages": 2,
+  "counts": {
+    "events": 1,
+    "accepted": 1,
+    "rejected": 0,
+    "ignored": 0
+  },
+  "events": [
+    {
+      "id": 13255,
+      "block": {
+        "height": 41612,
+        "hash": "cf9463bbd37c1f5202314f3b216d87da8ddc7ba1339d850b19af0a2a395a4d47"
+      },
+      "txHash": "a2d3462dc4ee331d4f851c6c38cf2b4025bf0dc51574b5f1c48c04e5142fa19f",
+      "txId": 3174,
+      "result": "accept",
+      "identity": "preview|f6e2fac7659ec945494ceaed8c17c5f6cc88af9e6d7f83c9f88f6c9f33b42a1c|6d69702d303031383a6578616d706c653a756e736869656c6465640000000000|2",
+      "domainSep": "6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+      "kind": 2,
+      "records": 3
+    }
+  ],
+  "identities": [
+    {
+      "key": "preview|f6e2fac7659ec945494ceaed8c17c5f6cc88af9e6d7f83c9f88f6c9f33b42a1c|6d69702d303031383a6578616d706c653a756e736869656c6465640000000000|2",
+      "network": "preview",
+      "contractAddress": "f6e2fac7659ec945494ceaed8c17c5f6cc88af9e6d7f83c9f88f6c9f33b42a1c",
+      "domainSep": "6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+      "kind": 2,
+      "colored": true,
+      "color": "651ab6b0dd7ccb521586f3c14e235842171cbf27ba43ad5d3ac52aa991ce77d0",
+      "fields": [
+        {
+          "key": "6e616d65",
+          "valType": 1,
+          "value": "41636d65205075626c6963",
+          "setAt": {
+            "block": "41612",
+            "tx": 3174,
+            "event": 13255,
+            "record": 0
+          },
+          "keyHex": "6e616d65",
+          "usable": true
+        },
+        {
+          "key": "73796d626f6c",
+          "valType": 1,
+          "value": "41505542",
+          "setAt": {
+            "block": "41612",
+            "tx": 3174,
+            "event": 13255,
+            "record": 1
+          },
+          "keyHex": "73796d626f6c",
+          "usable": true
+        },
+        {
+          "key": "646563696d616c73",
+          "valType": 2,
+          "value": "06",
+          "setAt": {
+            "block": "41612",
+            "tx": 3174,
+            "event": 13255,
+            "record": 2
+          },
+          "integer": "6",
+          "keyHex": "646563696d616c73",
+          "usable": true
+        }
+      ],
+      "common": {
+        "name": "Acme Public",
+        "symbol": "APUB",
+        "decimals": "6"
+      }
+    }
+  ],
+  "groups": [
+    {
+      "network": "preview",
+      "contractAddress": "f6e2fac7659ec945494ceaed8c17c5f6cc88af9e6d7f83c9f88f6c9f33b42a1c",
+      "symbol": "41505542",
+      "members": [
+        {
+          "domainSep": "6d69702d303031383a6578616d706c653a756e736869656c6465640000000000",
+          "kind": 2,
+          "key": "preview|f6e2fac7659ec945494ceaed8c17c5f6cc88af9e6d7f83c9f88f6c9f33b42a1c|6d69702d303031383a6578616d706c653a756e736869656c6465640000000000|2"
+        }
+      ]
+    }
+  ],
+  "expectation": {
+    "ok": true,
+    "differences": []
+  }
+}

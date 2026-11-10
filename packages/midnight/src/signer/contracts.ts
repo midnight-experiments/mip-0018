@@ -3,8 +3,8 @@
 // Deploy, call and maintenance steps with before/after chain checks and a write-ahead submission journal.
 //
 // The transaction path is midnight-js's own: `deployContract`, `findDeployedContract(...).callTx.<circuit>()` and,
-// for ZKIR-v3 maintenance (midnight-js writes only the v3 slot), a ledger-level MaintenanceUpdate submitted with
-// midnight-js `submitTx`. Around it:
+// for maintenance, a ledger-level MaintenanceUpdate signed with the maintenance key (from the private-state file or a
+// key file, at its committee index) and submitted with midnight-js `submitTx`. Around it:
 //
 //   before   the step is skipped when the chain already shows it done (contract at the recorded address; the
 //            circuit's key already removed; the contract's metadata already holding exactly what this publish
@@ -13,7 +13,8 @@
 //            TTL has passed — only then may it be submitted again)
 //   journal  the midnight provider's submit is wrapped: the run record stores the transaction hash, identifiers,
 //            TTL, the deploy's contract address (and the maintenance key + private state go to the 0600 file)
-//            BEFORE the node sees the transaction
+//            BEFORE the node sees the transaction; a refusal raised there is kept by the journal itself, because
+//            midnight-js reports every provider failure as its own error with a rebuilt, redacted cause
 //   after    the step is `completed` only when the expected change is observed through the indexer (contract with
 //            every compiled operation; exactly the expected Misc events in that transaction; key gone)
 
@@ -24,9 +25,9 @@ import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-j
 import type { MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
 import { sampleSigningKey, type FinalizedTransaction, type SigningKey } from '@midnightntwrk/ledger-v9';
 import { normHex } from '../hex.ts';
-import { Indexer } from '../indexer.ts';
-import { checkIdentity, IdentityError, normGenesis } from '../network.ts';
+import { bindRecordedNetworks, checkChainIdentity, IdentityError, indexerFor, normGenesis } from '../network.ts';
 import { decodeTransaction, miscLogsOf } from '../raw.ts';
+import { ScrubbedError, scrubSecrets } from '../redact.ts';
 import { circuitArgs, fromJsonLoose, resolvePlaceholders } from './args.ts';
 import type { AdapterContext, ContractAdapter } from './adapter.ts';
 import { contractView, eventsInTx, pollFor, transactionState, wouldChange } from './check.ts';
@@ -36,7 +37,7 @@ import { buildProviders, loadCompiledContract, type CompiledArtifacts } from './
 import { findStep, loadRecord, note, saveRecord, upsertStep, RecordError, type RunRecord, type StepRecord } from './records.ts';
 import { describeWallet, waitForSync, type SignerEndpoints, type WalletSession } from './wallet.ts';
 
-export class StepError extends Error {
+export class StepError extends ScrubbedError {
   override name = 'StepError';
   readonly outcome: 'failed' | 'unknown' | 'refused';
   constructor(message: string, outcome: 'failed' | 'unknown' | 'refused') {
@@ -90,16 +91,28 @@ export function verifierKeyHashes(managedDir: string): Record<string, string> {
   );
 }
 
-/** Opens (or creates) the run record and checks the chain identity before anything else. */
+/**
+ * Opens (or creates) the run record and checks the chain identity before anything else: an existing record binds the
+ * profile to the genesis and chain instance it recorded (`bindRecordedNetworks`), so another network or a network
+ * re-created from the same genesis is refused before the wallet syncs or anything is built.
+ */
 export async function openRun(o: RunOptions): Promise<Run> {
   const log = o.log ?? (() => {});
-  const genesis = await checkIdentity(o.ep.profile);
   let record = loadRecord(o.recordPath);
+  const profile = record ? bindRecordedNetworks(o.ep.profile, [{ source: o.recordPath, network: record.network }]) : o.ep.profile;
+  const identity = await checkChainIdentity(profile);
+  const genesis = identity.genesisHash;
+  const chainInstance = identity.chainInstance ?? undefined;
   const keys = verifierKeyHashes(o.artifacts.managedDir);
   if (record) {
     if (normGenesis(record.network.genesisHash) !== genesis || record.network.id !== o.ep.profile.id) {
       throw new IdentityError(
         `${o.recordPath} was made on ${record.network.id} ${record.network.genesisHash}; this node is ${o.ep.profile.id} ${genesis}`,
+      );
+    }
+    if (record.network.chainInstance !== undefined && normGenesis(record.network.chainInstance) !== chainInstance) {
+      throw new IdentityError(
+        `${o.recordPath} was made on another instance of ${record.network.id}: block 1 was ${record.network.chainInstance}, the node has ${chainInstance ?? 'none'} (same genesis ${genesis}; the network was re-created)`,
       );
     }
     if (record.contract.name !== o.artifacts.name)
@@ -117,6 +130,7 @@ export async function openRun(o: RunOptions): Promise<Run> {
         id: o.ep.profile.id,
         networkId: o.ep.profile.networkId,
         genesisHash: genesis,
+        ...(chainInstance !== undefined ? { chainInstance } : {}),
         indexer: o.ep.profile.indexer,
         rpc: o.ep.profile.rpc,
       },
@@ -166,16 +180,29 @@ function crashHook(run: Run, step: StepRecord): void {
   }
 }
 
+interface Journal {
+  onBeforeSubmit(tx: FinalizedTransaction): Promise<void>;
+  onSubmitted(tx: FinalizedTransaction, txId: string): Promise<void>;
+  /** The error the before-submission hook raised, as raised (midnight-js passes on only a rebuilt copy). */
+  failure?: unknown;
+}
+
 /** Journal hooks for one step: write-ahead before the node sees the transaction. */
 function journal(
   run: Run,
   step: StepRecord,
   extra: (tx: FinalizedTransaction, decoded: ReturnType<typeof decodeTransaction>) => Promise<void>,
-) {
-  return {
+): Journal {
+  const j: Journal = {
     onBeforeSubmit: async (tx: FinalizedTransaction) => {
-      const d = decodeTransaction(tx as never);
-      await extra(tx, d);
+      let d: ReturnType<typeof decodeTransaction>;
+      try {
+        d = decodeTransaction(tx as never);
+        await extra(tx, d);
+      } catch (e) {
+        j.failure = e;
+        throw e;
+      }
       const ttl = ttlOf(tx);
       step.tx = { hash: d.hash, identifiers: d.identifiers, ...(ttl ? { ttl } : {}) };
       step.state = 'submitting';
@@ -190,13 +217,10 @@ function journal(
       crashHook(run, step);
     },
   };
+  return j;
 }
 
-function providersFor(
-  run: Run,
-  hooks: ReturnType<typeof journal> | Record<string, never>,
-  artifacts: CompiledArtifacts = run.o.artifacts,
-): MidnightProviders {
+function providersFor(run: Run, hooks: Journal | Record<string, never>, artifacts: CompiledArtifacts = run.o.artifacts): MidnightProviders {
   return buildProviders(run.o.ep, run.o.session, artifacts, run.psp, hooks);
 }
 
@@ -243,7 +267,7 @@ async function reconcile(run: Run, step: StepRecord): Promise<'included' | 'expi
 
 async function inclusionOf(run: Run, step: StepRecord): Promise<void> {
   if (!step.tx || step.inclusion) return;
-  const t = await new Indexer(run.o.ep.profile.indexer, run.o.ep.profile.indexerWs).waitForTransaction(step.tx.hash, {
+  const t = await indexerFor(run.o.ep.profile).waitForTransaction(step.tx.hash, {
     timeoutMs: run.o.observeTimeoutMs ?? 120_000,
   });
   if (t)
@@ -277,7 +301,7 @@ function refuse(run: Run, step: StepRecord, why: string): never {
 
 function onPerformError(run: Run, step: StepRecord, e: unknown): never {
   if (e instanceof StepError) throw e;
-  const msg = `${(e as Error)?.name ?? 'Error'}: ${String((e as Error)?.message ?? e)}`.slice(0, 1500);
+  const msg = scrubSecrets(`${(e as Error)?.name ?? 'Error'}: ${String((e as Error)?.message ?? e)}`).slice(0, 1500);
   step.error = msg;
   if (step.tx) {
     step.state = 'unknown';
@@ -364,7 +388,7 @@ export async function deployStep(
       throw new StepError('midnight-js reports another contract address than the journal', 'failed');
     note(step, `midnight-js: ${p.status} at block ${p.blockHeight}`);
   } catch (e) {
-    onPerformError(run, step, e);
+    onPerformError(run, step, hooks.failure ?? e);
   }
   return afterDeploy(run, step);
 }
@@ -456,8 +480,7 @@ export async function callStep(run: Run, input: CallInput): Promise<StepRecord> 
   const arts = input.artifacts ?? run.o.artifacts;
   const a = input.artifacts ? input.adapter : run.o.adapter;
   const privateStateId = run.record.contract.privateStateId;
-  if (privateStateId !== undefined) run.psp.setContractAddress(address);
-  let privateState = privateStateId !== undefined ? await run.psp.get(privateStateId) : undefined;
+  let privateState = privateStateId !== undefined ? await run.psp.forContract(address).get(privateStateId) : undefined;
   if (privateStateId !== undefined && (privateState === null || privateState === undefined) && a?.initialPrivateState) {
     // This signer has no private state for the contract (it did not deploy it): give it its own, as midnight-js
     // `findDeployedContract({ initialPrivateState })` would. For an Ownable contract that is a different secret,
@@ -473,7 +496,7 @@ export async function callStep(run: Run, input: CallInput): Promise<StepRecord> 
   };
   const json = resolvePlaceholders(input.args, { ...signerContext(run), adapter: a?.values?.(ctx) }) as unknown[];
   const args = a?.circuitArgs?.(input.circuit, json, ctx) ?? circuitArgs(arts.managedDir, input.circuit, json);
-  const current = await new Indexer(run.o.ep.profile.indexer, run.o.ep.profile.indexerWs).allContractEvents(address, {});
+  const current = await indexerFor(run.o.ep.profile).allContractEvents(address, {});
   const hooks = journal(run, step, async (_tx, d) => {
     const logs = miscLogsOf(d, address).filter((l) => l.name !== undefined && l.payload !== undefined);
     step.expectedEvents = logs.map((l) => ({ name: l.name!, payload: l.payload! }));
@@ -494,8 +517,7 @@ export async function callStep(run: Run, input: CallInput): Promise<StepRecord> 
     const r = await fn(...args);
     note(step, `midnight-js: ${r.public.status} at block ${r.public.blockHeight}`);
   } catch (e) {
-    const already =
-      e instanceof AlreadyPresent || String((e as Error)?.message ?? '').includes('already holds exactly what this call would set');
+    const already = hooks.failure instanceof AlreadyPresent || e instanceof AlreadyPresent;
     if (already && !step.tx) {
       step.state = 'completed';
       step.skipped =
@@ -505,7 +527,7 @@ export async function callStep(run: Run, input: CallInput): Promise<StepRecord> 
       run.save();
       return step;
     }
-    onPerformError(run, step, e);
+    onPerformError(run, step, hooks.failure ?? e);
   }
   return afterCall(run, step);
 }
@@ -561,7 +583,7 @@ export async function removeVerifierKeyStep(run: Run, circuit: string, slot: 'v3
     )) as unknown as { status: string; blockHeight: number };
     note(step, `midnight-js submitTx: ${r.status} at block ${r.blockHeight}`);
   } catch (e) {
-    onPerformError(run, step, e);
+    onPerformError(run, step, hooks.failure ?? e);
   }
   return after();
 }
@@ -586,10 +608,16 @@ const sha256 = (b: Uint8Array) => createHash('sha256').update(b).digest('hex');
 const NODE_REJECTION = /Invalid Transaction|InvalidTransaction|\b1010\b|Custom error/u;
 
 /**
- * An error's message with its causes: the wallet SDK reports a node rejection as an Effect `FiberFailure` wrapping
- * `SubmissionError("Transaction submission error")`, whose `cause` (the node client's error) holds the node's reason.
+ * An error's message with its causes, scrubbed (`scrubSecrets`: no URL query string or credentials, no registered
+ * token), so it can be stored, logged or truncated: the wallet SDK reports a node rejection as an Effect `FiberFailure`
+ * wrapping `SubmissionError("Transaction submission error")`, whose `cause` (the node client's error) holds the node's
+ * reason, and a node client's error may quote its token-bearing endpoint.
  */
-export function describeError(e: unknown, depth = 0, seen = new Set<unknown>()): string {
+export function describeError(e: unknown): string {
+  return scrubSecrets(errorChain(e));
+}
+
+function errorChain(e: unknown, depth = 0, seen = new Set<unknown>()): string {
   if (e === null || e === undefined || depth > 8 || seen.has(e)) return '';
   if (typeof e !== 'object') return String(e);
   seen.add(e);
@@ -600,11 +628,11 @@ export function describeError(e: unknown, depth = 0, seen = new Set<unknown>()):
   for (const k of ['cause', 'error', 'defect', 'left', 'right', 'failure', 'data', 'details', 'reason']) {
     const v = o[k];
     if (v === undefined || v === null) continue;
-    parts.push(typeof v === 'object' ? describeError(v, depth + 1, seen) : String(v));
+    parts.push(typeof v === 'object' ? errorChain(v, depth + 1, seen) : String(v));
   }
   for (const sym of Object.getOwnPropertySymbols(o)) {
     const v = o[sym];
-    if (v && typeof v === 'object') parts.push(describeError(v, depth + 1, seen));
+    if (v && typeof v === 'object') parts.push(errorChain(v, depth + 1, seen));
   }
   return [...new Set(parts.filter((x) => x !== ''))].join(' <- ');
 }
@@ -731,7 +759,7 @@ export async function insertVerifierKeyStep(run: Run, input: InsertInput): Promi
       run.save();
       throw new StepError(`${step.id}: rejected by the node: ${msg.slice(0, 300)}`, 'failed');
     }
-    onPerformError(run, step, e);
+    onPerformError(run, step, hooks.failure ?? e);
   }
   return after();
 }

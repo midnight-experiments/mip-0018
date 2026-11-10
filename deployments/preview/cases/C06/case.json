@@ -1,0 +1,377 @@
+{
+  "kind": "mip0018-case",
+  "schema": 1,
+  "id": "C06",
+  "title": "Minimal OwnerKey (kind 3, no OpenZeppelin) lifecycle: deploy, publish, rename, withdraw (six Null records, one event), withdraw again, revive",
+  "demonstrates": "MIP \"Applying records\" on chain: latest value wins (S2); one event with a Null record for each common key (name, symbol, decimals, standards, image, image_sha256) deletes every field, so the token identity is not referenced at all — not listed, in no group, as if it had never been described (S3c); a repeated withdrawal changes nothing (S3b); a later record describes it again with only that field (the revive: name and symbol; decimals and standards do not return, S3d).",
+  "conclusion": "after publish: name \"Acme Token\", symbol \"ACME\", decimals 6, standards \"mip-0004\" (group \"ACME\"); after rename: name \"Acme Prime\", symbol \"ACMP\", decimals and standards unchanged (group \"ACMP\"); after withdraw and after withdraw again: no identity and no group (`list`: identities none); final: ONLY name \"Acme Again\" and symbol \"ACMA\" (group \"ACMA\"); the publish payload = MIP Appendix A byte-for-byte, the withdraw payload = header + the six Null records.",
+  "mip": {
+    "commit": "338ea194bbe7c4e5d1829234a503b7c1b11ebf0f",
+    "eventName": "mip-0018:token-metadata[v1]"
+  },
+  "source": {
+    "example": "examples/minimal",
+    "contract": "examples/minimal/contracts/OwnerKey.compact",
+    "metadata": "examples/minimal/owner-key.metadata.json"
+  },
+  "notes": [
+    "withdrawMetadata() emits one event with a Null record for each of the six common keys; the token never had image or image_sha256, and a Null record for a field without a value has no effect.",
+    "Kind 3 has no color, so there is no color lookup: per the MIP \"Lookup\" section a contract token is found by querying the contract's kind-3 events, which is `list` — after the withdrawal it must show no identity for (0x11…, 3) and no group.",
+    "OwnerKey renames with setMetadata(name, symbol), so the revive sets name and symbol (10- and 4-byte values: \"Acme Again\"/\"ACMA\").",
+    "A Null record that deletes a single key while the other fields stay is shown on chain by C12 (steps s3a-publish and s3a-delete-name, vector S3a).",
+    "Every intermediate state is re-checkable: `recheck` lists the contract as of each step's block (`list --to-block`)."
+  ],
+  "placeholders": {
+    "{net}": "network options (Preview: --network preview)",
+    "{signer}": "wallet 1's signer options (mnemonic file, wallet cache)",
+    "{signer2}": "wallet 2's signer options, with its OWN private-state file",
+    "{case}": "this case folder",
+    "{out}": "where records and observations are written (Preview: this case folder)",
+    "{out:<ID>}": "another case's output folder"
+  },
+  "steps": [
+    {
+      "id": "deploy",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "deploy",
+        "{net}",
+        "{signer}",
+        "--adapter",
+        "examples/minimal/owner-key.mip0018.adapter.ts",
+        "--record",
+        "{out}/record.json"
+      ],
+      "expectExit": 0,
+      "submits": "deploy"
+    },
+    {
+      "id": "publish",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "publishMetadata",
+        "--step",
+        "publish"
+      ],
+      "expectExit": 0,
+      "submits": "call"
+    },
+    {
+      "id": "check-event-publish",
+      "runner": "wallet-free",
+      "argv": [
+        "check-event",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "publish",
+        "--expect",
+        "@{case}/expect/publish.json",
+        "--wait",
+        "120",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "observed-check-event-publish.json"
+    },
+    {
+      "id": "list-after-publish",
+      "runner": "wallet-free",
+      "argv": [
+        "list",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--expect",
+        "@{case}/expected-after-publish.json",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "observed-list-after-publish.json"
+    },
+    {
+      "id": "rename",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "setMetadata",
+        "--args",
+        "[{\"$utf8\":\"Acme Prime\"},{\"$utf8\":\"ACMP\"}]",
+        "--step",
+        "rename"
+      ],
+      "expectExit": 0,
+      "submits": "call"
+    },
+    {
+      "id": "check-event-rename",
+      "runner": "wallet-free",
+      "argv": [
+        "check-event",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "rename",
+        "--expect",
+        "@{case}/expect/rename.json",
+        "--wait",
+        "120",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "observed-check-event-rename.json"
+    },
+    {
+      "id": "list-after-rename",
+      "runner": "wallet-free",
+      "argv": [
+        "list",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--expect",
+        "@{case}/expected-after-rename.json",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "observed-list-after-rename.json"
+    },
+    {
+      "id": "withdraw",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "withdrawMetadata",
+        "--step",
+        "withdraw"
+      ],
+      "expectExit": 0,
+      "submits": "call"
+    },
+    {
+      "id": "check-event-withdraw",
+      "runner": "wallet-free",
+      "argv": [
+        "check-event",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "withdraw",
+        "--expect",
+        "@{case}/expect/withdraw.json",
+        "--wait",
+        "120",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "observed-check-event-withdraw.json"
+    },
+    {
+      "id": "list-after-withdraw",
+      "runner": "wallet-free",
+      "argv": [
+        "list",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--expect",
+        "@{case}/expected-after-withdraw.json",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "observed-list-after-withdraw.json"
+    },
+    {
+      "id": "withdraw-again",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "withdrawMetadata",
+        "--step",
+        "withdraw-again",
+        "--force"
+      ],
+      "expectExit": 0,
+      "submits": "call",
+      "note": "the identity is already gone, so the before-check sees no change and would skip it: --force emits it anyway (vector S3b)"
+    },
+    {
+      "id": "check-event-withdraw-again",
+      "runner": "wallet-free",
+      "argv": [
+        "check-event",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "withdraw-again",
+        "--expect",
+        "@{case}/expect/withdraw-again.json",
+        "--wait",
+        "120",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "observed-check-event-withdraw-again.json"
+    },
+    {
+      "id": "list-after-withdraw-again",
+      "runner": "wallet-free",
+      "argv": [
+        "list",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--expect",
+        "@{case}/expected-after-withdraw-again.json",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "observed-list-after-withdraw-again.json"
+    },
+    {
+      "id": "revive",
+      "runner": "signer",
+      "wallet": "wallet1",
+      "argv": [
+        "publish",
+        "{net}",
+        "{signer}",
+        "--record",
+        "{out}/record.json",
+        "--circuit",
+        "setMetadata",
+        "--args",
+        "[{\"$utf8\":\"Acme Again\"},{\"$utf8\":\"ACMA\"}]",
+        "--step",
+        "revive"
+      ],
+      "expectExit": 0,
+      "submits": "call"
+    },
+    {
+      "id": "check-event-revive",
+      "runner": "wallet-free",
+      "argv": [
+        "check-event",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--step",
+        "revive",
+        "--expect",
+        "@{case}/expect/revive.json",
+        "--wait",
+        "120",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "observed-check-event-revive.json"
+    },
+    {
+      "id": "list-after-revive",
+      "runner": "wallet-free",
+      "argv": [
+        "list",
+        "{net}",
+        "--record",
+        "{out}/record.json",
+        "--expect",
+        "@{case}/expected-after-revive.json",
+        "--json"
+      ],
+      "expectExit": 0,
+      "stdout": "observed-list-after-revive.json"
+    }
+  ],
+  "expected": "expected.json",
+  "recheck": {
+    "checkEvent": [
+      {
+        "record": "record.json",
+        "step": "publish",
+        "expect": "expect/publish.json"
+      },
+      {
+        "record": "record.json",
+        "step": "rename",
+        "expect": "expect/rename.json"
+      },
+      {
+        "record": "record.json",
+        "step": "withdraw",
+        "expect": "expect/withdraw.json"
+      },
+      {
+        "record": "record.json",
+        "step": "withdraw-again",
+        "expect": "expect/withdraw-again.json"
+      },
+      {
+        "record": "record.json",
+        "step": "revive",
+        "expect": "expect/revive.json"
+      }
+    ],
+    "list": [
+      {
+        "record": "record.json",
+        "expect": "expected-after-publish.json",
+        "atStep": "publish"
+      },
+      {
+        "record": "record.json",
+        "expect": "expected-after-rename.json",
+        "atStep": "rename"
+      },
+      {
+        "record": "record.json",
+        "expect": "expected-after-withdraw.json",
+        "atStep": "withdraw"
+      },
+      {
+        "record": "record.json",
+        "expect": "expected-after-withdraw-again.json",
+        "atStep": "withdraw-again"
+      },
+      {
+        "record": "record.json",
+        "expect": "expected-after-revive.json",
+        "atStep": "revive"
+      },
+      {
+        "record": "record.json",
+        "expect": "expected.json"
+      }
+    ]
+  }
+}

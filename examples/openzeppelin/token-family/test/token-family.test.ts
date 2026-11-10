@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// examples/openzeppelin/token-family in compact-runtime 0.20.0 (no chain): one
+// examples/openzeppelin/token-family in compact-runtime 0.21.0 (no chain): one
 // NativeShieldedTokenFamily contract, three token types (domainSep gold, silver, bronze).
 //   * publishMetadata(domain) emits one event per identity, each = metadata.json;
 //   * colors: each type's minted coin has the color rawTokenType(domain, contractAddress), distinct per

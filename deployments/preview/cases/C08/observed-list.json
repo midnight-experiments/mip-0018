@@ -1,0 +1,86 @@
+{
+  "network": {
+    "id": "preview",
+    "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+    "indexer": "https://indexer.preview.midnight.network/api/v4/graphql"
+  },
+  "contract": "252964661b893845299864a5f83b75d5bd2b6d6019a59d0befb6a3ba34a210fd",
+  "snapshot": {
+    "indexerTip": {
+      "height": 41994,
+      "hash": "37028d5de07bd848accb22653d7eb3f84d6e0c28c1631c4c6ee273fa2e159bbd"
+    },
+    "toBlock": 41994,
+    "nodeHashAtTip": "0x37028d5de07bd848accb22653d7eb3f84d6e0c28c1631c4c6ee273fa2e159bbd",
+    "tipMatchesNode": true,
+    "finalizedHeight": 41994
+  },
+  "pages": 2,
+  "counts": {
+    "events": 2,
+    "accepted": 1,
+    "rejected": 1,
+    "ignored": 0
+  },
+  "events": [
+    {
+      "id": 13353,
+      "block": {
+        "height": 41993,
+        "hash": "6af6764a4edca05b838070ba5b533d3c2829bdd6642eadb817da2f6a4c6a8d27"
+      },
+      "txHash": "fc8be601830183286d6f564ae8d754168cf6032f64099af424396fad6db1fb2c",
+      "txId": 3225,
+      "result": "accept",
+      "identity": "preview|252964661b893845299864a5f83b75d5bd2b6d6019a59d0befb6a3ba34a210fd|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "records": 1
+    },
+    {
+      "id": 13354,
+      "block": {
+        "height": 41993,
+        "hash": "6af6764a4edca05b838070ba5b533d3c2829bdd6642eadb817da2f6a4c6a8d27"
+      },
+      "txHash": "fc8be601830183286d6f564ae8d754168cf6032f64099af424396fad6db1fb2c",
+      "txId": 3225,
+      "result": "reject",
+      "reason": "reserved-valtype"
+    }
+  ],
+  "identities": [
+    {
+      "key": "preview|252964661b893845299864a5f83b75d5bd2b6d6019a59d0befb6a3ba34a210fd|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "network": "preview",
+      "contractAddress": "252964661b893845299864a5f83b75d5bd2b6d6019a59d0befb6a3ba34a210fd",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "colored": false,
+      "color": null,
+      "fields": [
+        {
+          "key": "6e616d65",
+          "valType": 1,
+          "value": "476f6f64",
+          "setAt": {
+            "block": "41993",
+            "tx": 3225,
+            "event": 13353,
+            "record": 0
+          },
+          "keyHex": "6e616d65",
+          "usable": true
+        }
+      ],
+      "common": {
+        "name": "Good"
+      }
+    }
+  ],
+  "groups": [],
+  "expectation": {
+    "ok": true,
+    "differences": []
+  }
+}

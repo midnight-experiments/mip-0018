@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// A native shielded token (Zswap coins) built from OpenZeppelin Compact Contracts 0.4.0-alpha.5:
+// A native shielded token (Zswap coins) built from OpenZeppelin Compact Contracts 0.5.0-alpha.2:
 // `NativeShieldedToken` (one token type; its domain separator is fixed at construction) owned with
 // `Ownable`. Every coin it mints has the color `tokenType(domainSep, <this contract>)`.
 //
-// Compile with Compact 0.35.0, --feature-zkir-v3 and --compact-path <repo>/node_modules
+// Compile with Compact 0.36.0 and --compact-path <repo>/node_modules
 // (examples/openzeppelin/README.md).
 
 pragma language_version >= 0.26.0;

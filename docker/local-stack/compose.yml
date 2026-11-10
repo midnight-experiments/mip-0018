@@ -4,14 +4,9 @@
 # Do not run this file directly: docker/local-stack/up.sh picks the project name
 # and random free loopback ports (>= 10000) and writes them to ports.env.
 #
-#   node                 midnight-node 2.0.0-rc.4       (CFG_PRESET=dev, network id "undeployed")
-#   indexer              indexer-standalone 4.4.0-rc.1  (GraphQL /api/v4/graphql)
-#   proof-server         proof-server 9.0.0-rc.8        contract circuits: reads Compact 0.35.0 ZKIR v3 (zkir 3.1)
-#   wallet-proof-server  proof-server 9.0.0-rc.6        DUST spends the 2.0.0-rc.4 node accepts
-#
-# Two provers because no single official image does both:
-# rc.7/rc.8 DUST-spend proofs are rejected by node 2.0.0-rc.4 (InvalidDustSpendProof,
-# error 170) and rc.6 cannot read zkir 3.1 circuits.
+#   node          midnight-node 2.1.101            (CFG_PRESET=dev, network id "undeployed")
+#   indexer       indexer-standalone 4.4.101       (GraphQL /api/v4/graphql)
+#   proof-server  proof-server 9.0.1               contract circuits (ZKIR v3) and the wallet's DUST spends
 
 name: ${MIP0018_STACK_PROJECT:?set by docker/local-stack/up.sh}
 
@@ -21,7 +16,7 @@ x-labels: &labels
 
 services:
   node:
-    image: midnightntwrk/midnight-node:2.0.0-rc.4@sha256:caf93d6f9fb3630c906ef3e714c151655377f3d28f907d17545de1870514da2e
+    image: midnightntwrk/midnight-node:2.1.101@sha256:0c1ad548d523c1109aa1f16daab1bf72dcb78c7e17b8a8c6d97424ad0eba7b8a
     labels: *labels
     environment:
       CFG_PRESET: dev
@@ -42,7 +37,7 @@ services:
       start_period: 5s
 
   indexer:
-    image: midnightntwrk/indexer-standalone:4.4.0-rc.1@sha256:5d79f3a20da9ed86236c7f7dc9d93b1beeb0b0c47c9c43a791041322eb80b74e
+    image: midnightntwrk/indexer-standalone:4.4.101@sha256:119f35db548ba1c390845f215bb1e928e73038bef7c315825aee0461bd54499d
     labels: *labels
     environment:
       RUST_LOG: indexer=info,chain_indexer=info,indexer_api=info,wallet_indexer=info,indexer_common=info,fastrace_opentelemetry=off,info
@@ -50,10 +45,7 @@ services:
       APP__INFRA__NODE__URL: ws://node:9944
       APP__INFRA__SPO_NODE__URL: ws://node:9944
       APP__INFRA__SPO_NODE__BLOCKFROST_ID: local-test-dummy-id
-      # Throwaway values for a local, unroutable test stack (the indexer's documented test settings).
-      APP__INFRA__STORAGE__PASSWORD: indexer
-      APP__INFRA__PUB_SUB__PASSWORD: indexer
-      APP__INFRA__LEDGER_STATE_STORAGE__PASSWORD: indexer
+      # Throwaway key for a local, unroutable test stack (the indexer encrypts wallet viewing keys with it).
       APP__INFRA__SECRET: '303132333435363738393031323334353637383930313233343536373839303132'
     ports:
       - 127.0.0.1:${MIP0018_INDEXER_PORT:?}:8088
@@ -69,26 +61,12 @@ services:
         condition: service_healthy
 
   proof-server:
-    image: midnightntwrk/proof-server:9.0.0-rc.8@sha256:2666c7bd7b4517f8ad135565387f98d14347a9ac715c6c466d4a8a852b545ecf
+    image: midnightntwrk/proof-server:9.0.1@sha256:90e36a14f92c2004127f0ed1cfd6ee89d770cf1f6e9cd7f02026ffd4ecb42f37
     labels: *labels
     environment:
       RUST_BACKTRACE: '1'
     ports:
       - 127.0.0.1:${MIP0018_PROOF_PORT:?}:6300
-    healthcheck:
-      test: [CMD-SHELL, 'echo > /dev/tcp/127.0.0.1/6300']
-      interval: 2s
-      timeout: 5s
-      retries: 60
-      start_period: 5s
-
-  wallet-proof-server:
-    image: midnightntwrk/proof-server:9.0.0-rc.6@sha256:38a819eacde273f725551fdf90ca7c31ebf3c0ff145f3ed58ee35f92fb7ce95b
-    labels: *labels
-    environment:
-      RUST_BACKTRACE: '1'
-    ports:
-      - 127.0.0.1:${MIP0018_WALLET_PROOF_PORT:?}:6300
     healthcheck:
       test: [CMD-SHELL, 'echo > /dev/tcp/127.0.0.1/6300']
       interval: 2s

@@ -11,4 +11,4 @@ end-to-end test can check the mint scanner
 | `publishMetadata(domainSep, kind, symbol4)` | emits a MIP-0018 event for `(domainSep, kind)`, kind 1 or 2, with `symbol` and `decimals` 2 |
 
 Every circuit is unguarded: never deploy this contract outside a local test chain. Compile with
-`docker/run.sh exec 'npm run compile -w test-contracts/scanner-mints'` (Compact 0.35.0, `--feature-zkir-v3`).
+`docker/run.sh exec 'npm run compile -w test-contracts/scanner-mints'` (Compact 0.36.0).

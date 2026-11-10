@@ -1,0 +1,120 @@
+{
+  "network": {
+    "id": "preview",
+    "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+    "indexer": "https://indexer.preview.midnight.network/api/v4/graphql",
+    "rpc": "https://rpc.preview.midnight.network"
+  },
+  "contract": "cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9",
+  "transaction": "5a0a3da06ae2161c278a083563066b9a3008ff2821b88571e9fd4c637403a281",
+  "outcome": "ok",
+  "exitCode": 0,
+  "events": [
+    {
+      "index": 0,
+      "id": 13345,
+      "contractAddress": "cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9",
+      "name": "61636d653a746f6b656e2d6d657461646174615b76315d000000000000000000",
+      "payload": "111111111111111111111111111111111111111111111111111111111111111103046e616d65010a41636d6520546f6b656e0673796d626f6c010441434d4508646563696d616c73020106097374616e646172647301086d69702d303030340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "inRawTransaction": true,
+      "segmentApplied": true,
+      "classification": {
+        "result": "ignore",
+        "reason": "other-name"
+      },
+      "source": {
+        "transactionHash": "5a0a3da06ae2161c278a083563066b9a3008ff2821b88571e9fd4c637403a281",
+        "logicalSegment": 0,
+        "physicalSegment": 18457,
+        "entryPoint": "emitRaw"
+      },
+      "expectation": {
+        "ok": true,
+        "differences": []
+      }
+    }
+  ],
+  "checks": [
+    {
+      "id": "identity",
+      "ok": true,
+      "message": "node genesis 0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796 (preview)"
+    },
+    {
+      "id": "indexed",
+      "ok": true,
+      "message": "transaction 5a0a3da06ae2161c278a083563066b9a3008ff2821b88571e9fd4c637403a281 in block 41946 (d2a8cae1baa7d50f72a6528118118a5eb11c76fe8a774eff1dd06a12413e94a3), SUCCESS"
+    },
+    {
+      "id": "raw-hash",
+      "ok": true,
+      "message": "recomputed hash 5a0a3da06ae2161c278a083563066b9a3008ff2821b88571e9fd4c637403a281"
+    },
+    {
+      "id": "raw-identifiers",
+      "ok": true,
+      "message": "2 identifiers recomputed"
+    },
+    {
+      "id": "event-0-record",
+      "ok": true,
+      "message": "event 13345: bound to cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9 (entry point emitRaw), misc"
+    },
+    {
+      "id": "event-0-in-raw-tx",
+      "ok": true,
+      "message": "event 13345: equals a log op of the contract in the raw transaction"
+    },
+    {
+      "id": "event-0-segment",
+      "ok": true,
+      "message": "event 13345: its segment applied"
+    },
+    {
+      "id": "completeness",
+      "ok": true,
+      "message": "1 applied Misc log(s) of the contract in the raw transaction, 1 indexed"
+    },
+    {
+      "id": "node-block-hash",
+      "ok": true,
+      "message": "node block 41946 = 0xd2a8cae1baa7d50f72a6528118118a5eb11c76fe8a774eff1dd06a12413e94a3"
+    },
+    {
+      "id": "node-extrinsic",
+      "ok": true,
+      "message": "raw transaction bytes are extrinsic 3 of block 41946"
+    },
+    {
+      "id": "expect-0",
+      "ok": true,
+      "message": "event 13345 matches the expectation"
+    },
+    {
+      "id": "finalized",
+      "ok": true,
+      "message": "block 41946 ≤ finalized 41963"
+    }
+  ],
+  "notes": [],
+  "indexerTip": {
+    "height": 41963,
+    "hash": "13bf858160d282a69a7d028bf1765e71479b476024e96dfbca4d45f2fe15dba2"
+  },
+  "inclusion": {
+    "height": 41946,
+    "hash": "d2a8cae1baa7d50f72a6528118118a5eb11c76fe8a774eff1dd06a12413e94a3",
+    "status": "SUCCESS",
+    "segments": null,
+    "nodeBlockHash": "0xd2a8cae1baa7d50f72a6528118118a5eb11c76fe8a774eff1dd06a12413e94a3",
+    "finalizedHeight": 41963,
+    "finalized": true,
+    "extrinsicIndex": 3
+  },
+  "rawTransaction": {
+    "hashRecomputed": "5a0a3da06ae2161c278a083563066b9a3008ff2821b88571e9fd4c637403a281",
+    "identifiersMatch": true,
+    "miscLogsOfContract": 1,
+    "appliedMiscLogsOfContract": 1
+  }
+}

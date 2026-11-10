@@ -15,19 +15,34 @@
 // another query.
 //
 // State: ONE JSON file (`<state dir>/index-state.json`) rewritten atomically (temp file, fsync, rename) after every
-// block, so a killed scan resumes at `nextHeight` with an identical table. Heights must be consecutive and each
+// block through `writePublicJson` (public-file.ts: no registered token, `project_id` value or URL credentials; the
+// decode errors' messages through `scrubSecrets`), so a killed scan resumes at `nextHeight` with an identical table. Heights must be consecutive and each
 // block's parent must be the previous block (the indexer serves finalized blocks only, so a mismatch is an error).
-// One scanner per state directory.
+// One scanner per state directory. The state records the network's genesis and chain instance (block 1); every read on
+// a state's behalf (a resume, a live `lookup`) binds the profile to them first (`bindScanState`), so the identity check
+// refuses a network re-created from the same genesis before any block is read. A state that records no chain instance
+// is read only when the node has the state's last scanned block at its height (the same chain); a resume then records
+// the node's block 1 in the state file at once, also when there is no new block to scan.
 
-import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, writeSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { EVENT_NAME_TEXT } from '@mip0018/codec';
 import { tokenTypeHex } from './color.ts';
 import { normHex } from './hex.ts';
 import { HttpClient, realSleep } from './http.ts';
-import { Indexer, type ScannedBlock } from './indexer.ts';
-import { checkIdentity, type NetworkProfile } from './network.ts';
+import type { ScannedBlock } from './indexer.ts';
+import {
+  bindRecordedNetworks,
+  checkChainIdentity,
+  httpFor,
+  indexerFor,
+  rpcFor,
+  withChainInstance,
+  type NetworkProfile,
+} from './network.ts';
+import { writePublicJson } from './public-file.ts';
 import { applied, decodeTransaction } from './raw.ts';
+import { ScrubbedError, scrubSecrets, type PublicFileRules } from './redact.ts';
 import { classify } from './check-event.ts';
 
 export const STATE_FILE = 'index-state.json';
@@ -78,7 +93,7 @@ export interface IndexedEvent {
 export interface ScanState {
   kind: 'mip0018-index-state';
   schema: 1;
-  network: { id: string; networkId: string; genesisHash: string };
+  network: { id: string; networkId: string; genesisHash: string; chainInstance?: string };
   fromHeight: number;
   /** The next height to scan (everything below it, from `fromHeight`, is in the table). */
   nextHeight: number;
@@ -101,7 +116,7 @@ export interface ScanState {
   updatedAt: string;
 }
 
-export class ScanError extends Error {
+export class ScanError extends ScrubbedError {
   override name = 'ScanError';
 }
 
@@ -117,27 +132,20 @@ export function loadState(dir: string): ScanState | undefined {
   return s;
 }
 
-/** Atomic write: temp file in the same directory, fsync, rename. */
+/** Where a scanner state holds messages (`publicCopy`). */
+export const SCAN_STATE_RULES: PublicFileRules = { messages: [['errors', '*', 'message']] };
+
+/** Stamps `updatedAt` and writes the state through `writePublicJson` (temp file in the same directory, fsync, rename). */
 export function saveState(dir: string, s: ScanState): void {
-  mkdirSync(dir, { recursive: true });
   s.updatedAt = new Date().toISOString();
-  const p = statePath(dir);
-  const tmp = `${p}.tmp-${process.pid}`;
-  const fd = openSync(tmp, 'w', 0o644);
-  try {
-    writeSync(fd, `${JSON.stringify(s, null, 1)}\n`);
-    fsyncSync(fd);
-  } finally {
-    closeSync(fd);
-  }
-  renameSync(tmp, p);
+  writePublicJson(statePath(dir), s, { ...SCAN_STATE_RULES, indent: 1, fsync: true });
 }
 
-export function newState(profile: NetworkProfile, genesisHash: string, fromHeight: number): ScanState {
+export function newState(profile: NetworkProfile, genesisHash: string, fromHeight: number, chainInstance?: string): ScanState {
   return {
     kind: 'mip0018-index-state',
     schema: 1,
-    network: { id: profile.id, networkId: profile.networkId, genesisHash },
+    network: { id: profile.id, networkId: profile.networkId, genesisHash, ...(chainInstance !== undefined ? { chainInstance } : {}) },
     fromHeight,
     nextHeight: fromHeight,
     lastBlock: null,
@@ -178,7 +186,7 @@ export function applyBlock(s: ScanState, b: ScannedBlock): { mints: number; even
       if (d.hash !== normHex(tx.hash)) throw new Error(`recomputed hash ${d.hash} differs from the indexer's ${tx.hash}`);
     } catch (e) {
       s.stats.decodeErrors++;
-      s.errors.push({ height: b.height, txHash: tx.hash, message: (e as Error).message });
+      s.errors.push({ height: b.height, txHash: tx.hash, message: scrubSecrets((e as Error).message) });
       return;
     }
     const ok = applied(d, tx.transactionResult);
@@ -251,26 +259,69 @@ export interface ScanResult {
   seconds: number;
 }
 
+export interface BoundScanState {
+  /** The profile bound to the state's genesis and chain instance (the node's block 1 for a state that records none). */
+  profile: NetworkProfile;
+  genesisHash: string;
+  chainInstance: string;
+  /** The state records no chain instance: it is anchored by its last scanned block, and `chainInstance` is the node's. */
+  anchored: boolean;
+}
+
+/**
+ * The profile for a read on behalf of a scanner state (a resume, a live `lookup`), checked on the node before any
+ * indexer read: bound to the state's network (`bindRecordedNetworks`: another network, genesis or chain instance is a
+ * `ProfileError`), then the node's genesis and block 1 (`checkChainIdentity`: `IdentityError`). A state that records no
+ * chain instance is anchored by its last scanned block instead: the node must have that block at its height, else
+ * `ScanError` (another chain); the node's block 1 is then the state's chain instance.
+ */
+export async function bindScanState(profile: NetworkProfile, stateDir: string, s: ScanState, http: HttpClient): Promise<BoundScanState> {
+  const bound = bindRecordedNetworks(profile, [{ source: statePath(stateDir), network: s.network }]);
+  const identity = await checkChainIdentity(bound, http);
+  if (identity.chainInstance === null) throw new ScanError('the node has no block 1 yet; the state needs the chain instance');
+  if (s.network.chainInstance !== undefined)
+    return { profile: bound, genesisHash: identity.genesisHash, chainInstance: identity.chainInstance, anchored: false };
+  const last = s.lastBlock;
+  const there = last ? await rpcFor(bound, http).blockHash(last.height) : null;
+  if (last && (there === null || normHex(there) !== last.hash))
+    throw new ScanError(
+      `${statePath(stateDir)} records no chain instance and its last scanned block ${last.height} is ${last.hash}; the node has ${there ?? 'none'} there (another chain): scan into a new --state directory`,
+    );
+  return {
+    profile: withChainInstance(bound, identity.chainInstance),
+    genesisHash: identity.genesisHash,
+    chainInstance: identity.chainInstance,
+    anchored: true,
+  };
+}
+
 export async function scan(o: ScanOptions): Promise<ScanResult> {
   const log = o.log ?? (() => {});
-  const http = o.http ?? new HttpClient({ minIntervalMs: o.profile.minIntervalMs });
-  const indexer = new Indexer(o.profile.indexer, o.profile.indexerWs, http);
-  const genesis = await checkIdentity(o.profile, http);
+  const http = o.http ?? httpFor(o.profile);
   let s = loadState(o.stateDir);
+  let profile: NetworkProfile;
   if (s) {
-    if (s.network.genesisHash !== genesis || s.network.id !== o.profile.id) {
-      throw new ScanError(`${statePath(o.stateDir)} belongs to ${s.network.id} ${s.network.genesisHash}, not ${o.profile.id} ${genesis}`);
-    }
     if (s.fromHeight !== o.fromHeight) {
       throw new ScanError(
         `${statePath(o.stateDir)} started at height ${s.fromHeight}; resume with --from-height ${s.fromHeight} or use a new --state directory`,
       );
     }
+    const b = await bindScanState(o.profile, o.stateDir, s, http);
+    profile = b.profile;
+    if (b.anchored) {
+      // The chain instance is verified: it is recorded at once, so the file is bound to it whether or not a block follows.
+      s.network.chainInstance = b.chainInstance;
+      saveState(o.stateDir, s);
+    }
     log(`resuming at height ${s.nextHeight} (${Object.keys(s.colors).length} colors, ${s.stats.events} events so far)`);
   } else {
-    s = newState(o.profile, genesis, o.fromHeight);
+    profile = o.profile;
+    const identity = await checkChainIdentity(profile, http);
+    if (identity.chainInstance === null) throw new ScanError('the node has no block 1 yet; the state needs the chain instance');
+    s = newState(profile, identity.genesisHash, o.fromHeight, identity.chainInstance);
     saveState(o.stateDir, s);
   }
+  const indexer = indexerFor(profile, http);
   const state = s;
   const started = Date.now();
   const tip = await indexer.latestBlock();

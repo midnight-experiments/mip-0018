@@ -8,7 +8,7 @@
   "contract": {
     "source": "contracts/MyFungibleToken.compact",
     "withoutMetadata": "contracts/without-metadata/MyFungibleToken.compact",
-    "openzeppelin": "@openzeppelin/compact-contracts@0.4.0-alpha.5 (access/Ownable, token/FungibleToken)",
+    "openzeppelin": "@openzeppelin/compact-contracts@0.5.0-alpha.2 (access/Ownable, token/FungibleToken)",
     "constructorArgs": {
       "name_": "Acme Gold",
       "symbol_": "AGLD",

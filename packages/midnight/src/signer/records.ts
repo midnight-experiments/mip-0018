@@ -14,10 +14,16 @@
 //   failed       included but failed, or the after-check contradicts the expectation
 //
 // Records never contain a secret: no mnemonic, seed, signing key or private state (those stay in the signer's 0600
-// private-state file).
+// private-state file), and no token. Every save writes `publicRecord` of the record through `writePublicJson`
+// (public-file.ts; the record in memory is not changed): the published values (`RUN_RECORD_RULES.exact`: circuit and
+// constructor arguments, the upgrade pre-checks with the decoded ledger state) keep every byte but a registered token;
+// the endpoint URLs and the messages (step errors, skip reasons, attempt notes, the node's rejection) go through
+// `scrubSecrets`; every other string and key, present or added later, through `scrubValue` (credentials in a URL's
+// authority, `project_id` values and registered tokens removed). Saving a saved record writes the same bytes.
 
-import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
-import { toJson } from '../hex.ts';
+import { existsSync, readFileSync } from 'node:fs';
+import { writePublicJson } from '../public-file.ts';
+import { publicCopy, ScrubbedError, type PublicFileRules } from '../redact.ts';
 
 export type StepState = 'pending' | 'submitting' | 'submitted' | 'unknown' | 'completed' | 'failed';
 export type StepKind = 'deploy' | 'call' | 'verifier-key-remove' | 'verifier-key-insert';
@@ -55,7 +61,15 @@ export interface RunRecord {
   schema: 1;
   createdAt: string;
   updatedAt: string;
-  network: { id: string; networkId: string; genesisHash: string; indexer: string; rpc: string };
+  network: {
+    id: string;
+    networkId: string;
+    genesisHash: string;
+    /** Hash of block 1 when the record was created: a later run on a network re-created from the same genesis is refused. */
+    chainInstance?: string;
+    indexer: string;
+    rpc: string;
+  };
   contract: {
     name: string;
     managedDir: string;
@@ -86,7 +100,7 @@ export interface UpgradeEntry {
   checks?: unknown;
 }
 
-export class RecordError extends Error {
+export class RecordError extends ScrubbedError {
   override name = 'RecordError';
 }
 
@@ -97,11 +111,32 @@ export function loadRecord(path: string): RunRecord | undefined {
   return r;
 }
 
+/** Where a run record holds published values and messages (`publicCopy`). */
+export const RUN_RECORD_RULES: PublicFileRules = {
+  exact: [
+    ['steps', '*', 'args'],
+    ['contract', 'constructorArgs'],
+    ['contract', 'upgrades', '*', 'checks'],
+  ],
+  messages: [
+    ['network', 'indexer'],
+    ['network', 'rpc'],
+    ['steps', '*', 'error'],
+    ['steps', '*', 'skipped'],
+    ['steps', '*', 'attempts', '*', 'event'],
+    ['steps', '*', 'observed', 'rejectedByNode'],
+  ],
+};
+
+/** The record as it is written and printed (a copy; see the header). */
+export function publicRecord(r: RunRecord): RunRecord {
+  return publicCopy(r, RUN_RECORD_RULES);
+}
+
+/** Stamps `updatedAt` and writes `publicRecord(r)` atomically. */
 export function saveRecord(path: string, r: RunRecord): void {
   r.updatedAt = new Date().toISOString();
-  const tmp = `${path}.tmp-${process.pid}`;
-  writeFileSync(tmp, `${toJson(r)}\n`);
-  renameSync(tmp, path);
+  writePublicJson(path, r, RUN_RECORD_RULES);
 }
 
 export function findStep(r: RunRecord, id: string): StepRecord | undefined {

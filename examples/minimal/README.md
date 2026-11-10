@@ -9,7 +9,7 @@ the `domainSep` given at deployment.
 | Contract | Who may publish | After publishing |
 |---|---|---|
 | [`CreateAndDestroy`](contracts/CreateAndDestroy.compact) | anyone (constant payload) | the maintenance authority **removes the circuit's verifier key**: it can never be called again |
-| [`OwnerKey`](contracts/OwnerKey.compact) | the owner | the owner can rename (`setMetadata`) and withdraw (`withdrawMetadata`: one event with a Null record at `name`, `symbol`, `decimals` and `standards`; with no field left the token is not referenced) |
+| [`OwnerKey`](contracts/OwnerKey.compact) | the owner | the owner can rename (`setMetadata`) and withdraw (`withdrawMetadata`: one event with a Null record at each of the six common keys; with no field left the token is not referenced) |
 | [`PublishOnce`](contracts/PublishOnce.compact) | anyone, once (constant payload) | a ledger flag refuses every later call |
 
 ## Add these 5 lines
@@ -32,7 +32,8 @@ Then, at deployment:
    payload = A1).
 3. **Create and destroy only:** remove the circuit with a maintenance update signed by the contract's
    maintenance authority: `VerifierKeyRemove("publishMetadata", ContractOperationVersion("v4"))`
-   (`v4` = the ZKIR-v3 key slot; midnight-js 5.0.0-rc.2's `removeVerifierKey()` removes `v3` only).
+   (`v4` = the ZKIR-v3 key slot, the one midnight-js 5.0.0's `circuitMaintenanceTx.publishMetadata.removeVerifierKey()`
+   removes as well).
 
 Why the payload must be constant when the circuit is unguarded: until its key is removed (or, for
 `PublishOnce`, until it ran), anyone with the compiled artefacts can call it. With constant values they
@@ -59,15 +60,14 @@ docker/local-stack/down.sh
 is refused while `transfer` keeps its key. It signs with the local chain's public genesis dev wallet;
 the run record goes to `docker/local-stack/.state/` (not committed).
 
-Local run, 2026-10-01: deploy 1.221 DUST, `publishMetadata` 0.146 DUST, `transfer` 0.239 DUST,
-`VerifierKeyRemove` 0.039 DUST; second call refused (`Operation 'publishMetadata' is undefined`);
-exactly one `Misc` event. Circuit sizes and proving times: [`docs/costs.md`](../../docs/costs.md).
+Local run, 2026-11-10 (node 2.1.101, indexer 4.4.101, one proof server 9.0.1): deploy 1.472 DUST,
+`publishMetadata` 0.165 DUST, `transfer` 0.272 DUST, `VerifierKeyRemove` 0.119 DUST; second call refused
+(`Operation 'publishMetadata' is undefined`); exactly one `Misc` event, equal to A1. Circuit sizes and proving times:
+[`docs/costs.md`](../../docs/costs.md).
 
-On Stagenet: `OwnerKey`'s publish → rename → withdraw ×2 → revive is case
-[C06](../../deployments/stagenet/cases/C06/README.md) (its contract was compiled from `OwnerKey.compact` at
-`70b54c6`, whose `withdrawMetadata` emits a single Null record at `name`), and the full withdrawal is case
-[C11](../../deployments/stagenet/cases/C11/README.md) (compiled from `OwnerKey.compact` at `57ce633`, whose
-`withdrawMetadata` emits one event with Null records at `name`, `symbol`, `decimals` and `standards`, the four keys
-that token has; this directory's `withdrawMetadata` also deletes `image` and `image_sha256`); `CreateAndDestroy` is case
-[C10](../../deployments/stagenet/cases/C10/README.md). All re-check wallet-free with
-`docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/<ID>`.
+On preview: `OwnerKey`'s publish → rename → withdraw → withdraw again → revive is case
+[C06](../../deployments/preview/cases/C06/README.md) (the withdrawal is one event with a Null record at each of the six
+common keys: the token is not listed until the revive, which brings back only `name` and `symbol`), and
+`CreateAndDestroy` is case [C10](../../deployments/preview/cases/C10/README.md) (publish = A1, then
+`VerifierKeyRemove`, a second publish refused). Both re-check wallet-free with
+`docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/<ID>`.

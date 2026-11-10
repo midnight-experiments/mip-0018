@@ -1,0 +1,57 @@
+{
+  "contract": "783fd16b82e6ce98381bf7a19d458f8bb179b6612984ef6f64c5cfbf2eab453a",
+  "exists": true,
+  "block": {
+    "height": 42136,
+    "hash": "782f6130396b27943792819f65af7ea22715975d89e4181e60fd9678cf3bae05"
+  },
+  "lastAction": "ContractCall",
+  "lastTx": "90a07830f88e475d4440c76800bd4b54bd7aeac83e938aa69572981894e6392a",
+  "operations": {
+    "mint": "b1dbe2b73135b3e586df2d1377e41c49520c45f4f2ac6581ae1c9b0ce5b3e53d"
+  },
+  "maintenanceAuthority": {
+    "committeeSize": 1,
+    "threshold": 1,
+    "counter": "0"
+  },
+  "dataSha256": "9ca152f8af7de48f18a7f8f897937a27823bb40915b88dc298e9591dc2fa2e07",
+  "decoded": {
+    "examples/upgrade-existing-contract/managed/LegacyToken": [
+      {
+        "name": "domain",
+        "value": "6d69702d303031383a6578616d706c653a757067726164650000000000000000"
+      },
+      {
+        "name": "owner",
+        "value": "37d29073f5134235631399fe9086dfa947b03dfd49b98f40cb9a019d97010e7b"
+      },
+      {
+        "name": "totalMinted",
+        "value": "1000"
+      },
+      {
+        "name": "mintCount",
+        "value": "1"
+      }
+    ],
+    "examples/upgrade-existing-contract/managed/LegacyTokenMetadata": [
+      {
+        "name": "domain",
+        "value": "6d69702d303031383a6578616d706c653a757067726164650000000000000000"
+      },
+      {
+        "name": "owner",
+        "value": "37d29073f5134235631399fe9086dfa947b03dfd49b98f40cb9a019d97010e7b"
+      },
+      {
+        "name": "totalMinted",
+        "value": "1000"
+      },
+      {
+        "name": "mintCount",
+        "value": "1"
+      }
+    ]
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "network": {
+    "id": "preview",
+    "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+    "indexer": "https://indexer.preview.midnight.network/api/v4/graphql"
+  },
+  "contract": "f53dbefbedcf5a5ab992b343e6b4f66585883a929b6a0d277290066268f7ff4a",
+  "snapshot": {
+    "indexerTip": {
+      "height": 41737,
+      "hash": "d3e52a8780b579744761011f6b1cc4b9c1d69f322f53cd9251f77f4efe872a0e"
+    },
+    "toBlock": 41737,
+    "nodeHashAtTip": "0xd3e52a8780b579744761011f6b1cc4b9c1d69f322f53cd9251f77f4efe872a0e",
+    "tipMatchesNode": true,
+    "finalizedHeight": 41737
+  },
+  "pages": 2,
+  "counts": {
+    "events": 2,
+    "accepted": 2,
+    "rejected": 0,
+    "ignored": 0
+  },
+  "events": [
+    {
+      "id": 13285,
+      "block": {
+        "height": 41728,
+        "hash": "a435054049252d74d87c113463a791bc8b041755556c4a197d416ba590f1227a"
+      },
+      "txHash": "a7c889e8ee0c0de3dfb5c25943922cd8962d5c27d062b1686507c8e8dff20b6c",
+      "txId": 3190,
+      "result": "accept",
+      "identity": "preview|f53dbefbedcf5a5ab992b343e6b4f66585883a929b6a0d277290066268f7ff4a|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "records": 4
+    },
+    {
+      "id": 13287,
+      "block": {
+        "height": 41736,
+        "hash": "2d8c753478e633e0635541878680d4d35e3c924af0e0953f548db47c918f6d2e"
+      },
+      "txHash": "7c499199eeca9bb2c83cbb4603df0a30a8307965a5131fe980f5738c207a7afd",
+      "txId": 3191,
+      "result": "accept",
+      "identity": "preview|f53dbefbedcf5a5ab992b343e6b4f66585883a929b6a0d277290066268f7ff4a|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "records": 2
+    }
+  ],
+  "identities": [
+    {
+      "key": "preview|f53dbefbedcf5a5ab992b343e6b4f66585883a929b6a0d277290066268f7ff4a|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "network": "preview",
+      "contractAddress": "f53dbefbedcf5a5ab992b343e6b4f66585883a929b6a0d277290066268f7ff4a",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "colored": false,
+      "color": null,
+      "fields": [
+        {
+          "key": "6e616d65",
+          "valType": 1,
+          "value": "41636d65205072696d65",
+          "setAt": {
+            "block": "41736",
+            "tx": 3191,
+            "event": 13287,
+            "record": 0
+          },
+          "keyHex": "6e616d65",
+          "usable": true
+        },
+        {
+          "key": "73796d626f6c",
+          "valType": 1,
+          "value": "41434d50",
+          "setAt": {
+            "block": "41736",
+            "tx": 3191,
+            "event": 13287,
+            "record": 1
+          },
+          "keyHex": "73796d626f6c",
+          "usable": true
+        },
+        {
+          "key": "646563696d616c73",
+          "valType": 2,
+          "value": "06",
+          "setAt": {
+            "block": "41728",
+            "tx": 3190,
+            "event": 13285,
+            "record": 2
+          },
+          "integer": "6",
+          "keyHex": "646563696d616c73",
+          "usable": true
+        },
+        {
+          "key": "7374616e6461726473",
+          "valType": 1,
+          "value": "6d69702d30303034",
+          "setAt": {
+            "block": "41728",
+            "tx": 3190,
+            "event": 13285,
+            "record": 3
+          },
+          "keyHex": "7374616e6461726473",
+          "usable": true
+        }
+      ],
+      "common": {
+        "name": "Acme Prime",
+        "symbol": "ACMP",
+        "decimals": "6",
+        "standards": [
+          "mip-0004"
+        ]
+      }
+    }
+  ],
+  "groups": [
+    {
+      "network": "preview",
+      "contractAddress": "f53dbefbedcf5a5ab992b343e6b4f66585883a929b6a0d277290066268f7ff4a",
+      "symbol": "41434d50",
+      "members": [
+        {
+          "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+          "kind": 3,
+          "key": "preview|f53dbefbedcf5a5ab992b343e6b4f66585883a929b6a0d277290066268f7ff4a|1111111111111111111111111111111111111111111111111111111111111111|3"
+        }
+      ]
+    }
+  ],
+  "expectation": {
+    "ok": true,
+    "differences": []
+  }
+}

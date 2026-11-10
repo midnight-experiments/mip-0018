@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Raw decoding of recorded Stagenet transactions and the color function.
+// Raw decoding of transactions recorded on a local chain (fixtures/local, record-local.ts) and the color function.
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -17,8 +17,15 @@ import {
 } from '../src/raw.ts';
 import type { Exchange } from './support/cassette.ts';
 
-const fx = (f: string) => JSON.parse(readFileSync(join(import.meta.dirname, 'fixtures', 'stagenet', f), 'utf8'));
-const SPIKE = '18097aeb608f35d83a65b2cad987084c97c6e9d1dc02973f2a6f6cc2fcdd76e1';
+const fx = (f: string) => JSON.parse(readFileSync(join(import.meta.dirname, 'fixtures', 'local', f), 'utf8'));
+const meta = fx('meta.json') as { emitter: { address: string; publish: { tx: string } } };
+const SPIKE = meta.emitter.address;
+const PUBLISH = meta.emitter.publish.tx;
+/** The publish's check-event report at recording time (inclusion and event source as the indexer and node gave them). */
+const recorded = fx('check-event-emitter-publish.result.json') as {
+  inclusion: { extrinsicIndex: number };
+  events: { source: { physicalSegment: number } }[];
+};
 const A1 =
   '11'.repeat(32) +
   '03' +
@@ -29,7 +36,7 @@ const A1 =
 const A1_PAYLOAD = A1.padEnd(512, '0');
 const NAME = Buffer.from('mip-0018:token-metadata[v1]').toString('hex').padEnd(64, '0');
 
-function rawOf(tape: Exchange[], hash: string): { raw: string; transactionResult: never; block: { hash: string } } {
+function rawOf(tape: Exchange[], hash: string): { raw: string; identifiers: string[]; transactionResult: never; block: { hash: string } } {
   for (const e of tape) {
     const t = (e.response as { data?: { transactions?: { hash: string; raw: string }[] } }).data?.transactions?.[0];
     if (t?.hash === hash) return t as never;
@@ -37,19 +44,21 @@ function rawOf(tape: Exchange[], hash: string): { raw: string; transactionResult
   throw new Error(`no raw for ${hash}`);
 }
 
-describe('raw transaction decoding (recorded Stagenet)', () => {
-  const tape = fx('check-event-spike-publish.tape.json') as Exchange[];
-  const publish = rawOf(tape, '223050717f704fe47d1bd0b6b91da8ea248139d2d15a23a2eab7cf07d5a51418');
+describe('raw transaction decoding (recorded on a local chain)', () => {
+  const tape = fx('check-event-emitter-publish.tape.json') as Exchange[];
+  const publish = rawOf(tape, PUBLISH);
+  const segment = recorded.events[0]!.source.physicalSegment;
 
   it('recomputes the hash and finds the A1 log op (zero-extended to 288 bytes)', () => {
     const d = decodeTransaction(publish.raw);
-    expect(d.hash).toBe('223050717f704fe47d1bd0b6b91da8ea248139d2d15a23a2eab7cf07d5a51418');
-    expect(d.identifiers).toHaveLength(2);
+    expect(d.hash).toBe(PUBLISH);
+    expect(d.identifiers).toEqual(publish.identifiers);
+    expect(d.identifiers.length).toBeGreaterThan(0);
     const logs = miscLogsOf(d, SPIKE);
     expect(logs).toHaveLength(1);
     expect(logs[0]).toMatchObject({
       phase: 'guaranteed',
-      segment: 30299,
+      segment,
       entryPoint: 'publishMetadata',
       version: 1,
       eventType: 'misc',
@@ -65,7 +74,7 @@ describe('raw transaction decoding (recorded Stagenet)', () => {
     const blockExchange = tape.find((e) => (e.body as { method?: string })?.method === 'chain_getBlock');
     const xs = (blockExchange!.response as { result: { block: { extrinsics: string[] } } }).result.block.extrinsics;
     const hits = xs.map((x) => transactionHashInExtrinsic(x));
-    expect(hits[3]).toBe('223050717f704fe47d1bd0b6b91da8ea248139d2d15a23a2eab7cf07d5a51418');
+    expect(hits[recorded.inclusion.extrinsicIndex]).toBe(PUBLISH);
     expect(hits.filter(Boolean)).toHaveLength(1);
   });
 
@@ -76,9 +85,9 @@ describe('raw transaction decoding (recorded Stagenet)', () => {
       }
     ).data.contractEvents[0]!;
     expect(decodeEventRaw(ev.raw)).toEqual({
-      transactionHash: '223050717f704fe47d1bd0b6b91da8ea248139d2d15a23a2eab7cf07d5a51418',
+      transactionHash: PUBLISH,
       logicalSegment: 0,
-      physicalSegment: 30299,
+      physicalSegment: segment,
       tag: 'contractLog',
       contractAddress: SPIKE,
       entryPoint: 'publishMetadata',
@@ -94,6 +103,7 @@ describe('raw transaction decoding (recorded Stagenet)', () => {
         entryPoint: string;
         hash: string;
         raw: string;
+        amount: string;
         transactionResult: never;
         unshieldedCreatedOutputs: { tokenType: string }[];
       }[];
@@ -108,7 +118,7 @@ describe('raw transaction decoding (recorded Stagenet)', () => {
         kind: t.entryPoint === 'mintShielded' ? 'shielded' : 'unshielded',
         domainSep: m.expected.domainSep,
         contractAddress: m.contractAddress,
-        amount: t.entryPoint === 'mintShielded' ? 1000n : 2000n,
+        amount: BigInt(t.amount),
         phase: 'guaranteed',
       });
       expect(tokenTypeHex(mints[0]!.domainSep, mints[0]!.contractAddress)).toBe(m.expected.color);

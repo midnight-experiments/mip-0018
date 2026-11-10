@@ -1,7 +1,7 @@
 # examples/openzeppelin/fungible-token — a contract token (kind 3)
 
 An OpenZeppelin `FungibleToken` (public balances, ERC-20 shape) owned with `Ownable`, from
-[OpenZeppelin Compact Contracts 0.4.0-alpha.5](https://github.com/OpenZeppelin/compact-contracts/tree/v0.4.0-alpha.5),
+[OpenZeppelin Compact Contracts 0.5.0-alpha.2](https://github.com/OpenZeppelin/compact-contracts/tree/v0.5.0-alpha.2),
 gains MIP-0018 metadata: the owner publishes its `name`, `symbol` and `decimals` once after deployment,
 and can rename or withdraw them later.
 
@@ -67,7 +67,7 @@ and emit nothing ("Normal token operation … MUST NOT emit metadata events").
 
 - **`metadataDomain()`** — a contract token's `domainSep` is any stable 32 bytes the contract chooses
   (MIP "Token identity and authority"). Keep it a constant: changing it describes a different token.
-  Because it is a literal, `publishMetadata()` stays small (k = 13 with the owner check).
+  Because it is a literal, `publishMetadata()` stays small (k = 14 with the owner check).
 - **The same literals as `initialize`** — OpenZeppelin stores `name` and `symbol` as
   `Opaque<"string">`, which a circuit cannot turn into bytes, so the circuit repeats them as `Bytes`
   literals. Pass exactly these strings to the constructor (the deploy scripts take both from
@@ -100,7 +100,7 @@ A consumer then shows one kind-3 identity with `name` "Acme Gold", `symbol` "AGL
 docker/run.sh exec 'npx vitest run examples/openzeppelin/fungible-token'
 ```
 
-[`test/fungible-token.test.ts`](test/fungible-token.test.ts), in compact-runtime 0.20.0 (no chain):
+[`test/fungible-token.test.ts`](test/fungible-token.test.ts), in compact-runtime 0.21.0 (no chain):
 
 | Test | Shows |
 |---|---|

@@ -13,10 +13,12 @@ This guide is the operational form of those three steps. The template is
 [`examples/upgrade-existing-contract`](../examples/upgrade-existing-contract) (a native shielded token
 deployed without any MIP-0018 circuit, and the upgrade-only source that adds `publishMetadata()`); the
 tool is `mip0018 upgrade` ([`packages/cli`](../packages/cli)). Everything below was run on the local
-chain (official images, [`docker/local-stack`](../docker/local-stack)) and on Stagenet: case
-[U1](../deployments/stagenet/cases/U1/README.md) (2026-10-02, contract `11010832…d63b`: deploy, mint, foreign-key
-insert refused and rejected, `VerifierKeyInsert` + `publishMetadata()`, same address and color; re-check with
-`docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/U1`).
+chain (official images, [`docker/local-stack`](../docker/local-stack)): deploy, mint, foreign-key insert refused and
+rejected, `VerifierKeyInsert` + `publishMetadata()`, same address and color
+([`scripts/local-upgrade.sh`](../examples/upgrade-existing-contract/scripts/local-upgrade.sh)); and on preview: case
+[U1](../deployments/preview/cases/U1/README.md) (2026-11-09, contract `783fd16b…453a`: deploy, mint, an insert signed by
+a key outside the committee refused and, forced, rejected by the node, `VerifierKeyInsert` + `publishMetadata()`, same
+address and color; re-check with `docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/U1`).
 
 ## What changes and what does not
 
@@ -40,11 +42,12 @@ the consumer side.
 Check the deployed contract first (wallet-free):
 
 ```sh
-docker/run.sh exec 'node examples/upgrade-existing-contract/scripts/inspect.ts --network stagenet --contract <address>'
+docker/run.sh exec 'node examples/upgrade-existing-contract/scripts/inspect.ts --network preview --contract <address>'
 ```
 
-It prints the entry points (with the SHA-256 of each verifier key), the maintenance authority
-(committee size, threshold, counter) and the SHA-256 of the ledger data.
+After checking the node's genesis (with `--record <run record>`, also the chain instance the record names), it prints
+the entry points (with the SHA-256 of each verifier key), the maintenance authority (committee size, threshold,
+counter) and the SHA-256 of the ledger data.
 
 1. **A usable maintenance authority** (the MIP's "valid maintenance authority"). The committee must not be empty and its threshold must be
    reachable (≤ committee size, and you must hold that many keys; `mip0018 upgrade` signs with one key,
@@ -105,7 +108,7 @@ Rules:
 - **The value of `domainSep` comes from the state**, never from a literal you retype: the color is
   derived from it.
 - **Compile with keys** (not `--skip-zk`): the verifier key is what you insert. The template uses
-  Compact 0.35.0 with `--feature-zkir-v3` (`publishMetadata` here: k = 15, 17,683 rows).
+  Compact 0.36.0 (`publishMetadata` here: k = 16, 36,203 rows).
 
 ## Step 2 — check the layout (before anything is signed)
 
@@ -116,7 +119,7 @@ docker/run.sh exec 'npm run -s check-layout -w examples/upgrade-existing-contrac
 
 [`scripts/check-layout.ts`](../examples/upgrade-existing-contract/scripts/check-layout.ts) compares the
 **compiler's own record of the layout** (`compiler/contract-info.json` → `ledger`: name, index,
-storage, type — compactc 0.35.0 writes it, including imported modules' fields) field by field, and
+storage, type — compactc 0.36.0 writes it, including imported modules' fields) field by field, and
 exits 1 on any difference: reordered, renamed, retyped, missing or extra fields, another storage kind,
 or an imported module that brings ledger fields. `export`/`sealed` are reported but do not change
 places. `mip0018 upgrade` runs the same comparison, plus an on-chain check: it decodes the **deployed
@@ -155,29 +158,31 @@ docker/signer.sh mip0018 -- upgrade --network <id> --record <the contract's run 
    with the before/after checks of `mip0018 publish`. Later `mip0018 publish --record … --circuit
    publishMetadata` calls find the upgrade build in the record.
 
-Facts the tool relies on (ledger v9, `midnight-ledger` 9.1.0.0-rc.3):
+Facts the tool relies on (ledger v9: `midnight-ledger` 9.1.0.0 source; observed with node 2.1.101, ledger 9.1.0.1):
 
 - **Key versions.** A contract operation keeps verifier keys in versioned slots: `v3` for ZKIR v2
-  circuits (the Compact default) and `v4` for ZKIR v3 circuits (`--feature-zkir-v3`). Insert at the
-  version of the circuit's proving system; a mismatch is included but fails. midnight-js 5.0.0-rc.2's
-  `insertVerifierKey()` / `submitInsertVerifierKeyTx` always write `v3`, so the tool builds the
-  `MaintenanceUpdate` itself with the right version and submits it through midnight-js `submitTx`.
+  circuits and `v4` for ZKIR v3 circuits (Compact 0.36.0's only backend). Insert at the version of the
+  circuit's proving system; a mismatch is included but fails. midnight-js 5.0.0's `insertVerifierKey()`
+  writes `v4`; the tool builds the `MaintenanceUpdate` itself (same `v4` slot) so that it can sign with a
+  key file at the key's committee index, and submits it through midnight-js `submitTx`.
   Existing circuits keep their own slot: ledger v9 verifies both
   generations, so a contract compiled to ZKIR v2 can hold `v3` keys for its original circuits and a `v4`
   key for the new one (not exercised here: the template's `mint` is ZKIR v3 too).
 - **Authority and counter.** The update carries the authority's current counter and enough committee
   signatures (each at its committee index); an applied update increments the counter. A signature by a
-  key that is not the authority's is refused by the node before inclusion — no fee (observed locally and on
-  Stagenet, case U1: `1010: Invalid Transaction: Custom error: 135`, `MalformedError::InvalidCommitteeSignature`).
+  key that is not the authority's is refused by the node before inclusion — no fee (observed on the local chain and on
+  preview, case U1: `1010: Invalid Transaction: Custom error: 135`,
+  `MalformedTransaction::InvalidCommitteeSignature`).
 - **Fallible segment.** Maintenance updates apply only in a fallible segment: an update the ledger
   refuses is still included (`PARTIAL_SUCCESS`) and its whole fee paid.
 - **No overwrite.** `VerifierKeyInsert` never replaces a key already present in that slot
   (`VerifierKeyAlreadyPresent`) — whether the new key is the same or another. Replacing a circuit takes
   a `VerifierKeyRemove` and then an insert. Observed: both attempts `PARTIAL_SUCCESS`, key and counter
   unchanged.
-- **Cost.** An insert writes the verifier key (2,121 bytes here) into the contract state:
-  ≈ 0.59 DUST on the local chain and **0.911 DUST on Stagenet** (case U1), against ≈ 0.04 DUST for a
-  `VerifierKeyRemove` and ≈ 0.16 DUST (local) / 0.176 DUST (Stagenet) for the `publishMetadata()` call.
+- **Cost.** An insert writes the verifier key (2,121 bytes here) into the contract state: **0.704 DUST** on the
+  local chain and **1.167 DUST on preview** (case U1), against 0.105–0.126 DUST (local) / 0.175 DUST (preview, case
+  C10) for a `VerifierKeyRemove` and 0.183 DUST (local) / 0.219 DUST (preview) for the `publishMetadata()` call
+  ([`docs/costs.md`](costs.md#fees-on-the-local-stack), [Fees on preview](costs.md#fees-on-preview)).
 - **Insert before anything touches it.** Until the key is on chain, `findDeployedContract` with the
   upgrade build refuses the contract (the circuit is missing).
 
@@ -203,11 +208,11 @@ color), and `lookup` resolves that color to the metadata published after the upg
 | Threshold > 1 | Needs that many committee signatures on one update; `mip0018 upgrade` signs with one key (collect the others with the ledger API) |
 | Ledger layout must be identical | The upgrade source repeats every ledger declaration verbatim; a mismatch is invisible on chain (see Step 2) |
 | No new ledger fields | No publish-once flag; reuse existing access control, or constant payload + remove the key after the call |
-| Key versions | Insert at the slot of the circuit's proving system (`v4` for ZKIR v3); midnight-js 5.0.0-rc.2 writes only `v3` |
+| Key versions | Insert at the slot of the circuit's proving system (`v4` for ZKIR v3, which midnight-js 5.0.0 writes too) |
 | No overwrite | An existing `publishMetadata` must be removed first; the ledger refuses an insert over it (see the run below) |
 | One circuit per run | The tool inserts one circuit per `upgrade` run (the ledger accepts several `SingleUpdate`s in one update); export only inserted circuits from the upgrade source |
 | Trust | The maintenance authority can remove and insert **any** circuit at any time — including `publishMetadata` and the token's own circuits. Whoever holds it controls the token's metadata as much as the owner check does |
-| Contracts deployed under ledger 8 (before Midnight 2.x) | Not exercised here: the local chain and Stagenet run ledger v9 from genesis. midnight-js 5 has a separate pipeline for such ("retained era") contracts; whether they accept a `v4` (ZKIR v3) key insert and call is unverified |
+| Contracts deployed under ledger 8 (before Midnight 2.x) | Not exercised here: the local chain runs ledger v9 from genesis, and U1 was deployed on preview under ledger v9. midnight-js 5 has a separate pipeline for such ("retained era") contracts; whether they accept a `v4` (ZKIR v3) key insert and call is unverified |
 
 ## Run the template locally
 

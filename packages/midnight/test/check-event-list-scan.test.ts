@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// check-event / list / scan against recorded Stagenet exchanges (the SPIKE case), plus synthetic edge cases.
+// check-event / list / scan against exchanges recorded on a local chain (the SpikeEmitter run of local-e2e.sh: deploy,
+// publishMetadata = MIP-0018 A1, VerifierKeyRemove; record-local.ts), plus synthetic edge cases.
 
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { HttpClient } from '../src/http.ts';
-import { stagenetProfile } from '../src/network.ts';
+import { undeployedProfile } from '../src/network.ts';
 import { checkEvent, type CheckEventReport } from '../src/check-event.ts';
 import { listMetadata, reduceScannedEvents } from '../src/list.ts';
 import { commonRecords, encodePayload, EVENT_NAME, withdrawRecords } from '@mip0018/codec';
@@ -16,26 +17,54 @@ import type { ScannedBlock } from '../src/indexer.ts';
 import { toJson } from '../src/hex.ts';
 import { loadTape, replayFetch } from './support/cassette.ts';
 
-const dir = join(import.meta.dirname, 'fixtures', 'stagenet');
-const profile = stagenetProfile();
-const SPIKE = '18097aeb608f35d83a65b2cad987084c97c6e9d1dc02973f2a6f6cc2fcdd76e1';
-const PUBLISH = '223050717f704fe47d1bd0b6b91da8ea248139d2d15a23a2eab7cf07d5a51418';
-const DEPLOY = '62bd33fd5fe18ca2ddd78922f4685eabac97f4de2418492daf753568cee8b059';
+const dir = join(import.meta.dirname, 'fixtures', 'local');
+const meta = JSON.parse(readFileSync(join(dir, 'meta.json'), 'utf8')) as {
+  indexer: string;
+  rpc: string;
+  genesisHash: string;
+  chainInstance: string;
+  emitter: {
+    address: string;
+    deploy: { tx: string; height: number };
+    publish: { tx: string; height: number };
+    remove: { tx: string; height: number };
+    scan: { from: number; to: number };
+  };
+};
+const profile = undeployedProfile({ indexer: meta.indexer, rpc: meta.rpc, genesisHash: meta.genesisHash });
+const SPIKE = meta.emitter.address;
+const PUBLISH = meta.emitter.publish.tx;
+const DEPLOY = meta.emitter.deploy.tx;
+const { from: FROM, to: TO } = meta.emitter.scan;
 const A1_META = { domainSep: '11'.repeat(32), kind: 3, name: 'Acme Token', symbol: 'ACME', decimals: 6, standards: ['mip-0004'] };
 
 const replay = (name: string) => new HttpClient({ fetch: replayFetch(loadTape(join(dir, `${name}.tape.json`))), attempts: 1 });
+/**
+ * The replay of a scan tape plus the node's block 1, which a new scanner state records (its chain instance): the tape
+ * holds no block-1 read, and meta.json holds block 1 of the chain the tape comes from.
+ */
+const replayWithBlockOne = (name: string) => {
+  const tape = replayFetch(loadTape(join(dir, `${name}.tape.json`)));
+  const f = (async (input: string | URL | Request, init?: RequestInit) => {
+    const b = init?.body ? (JSON.parse(String(init.body)) as { method?: string; params?: unknown[] }) : {};
+    if (String(input) === meta.rpc && b.method === 'chain_getBlockHash' && b.params?.[0] === 1)
+      return new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, result: meta.chainInstance }), { status: 200 });
+    return tape(input, init);
+  }) as typeof fetch;
+  return new HttpClient({ fetch: f, attempts: 1 });
+};
 const temps: string[] = [];
 afterEach(() => {
   for (const t of temps.splice(0)) rmSync(t, { recursive: true, force: true });
 });
 
-describe('check-event (recorded Stagenet)', () => {
+describe('check-event (recorded on a local chain)', () => {
   it('SPIKE publish: every check passes, the event is A1 and accepted', async () => {
     const r = await checkEvent({
       profile,
       contract: SPIKE,
       tx: PUBLISH,
-      http: replay('check-event-spike-publish'),
+      http: replay('check-event-emitter-publish'),
       expect: { metadata: A1_META },
     });
     expect(r.outcome).toBe('ok');
@@ -48,8 +77,13 @@ describe('check-event (recorded Stagenet)', () => {
       segmentApplied: true,
       classification: { result: 'accept', kind: 3 },
     });
-    expect(r.inclusion).toMatchObject({ height: 710810, finalized: true, extrinsicIndex: 3 });
-    const recorded = JSON.parse(readFileSync(join(dir, 'check-event-spike-publish.result.json'), 'utf8')) as CheckEventReport;
+    const recorded = JSON.parse(readFileSync(join(dir, 'check-event-emitter-publish.result.json'), 'utf8')) as CheckEventReport;
+    expect(r.inclusion).toMatchObject({
+      height: meta.emitter.publish.height,
+      finalized: true,
+      extrinsicIndex: recorded.inclusion!.extrinsicIndex,
+    });
+    expect(recorded.inclusion!.extrinsicIndex).toBeGreaterThanOrEqual(0);
     expect(r.events[0]!.payload).toBe(recorded.events[0]!.payload);
   });
 
@@ -58,7 +92,7 @@ describe('check-event (recorded Stagenet)', () => {
       profile,
       contract: SPIKE,
       tx: PUBLISH,
-      http: replay('check-event-spike-publish'),
+      http: replay('check-event-emitter-publish'),
       expect: { metadata: { ...A1_META, name: 'Other Token' } },
     });
     expect(r.outcome).toBe('mismatch');
@@ -68,14 +102,14 @@ describe('check-event (recorded Stagenet)', () => {
       profile,
       contract: SPIKE,
       tx: PUBLISH,
-      http: replay('check-event-spike-publish'),
+      http: replay('check-event-emitter-publish'),
       expect: { result: 'reject' },
     });
     expect(r2.exitCode).toBe(1);
   });
 
   it('the deploy transaction holds no event: not-found (exit 3)', async () => {
-    const r = await checkEvent({ profile, contract: SPIKE, tx: DEPLOY, http: replay('check-event-spike-deploy') });
+    const r = await checkEvent({ profile, contract: SPIKE, tx: DEPLOY, http: replay('check-event-emitter-deploy') });
     expect(r.outcome).toBe('not-found');
     expect(r.exitCode).toBe(3);
   });
@@ -105,10 +139,10 @@ describe('check-event (recorded Stagenet)', () => {
   });
 });
 
-describe('list (recorded Stagenet)', () => {
+describe('list (recorded on a local chain)', () => {
   it('SPIKE: one kind-3 identity with the A1 fields, no color, one group', async () => {
-    const r = await listMetadata({ profile, contract: SPIKE, toBlock: 710820, http: replay('list-spike') });
-    expect(r.snapshot.toBlock).toBe(710820);
+    const r = await listMetadata({ profile, contract: SPIKE, toBlock: TO, http: replay('list-emitter') });
+    expect(r.snapshot.toBlock).toBe(TO);
     expect(r.snapshot.tipMatchesNode).toBe(true);
     expect(r.counts).toEqual({ events: 1, accepted: 1, rejected: 0, ignored: 0 });
     expect(r.identities).toHaveLength(1);
@@ -118,7 +152,7 @@ describe('list (recorded Stagenet)', () => {
     expect(r.groups).toHaveLength(1);
     expect(r.pages).toBe(2); // one page with the event, then the empty page that proves the end
     // The stored report is exactly what this code produces from the recorded tape.
-    expect(`${toJson(r, 1)}\n`).toBe(readFileSync(join(dir, 'list-spike.result.json'), 'utf8'));
+    expect(`${toJson(r, 1)}\n`).toBe(readFileSync(join(dir, 'list-emitter.result.json'), 'utf8'));
   });
 });
 
@@ -150,7 +184,7 @@ describe('indexer data with trailing zero bytes dropped (MIP "Consuming": zero e
       profile,
       contract: SPIKE,
       tx: PUBLISH,
-      http: trimmedReplay('check-event-spike-publish'),
+      http: trimmedReplay('check-event-emitter-publish'),
       expect: { metadata: A1_META },
     });
     expect(r.outcome).toBe('ok');
@@ -161,39 +195,42 @@ describe('indexer data with trailing zero bytes dropped (MIP "Consuming": zero e
   });
 
   it('list: the trimmed event gives the same identity', async () => {
-    const r = await listMetadata({ profile, contract: SPIKE, toBlock: 710820, http: trimmedReplay('list-spike') });
+    const r = await listMetadata({ profile, contract: SPIKE, toBlock: TO, http: trimmedReplay('list-emitter') });
     expect(r.counts).toEqual({ events: 1, accepted: 1, rejected: 0, ignored: 0 });
     expect(r.identities[0]!.common).toEqual({ name: 'Acme Token', symbol: 'ACME', decimals: 6n, standards: ['mip-0004'] });
   });
 });
 
 describe('scanner', () => {
-  it('replays blocks 710800..710820 (polling) to the recorded state', async () => {
+  it('replays the recorded block range (polling) to the recorded state', async () => {
     const t = mkdtempSync(join(tmpdir(), 'scan-'));
     temps.push(t);
-    const r = await scan({ profile, stateDir: t, fromHeight: 710800, toHeight: 710820, poll: true, http: replay('scan-710800-710820') });
-    const recorded = JSON.parse(readFileSync(join(dir, 'scan-710800-710820.result.json'), 'utf8')) as ScanState;
+    const r = await scan({ profile, stateDir: t, fromHeight: FROM, toHeight: TO, poll: true, http: replayWithBlockOne('scan-emitter') });
+    const recorded = JSON.parse(readFileSync(join(dir, 'scan-emitter.result.json'), 'utf8')) as ScanState;
+    recorded.network.chainInstance ??= meta.chainInstance;
     const strip = (s: ScanState) => ({ ...s, updatedAt: '' });
+    expect(r.state.network.chainInstance).toBe(meta.chainInstance);
     expect(strip(r.state)).toEqual(strip(recorded));
     expect(r.state.events[SPIKE]).toHaveLength(1);
-    expect(r.state.events[SPIKE]![0]).toMatchObject({ result: 'accept', kind: 3, block: { height: 710810 } });
+    expect(r.state.events[SPIKE]![0]).toMatchObject({ result: 'accept', kind: 3, block: { height: meta.emitter.publish.height } });
+    expect(r.state.deploys[SPIKE]).toMatchObject({ height: meta.emitter.deploy.height });
     expect(strip(loadState(t)!)).toEqual(strip(recorded));
   });
 
   it('a split scan equals a single scan (resumability) and refuses gaps / wrong parents', () => {
-    const tape = loadTape(join(dir, 'scan-710800-710820.tape.json'));
+    const tape = loadTape(join(dir, 'scan-emitter.tape.json'));
     const blocks = tape
       .map((e) => (e.response as { data?: { block?: ScannedBlock } }).data?.block)
       .filter((b): b is ScannedBlock => b !== undefined && b !== null && 'transactions' in b);
-    expect(blocks.map((b) => b.height)).toEqual(Array.from({ length: 21 }, (_, i) => 710800 + i));
-    const one = newState(profile, profile.genesisHash!, 710800);
+    expect(blocks.map((b) => b.height)).toEqual(Array.from({ length: TO - FROM + 1 }, (_, i) => FROM + i));
+    const one = newState(profile, profile.genesisHash!, FROM);
     for (const b of blocks) applyBlock(one, b);
-    const a = newState(profile, profile.genesisHash!, 710800);
+    const a = newState(profile, profile.genesisHash!, FROM);
     for (const b of blocks.slice(0, 7)) applyBlock(a, b);
     const resumed = JSON.parse(JSON.stringify(a)) as ScanState; // as if reloaded from disk
     for (const b of blocks.slice(7)) applyBlock(resumed, b);
     expect({ ...resumed, updatedAt: '' }).toEqual({ ...one, updatedAt: '' });
-    const g = newState(profile, profile.genesisHash!, 710800);
+    const g = newState(profile, profile.genesisHash!, FROM);
     expect(() => applyBlock(g, blocks[1]!)).toThrow(ScanError);
     applyBlock(g, blocks[0]!);
     expect(() => applyBlock(g, { ...blocks[1]!, parent: { hash: 'bb'.repeat(32) } })).toThrow(/parent/);
@@ -202,10 +239,22 @@ describe('scanner', () => {
   it('builds the color table from mint transactions and resolves colors', () => {
     const m = JSON.parse(readFileSync(join(dir, 'mint-txs.json'), 'utf8')) as {
       contractAddress: string;
-      transactions: { hash: string; height: number; blockHash: string; raw: string; transactionResult: never }[];
+      transactions: {
+        entryPoint: string;
+        hash: string;
+        height: number;
+        blockHash: string;
+        raw: string;
+        amount: string;
+        transactionResult: never;
+      }[];
       expected: { color: string; domainSep: string };
     };
-    const s = newState(profile, profile.genesisHash!, 508540);
+    const shielded = m.transactions.find((t) => t.entryPoint === 'mintShielded')!;
+    const unshielded = m.transactions.find((t) => t.entryPoint === 'mintUnshielded')!;
+    const first = Math.min(shielded.height, unshielded.height);
+    const last = Math.max(shielded.height, unshielded.height);
+    const s = newState(profile, profile.genesisHash!, first);
     const blockAt = (h: number): ScannedBlock => {
       const t = m.transactions.find((x) => x.height === h);
       return {
@@ -227,12 +276,12 @@ describe('scanner', () => {
           : [],
       };
     };
-    for (let h = 508540; h <= 508544; h++) applyBlock(s, blockAt(h));
+    for (let h = first; h <= last; h++) applyBlock(s, blockAt(h));
     expect(Object.keys(s.colors)).toEqual([m.expected.color]);
     const e = s.colors[m.expected.color]!;
     expect(e).toMatchObject({ contractAddress: m.contractAddress, domainSep: m.expected.domainSep });
-    expect(e.shielded).toMatchObject({ mints: 1, amount: '1000', firstMint: { height: 508540 } });
-    expect(e.unshielded).toMatchObject({ mints: 1, amount: '2000', firstMint: { height: 508544 } });
+    expect(e.shielded).toMatchObject({ mints: 1, amount: shielded.amount, firstMint: { height: shielded.height } });
+    expect(e.unshielded).toMatchObject({ mints: 1, amount: unshielded.amount, firstMint: { height: unshielded.height } });
     const l = lookupColor(s, m.expected.color);
     expect(l.identities.map((i) => i.kind)).toEqual([1, 2]);
     expect(lookupColor(s, m.expected.color, 2).identities).toEqual([
@@ -240,10 +289,10 @@ describe('scanner', () => {
     ]);
     const miss = lookupColor(s, 'ab'.repeat(32));
     expect(miss.found).toBe(false);
-    expect(miss.scanned).toMatchObject({ from: 508540, to: 508544 });
+    expect(miss.scanned).toMatchObject({ from: first, to: last });
     // a FAILED transaction mints nothing
-    const f = newState(profile, profile.genesisHash!, 508540);
-    const failed = blockAt(508540);
+    const f = newState(profile, profile.genesisHash!, first);
+    const failed = blockAt(first);
     failed.transactions[0]!.transactionResult = { status: 'FAILURE', segments: null };
     applyBlock(f, failed);
     expect(f.colors).toEqual({});
@@ -263,14 +312,14 @@ describe('scanner', () => {
       return l.identities.map((i) => ids.find((x) => x.domainSep === i.domainSep && x.kind === i.kind)?.common ?? null);
     };
     const published = [
-      ev(508545, 1, commonRecords({ name: 'Shield', symbol: 'SHD' })),
-      ev(508545, 2, commonRecords({ name: 'Open', symbol: 'OPN' })),
+      ev(last + 1, 1, commonRecords({ name: 'Shield', symbol: 'SHD' })),
+      ev(last + 1, 2, commonRecords({ name: 'Open', symbol: 'OPN' })),
     ];
     expect(meta(published)).toEqual([
       { name: 'Shield', symbol: 'SHD' },
       { name: 'Open', symbol: 'OPN' },
     ]);
-    const withdrawn = [...published, ev(508546, 1, withdrawRecords())];
+    const withdrawn = [...published, ev(last + 2, 1, withdrawRecords())];
     expect(meta(withdrawn)).toEqual([null, { name: 'Open', symbol: 'OPN' }]);
     expect(meta(withdrawn)).toEqual(meta([published[1]!])); // = kind 1 never described
   });

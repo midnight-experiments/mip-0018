@@ -5,7 +5,7 @@
 #   MIP0018_DOCKER_PREFIX=<prefix> MIP0018_E2E_DIR=<empty dir outside the repo> \
 #     examples/upgrade-existing-contract/scripts/local-upgrade.sh
 #
-#   1. compile LegacyToken and the upgrade-only LegacyTokenMetadata with keys (Compact 0.35.0, --feature-zkir-v3)
+#   1. compile LegacyToken and the upgrade-only LegacyTokenMetadata with keys (Compact 0.36.0)
 #   2. deploy LegacyToken (maintenance authority = the deploy-time key), mint 1000 shielded coins to wallet A, record
 #      the color wallet A holds and a wallet-free snapshot of the contract (entry points, authority, ledger data hash)
 #   3. NEGATIVE wrong signer: the insert signed by a random key is refused before submission, and — forced — rejected
@@ -78,7 +78,7 @@ fi
 NET="$MIP0018_STACK_NETWORK"
 IDX="http://127.0.0.1:$MIP0018_INDEXER_PORT/api/v4/graphql"
 ENV_NET="-e MIP0018_INDEXER_URL=$MIP0018_INDEXER_URL_IN_NETWORK -e MIP0018_NODE_URL=$MIP0018_NODE_URL_IN_NETWORK -v $E2E:/e2e"
-ENV_SIGN="$ENV_NET -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK -e MIP0018_WALLET_PROOF_SERVER_URL=$MIP0018_WALLET_PROOF_SERVER_URL_IN_NETWORK"
+ENV_SIGN="$ENV_NET -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK"
 pass "stack up ($MIP0018_STACK_PROJECT)"
 
 cli() { local name="$1"; shift

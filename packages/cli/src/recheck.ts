@@ -14,10 +14,17 @@
 //
 // Paths: "record", "wallet", "index" are relative to the OUTPUT directory (--out, default the case directory: where
 // the signer wrote its records); "expect" is relative to the case directory.
+//
+// Identity: the profile is bound to the network file of the case folder (`deployments/<network>/network.json` for
+// `deployments/<network>/cases/<ID>`: genesis and chain instance, i.e. block 1) and, per check, to the network its
+// run record names. The node's identity is checked once before the first check, bound to every run record and scanner
+// state the case names: a wrong genesis, a network re-created from the same genesis, or files that record another
+// chain end the case there, with one failed "identity" result and no further read.
 
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import {
+  checkIdentity,
   compareState,
   contractOperations,
   expectedStateFrom,
@@ -35,19 +42,22 @@ import {
 import {
   EXIT,
   NETWORK_OPTIONS,
+  NETWORK_USAGE,
   UsageError,
+  agreeingFiles,
+  boundProfile,
   emitJson,
   out,
   parse,
   profileFrom,
   readRecord,
-  recordContract,
   recordStep,
+  recordTarget,
   str,
 } from './common.ts';
 
 export const RECHECK_USAGE = `
-mip0018 recheck --network <stagenet|undeployed> --case <dir> [--out <dir>] [--json]
+mip0018 recheck --network <undeployed|preview|preprod|mainnet> --case <dir> [--out <dir>] [--json]
 
 Re-checks a recorded case without a wallet: runs every check of <dir>/case.json "recheck" (check-event each recorded
 transaction with its expectation, list the contract's metadata against expected.json, steps that must have no
@@ -57,8 +67,11 @@ transaction, removed verifier keys, colors through the mint scanner table and th
   --out <dir>    where the records and observations are (default: the case folder)
   --wait <s>     check-event: keep polling the indexer for a recorded transaction (default 0)
 
+The node's genesis and block 1 must equal those of the case folder's network file (deployments/<network>/network.json
+for deployments/<network>/cases/<ID>) and of each run record; a mismatch ends the case before any further read.
+
 Exit: 0 every check passes · 1 a check fails · 2 usage · 4 a transaction is not indexed / final yet
-`;
+${NETWORK_USAGE}`;
 
 interface RecheckSpec {
   checkEvent?: { record: string; step: string; expect?: string }[];
@@ -119,13 +132,33 @@ export async function recheckCase(
     }
   };
 
+  // The chain first, bound to every run record the case names: on another network (or another instance of it)
+  // nothing of the case is read; the case ends with one failed "identity" result. (Every check verifies the identity
+  // again before its own reads.)
+  try {
+    const entries: { record: string }[][] = [
+      spec.checkEvent ?? [],
+      spec.list ?? [],
+      spec.noTransaction ?? [],
+      spec.operationsAbsent ?? [],
+      spec.colors ?? [],
+    ];
+    const records = [...new Set(entries.flat().map((x) => join(outDir, x.record)))].filter((p) => existsSync(p));
+    const states = [...new Set((spec.colors ?? []).flatMap((k) => (k.index ? [join(outDir, k.index)] : [])))];
+    await checkIdentity(boundProfile(profile, [...records, ...states]));
+  } catch (e) {
+    add('identity', false, (e as Error).message);
+    return { caseId: c.id, results };
+  }
+
   for (const v of spec.checkEvent ?? [])
     await guard(`check-event ${v.step}`, async () => {
       const r = rec(v.record);
+      const t = recordTarget(r, profile);
       const expect = v.expect ? (readJson(join(caseDir, v.expect), 'expectation') as EventExpectation | EventExpectation[]) : undefined;
       const rep = await checkEvent({
-        profile,
-        contract: recordContract(r, profile),
+        profile: t.profile,
+        contract: t.address,
         tx: recordStep(r, v.step).tx,
         expect,
         waitMs: o.waitMs ?? 0,
@@ -155,7 +188,8 @@ export async function recheckCase(
         if (!s?.inclusion) throw new Error(`step ${l.atStep} of ${l.record} has no inclusion block`);
         toBlock = s.inclusion.height;
       }
-      const rep = await listMetadata({ profile, contract: recordContract(r, profile), ...(toBlock !== undefined ? { toBlock } : {}) });
+      const t = recordTarget(r, profile);
+      const rep = await listMetadata({ profile: t.profile, contract: t.address, ...(toBlock !== undefined ? { toBlock } : {}) });
       const cmp = compareState(projectState(rep.identities, rep.groups, rep.counts), expected);
       add(
         id,
@@ -181,8 +215,8 @@ export async function recheckCase(
 
   for (const a of spec.operationsAbsent ?? [])
     await guard(`no key ${a.circuit}`, async () => {
-      const address = recordContract(rec(a.record), profile);
-      const ops = await contractOperations(profile, address);
+      const { profile: bound, address } = recordTarget(rec(a.record), profile);
+      const ops = await contractOperations(bound, address);
       if (ops === null) throw new Error(`contract ${address} not found`);
       add(`no key ${a.circuit}`, !ops.includes(a.circuit), `contract operations with a key: ${ops.join(', ') || 'none'}`);
     });
@@ -190,13 +224,15 @@ export async function recheckCase(
   for (const k of spec.colors ?? []) {
     const id = `color ${domainLabel(k.domainSep)}/${k.kind}`;
     await guard(id, async () => {
-      const address = recordContract(rec(k.record), profile);
+      const r = rec(k.record);
+      const { profile: bound, address } = recordTarget(r, profile);
       const color = tokenTypeHex(k.domainSep, address);
       const notes: string[] = [`tokenType = ${color}`];
       let ok = true;
       if (k.index && k.minted === false) {
         const s = loadState(join(outDir, k.index));
         if (!s) throw new Error(`no index state in ${k.index}`);
+        agreeingFiles([r.path, join(outDir, k.index)]);
         const l = lookupColor(s, color, k.kind);
         if (l.found) {
           ok = false;
@@ -205,6 +241,7 @@ export async function recheckCase(
       } else if (k.index) {
         const s = loadState(join(outDir, k.index));
         if (!s) throw new Error(`no index state in ${k.index}`);
+        agreeingFiles([r.path, join(outDir, k.index)]);
         const l = lookupColor(s, color, k.kind);
         const e = l.entry;
         const kindOk = e && (k.kind === 1 ? e.shielded : e.unshielded);
@@ -230,7 +267,7 @@ export async function recheckCase(
         } else notes.push(`wallet holds ${b} of it (${k.kind === 1 ? 'shielded' : 'unshielded'})`);
       }
       if (k.expectIdentity) {
-        const rep = await listMetadata({ profile, contract: address });
+        const rep = await listMetadata({ profile: bound, contract: address });
         const v = rep.identities.find((x) => x.domainSep === normHex(k.domainSep) && x.kind === k.kind);
         const liveColor = v?.color ? Buffer.from(v.color).toString('hex') : undefined;
         const cmp = compareState(projectState(v ? [v] : [], []), { identities: [k.expectIdentity], groups: [] });
@@ -246,10 +283,15 @@ export async function recheckCase(
   return { caseId: c.id, results };
 }
 
+/** The profile bound to the network file of the case folder (genesis, chain instance); another network is refused. */
+export function caseProfile(profile: NetworkProfile, caseDir: string): NetworkProfile {
+  return boundProfile(profile, [caseDir]);
+}
+
 export async function cmdRecheck(argv: string[]): Promise<number> {
   const v = parse(argv, { ...NETWORK_OPTIONS, case: { type: 'string' }, out: { type: 'string' }, wait: { type: 'string' } }, RECHECK_USAGE);
-  const profile = profileFrom(v);
   const caseDir = resolve(str(v, 'case', true)!);
+  const profile = caseProfile(profileFrom(v), caseDir);
   const outDir = resolve(str(v, 'out') ?? caseDir);
   const wait = str(v, 'wait');
   if (wait !== undefined && !/^\d+$/u.test(wait)) throw new UsageError('--wait expects seconds');

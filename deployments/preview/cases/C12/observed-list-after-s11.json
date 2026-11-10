@@ -1,0 +1,494 @@
+{
+  "network": {
+    "id": "preview",
+    "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+    "indexer": "https://indexer.preview.midnight.network/api/v4/graphql"
+  },
+  "contract": "cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9",
+  "snapshot": {
+    "indexerTip": {
+      "height": 42072,
+      "hash": "be0284d3aec8f2b70bb35a69481d90750e3a7685f1f45acaead30edb94e02936"
+    },
+    "toBlock": 42072,
+    "nodeHashAtTip": "0xbe0284d3aec8f2b70bb35a69481d90750e3a7685f1f45acaead30edb94e02936",
+    "tipMatchesNode": true,
+    "finalizedHeight": 42072
+  },
+  "pages": 2,
+  "counts": {
+    "events": 25,
+    "accepted": 11,
+    "rejected": 10,
+    "ignored": 4
+  },
+  "events": [
+    {
+      "id": 13298,
+      "block": {
+        "height": 41785,
+        "hash": "1ac3dbabe406d8a070e1a61d6079467cd587cfcbb2d4a7c58edac56bfdd5592e"
+      },
+      "txHash": "0f85fd3dec9cd02623eee514365be26f19e5516773ba87497358a37c3797b5b2",
+      "txId": 3198,
+      "result": "accept",
+      "identity": "preview|cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "records": 1
+    },
+    {
+      "id": 13303,
+      "block": {
+        "height": 41803,
+        "hash": "17f271a6327c73f184c2c8cdfffeb2e83f62f0f5ba3cc71aa87902af79053a77"
+      },
+      "txHash": "d19121885e8b9b8fd79e4a460bd9b71dbcccee8dadc1e5bae6f3f823a7c6bd20",
+      "txId": 3200,
+      "result": "reject",
+      "reason": "no-records"
+    },
+    {
+      "id": 13305,
+      "block": {
+        "height": 41810,
+        "hash": "0ac7eb040714e2c67e4562f6e2e24842be2af28efc7bd6dda02679a74e478042"
+      },
+      "txHash": "42e4037456a182ecf30a3a7b8978663c3017f546697bb37f98b408ab35c08c82",
+      "txId": 3201,
+      "result": "accept",
+      "identity": "preview|cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "records": 1
+    },
+    {
+      "id": 13307,
+      "block": {
+        "height": 41817,
+        "hash": "d469f1c5fcd2719c56d7ff8046953a7a4700278d9cc81473f21531ac37b99365"
+      },
+      "txHash": "27f28a43ba8ab7796d8cce0112efee962d6fcc81c1c94b02b5407069e2453243",
+      "txId": 3202,
+      "result": "reject",
+      "reason": "vallen-out-of-bounds"
+    },
+    {
+      "id": 13309,
+      "block": {
+        "height": 41824,
+        "hash": "1e08d6d3118cfc20abd0cf7f4521ba0a257e1df9b080b95650914afb087a1049"
+      },
+      "txHash": "e63e1845bb0ac07672a542a1828cf4ed8541fe6dde6fcfff503b7826027634ec",
+      "txId": 3203,
+      "result": "accept",
+      "identity": "preview|cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "records": 2
+    },
+    {
+      "id": 13311,
+      "block": {
+        "height": 41831,
+        "hash": "804d3f5d37aa2891bf6ed0ec0956863972ef125a827bfe79c72f6d3f66438361"
+      },
+      "txHash": "a8ed02eff2f68d1610407459ad2abc66eda3a4cc0a9774b4cc89569db01539bd",
+      "txId": 3204,
+      "result": "reject",
+      "reason": "nonzero-padding"
+    },
+    {
+      "id": 13313,
+      "block": {
+        "height": 41838,
+        "hash": "c5b4d2ce2f68cb0d1a3705726bd5455540acafa57776b26b484144743f71c735"
+      },
+      "txHash": "f4224fa667eb076d5951a0123d2232b18e9177481f306dbe39083c5a5fad5348",
+      "txId": 3205,
+      "result": "accept",
+      "identity": "preview|cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "records": 1
+    },
+    {
+      "id": 13315,
+      "block": {
+        "height": 41846,
+        "hash": "48a92448a0d6b5d63254b9c2b9c64ac9320499b3dcbe88b484b8144d8b4ffbb3"
+      },
+      "txHash": "52888af7c5eb9b1e891359bab4b64759619876f6497429313bfef54e2e897b23",
+      "txId": 3206,
+      "result": "reject",
+      "reason": "nonzero-padding"
+    },
+    {
+      "id": 13317,
+      "block": {
+        "height": 41856,
+        "hash": "c90a25219bc65d49e6f9b22d34d5171ad1c3d997859609989a39aff4c3d34e5b"
+      },
+      "txHash": "4c21bd502275fe47ccc54dbc9615a43d81a1522f5e757dd7dfa80d84cc2cada4",
+      "txId": 3207,
+      "result": "reject",
+      "reason": "invalid-utf8-key"
+    },
+    {
+      "id": 13319,
+      "block": {
+        "height": 41867,
+        "hash": "c197497283a250d2d233299b1e079fa63952669ddcc3e34c14b91c7c54fd7b61"
+      },
+      "txHash": "25b4d4b93257aa97791f2b2fbf697deb11be0b7d95fc822695960571d112e0b6",
+      "txId": 3208,
+      "result": "reject",
+      "reason": "bad-kind"
+    },
+    {
+      "id": 13324,
+      "block": {
+        "height": 41875,
+        "hash": "69e292e397eb44006312cf487dde73dc92e610e703e69df6a9e25a64e2049906"
+      },
+      "txHash": "8455e6dbc2c5d9970aaf14f9ebac0c9976bf3b29e7b08ded396c26fd242463ce",
+      "txId": 3210,
+      "result": "accept",
+      "identity": "preview|cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "records": 1
+    },
+    {
+      "id": 13326,
+      "block": {
+        "height": 41882,
+        "hash": "aa2aefb748dfc073ffc99862a1b014e3055b108478af6e2dfab6919246055705"
+      },
+      "txHash": "b5d7fd79f6264c96ec732687c13c465a1f5b822264c0e8ea79e3007aa7e27a9c",
+      "txId": 3211,
+      "result": "reject",
+      "reason": "invalid-utf8"
+    },
+    {
+      "id": 13328,
+      "block": {
+        "height": 41889,
+        "hash": "a0b8381a79f336b08fba73c75357b74341681a7889722dfb46e99ac103f127a1"
+      },
+      "txHash": "900f441d5889bdd119af1858d47453fd5d38a3190240414149e5f3d1e375de82",
+      "txId": 3212,
+      "result": "accept",
+      "identity": "preview|cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "records": 2
+    },
+    {
+      "id": 13330,
+      "block": {
+        "height": 41896,
+        "hash": "d362809a5a8fce76c213cbdba35ac91445640a8f1f30af5dd8278e31b51b7b16"
+      },
+      "txHash": "4941d190dea30d5fd17431d53ff27e744e22f28e415c6da34d7e466b6654e43e",
+      "txId": 3213,
+      "result": "reject",
+      "reason": "invalid-uri"
+    },
+    {
+      "id": 13333,
+      "block": {
+        "height": 41903,
+        "hash": "255766e39eb28dfaaff5a2535a140b5c40ab7c5cfb4ee629528ad24f8895d99b"
+      },
+      "txHash": "4c9a087ba4ad134faa2cad67f39d61939772b611962cf62fac8429427d2c5714",
+      "txId": 3215,
+      "result": "accept",
+      "identity": "preview|cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "records": 2
+    },
+    {
+      "id": 13335,
+      "block": {
+        "height": 41910,
+        "hash": "e4b1d56e24ad08e80c70daafcfa93d32b137b7f6572fa64d3b8f24e19325d837"
+      },
+      "txHash": "34c0b6e4a090ffa0422d859b2c5a6da97eaa70e7641371e574ffe6f5e76704fe",
+      "txId": 3216,
+      "result": "reject",
+      "reason": "bad-null-length"
+    },
+    {
+      "id": 13337,
+      "block": {
+        "height": 41917,
+        "hash": "d79ec5095500e0a13aab563469298df4106a14cfe3710022477ecdd28dec869d"
+      },
+      "txHash": "9619810e46b61ebe03ef84d2959ce40881b811fb6bbe179364f18ee523eb74aa",
+      "txId": 3217,
+      "result": "accept",
+      "identity": "preview|cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "records": 2
+    },
+    {
+      "id": 13339,
+      "block": {
+        "height": 41925,
+        "hash": "2772efd5f1b1217856fc4dbe921c9de1216cbe37644cdd2608fb7e8af2d9537c"
+      },
+      "txHash": "df5ae918ce72a9ae9dc65406445e5b675593857f131263ecf4db86ccc53b4d62",
+      "txId": 3218,
+      "result": "reject",
+      "reason": "reserved-valtype"
+    },
+    {
+      "id": 13341,
+      "block": {
+        "height": 41932,
+        "hash": "0660756139eec36801eb1d2861d05c91127e7d23b32d671bff6861f57bd53b43"
+      },
+      "txHash": "49d62aae90ec0948313e86f3a44be2f60d361049a4bb7c0210cfc1229235bf8e",
+      "txId": 3219,
+      "result": "ignore",
+      "reason": "other-name"
+    },
+    {
+      "id": 13343,
+      "block": {
+        "height": 41939,
+        "hash": "ffe00db8d4e1293b192f32ed807893052b1f1a76d9322f9da69616b19d140f08"
+      },
+      "txHash": "ade1ec0c24fcfaae99c9e9e7018d05e13317d0547ae712ac36a05466a548b04d",
+      "txId": 3220,
+      "result": "ignore",
+      "reason": "other-name"
+    },
+    {
+      "id": 13345,
+      "block": {
+        "height": 41946,
+        "hash": "d2a8cae1baa7d50f72a6528118118a5eb11c76fe8a774eff1dd06a12413e94a3"
+      },
+      "txHash": "5a0a3da06ae2161c278a083563066b9a3008ff2821b88571e9fd4c637403a281",
+      "txId": 3221,
+      "result": "ignore",
+      "reason": "other-name"
+    },
+    {
+      "id": 13347,
+      "block": {
+        "height": 41952,
+        "hash": "cb4267a93b38187a3e0b49ea6657f932522ed548ce41200ad890ad419b27881f"
+      },
+      "txHash": "64e92d745579945b6346be7ed9e3991fe39cdd370b418e238ca88f0d0781a304",
+      "txId": 3222,
+      "result": "ignore",
+      "reason": "other-name"
+    },
+    {
+      "id": 13363,
+      "block": {
+        "height": 42054,
+        "hash": "e322ea247de127e9df4676319c7f8c679356b03a3b29e77130797b37add5c94e"
+      },
+      "txHash": "8efc794912d5a88b4711cadd5553b6a2a9f19d3504462141952d6c1b1815b802",
+      "txId": 3232,
+      "result": "accept",
+      "identity": "preview|cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9|6d69702d303031383a707265766965773a433132000000000000000000000000|3",
+      "domainSep": "6d69702d303031383a707265766965773a433132000000000000000000000000",
+      "kind": 3,
+      "records": 2
+    },
+    {
+      "id": 13367,
+      "block": {
+        "height": 42063,
+        "hash": "db0e85b91530d80cab1c2ab8102aa9987215c63253e7d4c078d3bebcafa19599"
+      },
+      "txHash": "fff38dbeca19b0e5243cb64e2d49cba5caaa4b510f6419eec1eba1216b1260ae",
+      "txId": 3234,
+      "result": "accept",
+      "identity": "preview|cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9|6d69702d303031383a707265766965773a433132000000000000000000000000|3",
+      "domainSep": "6d69702d303031383a707265766965773a433132000000000000000000000000",
+      "kind": 3,
+      "records": 1
+    },
+    {
+      "id": 13371,
+      "block": {
+        "height": 42071,
+        "hash": "e78f70b60ba3c273cf50469a4287caddc85149e44dc3a7c34a4553b72733e5b5"
+      },
+      "txHash": "b3b8e6ecc2639575478c8138329780571b4bac8053361c327ff8ef2337f0d9e3",
+      "txId": 3236,
+      "result": "accept",
+      "identity": "preview|cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9|6d69702d303031383a707265766965773a433132000000000000000000000000|3",
+      "domainSep": "6d69702d303031383a707265766965773a433132000000000000000000000000",
+      "kind": 3,
+      "records": 2
+    }
+  ],
+  "identities": [
+    {
+      "key": "preview|cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9|1111111111111111111111111111111111111111111111111111111111111111|3",
+      "network": "preview",
+      "contractAddress": "cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9",
+      "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+      "kind": 3,
+      "colored": false,
+      "color": null,
+      "fields": [
+        {
+          "key": "73796d626f6c",
+          "valType": 1,
+          "value": "41434d45",
+          "setAt": {
+            "block": "41824",
+            "tx": 3203,
+            "event": 13309,
+            "record": 0
+          },
+          "keyHex": "73796d626f6c",
+          "usable": true
+        },
+        {
+          "key": "646563696d616c73",
+          "valType": 2,
+          "value": "06000000000000000000000000000000",
+          "setAt": {
+            "block": "41875",
+            "tx": 3210,
+            "event": 13324,
+            "record": 0
+          },
+          "integer": "6",
+          "keyHex": "646563696d616c73",
+          "usable": true
+        },
+        {
+          "key": "6e616d65",
+          "valType": 1,
+          "value": "41636d65",
+          "setAt": {
+            "block": "41917",
+            "tx": 3217,
+            "event": 13337,
+            "record": 0
+          },
+          "keyHex": "6e616d65",
+          "usable": true
+        }
+      ],
+      "common": {
+        "symbol": "ACME",
+        "decimals": "6",
+        "name": "Acme"
+      }
+    },
+    {
+      "key": "preview|cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9|6d69702d303031383a707265766965773a433132000000000000000000000000|3",
+      "network": "preview",
+      "contractAddress": "cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9",
+      "domainSep": "6d69702d303031383a707265766965773a433132000000000000000000000000",
+      "kind": 3,
+      "colored": false,
+      "color": null,
+      "fields": [
+        {
+          "key": "696d616765",
+          "valType": 4,
+          "value": "68747470733a2f2f6578616d706c652e6f72672f61636d652e706e67",
+          "setAt": {
+            "block": "42054",
+            "tx": 3232,
+            "event": 13363,
+            "record": 0
+          },
+          "keyHex": "696d616765",
+          "usable": true
+        },
+        {
+          "key": "696d6167655f736861323536",
+          "valType": 0,
+          "value": "df0e7f2208098c42ba231bd6ed5eacce4c7a7b21e4eb5ea1a79bccb0fa237464",
+          "setAt": {
+            "block": "42054",
+            "tx": 3232,
+            "event": 13363,
+            "record": 1
+          },
+          "keyHex": "696d6167655f736861323536",
+          "usable": true
+        },
+        {
+          "key": "6e616d65",
+          "valType": 1,
+          "value": "41636d652043616665cc8120746f6b656e20f09f87baf09f87be20e18492e185a1e186abe18480e185a1e186a82041cc8a6e677374726fcc88cc846d2c20736576656e7479206368617261637465727320666f7220746573742053313161f09f87aff09f87b5",
+          "setAt": {
+            "block": "42071",
+            "tx": 3236,
+            "event": 13371,
+            "record": 0
+          },
+          "keyHex": "6e616d65",
+          "storedValue": "41636d652043616665cc8120746f6b656e20f09f87baf09f87be20e18492e185a1e186abe18480e185a1e186a82041cc8a6e677374726fcc88cc846d2c20736576656e7479206368617261637465727320666f7220746573742053313161f09f87aff09f87b5e18492e185a1e186ab207461696c",
+          "usable": true
+        },
+        {
+          "key": "73796d626f6c",
+          "valType": 1,
+          "value": "41cc8a434d65cc81f09f87baf09f87bee18492e185a1e186ab58595a6fcc88cc843132",
+          "setAt": {
+            "block": "42071",
+            "tx": 3236,
+            "event": 13371,
+            "record": 1
+          },
+          "keyHex": "73796d626f6c",
+          "storedValue": "41cc8a434d65cc81f09f87baf09f87bee18492e185a1e186ab58595a6fcc88cc84313233f09f87aff09f87b5e18480e185a1e186a8",
+          "usable": true
+        }
+      ],
+      "common": {
+        "image": "https://example.org/acme.png",
+        "imageSha256": "df0e7f2208098c42ba231bd6ed5eacce4c7a7b21e4eb5ea1a79bccb0fa237464",
+        "name": "Acme Café token 🇺🇾 한각 Ångstrȫm, seventy characters for test S11a🇯🇵",
+        "symbol": "ÅCMé🇺🇾한XYZȫ12"
+      }
+    }
+  ],
+  "groups": [
+    {
+      "network": "preview",
+      "contractAddress": "cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9",
+      "symbol": "41434d45",
+      "members": [
+        {
+          "domainSep": "1111111111111111111111111111111111111111111111111111111111111111",
+          "kind": 3,
+          "key": "preview|cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9|1111111111111111111111111111111111111111111111111111111111111111|3"
+        }
+      ]
+    },
+    {
+      "network": "preview",
+      "contractAddress": "cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9",
+      "symbol": "41cc8a434d65cc81f09f87baf09f87bee18492e185a1e186ab58595a6fcc88cc84313233f09f87aff09f87b5e18480e185a1e186a8",
+      "members": [
+        {
+          "domainSep": "6d69702d303031383a707265766965773a433132000000000000000000000000",
+          "kind": 3,
+          "key": "preview|cd2fd7655fd4481daa50ea0e7ed7095247dd7f15c48d746116a2fa6e02fdb6a9|6d69702d303031383a707265766965773a433132000000000000000000000000|3"
+        }
+      ]
+    }
+  ],
+  "expectation": {
+    "ok": true,
+    "differences": []
+  }
+}

@@ -8,7 +8,7 @@
   "contract": {
     "source": "contracts/MyShieldedToken.compact",
     "withoutMetadata": "contracts/without-metadata/MyShieldedToken.compact",
-    "openzeppelin": "@openzeppelin/compact-contracts@0.4.0-alpha.5 (access/Ownable, token/NativeShieldedToken)",
+    "openzeppelin": "@openzeppelin/compact-contracts@0.5.0-alpha.2 (access/Ownable, token/NativeShieldedToken)",
     "constructorArgs": {
       "domainSep": "0x6d69702d303031383a6578616d706c653a736869656c64656400000000000000",
       "name_": "Acme Shield",

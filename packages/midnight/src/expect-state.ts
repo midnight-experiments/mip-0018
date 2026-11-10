@@ -3,7 +3,7 @@
 // Expected consumer state of one contract, and the comparison `mip0018 list --expect` / `recheck` make.
 //
 // The shape is the `expected` object of the examples' metadata.json (examples/openzeppelin/README.md#metadatajson),
-// which is also what deployments/stagenet/cases/<ID>/expected.json holds:
+// which is also what deployments/<network>/cases/<ID>/expected.json holds:
 //
 //   { "identities": [ { "domainSep": "0x…", "kind": 1|2|3, "colored": bool,
 //                       "common": { "name"?, "symbol"?, "decimals"? (number), "standards"? (space-joined), "image"?,

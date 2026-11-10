@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# End-to-end test of the examples and of the Stagenet case folders on a local undeployed chain (docker/local-stack, official
+# End-to-end test of the examples and of the case folders on a local undeployed chain (docker/local-stack, official
 # images only). Companion of local-e2e.sh (which covers the CLI's crash/resume, scanner kill/resume, identity guards).
 #
 #   MIP0018_DOCKER_PREFIX=<prefix> MIP0018_E2E_DIR=<empty dir outside the repo> packages/cli/test/e2e/examples-e2e.sh
@@ -8,6 +8,7 @@
 #   docker/run.sh exec 'npm run -s compile -w examples/minimal -- --keys CreateAndDestroy OwnerKey'
 #   docker/run.sh exec 'npm run -s compile -w examples/openzeppelin -- --keys --with-metadata-only'
 #   docker/run.sh exec 'npm run -s compile -w test-contracts/raw-emitter -- --keys'
+#   docker/run.sh exec 'npm run -s compile -w examples/upgrade-existing-contract'   (case U1: both contracts, with keys)
 #
 # Parts (MIP0018_E2E_PARTS, default "A B C D"):
 #   A  happy path: deploy-and-publish of examples/minimal and every examples/openzeppelin/* example → check-event → list
@@ -15,8 +16,11 @@
 #   B  the publish-and-emit walkthrough: rename, withdraw, withdraw again, revive on the fungible token with `publish`
 #      (list after each = metadata.json lifecycle); create-and-destroy on the minimal example (remove-circuit, then a
 #      publish refused before submission)
-#   C  every Stagenet case folder (deployments/stagenet/cases/C01…C10, IDX) run on the local chain: each step's
-#      command expanded by case.py (local wallets and paths), its exit code = the case's; outputs saved as on Stagenet
+#   C  the case folders of deployments/tools/prepare-cases.ts (C01…C10, C12, IDX, U1 in that order, or
+#      MIP0018_E2E_CASES; generated for MIP0018_E2E_CASE_NETWORK, default preview, into $MIP0018_E2E_DIR/case-defs) run
+#      on the local chain: each step's command expanded by case.py (local wallets and paths), its exit code = the
+#      case's; outputs saved as on the public network. U1's wrong-signer key is a throwaway ledger sampleSigningKey()
+#      written to the state directory (0600)
 #   D  `mip0018 recheck` of every case (wallet-free, one command each) + a secret scan of every log, record and state
 #
 # Wallets: A = the dev chain's public genesis wallet (with a 0600 sync cache); B = a fresh local test wallet funded by
@@ -84,7 +88,7 @@ fi
 . "$repo/docker/local-stack/ports.env"
 NET="$MIP0018_STACK_NETWORK"
 ENV_NET="-e MIP0018_INDEXER_URL=$MIP0018_INDEXER_URL_IN_NETWORK -e MIP0018_NODE_URL=$MIP0018_NODE_URL_IN_NETWORK -v $E2E:/e2e"
-ENV_SIGN="$ENV_NET -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK -e MIP0018_WALLET_PROOF_SERVER_URL=$MIP0018_WALLET_PROOF_SERVER_URL_IN_NETWORK"
+ENV_SIGN="$ENV_NET -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK"
 pass "stack up ($MIP0018_STACK_PROJECT)"
 
 cli() { # cli <log name> <mip0018 args...> — wallet-free container
@@ -95,6 +99,11 @@ signer() { # signer <log name> <mip0018 args...> — signer container (secrets r
   local name="$1"; shift
   MIP0018_DOCKER_NETWORK="$NET" MIP0018_SECRET_DIR="$SECRETS" MIP0018_STATE_DIR="$STATE" \
     MIP0018_DOCKER_ENV="$ENV_SIGN" "$repo/docker/signer.sh" mip0018 -- "$@" </dev/null >"$LOGS/$name.out" 2>"$LOGS/$name.err"
+}
+script_run() { # script_run <log name> <repository script> <args...> — wallet-free container, `node <script> <args>`
+  local name="$1" script="$2"; shift 2
+  MIP0018_DOCKER_NETWORK="$NET" MIP0018_DOCKER_ENV="$ENV_NET" "$repo/docker/run.sh" exec "node $script $(printf '%q ' "$@")" \
+    </dev/null >"$LOGS/$name.out" 2>"$LOGS/$name.err"
 }
 A="--network undeployed --dev-genesis-wallet --wallet-cache /run/mip0018/state/a.wallet-cache"
 
@@ -185,32 +194,49 @@ import json; s=[x for x in json.load(open('$DAP/minimal.json'))['steps'] if x['i
   expect_rc "B list minimal: still exactly the A1 metadata" 0 "$rc"
 fi
 
-# ------------------------------------------------------------------------------------ C: Stagenet case folders, local
+# ------------------------------------------------------------------------------------------ C: case folders, local
+CASE_DEFS="$E2E/case-defs"
+if part C || part D; then
+  rc=0; MIP0018_DOCKER_ENV="-v $E2E:/e2e" "$repo/docker/run.sh" exec \
+    "node deployments/tools/prepare-cases.ts --network ${MIP0018_E2E_CASE_NETWORK:-preview} --dir /e2e/case-defs" \
+    </dev/null >"$LOGS/prepare-cases.out" 2>"$LOGS/prepare-cases.err" || rc=$?
+  expect_rc "C case folders generated (prepare-cases.ts --network ${MIP0018_E2E_CASE_NETWORK:-preview} --dir)" 0 "$rc"
+fi
 run_case() { # run_case <ID>
-  local id="$1" cj="$repo/deployments/stagenet/cases/$1/case.json" line i sid runner want out msg args a rc
+  local id="$1" cj="$CASE_DEFS/$1/case.json" line i sid runner want out msg script args a rc
   mkdir -p "$CASES/$id"
   say "C: case $id"
   while IFS= read -r line; do
     i="$(printf '%s' "$line" | cut -f1)"; sid="$(printf '%s' "$line" | cut -f2)"; runner="$(printf '%s' "$line" | cut -f3)"
     want="$(printf '%s' "$line" | cut -f4)"; out="$(printf '%s' "$line" | cut -f5)"; msg="$(printf '%s' "$line" | cut -f6)"
+    script="$(printf '%s' "$line" | cut -f7)"
     args=()
     while IFS= read -r -d '' a; do args[${#args[@]}]="$a"; done < <(python3 "$here/case.py" argv "$cj" "$i" "$E2E")
     rc=0
-    if [ "$runner" = signer ]; then signer "case-$id-$sid" ${args[@]+"${args[@]}"} || rc=$?
+    if [ -n "$script" ]; then script_run "case-$id-$sid" "$script" ${args[@]+"${args[@]}"} || rc=$?
+    elif [ "$runner" = signer ]; then signer "case-$id-$sid" ${args[@]+"${args[@]}"} || rc=$?
     else cli "case-$id-$sid" ${args[@]+"${args[@]}"} || rc=$?; fi
     if [ -n "$out" ] && [ -f "$LOGS/case-$id-$sid.out" ]; then cp "$LOGS/case-$id-$sid.out" "$CASES/$id/$out"; fi
     expect_rc "C $id $sid" "$want" "$rc"
     if [ -n "$msg" ]; then check "C $id $sid fails for the expected reason ($msg)" grep -qF "$msg" "$LOGS/case-$id-$sid.out" "$LOGS/case-$id-$sid.err"; fi
   done < <(python3 "$here/case.py" steps "$cj")
 }
+CASE_IDS="${MIP0018_E2E_CASES:-C01 C02 C03 C04 C05 C06 C07 C08 C09 C10 C12 IDX U1}"
 if part C; then
-  for id in ${MIP0018_E2E_CASES:-C01 C02 C03 C04 C05 C06 C07 C08 C09 C10 IDX}; do run_case "$id"; done
+  for id in $CASE_IDS; do
+    if [ "$id" = U1 ] && [ ! -f "$STATE/u1-wrong-signer.key" ]; then
+      MIP0018_DOCKER_NETWORK=none MIP0018_DOCKER_ENV="-v $E2E:/e2e" "$repo/docker/run.sh" exec \
+        "node -e \"const l=require('@midnightntwrk/ledger-v9'); require('fs').writeFileSync('/e2e/state/u1-wrong-signer.key', JSON.stringify(l.sampleSigningKey()), {mode: 0o600})\"" \
+        </dev/null >"$LOGS/u1-wrong-key.out" 2>"$LOGS/u1-wrong-key.err"
+    fi
+    run_case "$id"
+  done
 fi
 
 # ------------------------------------------------------------------------------------- D: recheck + secret scan
 if part D; then
-  for id in ${MIP0018_E2E_CASES:-C01 C02 C03 C04 C05 C06 C07 C08 C09 C10 IDX}; do
-    rc=0; cli "recheck-$id" recheck --network undeployed --case "deployments/stagenet/cases/$id" --out "/e2e/cases/$id" || rc=$?
+  for id in $CASE_IDS; do
+    rc=0; cli "recheck-$id" recheck --network undeployed --case "/e2e/case-defs/$id" --out "/e2e/cases/$id" || rc=$?
     expect_rc "D recheck $id ($(tail -1 "$LOGS/recheck-$id.out" 2>/dev/null))" 0 "$rc"
   done
   say "wallet sync cache of another chain"
@@ -224,6 +250,7 @@ if part D; then
 import json,glob,os
 secrets=set()
 secrets.add(open('$SECRETS/b.seed').read().strip().lower())
+if os.path.exists('$STATE/u1-wrong-signer.key'): secrets.add(json.load(open('$STATE/u1-wrong-signer.key'))['value'].lower())
 def walk(v):
   if isinstance(v,dict):
     if set(v)=={'\$bytes'}: secrets.add(v['\$bytes'].lower()); return

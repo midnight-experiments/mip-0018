@@ -1,0 +1,90 @@
+{
+  "mode": "subscription",
+  "blocksThisRun": 25,
+  "requests": 2,
+  "seconds": 2.3,
+  "state": "deployments/preview/cases/U1/index/index-state.json",
+  "kind": "mip0018-index-state",
+  "schema": 1,
+  "network": {
+    "id": "preview",
+    "networkId": "preview",
+    "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796"
+  },
+  "fromHeight": 42129,
+  "nextHeight": 42154,
+  "lastBlock": {
+    "height": 42153,
+    "hash": "06c4fc6c034d0fd208878e19f85b50d26b86421afc43a330a4e2116c9871caf6"
+  },
+  "colors": {
+    "110b4cf8aad92cebf85555196c46dfc1ac8ca15698ec77d2ab198cf0633b704a": {
+      "color": "110b4cf8aad92cebf85555196c46dfc1ac8ca15698ec77d2ab198cf0633b704a",
+      "contractAddress": "783fd16b82e6ce98381bf7a19d458f8bb179b6612984ef6f64c5cfbf2eab453a",
+      "domainSep": "6d69702d303031383a6578616d706c653a757067726164650000000000000000",
+      "shielded": {
+        "firstMint": {
+          "height": 42136,
+          "blockHash": "782f6130396b27943792819f65af7ea22715975d89e4181e60fd9678cf3bae05",
+          "txHash": "90a07830f88e475d4440c76800bd4b54bd7aeac83e938aa69572981894e6392a"
+        },
+        "lastMint": {
+          "height": 42136,
+          "blockHash": "782f6130396b27943792819f65af7ea22715975d89e4181e60fd9678cf3bae05",
+          "txHash": "90a07830f88e475d4440c76800bd4b54bd7aeac83e938aa69572981894e6392a"
+        },
+        "mints": 1,
+        "amount": "1000"
+      }
+    }
+  },
+  "events": {
+    "783fd16b82e6ce98381bf7a19d458f8bb179b6612984ef6f64c5cfbf2eab453a": [
+      {
+        "block": {
+          "height": 42153,
+          "hash": "06c4fc6c034d0fd208878e19f85b50d26b86421afc43a330a4e2116c9871caf6"
+        },
+        "txHash": "48f5a1ac030067cb0be09d33e3a00309714956f6ed7da27ec24d5b056d4883e3",
+        "txIndex": 0,
+        "eventIndex": 0,
+        "phase": "guaranteed",
+        "segment": 62099,
+        "entryPoint": "publishMetadata",
+        "name": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000",
+        "payload": "6d69702d303031383a6578616d706c653a75706772616465000000000000000001046e616d65010c4c656761637920546f6b656e0673796d626f6c01044c47435908646563696d616c730201060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "result": "accept",
+        "domainSep": "6d69702d303031383a6578616d706c653a757067726164650000000000000000",
+        "kind": 1
+      }
+    ]
+  },
+  "deploys": {
+    "783fd16b82e6ce98381bf7a19d458f8bb179b6612984ef6f64c5cfbf2eab453a": {
+      "height": 42130,
+      "blockHash": "23e7a2d8e678ddf4f02f1d149663df01755ebb8ac2b699a13bb1ac8ea148780c",
+      "txHash": "46d13d03df55b89e07ac9781fde09fdb911feb47490349a9356a8043720b32f6"
+    },
+    "3ad32eca4f63b24c2136ece865b006d07bad074b153679f68832619731da2912": {
+      "height": 42135,
+      "blockHash": "9a6bc0276b211137d4a6d84f5040bd50f68556b3913bd9a643195a50079b36c4",
+      "txHash": "e4706d1a3bc2b90e3c6999a9235c0de9e60dc8abffadcf24c955a057507fda44"
+    },
+    "4d299d54337f2bb998cf8ad94d611fdf10e6fc9f7ad5f376922412d46b37b352": {
+      "height": 42138,
+      "blockHash": "25e3ac2f40621091b643c955218b946bbe40525928a8f1d5f6747fcedd3b6e59",
+      "txHash": "bbc5a38351f364c6edcc317eb4a67653099caa0ff2767ab690ccaa3bac4662f5"
+    }
+  },
+  "stats": {
+    "blocks": 25,
+    "transactions": 9,
+    "contractCalls": 5,
+    "deploys": 3,
+    "decodeErrors": 0,
+    "mints": 1,
+    "events": 1
+  },
+  "errors": [],
+  "updatedAt": "2026-11-09T23:21:26.606Z"
+}

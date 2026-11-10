@@ -10,8 +10,10 @@
 
 import { HttpClient } from './http.ts';
 import { normHex, to0x } from './hex.ts';
+import { ScrubbedError } from './redact.ts';
 
-export class RpcError extends Error {
+/** A JSON-RPC failure; scrubbed when built (a node error that echoes the request URL or token is not passed on). */
+export class RpcError extends ScrubbedError {
   override name = 'RpcError';
 }
 

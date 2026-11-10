@@ -1,0 +1,76 @@
+{
+ "network": {
+  "id": "undeployed",
+  "genesisHash": "0x823383ec0302be8417cfcbcc62f21df08f4047bca37aaea89e3f54b550ebae1d",
+  "indexer": "http://indexer:8088/api/v4/graphql",
+  "rpc": "http://node:9944"
+ },
+ "contract": "ae4c5f2d80f1d474850135364c72dd17be0f8da2991ab7ed139efea9e1ff087b",
+ "transaction": "dffc4f546e32358981d96d6df14107623b00820069b1273a4696ffbc37b4c0bc",
+ "outcome": "not-found",
+ "exitCode": 3,
+ "events": [],
+ "checks": [
+  {
+   "id": "identity",
+   "ok": true,
+   "message": "node genesis 0x823383ec0302be8417cfcbcc62f21df08f4047bca37aaea89e3f54b550ebae1d (undeployed)"
+  },
+  {
+   "id": "indexed",
+   "ok": true,
+   "message": "transaction dffc4f546e32358981d96d6df14107623b00820069b1273a4696ffbc37b4c0bc in block 27 (dbf5f394000b2176c0a791ecb9e4fc008de3380ca6780b57950dfbcd8de0b84a), SUCCESS"
+  },
+  {
+   "id": "raw-hash",
+   "ok": true,
+   "message": "recomputed hash dffc4f546e32358981d96d6df14107623b00820069b1273a4696ffbc37b4c0bc"
+  },
+  {
+   "id": "raw-identifiers",
+   "ok": true,
+   "message": "2 identifiers recomputed"
+  },
+  {
+   "id": "completeness",
+   "ok": true,
+   "message": "0 applied Misc log(s) of the contract in the raw transaction, 0 indexed"
+  },
+  {
+   "id": "node-block-hash",
+   "ok": true,
+   "message": "node block 27 = 0xdbf5f394000b2176c0a791ecb9e4fc008de3380ca6780b57950dfbcd8de0b84a"
+  },
+  {
+   "id": "node-extrinsic",
+   "ok": true,
+   "message": "raw transaction bytes are extrinsic 4 of block 27"
+  },
+  {
+   "id": "events",
+   "ok": false,
+   "message": "the transaction holds no Misc event bound to ae4c5f2d80f1d474850135364c72dd17be0f8da2991ab7ed139efea9e1ff087b"
+  }
+ ],
+ "notes": [],
+ "indexerTip": {
+  "height": 644,
+  "hash": "8f450cada47e6558b5395c5f53726b9eb69c9fbfc2b7dc31efe384ce099f41b7"
+ },
+ "inclusion": {
+  "height": 27,
+  "hash": "dbf5f394000b2176c0a791ecb9e4fc008de3380ca6780b57950dfbcd8de0b84a",
+  "status": "SUCCESS",
+  "segments": null,
+  "nodeBlockHash": "0xdbf5f394000b2176c0a791ecb9e4fc008de3380ca6780b57950dfbcd8de0b84a",
+  "finalizedHeight": 644,
+  "finalized": true,
+  "extrinsicIndex": 4
+ },
+ "rawTransaction": {
+  "hashRecomputed": "dffc4f546e32358981d96d6df14107623b00820069b1273a4696ffbc37b4c0bc",
+  "identifiersMatch": true,
+  "miscLogsOfContract": 0,
+  "appliedMiscLogsOfContract": 0
+ }
+}

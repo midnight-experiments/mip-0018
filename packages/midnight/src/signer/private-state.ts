@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// A file-backed midnight-js PrivateStateProvider for the signer.
+// A file-backed midnight-js PrivateStateProvider for the signer (private states reached per contract through
+// `forContract(address)`, signing keys by address; addresses compared in lower case).
 //
 // It holds the two kinds of secrets midnight-js keeps per contract: the contract maintenance signing key and the
 // contract's private state (e.g. an OpenZeppelin `Ownable` owner secret used by the `wit_OwnableSK` witness). Both
@@ -39,8 +40,11 @@ export function decodeTyped(v: unknown): unknown {
 
 const unsupported = (what: string) => () => Promise.reject(new Error(`${what} is not supported by this provider`));
 
+/** midnight-js compares contract addresses in lower case; so does this file. */
+const addressKey = (a: unknown): string => String(a).toLowerCase();
+
 export interface FilePrivateStateProvider extends PrivateStateProvider {
-  /** Stores a private state for a given contract address without changing the provider's current address. */
+  /** Stores a private state for a given contract address. */
   setFor(address: string, id: string, state: unknown): Promise<void>;
   /** Whether a signing key is stored for the address. */
   hasSigningKey(address: string): boolean;
@@ -49,52 +53,61 @@ export interface FilePrivateStateProvider extends PrivateStateProvider {
 export const filePrivateStateProvider = (path?: string): FilePrivateStateProvider => {
   let data: Stored = { signingKeys: {}, states: {} };
   if (path && existsSync(path)) data = decodeTyped(JSON.parse(readProtectedFile(path).toString('utf8'))) as Stored;
-  let address = '';
   const save = () => {
     if (path) writeProtectedFile(path, JSON.stringify(encodeTyped(data)));
   };
-  const scope = (a = address) => (data.states[a] ??= {});
+  const scope = (a: unknown) => (data.states[addressKey(a)] ??= {});
 
-  const p = {
-    setContractAddress(a: unknown) {
-      address = String(a);
-    },
+  /** The private states of one contract (midnight-js `ContractPrivateStates`). */
+  const forContract = (a: unknown) => ({
+    contractAddress: addressKey(a),
     set(id: string, state: unknown) {
-      scope()[id] = state;
-      save();
-      return Promise.resolve();
-    },
-    setFor(a: string, id: string, state: unknown) {
       scope(a)[id] = state;
       save();
       return Promise.resolve();
     },
     get(id: string) {
-      return Promise.resolve((scope()[id] as never) ?? null);
+      return Promise.resolve((scope(a)[id] as never) ?? null);
     },
     remove(id: string) {
-      delete scope()[id];
+      delete scope(a)[id];
       save();
       return Promise.resolve();
     },
     clear() {
+      delete data.states[addressKey(a)];
+      save();
+      return Promise.resolve();
+    },
+    exportPrivateStates: unsupported('exportPrivateStates'),
+    importPrivateStates: unsupported('importPrivateStates'),
+  });
+
+  const p = {
+    forContract,
+    setFor(a: string, id: string, state: unknown) {
+      scope(a)[id] = state;
+      save();
+      return Promise.resolve();
+    },
+    clearAll() {
       data.states = {};
       save();
       return Promise.resolve();
     },
     setSigningKey(a: unknown, key: unknown) {
-      data.signingKeys[String(a)] = key;
+      data.signingKeys[addressKey(a)] = key;
       save();
       return Promise.resolve();
     },
     getSigningKey(a: unknown) {
-      return Promise.resolve((data.signingKeys[String(a)] as never) ?? null);
+      return Promise.resolve((data.signingKeys[addressKey(a)] as never) ?? null);
     },
     hasSigningKey(a: string) {
-      return data.signingKeys[a] !== undefined;
+      return data.signingKeys[addressKey(a)] !== undefined;
     },
     removeSigningKey(a: unknown) {
-      delete data.signingKeys[String(a)];
+      delete data.signingKeys[addressKey(a)];
       save();
       return Promise.resolve();
     },
@@ -103,8 +116,6 @@ export const filePrivateStateProvider = (path?: string): FilePrivateStateProvide
       save();
       return Promise.resolve();
     },
-    exportPrivateStates: unsupported('exportPrivateStates'),
-    importPrivateStates: unsupported('importPrivateStates'),
     exportSigningKeys: unsupported('exportSigningKeys'),
     importSigningKeys: unsupported('importSigningKeys'),
   };

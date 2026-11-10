@@ -5,7 +5,8 @@
 // against toolchain.json; checks that README.md cites the same commit and hash
 // and links the MIP proposal; checks that every other copy of the pin agrees
 // with toolchain.json: the vector manifest, every vector's `mip.commit`, the
-// vector schemas, the vector tools and every Stagenet case's `mip.commit`; and
+// vector schemas, the vector tools and every case's `mip.commit`
+// (deployments/<network>/cases/<ID>/case.json); and
 // that no tracked file cites another commit of the MIP text (a link into the
 // MIP repository naming another commit, or any other commit of the proposal or
 // of the file, listed by the GitHub API). A positive control plants such a
@@ -44,16 +45,21 @@ for (const [file, pick] of schemaPins) {
   const pinned = pick(JSON.parse(read(file)));
   if (pinned !== mip.commit) problems.push(`${file} pins commit ${pinned}, toolchain.json ${mip.commit}`);
 }
-// Every Stagenet case cites the pin (deployments/stagenet/cases/<ID>/case.json).
-const casesDir = join(repoRoot, 'deployments', 'stagenet', 'cases');
-const cases = readdirSync(casesDir, { withFileTypes: true })
-  .filter((e) => e.isDirectory() && existsSync(join(casesDir, e.name, 'case.json')))
-  .map((e) => e.name);
-if (cases.length === 0) problems.push('no Stagenet case.json found under deployments/stagenet/cases');
-const staleCases = cases.filter(
-  (id) => JSON.parse(read(join('deployments', 'stagenet', 'cases', id, 'case.json'))).mip?.commit !== mip.commit,
+// Every committed case cites the pin (deployments/<network>/cases/<ID>/case.json; the generator,
+// deployments/tools/prepare-cases.ts, writes the pin from toolchain.json).
+const dirs = (p) =>
+  existsSync(p)
+    ? readdirSync(p, { withFileTypes: true })
+        .filter((e) => e.isDirectory())
+        .map((e) => e.name)
+    : [];
+const cases = dirs(join(repoRoot, 'deployments')).flatMap((network) =>
+  dirs(join(repoRoot, 'deployments', network, 'cases'))
+    .map((id) => join('deployments', network, 'cases', id, 'case.json'))
+    .filter((rel) => existsSync(join(repoRoot, rel))),
 );
-if (staleCases.length > 0) problems.push(`${staleCases.length} Stagenet case(s) cite another MIP commit: ${staleCases.join(', ')}`);
+const staleCases = cases.filter((rel) => JSON.parse(read(rel)).mip?.commit !== mip.commit);
+if (staleCases.length > 0) problems.push(`${staleCases.length} case(s) cite another MIP commit: ${staleCases.join(', ')}`);
 
 const common = read('vectors/tools/common.ts');
 if (!common.includes(`commit: '${mip.commit}'`) || !common.includes(`sha256: '${mip.sha256}'`))
@@ -92,6 +98,6 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  `OK MIP-0018 @ ${mip.commit} sha256 ${sha256}; README, vector manifest, ${manifest.vectors.length} vectors, schemas, generator and ${cases.length} Stagenet cases agree; ` +
+  `OK MIP-0018 @ ${mip.commit} sha256 ${sha256}; README, vector manifest, ${manifest.vectors.length} vectors, schemas, generator and ${cases.length} committed case(s) agree; ` +
     `${scanned} tracked files cite no other commit of the MIP text (${others.length} known; positive control caught)`,
 );

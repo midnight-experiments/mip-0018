@@ -3,7 +3,7 @@
 // TEST-ONLY contract for the mint scanner: mints contract-issued UTXO tokens so the local end-to-end test can check that
 // `mip0018 index` records every mint with the right (contract, domainSep, kind) and that `mip0018 lookup` resolves
 // the color to the identity's metadata. Unguarded on purpose — never deploy it anywhere but a local test chain.
-// Compile with Compact 0.35.0 and --feature-zkir-v3.
+// Compile with Compact 0.36.0.
 
 pragma language_version >= 0.26.0;
 

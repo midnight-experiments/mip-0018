@@ -3,13 +3,13 @@
 How a token contract publishes its name, symbol and decimals as MIP-0018 events
 ([MIP-0018 @ `338ea194`](https://github.com/midnightntwrk/midnight-improvement-proposals/blob/338ea194bbe7c4e5d1829234a503b7c1b11ebf0f/mips/mip-0018-on-chain-token-metadata.md)):
 what to emit, the Compact lines to add, who may call them, and how to deploy, publish, rename and withdraw with the
-`mip0018` CLI. Everything shown was run on a local chain and on Stagenet; the commands are copied from the
-walkthroughs [`examples/publish-and-emit`](../examples/publish-and-emit/README.md) and
-[`examples/verify`](../examples/verify/README.md) or from the Stagenet case folders. The reader side is the
-[consumer guide](consumer-guide.md).
+`mip0018` CLI. Everything shown was run on a local chain and on preview; the commands are copied from the walkthroughs
+[`examples/publish-and-emit`](../examples/publish-and-emit/README.md) and
+[`examples/verify`](../examples/verify/README.md) or from the
+[preview case folders](../deployments/preview/README.md). The reader side is the [consumer guide](consumer-guide.md).
 
 Toolchain: MIP-0018 needs MIP-0002 `Misc` events, so **Compact 0.34.0 or later**; this repository builds and tests with
-**Compact 0.35.0 and `--feature-zkir-v3`** ([`toolchain.json`](../toolchain.json)), all inside the pinned Docker image.
+**Compact 0.36.0** ([`toolchain.json`](../toolchain.json)), all inside the pinned Docker image.
 
 ## 1. What to publish
 
@@ -118,7 +118,7 @@ record deletes its own field, and "a token identity exists only while at least o
 serializes, so the compiler checks every size. The alternative `Mip0018Pure` composes the payload from individual
 pure circuits with `Bytes[...]` spreads; it exists because it does not rely on `serialize` for non-event types. Both
 emit identical bytes, equal to the vectors; the typed one is 1.3–1.5× smaller for runtime values (four runtime fields:
-k = 15 vs 16), so use it unless you have a reason not to.
+k = 16 vs 17), so use it unless you have a reason not to.
 
 **What the compiler cannot check**: that a runtime UTF-8 value is valid UTF-8, a JSON value valid JSON, or a URI an
 RFC 3986 `URI` (scheme required, ASCII only). String literals are fine; validate runtime arguments off
@@ -128,7 +128,7 @@ A malformed event is rejected whole by every consumer.
 Compile with keys (a deploy needs the verifier keys); for a contract of your own, in the pinned image:
 
 ```sh
-docker/run.sh exec 'compact compile --feature-zkir-v3 --compact-path node_modules examples/openzeppelin/fungible-token/contracts/MyFungibleToken.compact managed/MyFungibleToken'
+docker/run.sh exec 'compact compile --compact-path node_modules examples/openzeppelin/fungible-token/contracts/MyFungibleToken.compact managed/MyFungibleToken'
 ```
 
 (source path and output directory are yours; `managed/` output is never committed — builds are deterministic, and
@@ -142,10 +142,10 @@ access-controlled, publish-once, or removed after use" (Publishing). Four patter
 
 | Pattern | Example | Rename / withdraw later | `publishMetadata()` size | Caveats |
 |---|---|---|---|---|
-| OpenZeppelin `Ownable` | [`examples/openzeppelin`](../examples/openzeppelin/README.md) | yes, owner-only | fungible k = 13 (literal `domainSep`), native-shielded / native-unshielded examples k = 15 | `Ownable_assertOnlyOwner()` first in every emitting circuit; the owner secret lives in the deployer's private state |
-| Owner key (hand-rolled) | [`OwnerKey`](../examples/minimal/contracts/OwnerKey.compact) | yes, owner-only | k = 15, 17,782 rows | the same idea without OpenZeppelin |
-| Publish once | [`PublishOnce`](../examples/minimal/contracts/PublishOnce.compact) | no | k = 14, 14,065 rows | payload must be **constant** (anyone may make the one call); keep the flag in your own ledger field — do not reuse OpenZeppelin `Initializable` (shared module state) |
-| Create and destroy | [`CreateAndDestroy`](../examples/minimal/contracts/CreateAndDestroy.compact) | no (only through a maintenance update) | k = 14, 14,041 rows | unguarded with a **constant** payload; the deployer calls it, then removes its verifier key (`VerifierKeyRemove` in the `v4` slot for ZKIR-v3 circuits — midnight-js 5.0.0-rc.2 removes only `v3`). Until then anyone holding the compiled artefacts can call it, but can only re-emit the same values |
+| OpenZeppelin `Ownable` | [`examples/openzeppelin`](../examples/openzeppelin/README.md) | yes, owner-only | fungible k = 14 (literal `domainSep`), native-shielded / native-unshielded examples k = 16 | `Ownable_assertOnlyOwner()` first in every emitting circuit; the owner secret lives in the deployer's private state |
+| Owner key (hand-rolled) | [`OwnerKey`](../examples/minimal/contracts/OwnerKey.compact) | yes, owner-only | k = 16, 38,363 rows | the same idea without OpenZeppelin |
+| Publish once | [`PublishOnce`](../examples/minimal/contracts/PublishOnce.compact) | no | k = 16, 34,554 rows | payload must be **constant** (anyone may make the one call); keep the flag in your own ledger field — do not reuse OpenZeppelin `Initializable` (shared module state) |
+| Create and destroy | [`CreateAndDestroy`](../examples/minimal/contracts/CreateAndDestroy.compact) | no (only through a maintenance update) | k = 16, 34,530 rows | unguarded with a **constant** payload; the deployer calls it, then removes its verifier key (`VerifierKeyRemove` in the `v4` slot, where ZKIR-v3 keys live; midnight-js 5.0.0's `removeVerifierKey()` uses it too). Until then anyone holding the compiled artefacts can call it, but can only re-emit the same values |
 
 Whatever the circuit's guard, the contract's **maintenance authority** can insert or remove circuits at any time, so it
 can change the metadata as well ([upgrade guide, Limits](upgrade-guide.md#limits)). Keep that key as carefully as the
@@ -159,9 +159,8 @@ chain already shows done, and an **after-check** that marks a step completed onl
 events. Re-running a command resumes; it never deploys or publishes twice.
 
 Signing commands run in `docker/signer.sh`, the only container that mounts a wallet secret (read-only, from a 0700
-directory outside the repository). Two official proof servers are needed: `proof-server` 9.0.0-rc.8 for the
-contract circuits (it reads ZKIR v3) and 9.0.0-rc.6 for the wallet's DUST spends (the only one whose DUST proofs node
-2.0.0-rc.4 accepts).
+directory outside the repository). One official proof server (`midnightntwrk/proof-server` 9.0.1) proves both the
+contract circuits and the wallet's DUST spends.
 
 **Local chain first** (official images, no funds needed) — the shell set-up of
 [`examples/publish-and-emit`](../examples/publish-and-emit/README.md#1-local-chain-and-shell-set-up):
@@ -175,7 +174,7 @@ NETENV="-e MIP0018_INDEXER_URL=$MIP0018_INDEXER_URL_IN_NETWORK -e MIP0018_NODE_U
 # signing commands: the only container that sees a wallet secret (none here: the local dev wallet is public)
 signer() {
   MIP0018_DOCKER_NETWORK="$MIP0018_STACK_NETWORK" MIP0018_SECRET_DIR="$WALK/secrets" MIP0018_STATE_DIR="$WALK/state" \
-  MIP0018_DOCKER_ENV="$NETENV -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK -e MIP0018_WALLET_PROOF_SERVER_URL=$MIP0018_WALLET_PROOF_SERVER_URL_IN_NETWORK" \
+  MIP0018_DOCKER_ENV="$NETENV -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK" \
   docker/signer.sh mip0018 -- "$@"
 }
 # wallet-free commands
@@ -198,36 +197,35 @@ wallet-free against the exact payload the example expects. Stop the chain with `
   key), [`examples/openzeppelin/src/adapter.ts`](../examples/openzeppelin/src/adapter.ts) (OpenZeppelin `Ownable`);
   the interface is in [`packages/midnight/src/signer/adapter.ts`](../packages/midnight/src/signer/adapter.ts).
 
-Then deploy and publish as two steps — on Stagenet, as case [C06](../deployments/stagenet/cases/C06/README.md) did
-(`signer` here is the Stagenet variant below):
-
-```sh
-signer deploy --network stagenet --mnemonic-file /run/mip0018/secrets/stagenet-wallet.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --adapter examples/minimal/owner-key.mip0018.adapter.ts --record deployments/stagenet/cases/C06/record.json
-signer publish --network stagenet --mnemonic-file /run/mip0018/secrets/stagenet-wallet.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --record deployments/stagenet/cases/C06/record.json --circuit publishMetadata --step publish
-```
-
-**Stagenet** needs a funded wallet registered for DUST (`mip0018 wallet status`, `wallet register-dust`), a mnemonic
-file and the two proof servers on a Docker network you run
-([`examples/publish-and-emit` §8](../examples/publish-and-emit/README.md#8-stagenet)):
+Then deploy and publish as two steps. On a public network — `preview`, or `preprod` / `mainnet` with the Blockfrost
+project token of that network in `MIP0018_BLOCKFROST_PREPROD` / `MIP0018_BLOCKFROST_MAINNET` (or a 0600 file,
+`--blockfrost-token-file`; passed to the containers by name, never written anywhere) — the signer needs a funded wallet
+registered for DUST (`mip0018 wallet status`, `wallet register-dust`), a mnemonic file and a proof server on a Docker
+network you run ([`examples/publish-and-emit` §8](../examples/publish-and-emit/README.md#8-public-networks)):
 
 ```sh
 signer() {
   MIP0018_SECRET_DIR="<0700 directory with the mnemonic file>" MIP0018_STATE_DIR="<0700 state directory outside the repo>" \
-  MIP0018_DOCKER_NETWORK="<network of your two proof servers>" \
-  MIP0018_DOCKER_ENV="-e MIP0018_PROOF_SERVER_URL=<proof-server 9.0.0-rc.8> -e MIP0018_WALLET_PROOF_SERVER_URL=<proof-server 9.0.0-rc.6>" \
+  MIP0018_DOCKER_NETWORK="<Docker network of your proof server>" \
+  MIP0018_DOCKER_ENV="-e MIP0018_PROOF_SERVER_URL=<proof-server 9.0.1 URL on that network>" \
   docker/signer.sh mip0018 -- "$@"
 }
-W="--network stagenet --mnemonic-file /run/mip0018/secrets/<wallet>.mnemonic --wallet-cache /run/mip0018/state/wallet.cache"
-signer deploy $W --example fungible-token --record deployments/stagenet/cases/C01/record.json
-signer publish $W --record deployments/stagenet/cases/C01/record.json --circuit publishMetadata --step publish
+W="--network preview --mnemonic-file /run/mip0018/secrets/<wallet>.mnemonic --wallet-cache /run/mip0018/state/wallet.cache"
+signer deploy $W --adapter examples/minimal/owner-key.mip0018.adapter.ts --record /run/mip0018/state/owner-key.json
+signer publish $W --record /run/mip0018/state/owner-key.json --circuit publishMetadata --step publish
 ```
 
-**Check what consumers see**, wallet-free (any network; Stagenet uses the public endpoints by default):
+Case [C06](../deployments/preview/cases/C06/README.md) ran these two steps on preview with wallet 1 (its README lists
+every command; its run record is `deployments/preview/cases/C06/record.json`).
+
+**Check what consumers see**, wallet-free (any network; the public profiles carry their endpoints) — here the publish
+of case [C01](../deployments/preview/cases/C01/README.md) and the three identities of case
+[C04](../deployments/preview/cases/C04/README.md) on preview; for your contract, your record and expectation:
 
 ```sh
-docker/run.sh mip0018 -- check-event --network stagenet --record deployments/stagenet/cases/C01/record.json --step publish \
-  --expect @deployments/stagenet/cases/C01/expect/publish.json
-docker/run.sh mip0018 -- list --network stagenet --record deployments/stagenet/cases/C04/record.json --expect @deployments/stagenet/cases/C04/expected.json
+docker/run.sh mip0018 -- check-event --network preview --record deployments/preview/cases/C01/record.json --step publish \
+  --expect @deployments/preview/cases/C01/expect/publish.json
+docker/run.sh mip0018 -- list --network preview --record deployments/preview/cases/C04/record.json --expect @deployments/preview/cases/C04/expected.json
 ```
 
 `check-event` checks the one emission end to end (event name, binding to your contract, decode result and every
@@ -238,26 +236,25 @@ record, raw transaction, block, finality, the expected payload); `list` shows th
 
 Call the owner-only circuits with `publish`. Arguments are converted with the compiler's types; `{"$utf8": "…"}` must be
 exactly the circuit's `Bytes<N>` length — a shorter text is refused rather than zero-padded (add `"pad": true` only
-when you really want zero padding, e.g. a `pad(32, "…")` domain separator). From case C06 on Stagenet:
+when you really want zero padding, e.g. a `pad(32, "…")` domain separator). With the owner-key contract above (case
+[C06](../deployments/preview/cases/C06/README.md) on preview):
 
 ```sh
-signer publish --network stagenet --mnemonic-file /run/mip0018/secrets/stagenet-wallet.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --record deployments/stagenet/cases/C06/record.json --circuit setMetadata --args '[{"$utf8":"Acme Prime"},{"$utf8":"ACMP"}]' --step rename
-signer publish --network stagenet --mnemonic-file /run/mip0018/secrets/stagenet-wallet.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --record deployments/stagenet/cases/C06/record.json --circuit withdrawMetadata --step withdraw
-signer publish --network stagenet --mnemonic-file /run/mip0018/secrets/stagenet-wallet.mnemonic --wallet-cache /run/mip0018/state/wallet1.cache --record deployments/stagenet/cases/C06/record.json --circuit setMetadata --args '[{"$utf8":"Acme Again"},{"$utf8":"ACMA"}]' --step revive
+signer publish $W --record /run/mip0018/state/owner-key.json --circuit setMetadata --args '[{"$utf8":"Acme Prime"},{"$utf8":"ACMP"}]' --step rename
+signer publish $W --record /run/mip0018/state/owner-key.json --circuit withdrawMetadata --step withdraw
+signer publish $W --record /run/mip0018/state/owner-key.json --circuit setMetadata --args '[{"$utf8":"Acme Again"},{"$utf8":"ACMA"}]' --step revive
 ```
 
-What consumers then show: after the rename "Acme Prime"/"ACMP" (the replaced name only as marked history). C06's
-deployed contract (`OwnerKey.compact` at `70b54c6`) has a `withdrawMetadata` that emits a single Null record at
-`name`: it deletes only `name`, and the revive sets a name and a new symbol next to the remaining `decimals` and
-`standards` ([C06](../deployments/stagenet/cases/C06/README.md)). With `OwnerKey` as in this repository
-([C11](../deployments/stagenet/cases/C11/README.md); that deployment's `withdrawMetadata`, compiled at `57ce633`,
-emits Null records at the four keys the token has: `name`, `symbol`, `decimals`, `standards`): after
-`withdrawMetadata` the token is not listed at all and has no group; after the revive it has **only** `name` and `symbol` —
-`decimals` and `standards` do not come back, so republish every field you want shown.
+What consumers then show: after the rename "Acme Prime"/"ACMP" (the replaced name only as marked history).
+`OwnerKey`'s `withdrawMetadata` emits one event with a Null record at each of the six common keys (`name`, `symbol`,
+`decimals`, `standards`, `image`, `image_sha256`): after it the token is not listed at all and has no group; after the
+revive it has **only** `name` and `symbol` — `decimals` and `standards` do not come back, so republish every field you
+want shown. To delete one field and keep the others, emit a Null record at that key only (vector `S3a`; on preview
+case [C12](../deployments/preview/cases/C12/README.md), step `s3a-delete-name`).
 
 A publish that would change nothing (the same values again, a second withdrawal) is skipped by the before-check; pass
 `--force` to emit it anyway. A non-owner's call is refused before anything is submitted
-([C09](../deployments/stagenet/cases/C09/README.md)).
+([C09](../deployments/preview/cases/C09/README.md)).
 
 **Create and destroy** with the CLI (local chain, [`examples/publish-and-emit` §7](../examples/publish-and-emit/README.md#7-create-and-destroy)):
 
@@ -267,20 +264,24 @@ signer remove-circuit $A --record /walk/minimal.json --circuit publishMetadata
 signer publish $A --record /walk/minimal.json --circuit publishMetadata --step publish-again --force   # exit 1
 ```
 
-The last command is refused (`publishMetadata has no verifier key`): the circuit cannot be called. On Stagenet:
-[C10](../deployments/stagenet/cases/C10/README.md).
+The last command is refused (`publishMetadata has no verifier key`): the circuit cannot be called. On preview:
+[C10](../deployments/preview/cases/C10/README.md).
 
 ## 6. Costs
 
-From the Stagenet receipts ([`docs/costs.md`](costs.md#fees-on-stagenet)):
+From the receipts of the local stack and of the preview cases ([`docs/costs.md`](costs.md#fees-on-the-local-stack),
+[Fees on preview](costs.md#fees-on-preview)):
 
-- **A metadata transaction costs ≈ 0.17–0.19 DUST**, whatever the circuit size (publish, rename and withdraw alike).
-- **The deploy dominates**: it stores every circuit's verifier key — about 0.6–0.9 DUST per extra circuit; the
-  OpenZeppelin examples with three metadata circuits cost 6.1–7.0 DUST to deploy.
+- **A metadata transaction costs ≈ 0.15–0.20 DUST on the local stack and 0.210–0.245 DUST on preview**, whatever the
+  circuit size (publish, rename and withdraw alike).
+- **The deploy dominates**: it stores every circuit's verifier key — for one circuit (`LegacyToken`) 1.1 DUST locally
+  and 1.892 DUST on preview; the OpenZeppelin examples with three metadata circuits (eight to ten circuits in all)
+  4.7–5.3 DUST locally and 8.731–10.534 DUST on preview.
 - **Circuit size costs proving time, not fees**: a fully constant payload compiles to k = 6 (the bare `emit`); any
-  runtime byte, even a `domainSep` read from the ledger, gives k = 14; four runtime fields k = 15 (typed) — about
-  2–4 s per proof on a 16-CPU host.
-- `VerifierKeyRemove` (create-and-destroy) ≈ 0.04 DUST; `VerifierKeyInsert` (upgrade) ≈ 0.9 DUST on Stagenet.
+  runtime byte, even a `domainSep` read from the ledger, gives k = 15–16; four runtime fields k = 16 (typed) — about
+  1.5–4 s per proof on a 12-CPU host.
+- `VerifierKeyRemove` (create-and-destroy) ≈ 0.11–0.13 DUST locally, 0.175 DUST on preview; `VerifierKeyInsert`
+  (upgrade) ≈ 0.70 DUST locally, 1.167 DUST on preview.
 
 ## 7. Existing contracts
 
@@ -288,25 +289,24 @@ A token deployed without an emitting circuit does not need a redeployment if it 
 (the MIP notes that "a valid maintenance authority is required"):
 compile an upgrade-only `publishMetadata()` against its exact ledger layout, insert its verifier key with
 `VerifierKeyInsert`, call it — address, `domainSep` and color stay the same. See the
-[upgrade guide](upgrade-guide.md) (`mip0018 upgrade`) and Stagenet case [U1](../deployments/stagenet/cases/U1/README.md).
+[upgrade guide](upgrade-guide.md) (`mip0018 upgrade`) and preview case [U1](../deployments/preview/cases/U1/README.md).
 
-## 8. Stagenet cases to look at
+## 8. Preview cases to look at
 
 | Case | Shows |
 |---|---|
-| [C01](../deployments/stagenet/cases/C01/README.md) | OpenZeppelin `FungibleToken` (kind 3): deploy, publish three fields |
-| [C02](../deployments/stagenet/cases/C02/README.md), [C03](../deployments/stagenet/cases/C03/README.md) | shielded / unshielded UTXO (OpenZeppelin native tokens): the minted coin's color = the identity's color |
-| [C04](../deployments/stagenet/cases/C04/README.md) | one asset as kinds 1, 2, 3 from one publish: one symbol group |
-| [C05](../deployments/stagenet/cases/C05/README.md) | token family: three `domainSep`, three identities |
-| [C06](../deployments/stagenet/cases/C06/README.md) | lifecycle: publish (Appendix A bytes), rename, delete `name` with a Null record twice, revive |
-| [C11](../deployments/stagenet/cases/C11/README.md) | full withdrawal (one event with a Null record at each of the token's four keys): the token disappears from `list`; withdraw again changes nothing; revive with only `name` and `symbol` |
-| [C12](../deployments/stagenet/cases/C12/README.md) | `image` + `image_sha256`, a key that is not served, a name and a symbol over their lengths (served truncated), a 31-byte `image_sha256` (unusable) |
-| [C09](../deployments/stagenet/cases/C09/README.md) | a non-owner's rename refused |
-| [C10](../deployments/stagenet/cases/C10/README.md) | create and destroy |
-| [U1](../deployments/stagenet/cases/U1/README.md) | adding `publishMetadata()` to a deployed token |
+| [C01](../deployments/preview/cases/C01/README.md) | OpenZeppelin `FungibleToken` (kind 3): deploy, publish three fields |
+| [C02](../deployments/preview/cases/C02/README.md), [C03](../deployments/preview/cases/C03/README.md) | shielded / unshielded UTXO (OpenZeppelin native shielded token; the standard library's unshielded mint): the minted coin's color = the identity's color |
+| [C04](../deployments/preview/cases/C04/README.md) | one asset as kinds 1, 2, 3 from one publish: one symbol group |
+| [C05](../deployments/preview/cases/C05/README.md) | token family: three `domainSep`, three identities |
+| [C06](../deployments/preview/cases/C06/README.md) | lifecycle: publish (Appendix A bytes), rename, full withdrawal (one event, a Null record at each of the six common keys: the token disappears from `list`), withdraw again (no change), revive with only `name` and `symbol` |
+| [C12](../deployments/preview/cases/C12/README.md) | `image` + `image_sha256`, a key that is not served, a name and a symbol over their lengths (served truncated), a 31-byte `image_sha256` (unusable), a Null record that deletes only `name` |
+| [C09](../deployments/preview/cases/C09/README.md) | a non-owner's rename refused |
+| [C10](../deployments/preview/cases/C10/README.md) | create and destroy |
+| [U1](../deployments/preview/cases/U1/README.md) | adding `publishMetadata()` to a deployed token |
 
-Re-check any of them without a wallet: `docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/<ID>`
-(all cases, addresses and fees: [`deployments/stagenet`](../deployments/stagenet/README.md)).
+Re-check any of them without a wallet: `docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/<ID>`
+(all cases, addresses and fees: [`deployments/preview`](../deployments/preview/README.md)).
 
 ## Checklist
 

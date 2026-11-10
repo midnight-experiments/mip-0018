@@ -1,20 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// The toolchain gate, shared by the local stack and Stagenet:
+// The toolchain gate on the local stack:
 //
 //   preflight -> deploy SpikeEmitter (midnight-js deployContract) -> call
 //   publishMetadata (callTx) -> the indexer returns the Misc event with the A1
-//   bytes -> VerifierKeyRemove of publishMetadata (create and destroy) ->
-//   [local only] a second call must fail.
+//   bytes -> VerifierKeyRemove of publishMetadata (create and destroy; midnight-js
+//   `circuitMaintenanceTx` or the package's signed MaintenanceUpdate, both in
+//   the ZKIR v3 'v4' slot) -> [local only] a second call must fail.
 //
 // Chain state is read before and after every transaction; a step is
 // marked done only when its effect is observed. The public record is written
-// after every step and never contains a secret.
+// after every step through `writePublicJson` (no registered token, `project_id`
+// value or URL credentials; error messages through `scrubSecrets`).
 
-import { mkdirSync, renameSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { sampleSigningKey } from '@midnightntwrk/ledger-v9';
+import { scrubSecrets, writePublicJson, type PublicFileRules } from '@mip0018/midnight';
 import { contractView, miscEvents, preflight, transactionByHash, waitFor } from './chain.js';
 import type { NetworkConfig } from './network.js';
 import { A1_PAYLOAD_HEX, EVENT_NAME_HEX } from './expected.js';
@@ -31,7 +32,7 @@ type TxData = { txId?: unknown; txHash?: unknown; blockHeight?: unknown; status?
 type Handle = {
   deployTxData: { public: TxData };
   callTx: Record<string, () => Promise<{ public: TxData }>>;
-  circuitMaintenanceTx: Record<string, { removeVerifierKey(): Promise<TxData> }>;
+  circuitMaintenanceTx: Record<string, { removeVerifierKey(): Promise<{ public: TxData }> }>;
 };
 
 export type SpikeRecord = {
@@ -49,13 +50,20 @@ export type SpikeRecord = {
 
 const json = (v: unknown) => JSON.stringify(v, (_k, x) => (typeof x === 'bigint' ? x.toString() : x), 2);
 
-export const recorder = (path: string, record: SpikeRecord) => (patch?: (r: SpikeRecord) => void) => {
-  patch?.(record);
-  mkdirSync(dirname(path), { recursive: true });
-  const tmp = `${path}.tmp-${process.pid}`;
-  writeFileSync(tmp, `${json(record)}\n`);
-  renameSync(tmp, path);
-};
+/** Where a local tool's record holds messages (`publicCopy`): its error and each step's. */
+export const LOCAL_RECORD_RULES: PublicFileRules = { messages: [['error'], ['steps', '*', 'error']] };
+
+/** A record writer: applies `patch`, then writes the record through `writePublicJson`. */
+export const recorder =
+  <T extends object>(path: string, record: T, rules: PublicFileRules = LOCAL_RECORD_RULES) =>
+  (patch?: (r: T) => void) => {
+    patch?.(record);
+    writePublicJson(path, record, rules);
+  };
+
+/** An error as one line for a record: scrubbed (`scrubSecrets`) before it is cut to `max` characters. */
+export const errorText = (e: unknown, max: number): string =>
+  scrubSecrets(`${(e as Error)?.name ?? 'Error'}: ${(e as Error)?.message ?? String(e)}`).slice(0, max);
 
 const log = (msg: string, extra?: unknown) =>
   process.stderr.write(`${new Date().toISOString()} ${msg}${extra === undefined ? '' : ` ${json(extra)}`}\n`);
@@ -81,9 +89,9 @@ export type SpikeOptions = {
   privateStatePath?: string;
   /** Try a second call after the key removal and require it to fail (local only: it costs nothing there). */
   secondCall: boolean;
-  /** First try midnight-js removeVerifierKey() and record its outcome (local only). */
-  tryMidnightJsRemove: boolean;
-  /** Abort unless the wallet's unshielded address equals this (Stagenet: wallet 1). */
+  /** Remove the key with midnight-js `circuitMaintenanceTx` instead of the package's MaintenanceUpdate helper. */
+  removeWithMidnightJs: boolean;
+  /** Abort unless the wallet's unshielded address equals this. */
   expectedUnshieldedAddress?: string;
   toolchain: Record<string, string>;
 };
@@ -186,37 +194,21 @@ export const runSpike = async (o: SpikeOptions): Promise<SpikeRecord> => {
       providers as never,
       { compiledContract: compiledContract as never, contractAddress: address } as never,
     )) as unknown as Handle;
-    if (o.tryMidnightJsRemove) {
-      // Evidence for the SDK limitation: midnight-js removes the 'v3' slot only.
-      log('removing the verifier key with midnight-js circuitMaintenanceTx (expected to fail for a ZKIR v3 key)');
-      let sdkOutcome: Record<string, unknown>;
-      try {
-        const r = await found.circuitMaintenanceTx[CIRCUIT]!.removeVerifierKey();
-        sdkOutcome = { ...(await txSummary(o.network, r)) };
-      } catch (e) {
-        const err = e as Error & { finalizedTxData?: TxData };
-        const m = /"txHash":\s*"([0-9a-f]+)"/u.exec(err.message);
-        const status = /"status":\s*"([A-Za-z]+)"/u.exec(err.message);
-        sdkOutcome = { error: err.name, status: status?.[1], txHash: m?.[1] };
-        if (m?.[1]) sdkOutcome = { ...sdkOutcome, ...(await txSummary(o.network, { txHash: m[1], status: status?.[1] })) };
-      }
-      const still = await contractView(o.network, address);
-      record.steps.removeVerifierKeyMidnightJs = {
-        ...sdkOutcome,
-        keyStillPresent: still.operations.includes(CIRCUIT),
-        operationBefore: opBefore,
-      };
-      save();
-      log('midnight-js removeVerifierKey', record.steps.removeVerifierKeyMidnightJs);
-    }
-    log('removing the publishMetadata verifier key (MaintenanceUpdate, VerifierKeyRemove v4)');
     t = Date.now();
-    const removed = await removeVerifierKey(providers, o.network, address, CIRCUIT, key, 'v4');
+    let removed: TxData;
+    if (o.removeWithMidnightJs) {
+      log('removing the publishMetadata verifier key (midnight-js circuitMaintenanceTx, v4 slot)');
+      removed = (await found.circuitMaintenanceTx[CIRCUIT]!.removeVerifierKey()).public;
+    } else {
+      log('removing the publishMetadata verifier key (MaintenanceUpdate, VerifierKeyRemove v4)');
+      removed = (await removeVerifierKey(providers, o.network, address, CIRCUIT, key, 'v4')) as unknown as TxData;
+    }
     record.steps.removeVerifierKey = {
-      ...(await txSummary(o.network, removed as unknown as TxData)),
+      ...(await txSummary(o.network, removed)),
       seconds: Math.round((Date.now() - t) / 1000),
       operationBefore: opBefore,
       version: 'v4',
+      by: o.removeWithMidnightJs ? 'midnight-js circuitMaintenanceTx' : '@mip0018/midnight/signer removeVerifierKey',
     };
     save();
     const afterRemove = await waitFor('contract state without publishMetadata', async () => {
@@ -234,7 +226,7 @@ export const runSpike = async (o: SpikeOptions): Promise<SpikeRecord> => {
       try {
         await deployed.callTx[CIRCUIT]!();
       } catch (e) {
-        failure = `${(e as Error).name}: ${(e as Error).message}`.slice(0, 600);
+        failure = errorText(e, 600);
       }
       const eventsAfter = await miscEvents(o.network, address);
       record.steps.secondCall = {
@@ -259,7 +251,7 @@ export const runSpike = async (o: SpikeOptions): Promise<SpikeRecord> => {
     return record;
   } catch (e) {
     record.result = 'failed';
-    record.error = `${(e as Error).name}: ${(e as Error).message}`.slice(0, 2000);
+    record.error = errorText(e, 2000);
     save();
     throw e;
   }

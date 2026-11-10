@@ -17,16 +17,15 @@
     "src"
   ],
   "scripts": {
-    "compile": "node scripts/compile.ts",
     "costs": "node scripts/costs.ts",
     "test": "vitest run"
   },
   "dependencies": {
-    "@midnight-ntwrk/compact-runtime": "0.20.0"
+    "@midnight-ntwrk/compact-runtime": "0.21.0"
   },
   "devDependencies": {
-    "@midnight-ntwrk/midnight-js-http-client-proof-provider": "5.0.0-rc.2",
-    "@midnight-ntwrk/midnight-js-node-zk-config-provider": "5.0.0-rc.2",
+    "@midnight-ntwrk/midnight-js-http-client-proof-provider": "5.0.0",
+    "@midnight-ntwrk/midnight-js-node-zk-config-provider": "5.0.0",
     "@mip0018/codec": "0.1.0",
     "@mip0018/vectors": "0.1.0",
     "@types/node": "24.19.1",

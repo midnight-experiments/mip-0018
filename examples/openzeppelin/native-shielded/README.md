@@ -1,7 +1,7 @@
 # examples/openzeppelin/native-shielded — a native shielded token (kind 1)
 
 An OpenZeppelin `NativeShieldedToken` (Zswap coins of one token type, MIP-0011 shape) owned with
-`Ownable`, from [OpenZeppelin Compact Contracts 0.4.0-alpha.5](https://github.com/OpenZeppelin/compact-contracts/tree/v0.4.0-alpha.5),
+`Ownable`, from [OpenZeppelin Compact Contracts 0.5.0-alpha.2](https://github.com/OpenZeppelin/compact-contracts/tree/v0.5.0-alpha.2),
 gains MIP-0018 metadata. Wallets hold this token as shielded coins whose color is
 `tokenType(domainSep, contractAddress)`; the metadata event names that same `domainSep`, so a wallet
 that holds a coin can find the token's name, symbol and decimals.
@@ -65,7 +65,7 @@ that holds a coin can find the token's name, symbol and decimals.
   it (instead of a literal) guarantees the event names the `domainSep` every `mint` uses, so the color
   a consumer derives, `tokenType(domainSep, contractAddress)`, is exactly the color of the coins
   (MIP "Token identity and authority": "A color MUST always be computed this way, never read from a
-  value"). Reading state makes the circuit k = 15 instead of 13.
+  value"). Reading state makes the circuit k = 16 instead of 14.
 - **Same literals, `decimals` from state, fixed sizes, no `standards`** — as in
   [`fungible-token`](../fungible-token/README.md): OpenZeppelin's `name`/`symbol` are
   `Opaque<"string">`; pass the same strings to the constructor; `setMetadata` takes an 11-byte name
@@ -91,7 +91,7 @@ A wallet holding a coin of that color finds `(contractAddress, domainSep)` throu
 docker/run.sh exec 'npx vitest run examples/openzeppelin/native-shielded'
 ```
 
-[`test/native-shielded.test.ts`](test/native-shielded.test.ts), in compact-runtime 0.20.0 (no chain):
+[`test/native-shielded.test.ts`](test/native-shielded.test.ts), in compact-runtime 0.21.0 (no chain):
 
 | Test | Shows |
 |---|---|

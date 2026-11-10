@@ -7,7 +7,6 @@ docker/local-stack/.state/
 vectors/**/*.json
 vectors/**/*.bin
 vectors/SHA256SUMS
-test-contracts/*/records/
 # Recorded chain responses (byte-pinned fixtures).
 packages/midnight/test/fixtures/**/*.json
 # Prose is formatted by hand (tables, line breaks).
@@ -15,7 +14,7 @@ packages/midnight/test/fixtures/**/*.json
 **/*.md
 # Investigation evidence copied byte-for-byte (URI investigation).
 vectors/informative/uri/investigation/
-# Generated case folders (deployments/stagenet/tools/prepare-cases.ts), run records and observations
-deployments/stagenet/cases/**
-# Stagenet identity observations appended by deployments/stagenet/tools/network-identity.ts (JSON.stringify layout)
-deployments/stagenet/network.json
+# Generated case folders (deployments/tools/prepare-cases.ts), run records and observations
+deployments/*/cases/**
+# Network identity observations appended by deployments/tools/network-identity.ts (JSON.stringify layout)
+deployments/*/network.json

@@ -8,7 +8,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
-import { checkIdentity, normAddress, checkEvent, type EventExpectation } from '@mip0018/midnight';
+import { normAddress, checkEvent, type EventExpectation } from '@mip0018/midnight';
 import {
   StepError,
   callStep,
@@ -27,6 +27,7 @@ import {
   masterSeed,
   openRun,
   openWallet,
+  publicRecord,
   registerDust,
   removeVerifierKeyStep,
   signerContext,
@@ -43,7 +44,9 @@ import {
 import {
   EXIT,
   NETWORK_OPTIONS,
+  NETWORK_USAGE,
   UsageError,
+  boundProfile,
   emitJson,
   fromPortable,
   jsonArg,
@@ -64,7 +67,6 @@ import { printCheckEvent } from './wallet-free.ts';
 const SIGNER_OPTIONS = {
   ...NETWORK_OPTIONS,
   'proof-server': { type: 'string' },
-  'wallet-proof-server': { type: 'string' },
   'mnemonic-file': { type: 'string' },
   'seed-file': { type: 'string' },
   'dev-genesis-wallet': { type: 'boolean', default: false },
@@ -78,20 +80,19 @@ Signer options (signer container only):
   --mnemonic-file <path>       BIP-39 mnemonic file, mode 0600 (or MIP0018_MNEMONIC_FILE)
   --seed-file <path>           hex seed file, local undeployed chains only (or MIP0018_SEED_FILE)
   --dev-genesis-wallet         the local dev chain's public genesis wallet (undeployed only)
-  --proof-server <url>         contract circuits (or MIP0018_PROOF_SERVER_URL; official 9.0.0-rc.8)
-  --wallet-proof-server <url>  DUST spends (or MIP0018_WALLET_PROOF_SERVER_URL; official 9.0.0-rc.6)
+  --proof-server <url>         contract circuits and the wallet's DUST spends (or MIP0018_PROOF_SERVER_URL; official
+                               midnightntwrk/proof-server 9.0.1)
   --state-dir <dir>            private state directory outside the repository (or MIP0018_STATE_DIR)
   --private-state <file>       maintenance keys + witness private state (default <state-dir>/mip0018-private-state.json)
   --wallet-cache <file>        optional 0600 wallet sync cache outside the repository (restores the sub-wallets; on a
                                public network a re-run then syncs only the new blocks)
-`;
+${NETWORK_USAGE}`;
 
 function endpoints(v: Values): SignerEndpoints {
   const profile = profileFrom(v);
   const proofServer = str(v, 'proof-server') ?? process.env.MIP0018_PROOF_SERVER_URL;
-  const walletProofServer = str(v, 'wallet-proof-server') ?? process.env.MIP0018_WALLET_PROOF_SERVER_URL ?? proofServer;
   if (!proofServer) throw new UsageError('--proof-server (or MIP0018_PROOF_SERVER_URL) is required: there is no public proof server');
-  return { profile, proofServer, walletProofServer: walletProofServer! };
+  return { profile, proofServer };
 }
 
 async function wallet(v: Values, ep: SignerEndpoints, log: (m: string, x?: unknown) => void): Promise<WalletSession> {
@@ -106,7 +107,7 @@ async function wallet(v: Values, ep: SignerEndpoints, log: (m: string, x?: unkno
   const cache = str(v, 'wallet-cache');
   if (cache !== undefined && !relative(repoRoot(), resolve(cache)).startsWith('..'))
     throw new UsageError(`${cache} is inside the repository; the wallet cache holds secrets`);
-  log('opening the wallet and syncing (minutes on a public network)');
+  // openWallet checks the network identity before it opens anything, then logs that the wallet opens.
   return openWallet(ep, seed, { ...(cache ? { cachePath: resolve(cache) } : {}), log });
 }
 
@@ -147,8 +148,8 @@ function printRun(run: Run, recordPath: string): void {
 // ---------------------------------------------------------------------------------------------------------- wallet
 
 export const WALLET_USAGE = `
-mip0018 wallet status --network <id> [signer options] [--json]
-mip0018 wallet register-dust --network <id> [--estimate] [signer options] [--json]
+mip0018 wallet status --network <undeployed|preview|preprod|mainnet> [signer options] [--json]
+mip0018 wallet register-dust --network <undeployed|preview|preprod|mainnet> [--estimate] [signer options] [--json]
 
 status: public addresses, NIGHT balance and UTxOs (registered for DUST or not), DUST balance — never a secret.
 register-dust: registers every unregistered NIGHT UTxO for DUST generation (skipped when none; waits until the
@@ -161,7 +162,6 @@ export async function cmdWallet(argv: string[]): Promise<number> {
   const v = parse(argv.slice(1), { ...SIGNER_OPTIONS, estimate: { type: 'boolean', default: false } }, WALLET_USAGE);
   const log = logger(v);
   const ep = endpoints(v);
-  await checkIdentity(ep.profile);
   const session = await wallet(v, ep, log);
   try {
     if (sub === 'status') {
@@ -240,13 +240,21 @@ function requireKeys(src: ContractSource): void {
   throw new UsageError(`${src.artifacts.managedDir} has no keys/ (a --skip-zk build?): compile with keys first: ${how}`);
 }
 
-async function withRun<T>(v: Values, recordPath: string, src: ContractSource, f: (run: Run) => Promise<T>): Promise<T> {
+async function withRun<T>(
+  v: Values,
+  recordPath: string,
+  src: ContractSource,
+  f: (run: Run) => Promise<T>,
+  also: readonly string[] = [],
+): Promise<T> {
   requireKeys(src);
   const log = logger(v);
-  const ep = endpoints(v);
+  const given = endpoints(v);
   const ps = privateStatePath(v);
-  // Chain identity first: a wrong network aborts before any wallet is opened or anything is built.
-  await checkIdentity(ep.profile);
+  // The identity the run must be on: every identity source of the record (its own network when it exists, the network
+  // file of the case folder it lies in) and of every other record it names (--attach @record). The wallet checks it
+  // before it opens: a wrong network, or one re-created from the same genesis, aborts before anything is built.
+  const ep: SignerEndpoints = { ...given, profile: boundProfile(given.profile, [recordPath, ...also]) };
   const session = await wallet(v, ep, log);
   try {
     const run = await openRun({
@@ -272,7 +280,7 @@ async function withRun<T>(v: Values, recordPath: string, src: ContractSource, f:
 // ---------------------------------------------------------------------------------------------------------- deploy
 
 export const DEPLOY_USAGE = `
-mip0018 deploy --network <id> (--contract <managed dir> | --adapter <file> | --example <name>) --record <file> [--args <json>]
+mip0018 deploy --network <undeployed|preview|preprod|mainnet> (--contract <managed dir> | --adapter <file> | --example <name>) --record <file> [--args <json>]
 
 Deploys a compiled contract with midnight-js deployContract. The record (public JSON) stores the contract address and
 the transaction BEFORE submission; re-running the same command resumes: the before-check finds the contract on chain
@@ -309,7 +317,7 @@ export async function cmdDeploy(argv: string[]): Promise<number> {
       logger(v)(`deploy: ${(e as Error).message}`);
       return exitFor(e);
     } finally {
-      if (v.json) emitJson(run.record);
+      if (v.json) emitJson(publicRecord(run.record));
       else printRun(run, recordPath);
     }
   });
@@ -317,14 +325,14 @@ export async function cmdDeploy(argv: string[]): Promise<number> {
 
 // ---------------------------------------------------------------------------------------------------------- attach
 
-/** `--attach <address|@record>` → the contract address (normalized). */
-function attachAddress(v: Values): { address: string; from: string } | undefined {
+/** `--attach <address|@record>` → the contract address (normalized), and the record that names it. */
+function attachAddress(v: Values): { address: string; from: string; record?: string } | undefined {
   const a = str(v, 'attach');
   if (a === undefined) return undefined;
   if (a.startsWith('@')) {
     const r = readRecord(a.slice(1));
     if (!r.contract.address) throw new UsageError(`${a.slice(1)} has no contract address`);
-    return { address: normAddress(r.contract.address), from: portablePath(a.slice(1)) };
+    return { address: normAddress(r.contract.address), from: portablePath(a.slice(1)), record: r.path };
   }
   try {
     return { address: normAddress(a), from: 'command line' };
@@ -354,7 +362,7 @@ function attachRecord(run: Run, a: { address: string; from: string }, src: Contr
 // --------------------------------------------------------------------------------------------------------- publish
 
 export const PUBLISH_USAGE = `
-mip0018 publish --network <id> --record <file> --circuit <name> [--args <json>] [--step <id>] [--force]
+mip0018 publish --network <undeployed|preview|preprod|mainnet> --record <file> --circuit <name> [--args <json>] [--step <id>] [--force]
 
 Calls an emitting circuit of the recorded contract (midnight-js findDeployedContract(...).callTx.<circuit>()).
 Before: the contract and the circuit's key exist; just before submission the finalized transaction's Misc events are
@@ -399,33 +407,39 @@ export async function cmdPublish(argv: string[]): Promise<number> {
   if (attach && !str(v, 'example') && !str(v, 'adapter') && !str(v, 'contract'))
     throw new UsageError('--attach needs --example, --adapter or --contract (what the contract is)');
   const src = await contractSource(v, attach ? undefined : recordPath);
-  return withRun(v, recordPath, src, async (run) => {
-    try {
-      if (attach) attachRecord(run, attach, src);
-      // A circuit added later with `mip0018 upgrade` is called through the upgrade-only build it was compiled in.
-      const up = upgradeFor(run, circuit);
-      const via = up && !provableCircuits(run.o.artifacts.managedDir).includes(circuit) ? await upgradeSourceOf(up) : undefined;
-      await callStep(run, {
-        circuit,
-        args,
-        ...(str(v, 'step') ? { stepId: str(v, 'step')! } : {}),
-        ...(via ? { artifacts: via.artifacts, ...(via.adapter ? { adapter: via.adapter } : {}) } : {}),
-      });
-      return EXIT.ok;
-    } catch (e) {
-      logger(v)(`publish: ${(e as Error).message}`);
-      return exitFor(e);
-    } finally {
-      if (v.json) emitJson(run.record);
-      else printRun(run, recordPath);
-    }
-  });
+  return withRun(
+    v,
+    recordPath,
+    src,
+    async (run) => {
+      try {
+        if (attach) attachRecord(run, attach, src);
+        // A circuit added later with `mip0018 upgrade` is called through the upgrade-only build it was compiled in.
+        const up = upgradeFor(run, circuit);
+        const via = up && !provableCircuits(run.o.artifacts.managedDir).includes(circuit) ? await upgradeSourceOf(up) : undefined;
+        await callStep(run, {
+          circuit,
+          args,
+          ...(str(v, 'step') ? { stepId: str(v, 'step')! } : {}),
+          ...(via ? { artifacts: via.artifacts, ...(via.adapter ? { adapter: via.adapter } : {}) } : {}),
+        });
+        return EXIT.ok;
+      } catch (e) {
+        logger(v)(`publish: ${(e as Error).message}`);
+        return exitFor(e);
+      } finally {
+        if (v.json) emitJson(publicRecord(run.record));
+        else printRun(run, recordPath);
+      }
+    },
+    attach?.record !== undefined ? [attach.record] : [],
+  );
 }
 
 // -------------------------------------------------------------------------------------------------- remove-circuit
 
 export const REMOVE_USAGE = `
-mip0018 remove-circuit --network <id> --record <file> --circuit <name> [--slot v4|v3]
+mip0018 remove-circuit --network <undeployed|preview|preprod|mainnet> --record <file> --circuit <name> [--slot v4|v3]
 
 Create-and-destroy: removes the circuit's verifier key with a maintenance VerifierKeyRemove signed by the
 contract's maintenance key (from the private-state file). ZKIR-v3 keys live in the v4 slot (default).
@@ -460,7 +474,7 @@ export async function cmdRemoveCircuit(argv: string[]): Promise<number> {
       logger(v)(`remove-circuit: ${(e as Error).message}`);
       return exitFor(e);
     } finally {
-      if (v.json) emitJson(run.record);
+      if (v.json) emitJson(publicRecord(run.record));
       else printRun(run, recordPath);
     }
   });
@@ -469,7 +483,7 @@ export async function cmdRemoveCircuit(argv: string[]): Promise<number> {
 // -------------------------------------------------------------------------------------------- deploy-and-publish
 
 export const DAP_USAGE = `
-mip0018 deploy-and-publish (--example <name> | --adapter <file>) [--metadata <json>] --network <id> --record <file>
+mip0018 deploy-and-publish (--example <name> | --adapter <file>) [--metadata <json>] --network <undeployed|preview|preprod|mainnet> --record <file>
                            [--compile] [--no-check-event]
 
 The request's "deploy + emit" in one command: compile (with keys, when managed/ has none or --compile) → deploy →
@@ -552,7 +566,7 @@ export async function cmdDeployAndPublish(argv: string[]): Promise<number> {
       log(`deploy-and-publish: ${(e as Error).message}`);
       code = exitFor(e);
     } finally {
-      if (v.json) emitJson({ record: run.record, checked });
+      if (v.json) emitJson({ record: publicRecord(run.record), checked });
       else printRun(run, recordPath);
     }
     return code;
@@ -562,7 +576,7 @@ export async function cmdDeployAndPublish(argv: string[]): Promise<number> {
 // --------------------------------------------------------------------------------------------------------- upgrade
 
 export const UPGRADE_USAGE = `
-mip0018 upgrade --network <id> --record <run record of the deployed contract> --source <dir> --circuit <name>
+mip0018 upgrade --network <undeployed|preview|preprod|mainnet> --record <run record of the deployed contract> --source <dir> --circuit <name>
                 [--args <json>] [--slot v4|v3] [--maintenance-key-file <path>] [--compile] [--no-call] [--step <id>] [--force]
 
 MIP-0018 "Existing contracts": adds <circuit> (e.g. publishMetadata) to an already-deployed contract with a maintenance
@@ -628,8 +642,8 @@ async function upgradeSource(dir: string, compile: boolean, log: (m: string) => 
   const name = basename(sources[0]!, '.compact');
   const managedDir = join(abs, 'managed', name);
   if (compile || !existsSync(join(managedDir, 'keys'))) {
-    log(`compiling ${sources[0]} (Compact, --feature-zkir-v3, with keys)`);
-    const r = spawnSync('compact', ['compile', '--feature-zkir-v3', join(abs, sources[0]!), managedDir], {
+    log(`compiling ${sources[0]} (Compact, with keys)`);
+    const r = spawnSync('compact', ['compile', join(abs, sources[0]!), managedDir], {
       cwd: repoRoot(),
       stdio: ['ignore', 'inherit', 'inherit'],
     });
@@ -707,7 +721,7 @@ export async function cmdUpgrade(argv: string[]): Promise<number> {
       log(`upgrade: ${(e as Error).message}`);
       return exitFor(e);
     } finally {
-      if (v.json) emitJson(run.record);
+      if (v.json) emitJson(publicRecord(run.record));
       else printRun(run, recordPath);
     }
   });

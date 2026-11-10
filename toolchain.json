@@ -12,20 +12,19 @@
     "note": "MIP-0018 as proposed in PR #372, at the pinned commit. CI checks the pinned text's SHA-256."
   },
   "compact": {
-    "version": "0.35.0",
-    "commit": "debb05f9414b9d1e176741c2be289bb32233f0fc",
-    "language": "0.27.0",
-    "runtime": "0.20.0",
-    "ledgerTarget": "ledger-9.1.0.0-rc.3",
-    "zkir": "zkir-3.1.0-rc.1",
-    "flags": ["--feature-zkir-v3"],
+    "version": "0.36.0",
+    "commit": "b5d9e4dfc532fe47011c4f6296e254f4853eb469",
+    "language": "0.28.0",
+    "runtime": "0.21.0",
+    "zkir": "zkir-3.2.0-rc.2",
+    "$comment": "ZKIR v3 is the compiler's only backend (no feature flag). `zkir` is what `compact compile --ledger-version` prints: the bundled zkir-v3 binary (midnight-zkir 3.2.0-rc.2). The ledger the contracts target is the npm pin @midnightntwrk/ledger-v9.",
     "minimumForMisc": "0.34.0 (language 0.26.0, runtime 0.19.0)",
     "release": {
-      "tag": "compactc-v0.35.0",
-      "urlTemplate": "https://github.com/midnightntwrk/compact/releases/download/compactc-v0.35.0/compactc_v0.35.0_{arch}-unknown-linux-musl.zip",
+      "tag": "compactc-v0.36.0",
+      "urlTemplate": "https://github.com/midnightntwrk/compact/releases/download/compactc-v0.36.0/compactc_v0.36.0_{arch}-unknown-linux-musl.zip",
       "sha256": {
-        "x86_64-unknown-linux-musl": "70f22fb8209cc5a8504b2b3d91796cfdab2d71d88807ceef12fab87fed03bae2",
-        "aarch64-unknown-linux-musl": "3f74ec6fc98ccca7365c5c915f6015d8893db4527faafe04a90bc36effc40a3a"
+        "x86_64-unknown-linux-musl": "7017b6121ebb9d53a562984bca616d143ef84fc7ee18b4da6c3a0a6615cb5e97",
+        "aarch64-unknown-linux-musl": "87740ca24c7f99fc2200fd398c57ddfaa55eb60f6bdcf971869b0b543a7722ad"
       }
     },
     "devtool": {
@@ -40,40 +39,61 @@
   },
   "images": {
     "node": "node:24-bookworm@sha256:64af3819f9275802414d7cdc38c27e9d82bd564dec4d4da87d008255d36c63b4",
-    "midnightNode": "midnightntwrk/midnight-node:2.0.0-rc.4@sha256:caf93d6f9fb3630c906ef3e714c151655377f3d28f907d17545de1870514da2e",
-    "indexer": "midnightntwrk/indexer-standalone:4.4.0-rc.1@sha256:5d79f3a20da9ed86236c7f7dc9d93b1beeb0b0c47c9c43a791041322eb80b74e",
-    "proofServer": "midnightntwrk/proof-server:9.0.0-rc.8@sha256:2666c7bd7b4517f8ad135565387f98d14347a9ac715c6c466d4a8a852b545ecf",
-    "walletProofServer": "midnightntwrk/proof-server:9.0.0-rc.6@sha256:38a819eacde273f725551fdf90ca7c31ebf3c0ff145f3ed58ee35f92fb7ce95b",
-    "$comment": "proofServer proves contract circuits (reads zkir 3.1); walletProofServer proves DUST spends accepted by node 2.0.0-rc.4 / Stagenet (no single official image does both)."
+    "midnightNode": "midnightntwrk/midnight-node:2.1.101@sha256:0c1ad548d523c1109aa1f16daab1bf72dcb78c7e17b8a8c6d97424ad0eba7b8a",
+    "indexer": "midnightntwrk/indexer-standalone:4.4.101@sha256:119f35db548ba1c390845f215bb1e928e73038bef7c315825aee0461bd54499d",
+    "proofServer": "midnightntwrk/proof-server:9.0.1@sha256:90e36a14f92c2004127f0ed1cfd6ee89d770cf1f6e9cd7f02026ffd4ecb42f37",
+    "$comment": "One proof server proves contract circuits (ZKIR v3) and the wallet's DUST spends. Digests are the multi-architecture index digests on Docker Hub."
   },
   "npm": {
-    "@midnight-ntwrk/compact-runtime": "0.20.0",
-    "@midnightntwrk/onchain-runtime-v4": "4.0.0-rc.3",
-    "@midnightntwrk/ledger-v9": "1.0.0-rc.5",
-    "@midnight-ntwrk/compact-js": "3.0.0-rc.3",
-    "@midnight-ntwrk/midnight-js-contracts": "5.0.0-rc.2",
-    "@midnightntwrk/wallet-sdk": "2.0.0-beta.2",
-    "@midnightntwrk/wallet-sdk-facade": "5.0.0-beta.2",
-    "@openzeppelin/compact-contracts": "0.4.0-alpha.5",
-    "$comment": "midnight-js 5.0.0-rc.2 is the line built for compact-runtime 0.20.0; wallet SDK 2.0.0-beta.2 because the 2.0.0-rc.0 line cannot sync against indexer 4.4.0-rc.1."
+    "@midnight-ntwrk/compact-runtime": "0.21.0",
+    "@midnightntwrk/onchain-runtime-v4": "4.0.1",
+    "@midnightntwrk/ledger-v9": "1.0.1",
+    "@midnight-ntwrk/compact-js": "3.0.0",
+    "@midnight-ntwrk/platform-js": "3.0.0",
+    "@midnight-ntwrk/midnight-js-contracts": "5.0.0",
+    "@midnightntwrk/wallet-sdk": "2.0.0",
+    "@midnightntwrk/wallet-sdk-facade": "5.0.0",
+    "@openzeppelin/compact-contracts": "0.5.0-alpha.2",
+    "$comment": "midnight-js 5.0.0 declares ledger-v9 1.0.0 and onchain-runtime-v4 4.0.0; the root package.json `overrides` pin ledger-v9 1.0.1 and onchain-runtime-v4 4.0.1 instead, the ledger node 2.1.101 runs (9.1.0.1), because that ledger prices transactions (VerifierKeyRemove among them) above what 1.0.0 computes. `npm run check:pins` asserts that the install holds exactly one copy of each, at these versions."
   },
   "networks": {
-    "stagenet": {
-      "networkId": "stagenet",
-      "genesisHash": "0x2f76825abc239fecf6107c9df99016de57037b451ae57a4394b76c8cf53a9491",
-      "indexer": "https://indexer.stagenet.shielded.tools/api/v4/graphql",
-      "indexerWs": "wss://indexer.stagenet.shielded.tools/api/v4/graphql/ws",
-      "rpc": "https://rpc.stagenet.shielded.tools",
-      "observed": {
-        "nodeVersion": "2.0.0-d9729c13",
-        "specVersion": 2000000,
-        "indexerSchema": "4.4.0-rc.1",
-        "ledger": "9.1.0.0-rc.3"
-      }
+    "$comment": "Profiles of packages/midnight/src/network.ts (a unit test keeps them equal). preprod and mainnet are served by Blockfrost: every request carries the project token of that network's Blockfrost project as `project_id`, read from the variable named in `token` (or a 0600 file, --blockfrost-token-file). Genesis hashes are pinned; `undeployed` is the local stack.",
+    "preview": {
+      "networkId": "preview",
+      "chain": "Midnight Preview",
+      "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+      "indexer": "https://indexer.preview.midnight.network/api/v4/graphql",
+      "indexerWs": "wss://indexer.preview.midnight.network/api/v4/graphql/ws",
+      "rpc": "https://rpc.preview.midnight.network",
+      "rpcWs": "wss://rpc.preview.midnight.network",
+      "addressPrefixes": { "unshielded": "mn_addr_preview", "shielded": "mn_shield-addr_preview", "dust": "mn_dust_preview" }
     },
-    "local": {
+    "preprod": {
+      "networkId": "preprod",
+      "chain": "Midnight Preprod",
+      "genesisHash": "0xdf831b09a8baa92badf47762ce5ac439b7e47e3ed3d39600cfdd44fad552361b",
+      "indexer": "https://midnight-preprod.blockfrost.io/api/v0",
+      "indexerWs": "wss://midnight-preprod.blockfrost.io/api/v0/ws",
+      "rpc": "https://rpc.midnight-preprod.blockfrost.io",
+      "rpcWs": "wss://rpc.midnight-preprod.blockfrost.io",
+      "token": "MIP0018_BLOCKFROST_PREPROD",
+      "addressPrefixes": { "unshielded": "mn_addr_preprod", "shielded": "mn_shield-addr_preprod", "dust": "mn_dust_preprod" }
+    },
+    "mainnet": {
+      "networkId": "mainnet",
+      "chain": "Midnight Mainnet",
+      "genesisHash": "0x1941ca8e2bb88146c14dea084d3be7eb6e96ca7135429c543848b628124f2854",
+      "indexer": "https://midnight-mainnet.blockfrost.io/api/v0",
+      "indexerWs": "wss://midnight-mainnet.blockfrost.io/api/v0/ws",
+      "rpc": "https://rpc.midnight-mainnet.blockfrost.io",
+      "rpcWs": "wss://rpc.midnight-mainnet.blockfrost.io",
+      "token": "MIP0018_BLOCKFROST_MAINNET",
+      "addressPrefixes": { "unshielded": "mn_addr", "shielded": "mn_shield-addr", "dust": "mn_dust" }
+    },
+    "undeployed": {
       "networkId": "undeployed",
-      "compose": "docker/local-stack/compose.yml"
+      "compose": "docker/local-stack/compose.yml",
+      "addressPrefixes": { "unshielded": "mn_addr_undeployed", "shielded": "mn_shield-addr_undeployed", "dust": "mn_dust_undeployed" }
     }
   }
 }

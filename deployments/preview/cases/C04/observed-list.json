@@ -1,0 +1,267 @@
+{
+  "network": {
+    "id": "preview",
+    "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+    "indexer": "https://indexer.preview.midnight.network/api/v4/graphql"
+  },
+  "contract": "63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93",
+  "snapshot": {
+    "indexerTip": {
+      "height": 41656,
+      "hash": "78978427550e0eb902a1f14f4374e75414caab147cc27d132d5bf9135584cc23"
+    },
+    "toBlock": 41656,
+    "nodeHashAtTip": "0x78978427550e0eb902a1f14f4374e75414caab147cc27d132d5bf9135584cc23",
+    "tipMatchesNode": true,
+    "finalizedHeight": 41656
+  },
+  "pages": 2,
+  "counts": {
+    "events": 3,
+    "accepted": 3,
+    "rejected": 0,
+    "ignored": 0
+  },
+  "events": [
+    {
+      "id": 13263,
+      "block": {
+        "height": 41655,
+        "hash": "45f95cc67b75b0bd65cee189f0bfb53047afc02725e48a8a948c11c71102a472"
+      },
+      "txHash": "3cded8814ab6da8a68d7a492d8e9337ab45347aba3e482ff56a60c6c0391aae8",
+      "txId": 3180,
+      "result": "accept",
+      "identity": "preview|63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93|6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000|1",
+      "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+      "kind": 1,
+      "records": 3
+    },
+    {
+      "id": 13264,
+      "block": {
+        "height": 41655,
+        "hash": "45f95cc67b75b0bd65cee189f0bfb53047afc02725e48a8a948c11c71102a472"
+      },
+      "txHash": "3cded8814ab6da8a68d7a492d8e9337ab45347aba3e482ff56a60c6c0391aae8",
+      "txId": 3180,
+      "result": "accept",
+      "identity": "preview|63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93|6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000|2",
+      "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+      "kind": 2,
+      "records": 3
+    },
+    {
+      "id": 13265,
+      "block": {
+        "height": 41655,
+        "hash": "45f95cc67b75b0bd65cee189f0bfb53047afc02725e48a8a948c11c71102a472"
+      },
+      "txHash": "3cded8814ab6da8a68d7a492d8e9337ab45347aba3e482ff56a60c6c0391aae8",
+      "txId": 3180,
+      "result": "accept",
+      "identity": "preview|63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93|6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000|3",
+      "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+      "kind": 3,
+      "records": 3
+    }
+  ],
+  "identities": [
+    {
+      "key": "preview|63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93|6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000|1",
+      "network": "preview",
+      "contractAddress": "63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93",
+      "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+      "kind": 1,
+      "colored": true,
+      "color": "056c310ebcb469c9c5b8974842104ada748a84c2c42824be0f1ed165e3d81b2a",
+      "fields": [
+        {
+          "key": "6e616d65",
+          "valType": 1,
+          "value": "41636d6520446f6c6c6172",
+          "setAt": {
+            "block": "41655",
+            "tx": 3180,
+            "event": 13263,
+            "record": 0
+          },
+          "keyHex": "6e616d65",
+          "usable": true
+        },
+        {
+          "key": "73796d626f6c",
+          "valType": 1,
+          "value": "414344",
+          "setAt": {
+            "block": "41655",
+            "tx": 3180,
+            "event": 13263,
+            "record": 1
+          },
+          "keyHex": "73796d626f6c",
+          "usable": true
+        },
+        {
+          "key": "646563696d616c73",
+          "valType": 2,
+          "value": "02",
+          "setAt": {
+            "block": "41655",
+            "tx": 3180,
+            "event": 13263,
+            "record": 2
+          },
+          "integer": "2",
+          "keyHex": "646563696d616c73",
+          "usable": true
+        }
+      ],
+      "common": {
+        "name": "Acme Dollar",
+        "symbol": "ACD",
+        "decimals": "2"
+      }
+    },
+    {
+      "key": "preview|63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93|6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000|2",
+      "network": "preview",
+      "contractAddress": "63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93",
+      "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+      "kind": 2,
+      "colored": true,
+      "color": "056c310ebcb469c9c5b8974842104ada748a84c2c42824be0f1ed165e3d81b2a",
+      "fields": [
+        {
+          "key": "6e616d65",
+          "valType": 1,
+          "value": "41636d6520446f6c6c6172",
+          "setAt": {
+            "block": "41655",
+            "tx": 3180,
+            "event": 13264,
+            "record": 0
+          },
+          "keyHex": "6e616d65",
+          "usable": true
+        },
+        {
+          "key": "73796d626f6c",
+          "valType": 1,
+          "value": "414344",
+          "setAt": {
+            "block": "41655",
+            "tx": 3180,
+            "event": 13264,
+            "record": 1
+          },
+          "keyHex": "73796d626f6c",
+          "usable": true
+        },
+        {
+          "key": "646563696d616c73",
+          "valType": 2,
+          "value": "02",
+          "setAt": {
+            "block": "41655",
+            "tx": 3180,
+            "event": 13264,
+            "record": 2
+          },
+          "integer": "2",
+          "keyHex": "646563696d616c73",
+          "usable": true
+        }
+      ],
+      "common": {
+        "name": "Acme Dollar",
+        "symbol": "ACD",
+        "decimals": "2"
+      }
+    },
+    {
+      "key": "preview|63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93|6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000|3",
+      "network": "preview",
+      "contractAddress": "63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93",
+      "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+      "kind": 3,
+      "colored": false,
+      "color": null,
+      "fields": [
+        {
+          "key": "6e616d65",
+          "valType": 1,
+          "value": "41636d6520446f6c6c6172",
+          "setAt": {
+            "block": "41655",
+            "tx": 3180,
+            "event": 13265,
+            "record": 0
+          },
+          "keyHex": "6e616d65",
+          "usable": true
+        },
+        {
+          "key": "73796d626f6c",
+          "valType": 1,
+          "value": "414344",
+          "setAt": {
+            "block": "41655",
+            "tx": 3180,
+            "event": 13265,
+            "record": 1
+          },
+          "keyHex": "73796d626f6c",
+          "usable": true
+        },
+        {
+          "key": "646563696d616c73",
+          "valType": 2,
+          "value": "02",
+          "setAt": {
+            "block": "41655",
+            "tx": 3180,
+            "event": 13265,
+            "record": 2
+          },
+          "integer": "2",
+          "keyHex": "646563696d616c73",
+          "usable": true
+        }
+      ],
+      "common": {
+        "name": "Acme Dollar",
+        "symbol": "ACD",
+        "decimals": "2"
+      }
+    }
+  ],
+  "groups": [
+    {
+      "network": "preview",
+      "contractAddress": "63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93",
+      "symbol": "414344",
+      "members": [
+        {
+          "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+          "kind": 1,
+          "key": "preview|63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93|6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000|1"
+        },
+        {
+          "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+          "kind": 2,
+          "key": "preview|63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93|6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000|2"
+        },
+        {
+          "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+          "kind": 3,
+          "key": "preview|63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93|6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000|3"
+        }
+      ]
+    }
+  ],
+  "expectation": {
+    "ok": true,
+    "differences": []
+  }
+}

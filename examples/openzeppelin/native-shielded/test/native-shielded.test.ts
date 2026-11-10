@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// examples/openzeppelin/native-shielded in compact-runtime 0.20.0 (no chain):
+// examples/openzeppelin/native-shielded in compact-runtime 0.21.0 (no chain):
 //   * publishMetadata() emits exactly the metadata.json payload: kind 1, `domainSep` read from
 //     `NativeShieldedToken__domain`, the same literals the constructor passed to initialize;
 //   * the color: `rawTokenType(domainSep, contractAddress)` (official runtime) equals the color of the

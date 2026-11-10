@@ -2,7 +2,7 @@
 
 ## Docker-only workflow
 
-Nothing is installed on the host: every build, compile and test runs in the pinned toolchain image (`docker/Dockerfile`: Node 24 + the official Compact 0.35.0 release, SHA-256 checked).
+Nothing is installed on the host: every build, compile and test runs in the pinned toolchain image (`docker/Dockerfile`: Node 24 + the official Compact 0.36.0 release, SHA-256 checked).
 
 ```sh
 docker/run.sh ci                     # npm ci from package-lock.json
@@ -14,8 +14,8 @@ docker/run.sh exec <command>         # any command in the image
 - The repository is bind-mounted at `/work`; the container runs as your uid/gid. `node_modules`, the npm cache and ZK parameters live in named volumes (`<prefix>-node-modules`, …). `MIP0018_DOCKER_PREFIX` sets the prefix of every container, network and volume a script creates; remove only what you created, by exact name or by the label `org.midnight-experiments.mip-0018.prefix=<prefix>`.
 - Chain tests use the local stack: `docker/local-stack/up.sh` (random free loopback ports ≥ 10000, written to `docker/local-stack/ports.env`), `fund.sh` for a funded test wallet, `down.sh` to remove it. Its state and logs are never committed.
 - Signing runs use `docker/signer.sh` (see [`SECURITY.md`](SECURITY.md)).
-- Versions are pinned in [`toolchain.json`](toolchain.json); `docker/run.sh check:pins` keeps the Dockerfile, the compose file and the manifests consistent with it. Only official binaries: Compact releases from `midnightntwrk/compact`, `midnightntwrk/*` images by digest, npm packages from the official scopes.
-- Compile every Compact file with Compact 0.35.0 and `--feature-zkir-v3`.
+- Versions are pinned in [`toolchain.json`](toolchain.json); `docker/run.sh check:pins` keeps the Dockerfile, the compose file and the manifests consistent with it, and requires a digest for every image of every compose file (every YAML file is parsed, and one that does not parse fails the check; a JSON file is a compose file when it is named as one, such as `compose.json`, or when its top-level `services` carry an `image`), every Dockerfile (`FROM`) and every GitHub Actions workflow (each job's `container` and `services`, and each step's `uses: docker://…`) in the repository. Only official binaries: Compact releases from `midnightntwrk/compact`, `midnightntwrk/*` images by digest, npm packages from the official scopes.
+- Compile every Compact file with Compact 0.36.0 (no compiler flags; ZKIR v3 is its only backend).
 
 Before opening or updating a pull request: `docker/run.sh ci lint typecheck test check:pins check:secrets check:mip-pin check:conformance-matrix check:md-links`.
 

@@ -3,8 +3,13 @@
 // A minimal `graphql-transport-ws` client (the protocol the Midnight indexer serves at /api/v4/graphql/ws) on Node's
 // global WebSocket. One subscription per connection; messages are buffered and pulled through an async iterator, so
 // a slow consumer never loses a message. The caller ends a subscription by breaking out of the loop (or aborting).
+// Error messages name the URL without its query string; every failure (a WebSocket that cannot be opened, an error
+// event, a close reason, a GraphQL error) is a `SubscriptionError`, scrubbed when built (redact.ts), so a server that
+// echoes the token-bearing URL or the token cannot pass it on.
 
-export class SubscriptionError extends Error {
+import { redactUrl, ScrubbedError } from './redact.ts';
+
+export class SubscriptionError extends ScrubbedError {
   override name = 'SubscriptionError';
 }
 
@@ -28,7 +33,13 @@ export async function* subscribe<T>(
 ): AsyncGenerator<T> {
   const WS = o.WebSocketImpl ?? globalThis.WebSocket;
   if (WS === undefined) throw new SubscriptionError('no WebSocket implementation (Node >= 22 provides one)');
-  const ws = new WS(url, 'graphql-transport-ws');
+  const shown = redactUrl(url);
+  let ws: WebSocket;
+  try {
+    ws = new WS(url, 'graphql-transport-ws');
+  } catch (e) {
+    throw new SubscriptionError(`cannot open a WebSocket to ${shown}: ${(e as Error)?.message ?? String(e)}`);
+  }
   const queue: T[] = [];
   let done = false;
   let failure: Error | undefined;
@@ -44,22 +55,22 @@ export async function* subscribe<T>(
   };
   let acked = false;
   const connectTimer = setTimeout(() => {
-    if (!acked) fail(new SubscriptionError(`no connection_ack from ${url} within ${o.connectTimeoutMs ?? 15_000} ms`));
+    if (!acked) fail(new SubscriptionError(`no connection_ack from ${shown} within ${o.connectTimeoutMs ?? 15_000} ms`));
   }, o.connectTimeoutMs ?? 15_000);
   let idleTimer: ReturnType<typeof setTimeout> | undefined;
   const armIdle = () => {
     if (!o.idleTimeoutMs) return;
     if (idleTimer) clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => fail(new SubscriptionError(`no message from ${url} for ${o.idleTimeoutMs} ms`)), o.idleTimeoutMs);
+    idleTimer = setTimeout(() => fail(new SubscriptionError(`no message from ${shown} for ${o.idleTimeoutMs} ms`)), o.idleTimeoutMs);
   };
   const onAbort = () => fail(new SubscriptionError('aborted'));
   o.signal?.addEventListener('abort', onAbort);
 
   ws.onopen = () => ws.send(JSON.stringify({ type: 'connection_init', payload: {} }));
   ws.onerror = (ev: Event) =>
-    fail(new SubscriptionError(`WebSocket error on ${url}: ${(ev as { message?: string }).message ?? 'unknown'}`));
+    fail(new SubscriptionError(`WebSocket error on ${shown}: ${(ev as { message?: string }).message ?? 'unknown'}`));
   ws.onclose = (ev: CloseEvent) => {
-    if (!done) fail(new SubscriptionError(`WebSocket closed by ${url} (code ${ev.code}${ev.reason ? `, ${ev.reason}` : ''})`));
+    if (!done) fail(new SubscriptionError(`WebSocket closed by ${shown} (code ${ev.code}${ev.reason ? `, ${ev.reason}` : ''})`));
   };
   ws.onmessage = (ev: MessageEvent) => {
     let msg: Message;

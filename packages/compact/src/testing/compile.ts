@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Compiles a Compact source with the pinned compiler (Compact 0.35.0, --feature-zkir-v3) unless an
+// Compiles a Compact source with the pinned compiler (Compact 0.36.0, ZKIR v3) unless an
 // up-to-date build already exists. Used by the tests (TypeScript only: --skip-zk) and by the cost
 // measurement (full keys). Runs inside the toolchain image (docker/run.sh), where `compact` is on PATH.
 
@@ -8,7 +8,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, renameSync, rmSync, statSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 
-export const COMPACT_VERSION = '0.35.0';
+export const COMPACT_VERSION = '0.36.0';
 
 /** Newest mtime (ms) of a file or of every *.compact file under a directory. */
 const newest = (path: string): number => {
@@ -51,7 +51,7 @@ export const ensureCompiled = (source: string, outDir: string, o: CompileOptions
 
   const tmp = join(dirname(outDir), `.${basename(outDir)}.tmp-${process.pid}-${Date.now()}`);
   mkdirSync(dirname(outDir), { recursive: true });
-  const args = ['compile', '--feature-zkir-v3'];
+  const args = ['compile'];
   if (skipZk) args.push('--skip-zk');
   if (o.compactPath) args.push('--compact-path', o.compactPath);
   args.push(source, tmp);
@@ -75,7 +75,7 @@ export const ensureCompiled = (source: string, outDir: string, o: CompileOptions
 /** Runs the compiler on a source expected to FAIL and returns its message (throws if it compiles). */
 export const compileError = (source: string, o: Pick<CompileOptions, 'compactPath'> = {}): string => {
   const tmp = join(dirname(source), `.compile-fail-${process.pid}-${Date.now()}`);
-  const args = ['compile', '--feature-zkir-v3', '--skip-zk'];
+  const args = ['compile', '--skip-zk'];
   if (o.compactPath) args.push('--compact-path', o.compactPath);
   args.push(source, tmp);
   try {

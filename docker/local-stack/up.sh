@@ -53,9 +53,8 @@ picked=""
 MIP0018_NODE_PORT=$(pick_port); picked="$picked $MIP0018_NODE_PORT"
 MIP0018_INDEXER_PORT=$(pick_port); picked="$picked $MIP0018_INDEXER_PORT"
 MIP0018_PROOF_PORT=$(pick_port); picked="$picked $MIP0018_PROOF_PORT"
-MIP0018_WALLET_PROOF_PORT=$(pick_port); picked="$picked $MIP0018_WALLET_PROOF_PORT"
 MIP0018_STACK_PROJECT="${MIP0018_DOCKER_PREFIX}-stack-$(mip0018_rand)"
-export MIP0018_DOCKER_PREFIX MIP0018_STACK_PROJECT MIP0018_NODE_PORT MIP0018_INDEXER_PORT MIP0018_PROOF_PORT MIP0018_WALLET_PROOF_PORT
+export MIP0018_DOCKER_PREFIX MIP0018_STACK_PROJECT MIP0018_NODE_PORT MIP0018_INDEXER_PORT MIP0018_PROOF_PORT
 
 umask 077
 cat >"$state" <<EOF
@@ -66,20 +65,17 @@ MIP0018_STACK_NETWORK=${MIP0018_STACK_PROJECT}_default
 MIP0018_NODE_PORT=$MIP0018_NODE_PORT
 MIP0018_INDEXER_PORT=$MIP0018_INDEXER_PORT
 MIP0018_PROOF_PORT=$MIP0018_PROOF_PORT
-MIP0018_WALLET_PROOF_PORT=$MIP0018_WALLET_PROOF_PORT
 # From the host
 MIP0018_NODE_URL=http://127.0.0.1:$MIP0018_NODE_PORT
 MIP0018_INDEXER_URL=http://127.0.0.1:$MIP0018_INDEXER_PORT/api/v4/graphql
 MIP0018_PROOF_SERVER_URL=http://127.0.0.1:$MIP0018_PROOF_PORT
-MIP0018_WALLET_PROOF_SERVER_URL=http://127.0.0.1:$MIP0018_WALLET_PROOF_PORT
 # From a container on the stack network (docker/run.sh with MIP0018_DOCKER_NETWORK)
 MIP0018_NODE_URL_IN_NETWORK=http://node:9944
 MIP0018_INDEXER_URL_IN_NETWORK=http://indexer:8088/api/v4/graphql
 MIP0018_PROOF_SERVER_URL_IN_NETWORK=http://proof-server:6300
-MIP0018_WALLET_PROOF_SERVER_URL_IN_NETWORK=http://wallet-proof-server:6300
 EOF
 
-echo "starting $MIP0018_STACK_PROJECT (node :$MIP0018_NODE_PORT, indexer :$MIP0018_INDEXER_PORT, proof servers :$MIP0018_PROOF_PORT contract / :$MIP0018_WALLET_PROOF_PORT wallet)" >&2
+echo "starting $MIP0018_STACK_PROJECT (node :$MIP0018_NODE_PORT, indexer :$MIP0018_INDEXER_PORT, proof server :$MIP0018_PROOF_PORT)" >&2
 if ! docker compose -f "$here/compose.yml" up -d --wait --wait-timeout 300 >&2; then
   echo "the stack did not become healthy; inspect with: docker compose -p $MIP0018_STACK_PROJECT logs" >&2
   exit 1
@@ -119,8 +115,8 @@ if [ -z "${h:-}" ]; then
 fi
 echo "indexer at block $h" >&2
 
-# Proof servers: /health.
-for port in "$MIP0018_PROOF_PORT" "$MIP0018_WALLET_PROOF_PORT"; do
+# Proof server: /health.
+for port in "$MIP0018_PROOF_PORT"; do
   ok=""
   for i in $(seq 1 60); do
     if curl -fsS -m 5 "http://127.0.0.1:$port/health" >/dev/null 2>&1; then ok=1; break; fi

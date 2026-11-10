@@ -1,0 +1,267 @@
+{
+  "network": {
+    "id": "preview",
+    "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+    "indexer": "https://indexer.preview.midnight.network/api/v4/graphql"
+  },
+  "contract": "93500811da5365b6a83ffe00b3f2d74bfbd0cd8bcaa124024578095b9854394e",
+  "snapshot": {
+    "indexerTip": {
+      "height": 41706,
+      "hash": "9d5fb5516e6de947ec61c11ce259b5c692d6bc07fb162743b51b92bab7c45287"
+    },
+    "toBlock": 41706,
+    "nodeHashAtTip": "0x9d5fb5516e6de947ec61c11ce259b5c692d6bc07fb162743b51b92bab7c45287",
+    "tipMatchesNode": true,
+    "finalizedHeight": 41706
+  },
+  "pages": 2,
+  "counts": {
+    "events": 3,
+    "accepted": 3,
+    "rejected": 0,
+    "ignored": 0
+  },
+  "events": [
+    {
+      "id": 13272,
+      "block": {
+        "height": 41691,
+        "hash": "d3f69e4248d984e15f3ad18f25dec7fd477e62348f98593b936ce6f648b7a7d3"
+      },
+      "txHash": "f62199fa313df07fbe19fcadd8b638618ab220c5b9d7866210758cdb688666b0",
+      "txId": 3184,
+      "result": "accept",
+      "identity": "preview|93500811da5365b6a83ffe00b3f2d74bfbd0cd8bcaa124024578095b9854394e|6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000|1",
+      "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+      "kind": 1,
+      "records": 3
+    },
+    {
+      "id": 13274,
+      "block": {
+        "height": 41697,
+        "hash": "dea037caae6162bb3534f27f915f0789eb4341d38206a426a512b8e2d065fb27"
+      },
+      "txHash": "ba38259314434801487ebabe54014631f89eee5513056d5d9079d0b2bde66589",
+      "txId": 3185,
+      "result": "accept",
+      "identity": "preview|93500811da5365b6a83ffe00b3f2d74bfbd0cd8bcaa124024578095b9854394e|6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000|1",
+      "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+      "kind": 1,
+      "records": 3
+    },
+    {
+      "id": 13279,
+      "block": {
+        "height": 41704,
+        "hash": "b67ec933a2f068c77fb232f38c46e165db1673272e7056d00bb4ec89cedc2d64"
+      },
+      "txHash": "5bcbac077d3a6968002ec8ad0b94b3b71b7369405561b490c3e1ec7c43685de2",
+      "txId": 3187,
+      "result": "accept",
+      "identity": "preview|93500811da5365b6a83ffe00b3f2d74bfbd0cd8bcaa124024578095b9854394e|6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000|1",
+      "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+      "kind": 1,
+      "records": 3
+    }
+  ],
+  "identities": [
+    {
+      "key": "preview|93500811da5365b6a83ffe00b3f2d74bfbd0cd8bcaa124024578095b9854394e|6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000|1",
+      "network": "preview",
+      "contractAddress": "93500811da5365b6a83ffe00b3f2d74bfbd0cd8bcaa124024578095b9854394e",
+      "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+      "kind": 1,
+      "colored": true,
+      "color": "58325446d1e1b0cd816504bfce22e387ed13975abed88fac313f1947f24c0487",
+      "fields": [
+        {
+          "key": "6e616d65",
+          "valType": 1,
+          "value": "41636d65204d6564616c73",
+          "setAt": {
+            "block": "41691",
+            "tx": 3184,
+            "event": 13272,
+            "record": 0
+          },
+          "keyHex": "6e616d65",
+          "usable": true
+        },
+        {
+          "key": "73796d626f6c",
+          "valType": 1,
+          "value": "4d4544414c",
+          "setAt": {
+            "block": "41691",
+            "tx": 3184,
+            "event": 13272,
+            "record": 1
+          },
+          "keyHex": "73796d626f6c",
+          "usable": true
+        },
+        {
+          "key": "646563696d616c73",
+          "valType": 2,
+          "value": "00",
+          "setAt": {
+            "block": "41691",
+            "tx": 3184,
+            "event": 13272,
+            "record": 2
+          },
+          "integer": "0",
+          "keyHex": "646563696d616c73",
+          "usable": true
+        }
+      ],
+      "common": {
+        "name": "Acme Medals",
+        "symbol": "MEDAL",
+        "decimals": "0"
+      }
+    },
+    {
+      "key": "preview|93500811da5365b6a83ffe00b3f2d74bfbd0cd8bcaa124024578095b9854394e|6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000|1",
+      "network": "preview",
+      "contractAddress": "93500811da5365b6a83ffe00b3f2d74bfbd0cd8bcaa124024578095b9854394e",
+      "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+      "kind": 1,
+      "colored": true,
+      "color": "7c98ff4715c5f47f2a1502a9e4d727a163608a31bb7fa459355a46e135e9da5a",
+      "fields": [
+        {
+          "key": "6e616d65",
+          "valType": 1,
+          "value": "41636d65204d6564616c73",
+          "setAt": {
+            "block": "41697",
+            "tx": 3185,
+            "event": 13274,
+            "record": 0
+          },
+          "keyHex": "6e616d65",
+          "usable": true
+        },
+        {
+          "key": "73796d626f6c",
+          "valType": 1,
+          "value": "4d4544414c",
+          "setAt": {
+            "block": "41697",
+            "tx": 3185,
+            "event": 13274,
+            "record": 1
+          },
+          "keyHex": "73796d626f6c",
+          "usable": true
+        },
+        {
+          "key": "646563696d616c73",
+          "valType": 2,
+          "value": "00",
+          "setAt": {
+            "block": "41697",
+            "tx": 3185,
+            "event": 13274,
+            "record": 2
+          },
+          "integer": "0",
+          "keyHex": "646563696d616c73",
+          "usable": true
+        }
+      ],
+      "common": {
+        "name": "Acme Medals",
+        "symbol": "MEDAL",
+        "decimals": "0"
+      }
+    },
+    {
+      "key": "preview|93500811da5365b6a83ffe00b3f2d74bfbd0cd8bcaa124024578095b9854394e|6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000|1",
+      "network": "preview",
+      "contractAddress": "93500811da5365b6a83ffe00b3f2d74bfbd0cd8bcaa124024578095b9854394e",
+      "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+      "kind": 1,
+      "colored": true,
+      "color": "f3a250ea5d41f3ffcaf1064e04bd8a79aded9adf8d1bf38332ea5de98a4cc608",
+      "fields": [
+        {
+          "key": "6e616d65",
+          "valType": 1,
+          "value": "41636d65204d6564616c73",
+          "setAt": {
+            "block": "41704",
+            "tx": 3187,
+            "event": 13279,
+            "record": 0
+          },
+          "keyHex": "6e616d65",
+          "usable": true
+        },
+        {
+          "key": "73796d626f6c",
+          "valType": 1,
+          "value": "4d4544414c",
+          "setAt": {
+            "block": "41704",
+            "tx": 3187,
+            "event": 13279,
+            "record": 1
+          },
+          "keyHex": "73796d626f6c",
+          "usable": true
+        },
+        {
+          "key": "646563696d616c73",
+          "valType": 2,
+          "value": "00",
+          "setAt": {
+            "block": "41704",
+            "tx": 3187,
+            "event": 13279,
+            "record": 2
+          },
+          "integer": "0",
+          "keyHex": "646563696d616c73",
+          "usable": true
+        }
+      ],
+      "common": {
+        "name": "Acme Medals",
+        "symbol": "MEDAL",
+        "decimals": "0"
+      }
+    }
+  ],
+  "groups": [
+    {
+      "network": "preview",
+      "contractAddress": "93500811da5365b6a83ffe00b3f2d74bfbd0cd8bcaa124024578095b9854394e",
+      "symbol": "4d4544414c",
+      "members": [
+        {
+          "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000",
+          "kind": 1,
+          "key": "preview|93500811da5365b6a83ffe00b3f2d74bfbd0cd8bcaa124024578095b9854394e|6d69702d303031383a6578616d706c653a66616d696c793a62726f6e7a650000|1"
+        },
+        {
+          "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000",
+          "kind": 1,
+          "key": "preview|93500811da5365b6a83ffe00b3f2d74bfbd0cd8bcaa124024578095b9854394e|6d69702d303031383a6578616d706c653a66616d696c793a676f6c6400000000|1"
+        },
+        {
+          "domainSep": "6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000",
+          "kind": 1,
+          "key": "preview|93500811da5365b6a83ffe00b3f2d74bfbd0cd8bcaa124024578095b9854394e|6d69702d303031383a6578616d706c653a66616d696c793a73696c7665720000|1"
+        }
+      ]
+    }
+  ],
+  "expectation": {
+    "ok": true,
+    "differences": []
+  }
+}

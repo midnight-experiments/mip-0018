@@ -1,51 +1,54 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Wallet session: wallet SDK 2.0.0-beta.2 (facade 5.0.0-beta.2) behind midnight-js 5.0.0-rc.2 providers (the 2.0.0-rc
-// wallet line cannot sync against indexer 4.4.0-rc.1).
+// Wallet session: wallet SDK 2.0.0 (facade 5.0.0) behind midnight-js 5.0.0 providers.
 //
+//   * `openWallet` is the one way a wallet starts, and it checks the network identity first (`checkIdentity`: the
+//     node's genesis against the profile, block 1 against the profile's chain instance when it has one; an undeployed
+//     profile refuses a public network's genesis), before it reads a cache anchor or connects anything, so no caller
+//     (the CLI, the example scripts, the local test wallets) can start a wallet on another chain
 //   * opened from a protected secret FILE (BIP-39 mnemonic → 64-byte seed, or — local test wallets only — a hex
-//     seed); HD account 0, index 0, roles Zswap / NightExternal / Dust (Lace-compatible); seeds are zeroed after use
+//     seed); `WalletSeeds.fromMasterSeed`: HD account 0, index 0, roles Zswap / NightExternal / Dust
+//     (Lace-compatible); the master seed is zeroed after derivation, the three wallet seeds when the session closes
+//   * one proof server for the wallet's own proofs (DUST spends, zswap outputs) and the contract circuits
 //   * complete sync = all three sub-wallets strictly complete AND connected on 3 consecutive samples ≥ 1 s apart
 //     (the facade's `isSynced` alone can flip back while the indexer still streams)
 //   * DUST registration: estimate, wait until the unregistered UTxOs generated enough DUST for the fee, register;
 //     the facade already signs the registration, so it is NOT signed again (a second signature makes the node
 //     reject it)
-//   * `feeBlocksMargin` 5 (the margin is consumed, not reserved: 100 blocks ≈ 89× the fee on Stagenet)
+//   * `feeBlocksMargin` 5 (the margin is consumed, not reserved)
+//   * transactions cross between midnight-js and the wallet as bytes (`serialize()` → `adoptTransaction`)
 //
 // Never prints or stores a seed or key; only public addresses and balances.
 
 import {
   DustWallet,
-  HDWallet,
   InMemoryTransactionHistoryStorage,
   PublicKey,
-  Roles,
   ShieldedWallet,
   UnshieldedWallet,
   WalletEntrySchema,
   WalletFacade,
+  WalletSeeds,
   createKeystore,
   mergeWalletEntries,
   type FacadeState,
   type UnshieldedKeystore,
 } from '@midnightntwrk/wallet-sdk';
-import { DustSecretKey, LedgerParameters, ZswapSecretKeys, nativeToken, type FinalizedTransaction } from '@midnightntwrk/ledger-v9';
-import { createMidnightProvider, createWalletProvider } from '@midnight-ntwrk/midnight-js-types';
-import type { MidnightProvider, UnboundTransaction, WalletProvider } from '@midnight-ntwrk/midnight-js-types';
+import { Transaction, ZswapSecretKeys, nativeToken, type FinalizedTransaction } from '@midnightntwrk/ledger-v9';
+import { createLedger9MidnightProvider, createLedger9WalletProvider } from '@midnight-ntwrk/midnight-js-types';
+import type { MidnightProvider, WalletProvider } from '@midnight-ntwrk/midnight-js-types';
 import * as Rx from 'rxjs';
 import { normHex } from '../hex.ts';
-import { Indexer } from '../indexer.ts';
-import type { NetworkProfile } from '../network.ts';
+import { checkIdentity, connectUrls, indexerFor, type NetworkProfile } from '../network.ts';
+import { ScrubbedError } from '../redact.ts';
 import { existsSync } from 'node:fs';
 import { decodeTyped, encodeTyped } from './private-state.ts';
 import { readProtectedFile, seedFromHexFile, seedFromMnemonicFile, writeProtectedFile } from './secrets.ts';
 
 export interface SignerEndpoints {
   profile: NetworkProfile;
-  /** Proof server for contract circuits (reads ZKIR v3; official 9.0.0-rc.8). */
+  /** The official proof server: contract circuits (ZKIR v3) and the wallet's DUST spends and zswap outputs. */
   proofServer: string;
-  /** Proof server for the wallet's DUST spends (official 9.0.0-rc.6). */
-  walletProofServer: string;
 }
 
 export interface WalletSession {
@@ -55,8 +58,10 @@ export interface WalletSession {
   /** 0600 sync cache (serialized sub-wallet states) written on close, when the wallet was opened with one. */
   readonly cachePath?: string;
   readonly keystore: UnshieldedKeystore;
+  /** Shielded keys of the wallet (coin and encryption public keys for midnight-js). */
   readonly shieldedSecretKeys: ZswapSecretKeys;
-  readonly dustSecretKey: DustSecretKey;
+  /** The three wallet seeds the facade was started with; zeroed by `closeWallet`. */
+  readonly seeds: WalletSeeds;
   readonly networkId: string;
 }
 
@@ -70,7 +75,7 @@ export interface WalletSecret {
 
 export const GENESIS_DEV_SEED_HEX = '0000000000000000000000000000000000000000000000000000000000000001';
 
-export class WalletError extends Error {
+export class WalletError extends ScrubbedError {
   override name = 'WalletError';
 }
 
@@ -86,22 +91,13 @@ export function masterSeed(s: WalletSecret, profile: NetworkProfile): Uint8Array
 
 /** The hash (hex, no 0x) of the indexer's block at a height, or undefined when it has none. */
 const blockHashAt = async (profile: NetworkProfile, height: number): Promise<string | undefined> => {
-  const { block } = await new Indexer(profile.indexer, profile.indexerWs).query<{ block: { hash: string } | null }>(
+  const { block } = await indexerFor(profile).query<{ block: { hash: string } | null }>(
     'query ($h: Int!) { block(offset: { height: $h }) { hash } }',
     { h: height },
   );
   return block ? normHex(block.hash) : undefined;
 };
 
-/** The network's current DUST parameters (never the built-in initial ones). */
-const currentDustParameters = async (profile: NetworkProfile) => {
-  const { block } = await new Indexer(profile.indexer, profile.indexerWs).query<{ block: { ledgerParameters: string } }>(
-    'query { block { ledgerParameters } }',
-  );
-  return LedgerParameters.deserialize(Buffer.from(block.ledgerParameters, 'hex')).dust;
-};
-
-/** Opens the wallet of a BIP-32 master seed (the seed buffer is zeroed). */
 type WalletCache = {
   kind: 'mip0018-wallet-cache';
   networkId: string;
@@ -119,9 +115,10 @@ type WalletCache = {
 };
 
 /**
- * Opens the wallet of a BIP-32 master seed (the seed buffer is zeroed). With `cachePath` (a 0600 file in the signer's
- * private state directory) the three sub-wallets are restored from their serialized states and only sync the rest;
- * a cache of another wallet or network, or one that does not restore, is ignored (fresh sync). The cache holds
+ * Opens the wallet of a BIP-32 master seed (the seed buffer is zeroed) after the network identity check (an
+ * `IdentityError` on another chain, before any other request or connection). With `cachePath` (a 0600 file in the
+ * signer's private state directory) the three sub-wallets are restored from their serialized states and only sync the
+ * rest; a cache of another wallet or network, or one that does not restore, is ignored (fresh sync). The cache holds
  * wallet secrets: it is written with mode 0600 and never printed.
  */
 export const openWallet = async (
@@ -129,16 +126,23 @@ export const openWallet = async (
   seed: Uint8Array,
   o: { cachePath?: string; log?: (m: string) => void } = {},
 ): Promise<WalletSession> => {
-  const hd = HDWallet.fromSeed(seed);
-  seed.fill(0);
-  if (hd.type !== 'seedOk') throw new WalletError('the master seed cannot be used for HD derivation');
-  const derived = hd.hdWallet.selectAccount(0).selectRoles([Roles.Zswap, Roles.NightExternal, Roles.Dust]).deriveKeysAt(0);
-  hd.hdWallet.clear();
-  if (derived.type !== 'keysDerived') throw new WalletError('key derivation failed');
-  const shieldedSecretKeys = ZswapSecretKeys.fromSeed(derived.keys[Roles.Zswap]);
-  const dustSecretKey = DustSecretKey.fromSeed(derived.keys[Roles.Dust]);
-  const keystore = createKeystore({ kind: 'schnorr', secret: derived.keys[Roles.NightExternal] }, ep.profile.networkId);
-  for (const k of Object.values(derived.keys)) (k as Uint8Array).fill(0);
+  try {
+    await checkIdentity(ep.profile);
+  } catch (e) {
+    seed.fill(0);
+    throw e;
+  }
+  o.log?.('opening the wallet and syncing (minutes on a public network)');
+  let seeds: WalletSeeds;
+  try {
+    seeds = WalletSeeds.fromMasterSeed(seed);
+  } catch {
+    throw new WalletError('the master seed cannot be used for HD derivation');
+  } finally {
+    seed.fill(0);
+  }
+  const shieldedSecretKeys = ZswapSecretKeys.fromSeed(seeds.shielded);
+  const keystore = createKeystore({ kind: 'schnorr', secret: seeds.unshielded }, ep.profile.networkId);
 
   let cache: WalletCache | undefined;
   if (o.cachePath && existsSync(o.cachePath)) {
@@ -162,22 +166,25 @@ export const openWallet = async (
       o.log?.(`wallet cache unreadable (${(e as Error).message}): ignored`);
     }
   }
-  const dustParameters = await currentDustParameters(ep.profile);
+  // One proof server for both ledger versions' wallet proofs: a chain on ledger 9 never asks the v8 entry.
+  const prover = { kind: 'server' as const, url: new URL(ep.proofServer) };
+  // The SDK connects with the token-bearing URLs (preprod, mainnet); they are never logged or recorded.
+  const urls = connectUrls(ep.profile);
   const configuration = {
     networkId: ep.profile.networkId,
     costParameters: { feeBlocksMargin: 5 },
-    relayURL: new URL(ep.profile.rpcWs),
-    provingServerUrl: new URL(ep.walletProofServer),
-    indexerClientConnection: { indexerHttpUrl: ep.profile.indexer, indexerWsUrl: ep.profile.indexerWs },
+    relayURL: new URL(urls.rpcWs),
+    provers: { v8: prover, v9: prover },
+    indexerClientConnection: { indexerHttpUrl: urls.indexer, indexerWsUrl: urls.indexerWs },
     txHistoryStorage: new InMemoryTransactionHistoryStorage(WalletEntrySchema, mergeWalletEntries),
   };
   const init = (c?: WalletCache) =>
     WalletFacade.init({
       configuration,
-      shielded: (x) => (c ? ShieldedWallet(x).restore(c.shielded as never) : ShieldedWallet(x).startWithSecretKeys(shieldedSecretKeys)),
+      shielded: (x) => (c ? ShieldedWallet(x).restore(c.shielded as never) : ShieldedWallet(x).startWithSeed(seeds.shielded)),
       unshielded: (x) =>
         c ? UnshieldedWallet(x).restore(c.unshielded as never) : UnshieldedWallet(x).startWithPublicKey(PublicKey.fromKeyStore(keystore)),
-      dust: (x) => (c ? DustWallet(x).restore(c.dust as never) : DustWallet(x).startWithSecretKey(dustSecretKey, dustParameters)),
+      dust: (x) => (c ? DustWallet(x).restore(c.dust as never) : DustWallet(x).startWithSeed(seeds.dust)),
     });
   let facade: WalletFacade;
   try {
@@ -188,13 +195,13 @@ export const openWallet = async (
     o.log?.(`wallet cache did not restore (${(e as Error).message}): fresh sync`);
     facade = await init(undefined);
   }
-  await facade.start(shieldedSecretKeys, dustSecretKey);
+  await facade.start(seeds);
   return {
     facade,
     profile: ep.profile,
     keystore,
     shieldedSecretKeys,
-    dustSecretKey,
+    seeds,
     networkId: ep.profile.networkId,
     ...(o.cachePath ? { cachePath: o.cachePath } : {}),
   };
@@ -204,7 +211,7 @@ export const closeWallet = async (session: WalletSession): Promise<void> => {
   if (session.cachePath) {
     try {
       const f = session.facade as unknown as Record<'shielded' | 'unshielded' | 'dust', { serializeState(): Promise<unknown> }>;
-      const tip = await new Indexer(session.profile.indexer, session.profile.indexerWs).latestBlock();
+      const tip = await indexerFor(session.profile).latestBlock();
       const c: WalletCache = {
         kind: 'mip0018-wallet-cache',
         networkId: session.networkId,
@@ -221,11 +228,11 @@ export const closeWallet = async (session: WalletSession): Promise<void> => {
   }
   await session.facade.stop();
   session.shieldedSecretKeys.clear();
-  session.dustSecretKey.clear();
+  for (const s of [session.seeds.shielded, session.seeds.unshielded, session.seeds.dust]) s.fill(0);
 };
 
 const strictlyComplete = (s: FacadeState): boolean => {
-  const parts = [s.shielded.state.progress, s.dust.state.progress, s.unshielded.progress] as {
+  const parts = [s.shielded.progress, s.dust.progress, s.unshielded.progress] as {
     isConnected: boolean;
     isStrictlyComplete(): boolean;
   }[];
@@ -374,8 +381,10 @@ export const registerDust = async (
 };
 
 /**
- * midnight-js wallet + midnight providers backed by the facade (current era, ledger v9). `onBeforeSubmit` runs with
- * the finalized transaction BEFORE the node sees it (the submission journal hooks in here).
+ * midnight-js wallet + midnight providers backed by the facade (ledger 9). Transactions cross as bytes: midnight-js
+ * hands over a transaction handle, the wallet adopts its serialization at the same stage. `onBeforeSubmit` runs with
+ * the finalized transaction (decoded with this package's ledger) BEFORE the node sees it (the submission journal
+ * hooks in here).
  */
 export const midnightJsProviders = (
   session: WalletSession,
@@ -384,23 +393,21 @@ export const midnightJsProviders = (
     onSubmitted?: (tx: FinalizedTransaction, txId: string) => Promise<void>;
   } = {},
 ): { walletProvider: WalletProvider; midnightProvider: MidnightProvider } => {
-  const walletProvider = createWalletProvider({
+  const walletProvider = createLedger9WalletProvider({
     getCoinPublicKey: () => session.shieldedSecretKeys.coinPublicKey,
     getEncryptionPublicKey: () => session.shieldedSecretKeys.encryptionPublicKey,
-    balanceTx: async (tx: UnboundTransaction, ttl?: Date): Promise<FinalizedTransaction> => {
-      const recipe = await session.facade.balanceUnboundTransaction(
-        tx as never,
-        { shieldedSecretKeys: session.shieldedSecretKeys, dustSecretKey: session.dustSecretKey },
-        { ttl: ttl ?? new Date(Date.now() + 30 * 60_000) },
-      );
+    balanceTx: async (tx, ttl) => {
+      const unbound = session.facade.adoptTransaction(tx.serialize(), 'Unbound');
+      const recipe = await session.facade.balanceUnboundTransaction(unbound as never, { ttl: ttl ?? new Date(Date.now() + 30 * 60_000) });
       const signed = await session.facade.signRecipe(recipe, (payload) => session.keystore.signDataAsync(payload));
-      return (await session.facade.finalizeRecipe(signed)) as unknown as FinalizedTransaction;
+      return (await session.facade.finalizeRecipe(signed)).serialize();
     },
   });
-  const midnightProvider = createMidnightProvider(async (tx: FinalizedTransaction) => {
-    await hooks.onBeforeSubmit?.(tx);
-    const txId = await session.facade.submitTransaction(tx as never);
-    await hooks.onSubmitted?.(tx, String(txId));
+  const midnightProvider = createLedger9MidnightProvider(async (tx) => {
+    const finalized = tx.deserialize({ v9: Transaction }) as unknown as FinalizedTransaction;
+    await hooks.onBeforeSubmit?.(finalized);
+    const txId = await session.facade.submitTransaction(session.facade.adoptTransaction(tx.serialize(), 'Finalized') as never);
+    await hooks.onSubmitted?.(finalized, String(txId));
     return txId;
   });
   return { walletProvider, midnightProvider };

@@ -2,7 +2,7 @@
 
 An OpenZeppelin `NativeShieldedTokenFamily` (many native shielded token types; each mint names its
 32-byte `domain`) owned with `Ownable`, from
-[OpenZeppelin Compact Contracts 0.4.0-alpha.5](https://github.com/OpenZeppelin/compact-contracts/tree/v0.4.0-alpha.5),
+[OpenZeppelin Compact Contracts 0.5.0-alpha.2](https://github.com/OpenZeppelin/compact-contracts/tree/v0.5.0-alpha.2),
 gains MIP-0018 metadata. Each `domain` is its own token identity with its own color, so each gets its
 own event(s): here three types, `gold`, `silver` and `bronze`.
 
@@ -87,7 +87,7 @@ group (`metadata.json` → `expected`).
 docker/run.sh exec 'npx vitest run examples/openzeppelin/token-family'
 ```
 
-[`test/token-family.test.ts`](test/token-family.test.ts), in compact-runtime 0.20.0 (no chain), with the
+[`test/token-family.test.ts`](test/token-family.test.ts), in compact-runtime 0.21.0 (no chain), with the
 reference consumer (`@mip0018/consumer`):
 
 | Test | Shows |

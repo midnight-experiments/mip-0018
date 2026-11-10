@@ -3,12 +3,12 @@
 // Measures every MIP-0018 emitting circuit of the repository and regenerates docs/costs.md
 // (between its `costs:begin` / `costs:end` markers) and docs/costs.json:
 //
-//   * k and rows: `zkir-v3 mock-compile` (Compact 0.35.0, --feature-zkir-v3, full keys);
+//   * k and rows: `zkir-v3 mock-compile` (Compact 0.36.0, full keys);
 //   * prover / verifier key sizes and the verifier key's SHA-256 (keys are deterministic, so a
 //     rebuild must reproduce them);
-//   * proving time on this host: the circuit is executed in compact-runtime 0.20.0 and its proof
+//   * proving time on this host: the circuit is executed in compact-runtime 0.21.0 and its proof
 //     preimage is proved by the official proof server (`MIP0018_PROOF_SERVER_URL`, e.g. the local
-//     stack's 9.0.0-rc.8) PROVE_RUNS times; the median is reported. Skipped when the variable is unset.
+//     stack's 9.0.1) PROVE_RUNS times; the median is reported. Skipped when the variable is unset.
 //
 //   docker/run.sh exec 'node packages/compact/scripts/costs.ts'                       # sizes only
 //   MIP0018_DOCKER_NETWORK=$MIP0018_STACK_NETWORK MIP0018_DOCKER_ENV="-e MIP0018_PROOF_SERVER_URL=http://proof-server:6300" \
@@ -233,7 +233,7 @@ const measureAll = async (): Promise<{ meta: Meta; rows: Row[] }> => {
     measuredAt: new Date().toISOString().slice(0, 10),
     compiler: `${info['compiler-version']} (${String(info['compiler-commit'] ?? '').slice(0, 9)})`,
     language: String(info['language-version']),
-    zkir: 'v3 (--feature-zkir-v3)',
+    zkir: `v3 (${spawnSync('compact', ['compile', '--ledger-version'], { encoding: 'utf8' }).stdout.trim()})`,
     proofServer: proofVersion ? `midnightntwrk/proof-server ${proofVersion} (local, ${PROVE_RUNS} runs, median)` : 'not measured',
     host: `${process.platform}/${process.arch}, ${os.cpus().length} CPUs (${os.cpus()[0]?.model ?? '?'})`,
     compileSeconds,

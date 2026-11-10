@@ -2,7 +2,7 @@
 
 One contract represents one asset, "Acme Dollar", three ways at once: shielded coins
 (OpenZeppelin `NativeShieldedToken`), unshielded UTXOs (the standard library's `mintUnshieldedToken`;
-OpenZeppelin 0.4.0-alpha.5 has no unshielded module) and balances in contract state (OpenZeppelin
+OpenZeppelin 0.5.0-alpha.2 has no unshielded module) and balances in contract state (OpenZeppelin
 `FungibleToken`), all under **one `domainSep`**, owned with `Ownable`. A user can hold all three.
 
 MIP-0018 treats each representation as its **own token identity** — `(network, contractAddress,
@@ -69,8 +69,8 @@ together because they share the contract and the `symbol` ("Symbol grouping").
 ```
 
 - **One event per identity** — a payload describes exactly one `(domainSep, kind)`, so publishing the
-  asset takes three events; one circuit emits all three in one transaction (k = 16). If that is too
-  big for you, split it into `publishMetadata(kind)` (k = 15, three transactions).
+  asset takes three events; one circuit emits all three in one transaction (k = 17). If that is too
+  big for you, split it into `publishMetadata(kind)` (k = 16, three transactions).
 - **One `domainSep`, one `symbol`** — that is what makes consumers group the three identities. They
   stay separate identities: each has its own fields, and an update to one changes no other.
 - **`setMetadata(kind, …)` and `withdrawMetadata(kind)`** take the kind, so one representation can be
@@ -95,7 +95,7 @@ A consumer then shows three identities in one `ACD` group (`metadata.json` → `
 docker/run.sh exec 'npx vitest run examples/openzeppelin/multi-kind'
 ```
 
-[`test/multi-kind.test.ts`](test/multi-kind.test.ts), in compact-runtime 0.20.0 (no chain), with the
+[`test/multi-kind.test.ts`](test/multi-kind.test.ts), in compact-runtime 0.21.0 (no chain), with the
 reference consumer (`@mip0018/consumer`, MIP vectors S6 and S9 on a real contract):
 
 | Test | Shows |

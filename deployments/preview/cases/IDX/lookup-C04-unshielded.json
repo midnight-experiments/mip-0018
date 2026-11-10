@@ -1,0 +1,116 @@
+{
+  "found": true,
+  "color": "056c310ebcb469c9c5b8974842104ada748a84c2c42824be0f1ed165e3d81b2a",
+  "scanned": {
+    "network": "preview",
+    "genesisHash": "0x3c096de209e06a1a8c52be7bda109ee8c891a42288c0a9db5495f9616dd13796",
+    "from": 41531,
+    "to": 42095
+  },
+  "entry": {
+    "color": "056c310ebcb469c9c5b8974842104ada748a84c2c42824be0f1ed165e3d81b2a",
+    "contractAddress": "63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93",
+    "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+    "shielded": {
+      "firstMint": {
+        "height": 41635,
+        "blockHash": "007808f09cf6f1ec677b589ee9db0c4e8b245d0c8d69e3ea4e8c0391a3aaeb6b",
+        "txHash": "5d9172b05979d6ac8bbf1fc34d3bff197c98fda007389bf3a5407b245ea20205"
+      },
+      "lastMint": {
+        "height": 41635,
+        "blockHash": "007808f09cf6f1ec677b589ee9db0c4e8b245d0c8d69e3ea4e8c0391a3aaeb6b",
+        "txHash": "5d9172b05979d6ac8bbf1fc34d3bff197c98fda007389bf3a5407b245ea20205"
+      },
+      "mints": 1,
+      "amount": "100000"
+    },
+    "unshielded": {
+      "firstMint": {
+        "height": 41641,
+        "blockHash": "38572a4f1abb799a82eae672a798ade0be0b048e9f6c7c159d3d39d9f7d8550c",
+        "txHash": "13501ee6ec89e2b79f6f4c0c91bb16812c3bcdb998e013b57ab0db363413e34c"
+      },
+      "lastMint": {
+        "height": 41641,
+        "blockHash": "38572a4f1abb799a82eae672a798ade0be0b048e9f6c7c159d3d39d9f7d8550c",
+        "txHash": "13501ee6ec89e2b79f6f4c0c91bb16812c3bcdb998e013b57ab0db363413e34c"
+      },
+      "mints": 1,
+      "amount": "100000"
+    }
+  },
+  "identities": [
+    {
+      "contractAddress": "63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93",
+      "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+      "kind": 2,
+      "mintedInRange": true
+    }
+  ],
+  "metadataSource": "live indexer at block 42112",
+  "resolved": [
+    {
+      "contractAddress": "63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93",
+      "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+      "kind": 2,
+      "mintedInRange": true,
+      "metadata": {
+        "key": "preview|63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93|6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000|2",
+        "network": "preview",
+        "contractAddress": "63d973a7df1b383cca57d8fab9c2a2ee3fa08bc92baada5dc3f12863ad1bfe93",
+        "domainSep": "6d69702d303031383a6578616d706c653a6d756c74692d6b696e640000000000",
+        "kind": 2,
+        "colored": true,
+        "color": "056c310ebcb469c9c5b8974842104ada748a84c2c42824be0f1ed165e3d81b2a",
+        "fields": [
+          {
+            "key": "6e616d65",
+            "valType": 1,
+            "value": "41636d6520446f6c6c6172",
+            "setAt": {
+              "block": "41655",
+              "tx": 3180,
+              "event": 13264,
+              "record": 0
+            },
+            "keyHex": "6e616d65",
+            "usable": true
+          },
+          {
+            "key": "73796d626f6c",
+            "valType": 1,
+            "value": "414344",
+            "setAt": {
+              "block": "41655",
+              "tx": 3180,
+              "event": 13264,
+              "record": 1
+            },
+            "keyHex": "73796d626f6c",
+            "usable": true
+          },
+          {
+            "key": "646563696d616c73",
+            "valType": 2,
+            "value": "02",
+            "setAt": {
+              "block": "41655",
+              "tx": 3180,
+              "event": 13264,
+              "record": 2
+            },
+            "integer": "2",
+            "keyHex": "646563696d616c73",
+            "usable": true
+          }
+        ],
+        "common": {
+          "name": "Acme Dollar",
+          "symbol": "ACD",
+          "decimals": "2"
+        }
+      }
+    }
+  ]
+}

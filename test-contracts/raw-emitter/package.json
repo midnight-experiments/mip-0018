@@ -10,8 +10,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@midnight-ntwrk/compact-runtime": "0.20.0",
-    "@openzeppelin/compact-contracts": "0.4.0-alpha.5"
+    "@midnight-ntwrk/compact-runtime": "0.21.0",
+    "@openzeppelin/compact-contracts": "0.5.0-alpha.2"
   },
   "devDependencies": {
     "@mip0018/codec": "0.1.0",

@@ -39,13 +39,15 @@ jobs:
           cache-from: type=gha,scope=toolchain
           cache-to: type=gha,scope=toolchain,mode=max
       - name: Compact version
-        run: docker/run.sh exec 'compact compile --version && compact compile --language-version && compact compile --feature-zkir-v3 --ledger-version'
+        run: docker/run.sh exec 'compact compile --version && compact compile --language-version && compact compile --ledger-version'
       - name: npm ci
         run: docker/run.sh ci
       - name: Lint
         run: docker/run.sh lint
       - name: Typecheck
         run: docker/run.sh typecheck
+      - name: Compile the toolchain spike (Compact 0.36.0; the signer unit tests load its output)
+        run: docker/run.sh compile:spike -- --skip-zk
       - name: Unit tests
         run: docker/run.sh test
       - name: Official binaries only
@@ -56,8 +58,6 @@ jobs:
         run: docker/run.sh check:conformance-matrix
       - name: Relative links and anchors in the Markdown files resolve
         run: docker/run.sh check:md-links
-      - name: Compile the toolchain spike (Compact 0.35.0, ZKIR v3)
-        run: docker/run.sh compile:spike -- --skip-zk
 
   mip-pin:
     name: pinned MIP text hash
@@ -74,7 +74,7 @@ jobs:
           tags: ${{ env.MIP0018_IMAGE }}
           load: true
           cache-from: type=gha,scope=toolchain
-      - name: Check the MIP-0018 text at the pinned commit (toolchain.json), that README, vectors, schemas and Stagenet cases cite it, and that no tracked file cites another MIP commit
+      - name: Check the MIP-0018 text at the pinned commit (toolchain.json), that README, vectors, schemas and the committed cases cite it, and that no tracked file cites another MIP commit
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: docker/run.sh check:mip-pin

@@ -29,7 +29,7 @@ try {
     session,
     recordPath,
     secondCall: true,
-    tryMidnightJsRemove: true,
+    removeWithMidnightJs: true,
     toolchain: toolchain(CONTRACT),
   });
   process.stdout.write(`${JSON.stringify({ result: record.result, record: recordPath, contract: record.contract })}\n`);

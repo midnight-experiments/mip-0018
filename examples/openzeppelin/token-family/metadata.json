@@ -8,7 +8,7 @@
   "contract": {
     "source": "contracts/MyTokenFamily.compact",
     "withoutMetadata": "contracts/without-metadata/MyTokenFamily.compact",
-    "openzeppelin": "@openzeppelin/compact-contracts@0.4.0-alpha.5 (access/Ownable, token/NativeShieldedTokenFamily)",
+    "openzeppelin": "@openzeppelin/compact-contracts@0.5.0-alpha.2 (access/Ownable, token/NativeShieldedTokenFamily)",
     "constructorArgs": {
       "name_": "Acme Medals",
       "symbol_": "MEDAL",

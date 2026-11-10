@@ -32,7 +32,7 @@ import {
   wouldChange,
   type RunRecord,
 } from '../src/signer/index.ts';
-import { undeployedProfile, stagenetProfile } from '../src/network.ts';
+import { undeployedProfile, resolveProfile } from '../src/network.ts';
 import type { IndexedMiscEvent } from '../src/indexer.ts';
 
 const temps: string[] = [];
@@ -62,14 +62,18 @@ const ev = (id: number, height: number, p: string): IndexedMiscEvent => ({
 
 describe('argument conversion', () => {
   const spikeManaged = join(import.meta.dirname, '..', '..', '..', 'test-contracts', 'toolchain-spike', 'managed', 'SpikeOzToken');
-  const haveSpike = (() => {
-    try {
-      statSync(join(spikeManaged, 'compiler', 'contract-info.json'));
-      return true;
-    } catch {
-      return false;
-    }
-  })();
+  // The two tests below need the compiled toolchain spike (`npm run compile:spike`). CI compiles it before the unit
+  // tests and sets CI, so there they always run (a missing spike fails them); elsewhere they run once it is compiled.
+  const haveSpike =
+    (process.env.CI ?? '') !== '' ||
+    (() => {
+      try {
+        statSync(join(spikeManaged, 'compiler', 'contract-info.json'));
+        return true;
+      } catch {
+        return false;
+      }
+    })();
 
   it('converts typed values and refuses wrong sizes/ranges', () => {
     expect(fromJsonTyped({ $utf8: 'ACME' }, { 'type-name': 'Bytes', length: 4 })).toEqual(new TextEncoder().encode('ACME'));
@@ -182,10 +186,15 @@ describe('private state and secrets', () => {
     await a.setFor('aa', 'Owner', { secretKey: Uint8Array.from([1, 2, 3]), n: 7n, m: new Map([['k', 1n]]) });
     expect((statSync(p).mode & 0o777).toString(8)).toBe('600');
     const b = filePrivateStateProvider(p);
-    b.setContractAddress('aa');
-    expect(await b.get('Owner')).toEqual({ secretKey: Uint8Array.from([1, 2, 3]), n: 7n, m: new Map([['k', 1n]]) });
+    expect(await b.forContract('aa').get('Owner')).toEqual({ secretKey: Uint8Array.from([1, 2, 3]), n: 7n, m: new Map([['k', 1n]]) });
+    // midnight-js compares contract addresses in lower case.
+    expect(await b.forContract('AA').get('Owner')).toEqual({ secretKey: Uint8Array.from([1, 2, 3]), n: 7n, m: new Map([['k', 1n]]) });
+    expect(await b.forContract('bb').get('Owner')).toBeNull();
     expect(await b.getSigningKey('aa')).toBe('deadbeef');
+    expect(await b.getSigningKey('AA')).toBe('deadbeef');
     expect(b.hasSigningKey('aa')).toBe(true);
+    await b.forContract('aa').remove('Owner');
+    expect(await filePrivateStateProvider(p).forContract('aa').get('Owner')).toBeNull();
     expect(decodeTyped(encodeTyped({ x: [1n, Uint8Array.from([255])] }))).toEqual({ x: [1n, Uint8Array.from([255])] });
   });
 
@@ -213,7 +222,7 @@ describe('private state and secrets', () => {
   it('hex seeds and the dev genesis wallet are refused outside undeployed', () => {
     const local = undeployedProfile({ indexer: 'http://indexer:8088/api/v4/graphql', rpc: 'http://node:9944' });
     expect(masterSeed({ devGenesis: true }, local)[31]).toBe(1);
-    expect(() => masterSeed({ devGenesis: true }, stagenetProfile())).toThrow(/undeployed/);
+    expect(() => masterSeed({ devGenesis: true }, resolveProfile('preview', {}, {}))).toThrow(/undeployed/);
     expect(() => masterSeed({}, local)).toThrow(/exactly one/);
   });
 });

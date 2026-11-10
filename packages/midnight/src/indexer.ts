@@ -1,17 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Midnight indexer client (GraphQL v4, schema of indexer 4.4.0-rc.1 — the version Stagenet serves).
+// Midnight indexer client (GraphQL v4, schema of indexer 4.4.101 — the version preview, preprod and mainnet serve;
+// Blockfrost serves the same API for preprod and mainnet).
 //
 // The contract-event surfaces (`contractEvents`, `MiscContractEvent`) are marked `@beta` in the schema; every query
 // that touches them is in this module, so a schema change breaks here, loudly (GraphQL errors are thrown, never
 // swallowed). Hex values are lowercase without `0x`. The indexer ingests FINALIZED blocks only, so everything read
 // here is final; `latestBlock()` is the latest finalized block it has indexed.
+//
+// Subscriptions always pass an explicit offset: on 4.4.101 a `contractActions` subscription opened without one
+// delivers only actions that happen after it opened, never the contract's history.
 
 import { HttpClient } from './http.ts';
 import { normAddress, normHex, normTxHash } from './hex.ts';
+import { ScrubbedError } from './redact.ts';
 import { subscribe, type SubscribeOptions } from './ws.ts';
 
-export class IndexerError extends Error {
+/** An indexer failure (GraphQL errors included); scrubbed when built, so an echoed token or URL is not passed on. */
+export class IndexerError extends ScrubbedError {
   override name = 'IndexerError';
 }
 

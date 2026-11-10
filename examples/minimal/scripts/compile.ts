@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Compiles the minimal example contracts with Compact 0.35.0 and --feature-zkir-v3.
+// Compiles the minimal example contracts with Compact 0.36.0.
 //
 //   node scripts/compile.ts                       # all, TypeScript only (--skip-zk)
 //   node scripts/compile.ts --keys                # all, with prover/verifier keys

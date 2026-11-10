@@ -7,8 +7,9 @@
 Purpose: put events on a test network that a conforming MIP-0018 consumer must **reject** (malformed
 payloads, MIP tests R1–R6), **ignore** (`mip-0018:token-metadata[v2]` and foreign names) or accept at
 **capacity** (A2), next to valid ones, and two events in **one transaction** (MIP test S7). Used by the
-Stagenet cases [C07](../../deployments/stagenet/cases/C07/README.md) (22 vectors) and
-[C08](../../deployments/stagenet/cases/C08/README.md) (S7b).
+cases [C07](../../deployments/preview/cases/C07/README.md) (22 vectors), [C08](../../deployments/preview/cases/C08/README.md)
+(S7b) and [C12](../../deployments/preview/cases/C12/README.md) (A6, S10a, S11a/b, S12b, and S3a's kind-1 events: a Null
+record that deletes one key) on preview, written by [`deployments/tools/prepare-cases.ts`](../../deployments/tools/prepare-cases.ts).
 
 | Circuit | Who | Emits |
 |---|---|---|
@@ -16,7 +17,7 @@ Stagenet cases [C07](../../deployments/stagenet/cases/C07/README.md) (22 vectors
 | `emitTwo(name1, payload1, name2, payload2)` | owner | two `Misc` events, in this order, in one call |
 | `accountId(secretKey)` (pure) | anyone | the OpenZeppelin account id `persistentHash(secretKey)` |
 
-Access control: OpenZeppelin Compact Contracts `0.4.0-alpha.5` `Ownable`. The
+Access control: OpenZeppelin Compact Contracts `0.5.0-alpha.2` `Ownable`. The
 constructor takes `initialOwner: Either<Bytes<32>, ContractAddress>` = `left(accountId(secretKey))`;
 the caller proves ownership through the `wit_OwnableSK` witness (private state `{ ownableSecretKey }`,
 see `src/contract.ts`).
@@ -27,7 +28,7 @@ docker/run.sh exec 'npm run -w test-contracts/raw-emitter compile -- --keys'  # 
 docker/run.sh exec 'npx vitest run test-contracts/raw-emitter'
 ```
 
-Tests (`test/raw-emitter.test.ts`, compact-runtime 0.20.0): the owner emits A1, A2a/b, R1–R6 and
+Tests (`test/raw-emitter.test.ts`, compact-runtime 0.21.0): the owner emits A1, A2a/b, R1–R6 and
 I1/I2 vectors byte-for-byte and `@mip0018/codec` classifies each as the vector says; `emitTwo` emits a
 malformed then a valid event (S7); a non-owner call fails with `Ownable: caller is not the owner` and
 emits nothing. Note what the wire does: trailing zero bytes of `name ‖ payload` are trimmed, content

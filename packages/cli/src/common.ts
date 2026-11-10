@@ -1,11 +1,30 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // Shared CLI plumbing: option parsing, network profiles, output (fixed-width text or --json), exit codes, logging.
+// Log lines and error messages go through `scrubSecrets` (URLs without their query string, no registered token);
+// `guardOutput` (@mip0018/midnight) filters everything the process writes through `removeSecrets` (no registered
+// token, nothing else changed — metadata values are printed exactly). A command that acts on a recorded file (a run
+// record, a scanner state, a case folder) binds its profile to the identity the file and its case folder's network
+// file record (`boundProfile`: every identity source of the paths given, collected by `identitySources`) before its
+// first request.
 
 import { readFileSync, realpathSync } from 'node:fs';
 import { isAbsolute, relative, resolve } from 'node:path';
 import { parseArgs, type ParseArgsConfig } from 'node:util';
-import { resolveProfile, toJson, type EndpointOverrides, type NetworkProfile } from '@mip0018/midnight';
+import {
+  PROFILE_IDS,
+  ProfileError,
+  agreeFiles,
+  profileForFiles,
+  resolveProfile,
+  scrubSecrets,
+  toJson,
+  type EndpointOverrides,
+  type NetworkProfile,
+  type RecordedNetwork,
+} from '@mip0018/midnight';
+
+export { guardOutput } from '@mip0018/midnight';
 
 export class UsageError extends Error {
   override name = 'UsageError';
@@ -32,8 +51,25 @@ export const NETWORK_OPTIONS: Options = {
   rpc: { type: 'string' },
   'rpc-ws': { type: 'string' },
   genesis: { type: 'string' },
+  'chain-instance': { type: 'string' },
+  'blockfrost-token-file': { type: 'string' },
   'min-interval-ms': { type: 'string' },
 };
+
+/** The network options as usage text (every command that takes --network shows it). */
+export const NETWORK_USAGE = `
+network (every command that reads the chain):
+  --network <${PROFILE_IDS.join('|')}>
+      preview     public endpoints (Midnight-hosted), no token
+      preprod     Blockfrost endpoints: the project token of a Midnight Preprod project from MIP0018_BLOCKFROST_PREPROD
+                  or --blockfrost-token-file <0600 file>; without one the command stops before any request
+      mainnet     Blockfrost endpoints: the same with MIP0018_BLOCKFROST_MAINNET
+      undeployed  a local chain: --indexer <url> --rpc <url> (or MIP0018_INDEXER_URL / MIP0018_NODE_URL), optional
+                  --genesis <hash>; public endpoints and public genesis hashes are refused
+  --indexer / --indexer-ws / --rpc / --rpc-ws <url>   other endpoints (no query string; the genesis stays pinned)
+  --chain-instance <hash>   also require this block-1 hash (refuses a network re-created from the same genesis)
+  --min-interval-ms <n>     politeness interval between requests (public networks: 250)
+`;
 
 export const OUTPUT_OPTIONS: Options = {
   json: { type: 'boolean', default: false },
@@ -92,6 +128,8 @@ export function profileFrom(v: Values): NetworkProfile {
   set('rpc', 'rpc');
   set('rpcWs', 'rpc-ws');
   set('genesisHash', 'genesis');
+  set('chainInstance', 'chain-instance');
+  set('tokenFile', 'blockfrost-token-file');
   const mi = int(v, 'min-interval-ms');
   if (mi !== undefined) o.minIntervalMs = mi;
   try {
@@ -115,7 +153,8 @@ export function jsonArg(v: Values, name: string): unknown {
 
 export function logger(v: Values): (msg: string, extra?: unknown) => void {
   if (v.quiet) return () => {};
-  return (msg, extra) => process.stderr.write(`${new Date().toISOString()} ${msg}${extra === undefined ? '' : ` ${toJson(extra, 0)}`}\n`);
+  return (msg, extra) =>
+    process.stderr.write(scrubSecrets(`${new Date().toISOString()} ${msg}${extra === undefined ? '' : ` ${toJson(extra, 0)}`}\n`));
 }
 
 export function emitJson(value: unknown): void {
@@ -161,7 +200,7 @@ export const KIND_NAME: Record<number, string> = { 1: 'shielded UTXO', 2: 'unshi
 /** The public facts of a run record the wallet-free commands use (read as plain JSON: no signer code). */
 export interface RecordInfo {
   path: string;
-  network: { id: string; genesisHash: string };
+  network: RecordedNetwork & { genesisHash: string };
   contract: { name: string; address?: string };
   steps: {
     id: string;
@@ -185,11 +224,39 @@ export function readRecord(path: string): RecordInfo {
   return { ...r, path };
 }
 
-/** The contract address of a record (refuses a record of another network). */
-export function recordContract(r: RecordInfo, profile: NetworkProfile): string {
-  if (r.network.id !== profile.id) throw new UsageError(`${r.path} was made on ${r.network.id}, not ${profile.id}`);
+/**
+ * The profile bound to every identity source of the files at `paths` (`profileForFiles`: each file's own network and
+ * the network file of the case folder it lies in): another network, another genesis or another chain instance is
+ * refused (exit 2) before any request; what the profile lacks is taken from them, so its identity check verifies the
+ * recorded chain.
+ */
+export function boundProfile(profile: NetworkProfile, paths: readonly string[]): NetworkProfile {
+  try {
+    return profileForFiles(profile, paths);
+  } catch (e) {
+    if (e instanceof ProfileError) throw new UsageError(e.message);
+    throw e;
+  }
+}
+
+/** Refuses (exit 2) files whose identity sources record different chains (`agreeFiles`), for a read without a network. */
+export function agreeingFiles(paths: readonly string[]): void {
+  try {
+    agreeFiles(paths);
+  } catch (e) {
+    if (e instanceof ProfileError) throw new UsageError(e.message);
+    throw e;
+  }
+}
+
+/**
+ * The contract of a run record and the profile to read it with: bound to the record's network and its case folder's
+ * network file (`boundProfile`).
+ */
+export function recordTarget(r: RecordInfo, profile: NetworkProfile): { profile: NetworkProfile; address: string } {
+  const bound = boundProfile(profile, [r.path]);
   if (!r.contract.address) throw new UsageError(`${r.path} has no contract address (not deployed)`);
-  return r.contract.address;
+  return { profile: bound, address: r.contract.address };
 }
 
 /** The step of a record whose transaction to check: `--step`, or the only call step with logged events. */

@@ -8,7 +8,7 @@
 //
 // Prefer the default module `Mip0018` (typed records serialized by Compact). This module
 // produces exactly the same bytes and exists because it does not use `serialize` on
-// non-event types: Compact 0.35.0 accepts that, but its standard-library documentation still
+// non-event types: Compact 0.36.0 accepts that, but its standard-library documentation still
 // says `serialize` "can only be instantiated for an event type". If a later compiler enforces
 // the documentation, this module keeps working. It is self-contained (it does not import
 // `Mip0018`) for the same reason.
@@ -30,7 +30,7 @@
 //
 // Same caveats as `Mip0018`: UTF-8/JSON/URI validity of values is not checked in circuit;
 // access control is the contract's choice; never emit from normal token operations.
-// Built and tested with Compact 0.35.0 (language 0.27.0) and --feature-zkir-v3.
+// Built and tested with Compact 0.36.0 (language 0.28.0).
 
 pragma language_version >= 0.26.0;
 

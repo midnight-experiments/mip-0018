@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // Compiles the OpenZeppelin examples (both versions of each contract: with and without metadata)
-// with Compact 0.35.0 and --feature-zkir-v3 against @openzeppelin/compact-contracts 0.4.0-alpha.5.
+// with Compact 0.36.0 against @openzeppelin/compact-contracts 0.5.0-alpha.2.
 //
 //   node scripts/compile.ts                          # all, TypeScript/ZKIR only (--skip-zk)
 //   node scripts/compile.ts --keys                   # all, with prover/verifier keys

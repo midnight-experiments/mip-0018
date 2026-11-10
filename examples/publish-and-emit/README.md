@@ -3,10 +3,12 @@
 This walkthrough takes a token that already has the MIP-0018 lines in its contract (the
 [OpenZeppelin fungible token](../openzeppelin/fungible-token/README.md) and the
 [minimal create-and-destroy contract](../minimal/README.md)), deploys it, publishes its metadata right after the
-deployment, renames and withdraws it, and shows create-and-destroy — first on a local chain, then on Stagenet.
+deployment, renames and withdraws it, and shows create-and-destroy on a local chain; §8 runs the same commands on a
+public network, as the preview cases do.
 Every command below was run by the local end-to-end test (`packages/cli/test/e2e/examples-e2e.sh`, parts A and B;
 it keeps its records under `/e2e/dap/` instead of `/walk/` and adds `--expect` and `--to-block` to some `list` calls);
-the outputs are excerpts of that run (2026-10-07), with `/e2e/dap/` shown as `/walk/`.
+the outputs are excerpts of that run (2026-11-09 23:53 – 2026-11-10 00:04 UTC, on a fresh local stack), with
+`/e2e/dap/` shown as `/walk/`.
 
 What `mip0018` adds to the plain midnight-js calls (shown in the [appendix](#appendix-the-same-with-plain-midnight-js)):
 a public **run record** per contract (address, every transaction, written *before* submission), a **before-check**
@@ -24,7 +26,7 @@ NETENV="-e MIP0018_INDEXER_URL=$MIP0018_INDEXER_URL_IN_NETWORK -e MIP0018_NODE_U
 # signing commands: the only container that sees a wallet secret (none here: the local dev wallet is public)
 signer() {
   MIP0018_DOCKER_NETWORK="$MIP0018_STACK_NETWORK" MIP0018_SECRET_DIR="$WALK/secrets" MIP0018_STATE_DIR="$WALK/state" \
-  MIP0018_DOCKER_ENV="$NETENV -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK -e MIP0018_WALLET_PROOF_SERVER_URL=$MIP0018_WALLET_PROOF_SERVER_URL_IN_NETWORK" \
+  MIP0018_DOCKER_ENV="$NETENV -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK" \
   docker/signer.sh mip0018 -- "$@"
 }
 # wallet-free commands
@@ -63,40 +65,41 @@ emission wallet-free (the indexer's event = the `log` op of the raw transaction,
 exact payload):
 
 ```text
-network     undeployed  genesis 0x6356…56356a  indexer http://indexer:8088/api/v4/graphql
-contract    787ce186ec75dc471d7c44ac7e64d423cad0a05d3bdb5393c2ae59b0c4fed602
-transaction f604562c064fa16d5ef3720bec8b966d3c21999817a7764d6215f3a6a371610f  block 34 (2791c917…2c85fd82)  SUCCESS  finalized (finalized head 35)  extrinsic 4
-event 0     id 59  segment 1065 (guaranteed)  entry publishMetadata
+network     undeployed  genesis 0x8233…ebae1d  indexer http://indexer:8088/api/v4/graphql
+contract    e38964ebb24645d0b291004fab2adf369e60462c10051aba1d453463c32979d6
+transaction 1b20a2d0aaf84adc137c1d91bb282a85b7eda45c053b851f5bf262440905e27d  block 29 (5b81de4c…137c9765)  SUCCESS  finalized (finalized head 29)  extrinsic 4
+event 0     id 59  segment 25637 (guaranteed)  entry publishMetadata
   result    accept  domainSep 6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000  kind 3 (contract token)
   records   name         "Acme Gold"  type 1
             symbol       "AGLD"  type 1
             decimals     6  type 2
   expected  matches
 checks
-  OK   identity             node genesis 0x635663c02847be53aacef6ba8e6153d6a6ff81e8f8be51dcc92d40fca056356a (undeployed)
-  OK   indexed              transaction f604562c064fa16d5ef3720bec8b966d3c21999817a7764d6215f3a6a371610f in block 34 (2791c917b535e12a8b1d0c6232ad483076b924ec07a0efac1e4f7f192c85fd82), SUCCESS
-  OK   raw-hash             recomputed hash f604562c064fa16d5ef3720bec8b966d3c21999817a7764d6215f3a6a371610f
+  OK   identity             node genesis 0x823383ec0302be8417cfcbcc62f21df08f4047bca37aaea89e3f54b550ebae1d (undeployed)
+  OK   indexed              transaction 1b20a2d0aaf84adc137c1d91bb282a85b7eda45c053b851f5bf262440905e27d in block 29 (5b81de4cdd89148ab20fb4f27d84ec08b5ed08fbfe84995e0bbc2b15137c9765), SUCCESS
+  OK   raw-hash             recomputed hash 1b20a2d0aaf84adc137c1d91bb282a85b7eda45c053b851f5bf262440905e27d
   OK   raw-identifiers      2 identifiers recomputed
-  OK   event-0-record       event 59: bound to 787ce186ec75dc471d7c44ac7e64d423cad0a05d3bdb5393c2ae59b0c4fed602 (entry point publishMetadata), misc
+  OK   event-0-record       event 59: bound to e38964ebb24645d0b291004fab2adf369e60462c10051aba1d453463c32979d6 (entry point publishMetadata), misc
   OK   event-0-in-raw-tx    event 59: equals a log op of the contract in the raw transaction
   OK   event-0-segment      event 59: its segment applied
   OK   completeness         1 applied Misc log(s) of the contract in the raw transaction, 1 indexed
-  OK   node-block-hash      node block 34 = 0x2791c917b535e12a8b1d0c6232ad483076b924ec07a0efac1e4f7f192c85fd82
-  OK   node-extrinsic       raw transaction bytes are extrinsic 4 of block 34
+  OK   node-block-hash      node block 29 = 0x5b81de4cdd89148ab20fb4f27d84ec08b5ed08fbfe84995e0bbc2b15137c9765
+  OK   node-extrinsic       raw transaction bytes are extrinsic 4 of block 29
   OK   expect-0             event 59 matches the expectation
-  OK   finalized            block 34 ≤ finalized 35
+  OK   finalized            block 29 ≤ finalized 29
 result      ok (exit 0)
 record      /walk/fungible-token.json
-network     undeployed  genesis 0x6356…56356a
-contract    MyFungibleToken  787ce186ec75dc471d7c44ac7e64d423cad0a05d3bdb5393c2ae59b0c4fed602
+network     undeployed  genesis 0x8233…ebae1d
+contract    MyFungibleToken  e38964ebb24645d0b291004fab2adf369e60462c10051aba1d453463c32979d6
 steps
-  deploy                             completed  tx c285fe0d…82fa1d32 block 30 SUCCESS fee 4938164564525608 SPECK
-  publish                            completed  tx f604562c…a371610f block 34 SUCCESS fee 164017660288561 SPECK
+  deploy                             completed  tx 5d961d8b…e4fd8fa0 block 26 SUCCESS fee 4938164564525608 SPECK
+  publish                            completed  tx 1b20a2d0…0905e27d block 29 SUCCESS fee 169535109254271 SPECK
 ```
 
 The fees are in SPECK (10^15 SPECK = 1 DUST): about 4.94 DUST for deploying the token with the verifier keys of all
-its circuits, 0.16 DUST for the publish (local chain). On Stagenet the same token cost 6.967 DUST to deploy and
-0.171 DUST to publish (case C01; all Stagenet fees in [`docs/costs.md`](../../docs/costs.md#fees-on-stagenet)).
+its circuits, 0.17 DUST for the publish (local chain). On preview the same token cost 10.534 DUST to deploy and
+0.219 DUST to publish (case [C01](../../deployments/preview/cases/C01/README.md); all preview fees in
+[`docs/costs.md`](../../docs/costs.md#fees-on-preview)).
 
 Re-running the same command changes nothing: every step is already completed on chain. Passing `--metadata` other
 than what the contract emits (its values are compiled in) is refused before anything is built.
@@ -110,12 +113,12 @@ with, and per step the transaction — written **before** the node saw it — it
 ```json
 {
   "kind": "mip0018-run-record",
-  "network": { "id": "undeployed", "genesisHash": "0x635663c02847be53aacef6ba8e6153d6a6ff81e8f8be51dcc92d40fca056356a" },
+  "network": { "id": "undeployed", "genesisHash": "0x823383ec0302be8417cfcbcc62f21df08f4047bca37aaea89e3f54b550ebae1d", "chainInstance": "0x37241d5f…edcd38ff" },
   "contract": {
     "name": "MyFungibleToken",
     "managedDir": "examples/openzeppelin/fungible-token/managed/MyFungibleToken",
     "adapter": "examples/openzeppelin/fungible-token/mip0018.adapter.ts",
-    "address": "787ce186ec75dc471d7c44ac7e64d423cad0a05d3bdb5393c2ae59b0c4fed602",
+    "address": "e38964ebb24645d0b291004fab2adf369e60462c10051aba1d453463c32979d6",
     "privateStateId": "MyFungibleToken",
     "constructorArgs": ["Acme Gold", "AGLD", 6],
     "verifierKeySha256": { "balanceOf": "1314444ccfea…", "burn": "fd37e5b4c1a4…", "decimals": "3cfdfb97570b…", "…": "…" }
@@ -123,16 +126,16 @@ with, and per step the transaction — written **before** the node saw it — it
   "steps": [
     {
       "id": "deploy", "kind": "deploy", "state": "completed",
-      "tx": { "hash": "c285fe0db58803256df6f76150eb563c9e6e4f95640f72d120a4947a82fa1d32", "ttl": "2026-10-07T20:44:31.000Z" },
-      "inclusion": { "height": 30, "status": "SUCCESS", "fee": "4938164564525608" },
-      "attempts": ["submitting c285fe0d…", "node accepted 005e2e69…", "midnight-js: SucceedEntirely at block 30", "completed: contract 787ce186… on chain with …"]
+      "tx": { "hash": "5d961d8baca197da2df9337e8cb5eb814cbb71eb6ffe6159855388eee4fd8fa0", "ttl": "2026-11-10T00:25:02.000Z" },
+      "inclusion": { "height": 26, "status": "SUCCESS", "fee": "4938164564525608" },
+      "attempts": [{ "event": "submitting 5d961d8b…" }, { "event": "node accepted 003f7b01…" }, { "event": "midnight-js: SucceedEntirely at block 26" }, { "event": "completed: contract e38964eb… on chain with balanceOf, burn, …" }]
     },
     {
       "id": "publish", "kind": "call", "circuit": "publishMetadata", "state": "completed",
-      "tx": { "hash": "f604562c064fa16d5ef3720bec8b966d3c21999817a7764d6215f3a6a371610f" },
-      "inclusion": { "height": 34, "status": "SUCCESS", "fee": "164017660288561" },
+      "tx": { "hash": "1b20a2d0aaf84adc137c1d91bb282a85b7eda45c053b851f5bf262440905e27d" },
+      "inclusion": { "height": 29, "status": "SUCCESS", "fee": "169535109254271" },
       "expectedEvents": [{ "name": "6d69702d303031383a746f6b656e2d6d657461646174615b76315d0000000000", "payload": "6d69702d…" }],
-      "attempts": ["submitting f604562c…", "node accepted 005a99b3…", "midnight-js: SucceedEntirely at block 34", "completed: 1 expected Misc event(s) observed in f604562c…"]
+      "attempts": [{ "event": "submitting 1b20a2d0…" }, { "event": "node accepted 00f3a8a1…" }, { "event": "midnight-js: SucceedEntirely at block 29" }, { "event": "completed: 1 expected Misc event(s) observed in 1b20a2d0…" }]
     }
   ]
 }
@@ -151,7 +154,7 @@ mip0018 list --network undeployed --record /walk/fungible-token.json --expect @e
 common key marked "not served". `list --json` (excerpt):
 
 ```text
-"snapshot": { "indexerTip": { "height": 36, … }, "toBlock": 36, "tipMatchesNode": true, "finalizedHeight": 36 },
+"snapshot": { "indexerTip": { "height": 29, … }, "toBlock": 29, "tipMatchesNode": true, "finalizedHeight": 29 },
 "counts": { "events": 1, "accepted": 1, "rejected": 0, "ignored": 0 },
 "identities": [ { "domainSep": "6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000", "kind": 3,
                   "colored": false, "common": { "name": "Acme Gold", "symbol": "AGLD", "decimals": "6" }, … } ],
@@ -182,19 +185,20 @@ repeated withdrawal without `--force` is skipped, because it would change nothin
 
 ```text
 steps
-  deploy                             completed  tx c285fe0d…82fa1d32 block 30 SUCCESS fee 4938164564525608 SPECK
-  publish                            completed  tx f604562c…a371610f block 34 SUCCESS fee 164017660288561 SPECK
-  rename                             completed  tx 761ed938…5d531f75 block 118 SUCCESS fee 170666688769564 SPECK
-  withdraw                           completed  tx e54dd47a…69f06d6d block 123 SUCCESS fee 171037094324210 SPECK
+  deploy                             completed  tx 5d961d8b…e4fd8fa0 block 26 SUCCESS fee 4938164564525608 SPECK
+  publish                            completed  tx 1b20a2d0…0905e27d block 29 SUCCESS fee 169535109254271 SPECK
+  rename                             completed  tx 68a299b9…d08e4d5f block 96 SUCCESS fee 176634718453921 SPECK
+  withdraw                           completed  tx e940b4b7…3a03e28f block 100 SUCCESS fee 177481648090527 SPECK
   withdraw-again-skipped             completed  no tx  (skipped: the contract metadata already holds exactly these values (before-check on the finalized transaction; nothing submitted))
+  withdraw-again                     completed  tx e9aaa43f…f6ba4a08 block 105 SUCCESS fee 177471890727911 SPECK
 ```
 
 (`withdraw-again-skipped` is the same command without `--force`; with `--force` the second withdrawal is emitted, as
-the Stagenet cases C06 and C11 do on purpose.) After the revive, `list`:
+case [C06](../../deployments/preview/cases/C06/README.md) does on preview on purpose.) After the revive, `list`:
 
 ```text
-contract    787ce186ec75dc471d7c44ac7e64d423cad0a05d3bdb5393c2ae59b0c4fed602  network undeployed
-snapshot    indexer block 135 (5ed433fb…1ec6b2d6) = node  to-block 135  node finalized 135
+contract    e38964ebb24645d0b291004fab2adf369e60462c10051aba1d453463c32979d6  network undeployed
+snapshot    indexer block 109 (3ec384e9…94f6990f) = node  to-block 109  node finalized 109
 events      5 (5 accepted, 0 rejected, 0 ignored) in 2 page(s)
 identity  domainSep 6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000  kind 3 (contract token)  color -
   name         "Acme Gold"                              type 1  usable
@@ -205,18 +209,18 @@ groups
   "AGLD": 6d69…0000/3
 history (replaced values; never current)
 source events
-  59       block 34       tx f604562c…a371610f  accept 6d69…0000/3 (3 record(s))
-  90       block 118      tx 761ed938…5d531f75  accept 6d69…0000/3 (2 record(s))
-  92       block 123      tx e54dd47a…69f06d6d  accept 6d69…0000/3 (6 record(s))
-  94       block 130      tx 5153b762…43dd740e  accept 6d69…0000/3 (6 record(s))
-  96       block 135      tx fe77b3fb…b8dd0288  accept 6d69…0000/3 (3 record(s))
+  59       block 29       tx 1b20a2d0…0905e27d  accept 6d69…0000/3 (3 record(s))
+  90       block 96       tx 68a299b9…d08e4d5f  accept 6d69…0000/3 (2 record(s))
+  92       block 100      tx e940b4b7…3a03e28f  accept 6d69…0000/3 (6 record(s))
+  94       block 105      tx e9aaa43f…f6ba4a08  accept 6d69…0000/3 (6 record(s))
+  96       block 109      tx 298dd74e…12f00a62  accept 6d69…0000/3 (3 record(s))
 ```
 
-The history is empty: the withdrawal at block 123 deleted every field, so the identity and its history are gone, and
-nothing from before it comes back (MIP "Applying records"; vectors S3c, S3d). `list --to-block 118` (after the rename)
-shows "Acme Bars"/"ABAR"; at blocks 123 and 130 (after each withdrawal) `list` reports
-`identities  none: no token identity of this contract has a field with a value`. The same lifecycle on Stagenet:
-case [C11](../../deployments/stagenet/cases/C11/README.md).
+The history is empty: the withdrawal at block 100 deleted every field, so the identity and its history are gone, and
+nothing from before it comes back (MIP "Applying records"; vectors S3c, S3d). `list --to-block 96` (after the rename)
+shows "Acme Bars"/"ABAR"; at blocks 100 and 105 (after each withdrawal) `list` reports
+`identities  none: no token identity of this contract has a field with a value`. The same lifecycle on preview, with
+`examples/minimal`'s `OwnerKey`: case [C06](../../deployments/preview/cases/C06/README.md).
 
 ## 7. Create and destroy
 
@@ -233,55 +237,58 @@ signer publish $A --record /walk/minimal.json --circuit publishMetadata --step p
 
 ```text
 steps
-  deploy                             completed  tx 6defaf26…d7060158 block 19 SUCCESS fee 1228706932471153 SPECK
-  publish                            completed  tx 8ebacff8…36cda0d5 block 23 SUCCESS fee 146122510748296 SPECK
-  verifier-key-remove:publishMetadata completed  tx 0f9333c9…1e32422a block 140 SUCCESS fee 38987436235576 SPECK
+  deploy                             completed  tx 07d933ba…e91739fe block 18 SUCCESS fee 1228716976298232 SPECK
+  publish                            completed  tx 4e5f7641…a4d6fcc7 block 22 SUCCESS fee 151695886291523 SPECK
+  verifier-key-remove:publishMetadata completed  tx a5013fe8…00bf5163 block 113 SUCCESS fee 115513382769943 SPECK
   publish-again                      pending    no tx
-2026-10-07T19:55:56.680Z publish: publish-again: publishMetadata has no verifier key on 080aae689603534324e2c88181db52a3b36b9e2dc0fb8023edbb0f9ef10cefa6 (removed?); nothing submitted
+2026-11-10T00:04:07.297Z publish: publish-again: publishMetadata has no verifier key on 203924e8b1a4425fac6a3a1cb1dc3c957313394dde0e7e9965f94992a4e697cb (removed?); nothing submitted
 ```
 
 The published payload is MIP Appendix A byte-for-byte (the example's domainSep is Appendix A's, `0x11` × 32); `list`
 still shows it after the removal. The removal is a maintenance `VerifierKeyRemove` in the `v4` key slot (where ZKIR v3
 keys live), signed with the maintenance key midnight-js generated at deployment and the CLI kept in the
-private-state file.
+private-state file. On preview: case [C10](../../deployments/preview/cases/C10/README.md).
 
-## 8. Stagenet
+## 8. Public networks
 
-The same commands with `--network stagenet` and a wallet secret file instead of `--dev-genesis-wallet`. The secret
-directory is mounted read-only into the signer container only; the wallet sync cache (`--wallet-cache`) avoids a
-several-minute sync per command:
+The same commands with `--network preview` (or `preprod` / `mainnet`) and a wallet secret file instead of
+`--dev-genesis-wallet`. The secret directory is mounted read-only into the signer container only; the wallet sync cache
+(`--wallet-cache`) avoids a several-minute sync per command. `preprod` and `mainnet` are served by Blockfrost: the
+project token of that network's Blockfrost project is read from `MIP0018_BLOCKFROST_PREPROD` / `MIP0018_BLOCKFROST_MAINNET`
+(or a 0600 file, `--blockfrost-token-file`), passed to the containers by name, and appears in no output or record:
 
 ```sh
 signer() {
   MIP0018_SECRET_DIR="<0700 directory with the mnemonic file>" MIP0018_STATE_DIR="<0700 state directory outside the repo>" \
-  MIP0018_DOCKER_NETWORK="<network of your two proof servers>" \
-  MIP0018_DOCKER_ENV="-e MIP0018_PROOF_SERVER_URL=<proof-server 9.0.0-rc.8> -e MIP0018_WALLET_PROOF_SERVER_URL=<proof-server 9.0.0-rc.6>" \
+  MIP0018_DOCKER_NETWORK="<Docker network of your proof server>" \
+  MIP0018_DOCKER_ENV="-e MIP0018_PROOF_SERVER_URL=<proof-server 9.0.1 URL on that network>" \
   docker/signer.sh mip0018 -- "$@"
 }
-W="--network stagenet --mnemonic-file /run/mip0018/secrets/<wallet>.mnemonic --wallet-cache /run/mip0018/state/wallet.cache"
-signer deploy $W --example fungible-token --record deployments/stagenet/cases/C01/record.json
-signer publish $W --record deployments/stagenet/cases/C01/record.json --circuit publishMetadata --step publish
+W="--network preview --mnemonic-file /run/mip0018/secrets/<wallet>.mnemonic --wallet-cache /run/mip0018/state/wallet.cache"
+signer deploy $W --example fungible-token --record /run/mip0018/state/fungible-token.json
+signer publish $W --record /run/mip0018/state/fungible-token.json --circuit publishMetadata --step publish
 ```
 
-Two official proof servers are needed: 9.0.0-rc.8 proves the Compact 0.35.0 / ZKIR v3 contract
-circuits, 9.0.0-rc.6 the wallet's DUST spends. The recorded Stagenet runs — one `mip0018` command per step — are the
-case folders [`deployments/stagenet/cases/`](../../deployments/stagenet/cases/README.md):
+One official proof server (9.0.1) proves the Compact 0.36.0 contract circuits and the wallet's DUST spends. The
+recorded preview runs — one `mip0018` command per step — are the case folders
+[`deployments/preview/cases/`](../../deployments/preview/cases/README.md):
 
 | Case | What | Contract | Publish transaction |
 |---|---|---|---|
-| [C01](../../deployments/stagenet/cases/C01/README.md) | OpenZeppelin fungible token: deploy, publish | `98a90519419e2ebb514b7c6ce87ee7f6f4f9753d9ee6f533c5d1c25b9d437dcf` | `a6fff9fb3f034aea393ff37fcd4343c418c3bfcc7cb22c502c1c1a6ffbc55dfd` (block 714501) |
-| [C06](../../deployments/stagenet/cases/C06/README.md) | minimal OwnerKey (this deployment's `withdrawMetadata` emits one Null record at `name`): publish, rename, withdraw ×2, revive | `9d93b91942530f66f381daf5d9856caf9dfaa24444f0803a6c5d02e8c28040e3` | `71fb2c2d9ade1a3906ad92b3d245e6578478d58cac52d4f3f4c01fdbea2fc7e2` (block 714796; then rename 714804, withdraw 714813, withdraw again 714827, revive 714835) |
-| [C11](../../deployments/stagenet/cases/C11/README.md) | minimal OwnerKey (this deployment's `withdrawMetadata` emits four Null records: `name`, `symbol`, `decimals`, `standards`): publish, withdraw ×2, revive | `b05ee03f0e0f0edb6b3097d68c26a9c198365fe4900df493467d606738db6141` | `054ecbd532d6a4dc997269f147be7930726e7c434d5fc26f60e53df840563dd6` (block 724896; then withdraw 724916, withdraw again 724940, revive 724957) |
-| [C10](../../deployments/stagenet/cases/C10/README.md) | minimal create-and-destroy | `048ec49aacdde9ef2fee1bd51c651df46d3224578e36a1e89bdbb88842edf0f6` | `85d6f8a241ceff9935dc1aec51e5c5c1c51818dd0a41ebf7b850e2ff413a5b4d` (block 715177; key removed in 715183) |
+| [C01](../../deployments/preview/cases/C01/README.md) | OpenZeppelin fungible token: deploy, publish | `c135766fdc8ef3ae24fcd1e89bd37f66513a9f5948e7d034567de24aaae9237e` | `57f8a00479674d1498b1c2dfa6a3b44f82f6ee822aa8c3c41df6ce1907fb77e7` (block 41547) |
+| [C06](../../deployments/preview/cases/C06/README.md) | minimal `OwnerKey`: publish, rename, withdraw (six Null records, one event), withdraw again, revive | `f53dbefbedcf5a5ab992b343e6b4f66585883a929b6a0d277290066268f7ff4a` | `a7c889e8ee0c0de3dfb5c25943922cd8962d5c27d062b1686507c8e8dff20b6c` (block 41728; then rename 41736, withdraw 41744, withdraw again 41752, revive 41760) |
+| [C10](../../deployments/preview/cases/C10/README.md) | minimal create-and-destroy | `972122c67324da57729b0f9c9c080d86dc99dc8c1ad0adcce9762b5cb0df9a11` | `cc13881c9191233ad1ff767996278b291842c17c7f37f0e02a5759a9f435e834` (block 42029; key removed in 42035) |
 
-Run on 2026-10-02 (C11: 2026-10-03) with wallet 1 of this repository's test wallets; every case re-checks wallet-free with
-`docker/run.sh mip0018 -- recheck --network stagenet --case deployments/stagenet/cases/<ID>`.
+Run on 2026-11-09 with wallet 1 of this repository's test wallets; every case re-checks wallet-free with
+`docker/run.sh mip0018 -- recheck --network preview --case deployments/preview/cases/<ID>`. The `preprod` and `mainnet`
+profiles are not exercised against live endpoints in this repository (their token handling is tested against a local
+stub).
 
 ## Appendix: the same with plain midnight-js
 
 [`scripts/midnight-js-snippet.ts`](scripts/midnight-js-snippet.ts) is what `mip0018 deploy-and-publish` does underneath,
-without the record and the checks: `deployContract` with the owner secret as private state, then
-`callTx.publishMetadata()` right after the deployment.
+without the record and the before/after checks (the wallet checks the node's identity before it opens):
+`deployContract` with the owner secret as private state, then `callTx.publishMetadata()` right after the deployment.
 
 The core of it (the providers are built with `@mip0018/midnight/signer` for brevity; any midnight-js
 `MidnightProviders` work):
@@ -302,19 +309,18 @@ const deployed = await deployContract(providers, {
 const published = await deployed.callTx.publishMetadata();
 ```
 
-Run on the local chain (2026-10-07), then checked wallet-free with the expected payload from `metadata.json`:
+Run on the local chain (2026-11-10), then checked wallet-free with the expected payload from `metadata.json`:
 
 ```sh
 MIP0018_DOCKER_NETWORK=$MIP0018_STACK_NETWORK MIP0018_DOCKER_ENV="-e MIP0018_INDEXER_URL=$MIP0018_INDEXER_URL_IN_NETWORK \
-  -e MIP0018_NODE_URL=$MIP0018_NODE_URL_IN_NETWORK -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK \
-  -e MIP0018_WALLET_PROOF_SERVER_URL=$MIP0018_WALLET_PROOF_SERVER_URL_IN_NETWORK" \
+  -e MIP0018_NODE_URL=$MIP0018_NODE_URL_IN_NETWORK -e MIP0018_PROOF_SERVER_URL=$MIP0018_PROOF_SERVER_URL_IN_NETWORK" \
   docker/run.sh exec 'node examples/publish-and-emit/scripts/midnight-js-snippet.ts'
 ```
 
 ```text
-{"contract":"3e612bb1926c897495728eee18572451a7f327cbda49f3b60f4602ba0c08610a","deploy":{"tx":"b8dc509dfbc00f0a69551f239f5abb58dad09d1dfd0e0cd11f44e5ea26cc9dd6","block":164},"publish":{"tx":"368f4b9716fb1db4280efbf3785e6c1d7d12ab72dd576e76bd8b828f4441da5c","block":167,"status":"SucceedEntirely"}}
+{"contract":"cd175030f9add2de29cde76439872e90738a2189fa2e7599c2a867a56b9db2cf","deploy":{"tx":"dd965b1acd4841afdd4839d49c746c4204626040380b546b33a2f533f97db331","block":128},"publish":{"tx":"bc6dbe1816d5b087f0160ed67ed70e538c7e488781b6a531a3543ffa2e9b1fe4","block":131,"status":"SucceedEntirely"}}
 
-$ mip0018 check-event --network undeployed --contract 3e612bb1…0c08610a --tx 368f4b97…f4441da5c --expect '{"payload":"6d69702d…","result":"accept"}'
+$ mip0018 check-event --network undeployed --contract cd175030…6b9db2cf --tx bc6dbe18…2e9b1fe4 --expect '{"payload":"6d69702d…","result":"accept"}'
   result    accept  domainSep 6d69702d303031383a6578616d706c653a66756e6769626c6500000000000000  kind 3 (contract token)
   records   name         "Acme Gold"  type 1
             symbol       "AGLD"  type 1

@@ -5,7 +5,12 @@
 
 export * from './hex.ts';
 export * from './http.ts';
+export * from './redact.ts';
+export * from './tool.ts';
+export * from './protected-file.ts';
 export * from './network.ts';
+export * from './network-file.ts';
+export * from './public-file.ts';
 export * from './rpc.ts';
 export * from './indexer.ts';
 export * from './ws.ts';
