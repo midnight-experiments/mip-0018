@@ -41,7 +41,7 @@ const A1_META = { domainSep: '11'.repeat(32), kind: 3, name: 'Acme Token', symbo
 const replay = (name: string) => new HttpClient({ fetch: replayFetch(loadTape(join(dir, `${name}.tape.json`))), attempts: 1 });
 /**
  * The replay of a scan tape plus the node's block 1, which a new scanner state records (its chain instance): the tape
- * predates that read, and meta.json holds block 1 of the chain it was recorded on.
+ * holds no block-1 read, and meta.json holds block 1 of the chain the tape comes from.
  */
 const replayWithBlockOne = (name: string) => {
   const tape = replayFetch(loadTape(join(dir, `${name}.tape.json`)));
