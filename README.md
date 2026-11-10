@@ -175,15 +175,23 @@ tools/             repository checks (pins, MIP hash, conformance matrix, Markdo
 
 ## TODO
 
-OpenZeppelin Compact Contracts 0.5.0-alpha.2 token modules that have no MIP-0018 example in this repository yet
-([`examples/openzeppelin`](examples/openzeppelin/README.md) covers `FungibleToken`, `NativeShieldedToken` and
-`NativeShieldedTokenFamily`):
+Every token module of OpenZeppelin Compact Contracts 0.5.0-alpha.2 (`token/` of the package) that has no MIP-0018
+example in this repository yet. [`examples/openzeppelin`](examples/openzeppelin/README.md) covers `FungibleToken`,
+`NativeShieldedToken` and `NativeShieldedTokenFamily`, and with them `NativeShieldedTokenCore`, their shared core
+(not composed directly). Without an example:
 
-- the `ZOwnableNativeShieldedToken` preset (`token/presets/ZOwnableNativeShieldedToken.compact`);
-- `ConfidentialFungibleToken` (`token/ConfidentialFungibleToken.compact`);
-- `ConfidentialNoteFungibleToken` (`token/ConfidentialNoteFungibleToken.compact`);
+- the `ZOwnableNativeShieldedToken` preset (`token/presets/ZOwnableNativeShieldedToken.compact`; the package's
+  `token/examples/ZOwnableNativeShieldedTokenExample.compact` composes it);
+- `ConfidentialFungibleToken` (`token/ConfidentialFungibleToken.compact`) and the `ConfidentialFungibleTokenPublicSupply`
+  extension (`token/extensions/`);
+- `ConfidentialNoteFungibleToken` (`token/ConfidentialNoteFungibleToken.compact`) and the
+  `ConfidentialNoteFungibleTokenDelivery` extension (`token/extensions/`);
 - the `NativeShieldedTokenPublicSupply`, `NativeShieldedTokenFamilyPublicSupply` and `NativeShieldedTokenDerivedNonce`
-  extensions (`token/extensions/`).
+  extensions, and `NativeShieldedTokenPublicSupplyCore`, the shared core of the two public-supply extensions
+  (`token/extensions/`).
+
+Outside MIP-0018's token kinds (MIP-0018 defines metadata per token identity of kinds 1–3, not per token id):
+`NonFungibleToken` (`token/NonFungibleToken.compact`) and `MultiToken` (`token/MultiToken.compact`).
 
 ## Contributing, security, licence
 
