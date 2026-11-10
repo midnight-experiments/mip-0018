@@ -62,7 +62,7 @@ describe('readMaintenanceKeyFile', () => {
 });
 
 describe('compareLayouts (synthetic compiler layouts)', () => {
-  const layout = (fields: Layout['fields'], compiler = '0.35.0'): Layout => ({ from: 'x', compiler, language: '0.27.0', fields });
+  const layout = (fields: Layout['fields'], compiler = '0.34.0'): Layout => ({ from: 'x', compiler, language: '0.26.0', fields });
   const bytes32 = { 'type-name': 'Bytes', length: 32 };
   const u128 = { 'type-name': 'Uint', maxval: 2 ** 128 - 1 };
   const deployed = layout([
