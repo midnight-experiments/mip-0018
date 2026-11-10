@@ -14,13 +14,14 @@
 //   failed       included but failed, or the after-check contradicts the expectation
 //
 // Records never contain a secret: no mnemonic, seed, signing key or private state (those stay in the signer's 0600
-// private-state file), and no URL with its query string — the endpoint URLs and every message (step errors, skip
-// reasons, attempt notes) go through the redaction of redact.ts on every save, so a library error that quoted a
-// token-bearing URL is written without the token.
+// private-state file), and no token. Every save (redact.ts) cuts the query string of the endpoint URLs, scrubs every
+// message field (step errors, skip reasons, attempt notes) with `scrubSecrets`, and then walks EVERY string and key of
+// the record with `scrubDeep` (URL credentials, `project_id` values and registered tokens removed; other values kept
+// exactly), so a library error quoted in any field, present or added later, is written without the token.
 
 import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { toJson } from '../hex.ts';
-import { redactUrl, scrubSecrets } from '../redact.ts';
+import { redactUrl, ScrubbedError, scrubDeep, scrubSecrets } from '../redact.ts';
 
 export type StepState = 'pending' | 'submitting' | 'submitted' | 'unknown' | 'completed' | 'failed';
 export type StepKind = 'deploy' | 'call' | 'verifier-key-remove' | 'verifier-key-insert';
@@ -97,7 +98,7 @@ export interface UpgradeEntry {
   checks?: unknown;
 }
 
-export class RecordError extends Error {
+export class RecordError extends ScrubbedError {
   override name = 'RecordError';
 }
 
@@ -108,7 +109,7 @@ export function loadRecord(path: string): RunRecord | undefined {
   return r;
 }
 
-/** The record's endpoint URLs and messages redacted (in place). */
+/** The record's endpoint URLs and messages redacted, then every string and key scrubbed (in place). */
 function redactRecord(r: RunRecord): void {
   r.network.indexer = redactUrl(r.network.indexer);
   r.network.rpc = redactUrl(r.network.rpc);
@@ -117,6 +118,7 @@ function redactRecord(r: RunRecord): void {
     if (s.skipped !== undefined) s.skipped = scrubSecrets(s.skipped);
     for (const a of s.attempts) a.event = scrubSecrets(a.event);
   }
+  scrubDeep(r);
 }
 
 export function saveRecord(path: string, r: RunRecord): void {

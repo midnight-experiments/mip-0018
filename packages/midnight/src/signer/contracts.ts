@@ -27,6 +27,7 @@ import { sampleSigningKey, type FinalizedTransaction, type SigningKey } from '@m
 import { normHex } from '../hex.ts';
 import { checkIdentity, IdentityError, indexerFor, normGenesis, rpcFor } from '../network.ts';
 import { decodeTransaction, miscLogsOf } from '../raw.ts';
+import { ScrubbedError, scrubSecrets } from '../redact.ts';
 import { circuitArgs, fromJsonLoose, resolvePlaceholders } from './args.ts';
 import type { AdapterContext, ContractAdapter } from './adapter.ts';
 import { contractView, eventsInTx, pollFor, transactionState, wouldChange } from './check.ts';
@@ -36,7 +37,7 @@ import { buildProviders, loadCompiledContract, type CompiledArtifacts } from './
 import { findStep, loadRecord, note, saveRecord, upsertStep, RecordError, type RunRecord, type StepRecord } from './records.ts';
 import { describeWallet, waitForSync, type SignerEndpoints, type WalletSession } from './wallet.ts';
 
-export class StepError extends Error {
+export class StepError extends ScrubbedError {
   override name = 'StepError';
   readonly outcome: 'failed' | 'unknown' | 'refused';
   constructor(message: string, outcome: 'failed' | 'unknown' | 'refused') {
@@ -295,7 +296,7 @@ function refuse(run: Run, step: StepRecord, why: string): never {
 
 function onPerformError(run: Run, step: StepRecord, e: unknown): never {
   if (e instanceof StepError) throw e;
-  const msg = `${(e as Error)?.name ?? 'Error'}: ${String((e as Error)?.message ?? e)}`.slice(0, 1500);
+  const msg = scrubSecrets(`${(e as Error)?.name ?? 'Error'}: ${String((e as Error)?.message ?? e)}`).slice(0, 1500);
   step.error = msg;
   if (step.tx) {
     step.state = 'unknown';
@@ -602,10 +603,16 @@ const sha256 = (b: Uint8Array) => createHash('sha256').update(b).digest('hex');
 const NODE_REJECTION = /Invalid Transaction|InvalidTransaction|\b1010\b|Custom error/u;
 
 /**
- * An error's message with its causes: the wallet SDK reports a node rejection as an Effect `FiberFailure` wrapping
- * `SubmissionError("Transaction submission error")`, whose `cause` (the node client's error) holds the node's reason.
+ * An error's message with its causes, scrubbed (`scrubSecrets`: no URL query string or credentials, no registered
+ * token), so it can be stored, logged or truncated: the wallet SDK reports a node rejection as an Effect `FiberFailure`
+ * wrapping `SubmissionError("Transaction submission error")`, whose `cause` (the node client's error) holds the node's
+ * reason, and a node client's error may quote its token-bearing endpoint.
  */
-export function describeError(e: unknown, depth = 0, seen = new Set<unknown>()): string {
+export function describeError(e: unknown): string {
+  return scrubSecrets(errorChain(e));
+}
+
+function errorChain(e: unknown, depth = 0, seen = new Set<unknown>()): string {
   if (e === null || e === undefined || depth > 8 || seen.has(e)) return '';
   if (typeof e !== 'object') return String(e);
   seen.add(e);
@@ -616,11 +623,11 @@ export function describeError(e: unknown, depth = 0, seen = new Set<unknown>()):
   for (const k of ['cause', 'error', 'defect', 'left', 'right', 'failure', 'data', 'details', 'reason']) {
     const v = o[k];
     if (v === undefined || v === null) continue;
-    parts.push(typeof v === 'object' ? describeError(v, depth + 1, seen) : String(v));
+    parts.push(typeof v === 'object' ? errorChain(v, depth + 1, seen) : String(v));
   }
   for (const sym of Object.getOwnPropertySymbols(o)) {
     const v = o[sym];
-    if (v && typeof v === 'object') parts.push(describeError(v, depth + 1, seen));
+    if (v && typeof v === 'object') parts.push(errorChain(v, depth + 1, seen));
   }
   return [...new Set(parts.filter((x) => x !== ''))].join(' <- ');
 }
