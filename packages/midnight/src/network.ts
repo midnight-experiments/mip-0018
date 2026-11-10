@@ -25,7 +25,7 @@ import { HttpClient } from './http.ts';
 import { Indexer } from './indexer.ts';
 import { normHexBytes } from './hex.ts';
 import { readProtectedFile } from './protected-file.ts';
-import { redactUrl, registerSecret, TOKEN_PARAM } from './redact.ts';
+import { redactUrl, registerSecret, ScrubbedError, scrubSecrets, TOKEN_PARAM } from './redact.ts';
 import { NodeRpc } from './rpc.ts';
 
 export const PROFILE_IDS = ['undeployed', 'preview', 'preprod', 'mainnet'] as const;
@@ -125,11 +125,11 @@ export interface NetworkProfile {
   minIntervalMs: number;
 }
 
-export class ProfileError extends Error {
+export class ProfileError extends ScrubbedError {
   override name = 'ProfileError';
 }
 
-export class IdentityError extends Error {
+export class IdentityError extends ScrubbedError {
   override name = 'IdentityError';
 }
 
@@ -375,7 +375,7 @@ export async function checkIdentity(profile: NetworkProfile, http?: HttpClient):
     params: [0],
   });
   if (typeof body.result !== 'string')
-    throw new IdentityError(`node ${profile.rpc} did not return a genesis hash: ${JSON.stringify(body).slice(0, 200)}`);
+    throw new IdentityError(`node ${profile.rpc} did not return a genesis hash: ${scrubSecrets(JSON.stringify(body)).slice(0, 200)}`);
   const genesis = normGenesis(body.result);
   if (profile.genesisHash !== undefined && genesis !== profile.genesisHash) {
     throw new IdentityError(`wrong chain: node genesis ${genesis}, expected ${profile.genesisHash} (${profile.id})`);

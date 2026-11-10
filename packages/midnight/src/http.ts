@@ -8,9 +8,10 @@
 // through it waits — for the back-off (doubling per attempt, at least the interval, a `Retry-After` header honoured
 // up to 60 s), so a rate-limited endpoint sees no request until the pause is over. 401/403 are final: with an
 // `authHint` (a profile that sends a Blockfrost token) they become a `TokenError` that names where the token came
-// from. Error messages carry the URL without its query string (redact.ts).
+// from. Error messages carry the URL without its query string, and every error is a `ScrubbedError` (redact.ts): a
+// failure text that echoes the token or a token-bearing URL is scrubbed when the error is built.
 
-import { redactUrl, redactUrls } from './redact.ts';
+import { redactUrl, ScrubbedError } from './redact.ts';
 
 export interface HttpOptions {
   /** Minimum milliseconds between the starts of two requests (0 = no bound). */
@@ -29,7 +30,7 @@ export interface HttpOptions {
   sleep?: (ms: number) => Promise<void>;
 }
 
-export class HttpError extends Error {
+export class HttpError extends ScrubbedError {
   override name = 'HttpError';
   readonly status: number | undefined;
   constructor(message: string, status?: number) {
@@ -47,11 +48,11 @@ const RETRY_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
 
 export const realSleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
-/** A failed request's message: the redacted URL and the error (with its cause, e.g. ECONNREFUSED), redacted. */
+/** A failed request's message: the redacted URL and the error (with its cause, e.g. ECONNREFUSED). */
 const failureText = (url: string, e: unknown): string => {
   const err = e as { message?: string; cause?: { message?: string; code?: string } };
   const cause = err.cause ? ` (${err.cause.code ?? err.cause.message ?? 'cause unknown'})` : '';
-  return redactUrls(`request to ${redactUrl(url)} failed: ${err.message ?? String(e)}${cause}`);
+  return `request to ${redactUrl(url)} failed: ${err.message ?? String(e)}${cause}`;
 };
 
 export class HttpClient {
@@ -144,18 +145,17 @@ export class HttpClient {
         `HTTP 429 from ${redactUrl(url)}: rate limited on all ${this.attempts} attempts (the endpoint's request limit; retry later or raise --min-interval-ms)`,
         429,
       );
-    throw last instanceof Error ? last : new HttpError(redactUrls(String(last)));
+    throw last instanceof HttpError ? last : new HttpError(failureText(url, last));
   }
 
   /** GET returning text (proof server `/version`, `/health`). */
   async getText(url: string): Promise<{ status: number; text: string }> {
     await this.turn();
-    let res: Response;
     try {
-      res = await this.fetchImpl(url, { signal: AbortSignal.timeout(this.timeoutMs) });
+      const res = await this.fetchImpl(url, { signal: AbortSignal.timeout(this.timeoutMs) });
+      return { status: res.status, text: (await res.text()).trim() };
     } catch (e) {
       throw new HttpError(failureText(url, e));
     }
-    return { status: res.status, text: (await res.text()).trim() };
   }
 }

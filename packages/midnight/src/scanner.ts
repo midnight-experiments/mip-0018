@@ -28,6 +28,7 @@ import { HttpClient, realSleep } from './http.ts';
 import type { ScannedBlock } from './indexer.ts';
 import { checkIdentity, httpFor, indexerFor, type NetworkProfile } from './network.ts';
 import { applied, decodeTransaction } from './raw.ts';
+import { ScrubbedError } from './redact.ts';
 import { classify } from './check-event.ts';
 
 export const STATE_FILE = 'index-state.json';
@@ -101,7 +102,7 @@ export interface ScanState {
   updatedAt: string;
 }
 
-export class ScanError extends Error {
+export class ScanError extends ScrubbedError {
   override name = 'ScanError';
 }
 

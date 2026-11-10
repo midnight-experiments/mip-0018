@@ -13,9 +13,11 @@
 
 import { HttpClient } from './http.ts';
 import { normAddress, normHex, normTxHash } from './hex.ts';
+import { ScrubbedError } from './redact.ts';
 import { subscribe, type SubscribeOptions } from './ws.ts';
 
-export class IndexerError extends Error {
+/** An indexer failure (GraphQL errors included); scrubbed when built, so an echoed token or URL is not passed on. */
+export class IndexerError extends ScrubbedError {
   override name = 'IndexerError';
 }
 

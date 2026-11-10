@@ -36,6 +36,7 @@ import type { MidnightProvider, WalletProvider } from '@midnight-ntwrk/midnight-
 import * as Rx from 'rxjs';
 import { normHex } from '../hex.ts';
 import { connectUrls, indexerFor, type NetworkProfile } from '../network.ts';
+import { ScrubbedError } from '../redact.ts';
 import { existsSync } from 'node:fs';
 import { decodeTyped, encodeTyped } from './private-state.ts';
 import { readProtectedFile, seedFromHexFile, seedFromMnemonicFile, writeProtectedFile } from './secrets.ts';
@@ -70,7 +71,7 @@ export interface WalletSecret {
 
 export const GENESIS_DEV_SEED_HEX = '0000000000000000000000000000000000000000000000000000000000000001';
 
-export class WalletError extends Error {
+export class WalletError extends ScrubbedError {
   override name = 'WalletError';
 }
 
