@@ -7,8 +7,9 @@
 Purpose: put events on a test network that a conforming MIP-0018 consumer must **reject** (malformed
 payloads, MIP tests R1–R6), **ignore** (`mip-0018:token-metadata[v2]` and foreign names) or accept at
 **capacity** (A2), next to valid ones, and two events in **one transaction** (MIP test S7). Used by the
-cases C07 (22 vectors), C08 (S7b) and C12 (A6, S10a, S11a/b, S12b, and S3a's kind-1 events: a Null record that
-deletes one key) of [`deployments/tools/prepare-cases.ts`](../../deployments/tools/prepare-cases.ts).
+cases [C07](../../deployments/preview/cases/C07/README.md) (22 vectors), [C08](../../deployments/preview/cases/C08/README.md)
+(S7b) and [C12](../../deployments/preview/cases/C12/README.md) (A6, S10a, S11a/b, S12b, and S3a's kind-1 events: a Null
+record that deletes one key) on preview, written by [`deployments/tools/prepare-cases.ts`](../../deployments/tools/prepare-cases.ts).
 
 | Circuit | Who | Emits |
 |---|---|---|

@@ -67,8 +67,8 @@ export circuit withdrawMetadata(): [] {
    - `decimals`: read from the module's `_decimals` (`Uint<8>`), so it always equals the getter.
 3. **Add `setMetadata(...)` and `withdrawMetadata()`** — owner-only rename (an extraordinary update;
    a new value of exactly the circuit's byte length) and withdrawal: `withdraw(domainSep, kind)` emits
-   ONE event with a Null record at `name`, `symbol`, `decimals` and `standards` (a Null record deletes
-   its field; once a token has no field left, consumers do not reference it at all — MIP "Applying
+   ONE event with a Null record at each of the six common keys — `name`, `symbol`, `decimals`,
+   `standards`, `image`, `image_sha256` (a Null record deletes its field; once a token has no field left, consumers do not reference it at all — MIP "Applying
    records"). A token that published other keys adds a Null record for each of them (build that event
    with `nullRecord<K>(key)` and `payload<n>`); a single key is deleted the same way. Both circuits
    are optional; without them the metadata can still be changed later by inserting a circuit with a
@@ -132,7 +132,7 @@ consumer must conclude. The tests check every byte and every state in it against
 | `identities[]` | each token identity's metadata as `{domainSep, kind, name, symbol, decimals}` — the shape `mip0018 deploy-and-publish --metadata` and `check-event --expect '{"metadata": …}'` take |
 | `steps[]` | what to do after deployment, in order: `{id, circuit, args, caller, events[], mints[]}`; each event is an identity plus `payload` (the exact 256 bytes, hex, from `@mip0018/codec`; `scripts/payload-hex.ts --fill` writes them) |
 | `expected` | the consumer state after `steps`: every identity that has at least one field (`colored`, the usable common fields) and the symbol groups. Colors depend on the deployed address: `rawTokenType(domainSep, contractAddress)` for kinds 1 and 2 |
-| `lifecycle[]` | later updates (rename, withdraw, withdraw again, revive), each with its `expected` state. A withdraw event is `{domainSep, kind, "withdraw": true, payload}` (Null records at `name`, `symbol`, `decimals`, `standards`); after it the identity is not listed, and the revive lists it again with only the revived fields |
+| `lifecycle[]` | later updates (rename, withdraw, withdraw again, revive), each with its `expected` state. A withdraw event is `{domainSep, kind, "withdraw": true, payload}` (one Null record at each of the six common keys: `name`, `symbol`, `decimals`, `standards`, `image`, `image_sha256`); after it the identity is not listed, and the revive lists it again with only the revived fields |
 
 Arguments in angle brackets (`<the holder's Zswap coin public key>`) are chosen at run time.
 
@@ -198,5 +198,6 @@ Measured 2026-11-09 (UTC): Compact 0.36.0 (b5d9e4dfc), language 0.28.0, ZKIR v3 
 
 - Nothing is proposed or contributed to OpenZeppelin from this repository.
 - Conversion between representations (OpenZeppelin's `NativeTokenConverter` is not on `main`).
-- Deploying: see [`examples/publish-and-emit`](../publish-and-emit) and the case generator
-  [`deployments/tools/prepare-cases.ts`](../../deployments/tools/prepare-cases.ts).
+- Deploying: see [`examples/publish-and-emit`](../publish-and-emit) and the cases on preview in
+  [`deployments/preview`](../../deployments/preview/README.md) (C01–C05 deploy and publish these five examples;
+  folders written by [`deployments/tools/prepare-cases.ts`](../../deployments/tools/prepare-cases.ts)).
