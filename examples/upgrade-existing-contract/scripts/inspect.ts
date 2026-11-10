@@ -29,8 +29,6 @@ import {
   resolveProfile,
   runTool,
   toJson,
-  type RecordedNetwork,
-  type RecordedSource,
 } from '@mip0018/midnight';
 
 await runTool('inspect', async () => {
@@ -47,22 +45,16 @@ await runTool('inspect', async () => {
   // --record: the contract address of a mip0018 run record (public JSON), e.g. a case's record.json, and the network
   // identity it recorded
   let contract = values.contract;
-  const recorded: RecordedSource[] = [];
   if (values.record !== undefined) {
-    const r = JSON.parse(readFileSync(values.record, 'utf8')) as {
-      kind?: string;
-      network?: RecordedNetwork;
-      contract?: { address?: string };
-    };
-    if (r.kind !== 'mip0018-run-record' || r.network === undefined) throw new Error(`${values.record} is not a mip0018 run record`);
-    recorded.push({ source: values.record, network: r.network });
+    const r = JSON.parse(readFileSync(values.record, 'utf8')) as { kind?: string; contract?: { address?: string } };
+    if (r.kind !== 'mip0018-run-record') throw new Error(`${values.record} is not a mip0018 run record`);
     contract ??= r.contract?.address;
   }
   if (!contract) throw new Error('--contract <address> (or --record <run record with a deployed contract>) is required');
+  // Every identity source of --record: its own network and its case folder's network file.
   const profile = profileForFiles(
     resolveProfile(values.network, values['blockfrost-token-file'] ? { tokenFile: values['blockfrost-token-file'] } : {}),
-    recorded.map((r) => r.source),
-    recorded,
+    values.record !== undefined ? [values.record] : [],
   );
   const atBlock = values.block === undefined ? undefined : Number(values.block);
   if (atBlock !== undefined && !(Number.isInteger(atBlock) && atBlock >= 0)) throw new Error('--block <height> must be a block height');

@@ -8,7 +8,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
-import { checkIdentity, normAddress, checkEvent, type EventExpectation, type RecordedSource } from '@mip0018/midnight';
+import { checkIdentity, normAddress, checkEvent, type EventExpectation } from '@mip0018/midnight';
 import {
   StepError,
   callStep,
@@ -246,18 +246,16 @@ async function withRun<T>(
   recordPath: string,
   src: ContractSource,
   f: (run: Run) => Promise<T>,
-  also: readonly RecordedSource[] = [],
+  also: readonly string[] = [],
 ): Promise<T> {
   requireKeys(src);
   const log = logger(v);
   const given = endpoints(v);
   const ps = privateStatePath(v);
-  // The identity the run must be on: the record's (when it exists), any other record it names (--attach @record) and
-  // the network file of the case folder the record lies in. Checked first: a wrong network, or a network re-created
-  // from the same genesis, aborts before any wallet is opened or anything is built.
-  const existing = loadRecord(recordPath);
-  const recorded = [...(existing ? [{ source: recordPath, network: existing.network }] : []), ...also];
-  const ep: SignerEndpoints = { ...given, profile: boundProfile(given.profile, [recordPath], recorded) };
+  // The identity the run must be on: every identity source of the record (its own network when it exists, the network
+  // file of the case folder it lies in) and of every other record it names (--attach @record), checked before the
+  // wallet opens: a wrong network, or one re-created from the same genesis, aborts before anything is built.
+  const ep: SignerEndpoints = { ...given, profile: boundProfile(given.profile, [recordPath, ...also]) };
   await checkIdentity(ep.profile);
   const session = await wallet(v, ep, log);
   try {
@@ -329,14 +327,14 @@ export async function cmdDeploy(argv: string[]): Promise<number> {
 
 // ---------------------------------------------------------------------------------------------------------- attach
 
-/** `--attach <address|@record>` → the contract address (normalized), and the network a record names. */
-function attachAddress(v: Values): { address: string; from: string; recorded?: RecordedSource } | undefined {
+/** `--attach <address|@record>` → the contract address (normalized), and the record that names it. */
+function attachAddress(v: Values): { address: string; from: string; record?: string } | undefined {
   const a = str(v, 'attach');
   if (a === undefined) return undefined;
   if (a.startsWith('@')) {
     const r = readRecord(a.slice(1));
     if (!r.contract.address) throw new UsageError(`${a.slice(1)} has no contract address`);
-    return { address: normAddress(r.contract.address), from: portablePath(a.slice(1)), recorded: { source: r.path, network: r.network } };
+    return { address: normAddress(r.contract.address), from: portablePath(a.slice(1)), record: r.path };
   }
   try {
     return { address: normAddress(a), from: 'command line' };
@@ -436,7 +434,7 @@ export async function cmdPublish(argv: string[]): Promise<number> {
         else printRun(run, recordPath);
       }
     },
-    attach?.recorded ? [attach.recorded] : [],
+    attach?.record !== undefined ? [attach.record] : [],
   );
 }
 

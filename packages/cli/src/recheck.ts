@@ -17,8 +17,9 @@
 //
 // Identity: the profile is bound to the network file of the case folder (`deployments/<network>/network.json` for
 // `deployments/<network>/cases/<ID>`: genesis and chain instance, i.e. block 1) and, per check, to the network its
-// run record names. The node's identity is checked once before the first check: a wrong genesis or a network
-// re-created from the same genesis ends the case there, with one failed "identity" result and no further read.
+// run record names. The node's identity is checked once before the first check, bound to every run record and scanner
+// state the case names: a wrong genesis, a network re-created from the same genesis, or files that record another
+// chain end the case there, with one failed "identity" result and no further read.
 
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -32,7 +33,6 @@ import {
   lookupColor,
   normHex,
   projectState,
-  statePath,
   tokenTypeHex,
   checkEvent,
   type EventExpectation,
@@ -51,7 +51,6 @@ import {
   parse,
   profileFrom,
   readRecord,
-  recordSource,
   recordStep,
   recordTarget,
   str,
@@ -145,13 +144,8 @@ export async function recheckCase(
       spec.colors ?? [],
     ];
     const records = [...new Set(entries.flat().map((x) => join(outDir, x.record)))].filter((p) => existsSync(p));
-    await checkIdentity(
-      boundProfile(
-        profile,
-        [],
-        records.map((p) => recordSource(readRecord(p))),
-      ),
-    );
+    const states = [...new Set((spec.colors ?? []).flatMap((k) => (k.index ? [join(outDir, k.index)] : [])))];
+    await checkIdentity(boundProfile(profile, [...records, ...states]));
   } catch (e) {
     add('identity', false, (e as Error).message);
     return { caseId: c.id, results };
@@ -238,7 +232,7 @@ export async function recheckCase(
       if (k.index && k.minted === false) {
         const s = loadState(join(outDir, k.index));
         if (!s) throw new Error(`no index state in ${k.index}`);
-        agreeingFiles([recordSource(r), { source: statePath(join(outDir, k.index)), network: s.network }]);
+        agreeingFiles([r.path, join(outDir, k.index)]);
         const l = lookupColor(s, color, k.kind);
         if (l.found) {
           ok = false;
@@ -247,7 +241,7 @@ export async function recheckCase(
       } else if (k.index) {
         const s = loadState(join(outDir, k.index));
         if (!s) throw new Error(`no index state in ${k.index}`);
-        agreeingFiles([recordSource(r), { source: statePath(join(outDir, k.index)), network: s.network }]);
+        agreeingFiles([r.path, join(outDir, k.index)]);
         const l = lookupColor(s, color, k.kind);
         const e = l.entry;
         const kindOk = e && (k.kind === 1 ? e.shielded : e.unshielded);

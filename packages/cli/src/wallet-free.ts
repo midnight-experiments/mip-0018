@@ -5,8 +5,10 @@
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import {
+  bindScanState,
   compareState,
   expectedStateFrom,
+  httpFor,
   listMetadata,
   loadState,
   lookupColor,
@@ -20,7 +22,6 @@ import {
   type EventExpectation,
   type ListReport,
   type CheckEventReport,
-  type RecordedSource,
 } from '@mip0018/midnight';
 import { characters, formatAmount, type IdentityView } from '@mip0018/consumer';
 import {
@@ -40,7 +41,6 @@ import {
   parse,
   profileFrom,
   readRecord,
-  recordSource,
   recordStep,
   recordTarget,
   repoRoot,
@@ -322,8 +322,7 @@ export async function cmdIndex(argv: string[]): Promise<number> {
   const to = int(v, 'to-height');
   if (v.follow && to !== undefined) throw new UsageError('--follow and --to-height exclude each other');
   const stateDir = str(v, 'state', true)!;
-  // The state's own network is bound by the scanner when it resumes; a state inside a case folder also takes the
-  // folder's network file.
+  // The state's own network and, for a state inside a case folder, the folder's network file (exit 2 on a conflict).
   const profile = boundProfile(profileFrom(v), [stateDir]);
   const log = logger(v);
   const ac = new AbortController();
@@ -394,9 +393,16 @@ token identity (contract, domainSep, kind) and its current metadata: live from t
 (the contract's whole history), otherwise from the MIP-0018 events the scan recorded (scanned range only).
 Kind 3 (contract tokens) has no color: list the contract's kind-3 events with \`mip0018 list\` instead.
 With --contract/--record and --domain-sep the color is computed (tokenType(domainSep, contract)) and looked up:
-the table must hold exactly that contract and domainSep for it.
+the table must hold exactly that contract and domainSep for it. Every option given is used or refused: --color
+excludes --contract, --record and --domain-sep; the network options need --network.
 
-Exit: 0 resolved · 2 usage (e.g. --kind 3) · 3 not minted in the scanned range
+Identity: the scanner state, the run record and the network file of the case folder each lies in must record one
+chain (exit 2 otherwise), checked before anything else. A live read binds the profile to them and checks the node's
+genesis and block 1 first; a state that records no chain instance is read only on a node that has the state's last
+scanned block at its height (exit 1 otherwise).
+
+Exit: 0 resolved · 1 the table maps the color elsewhere, or a wrong chain · 2 usage (e.g. --kind 3) · 3 not minted in
+the scanned range
 ${NETWORK_USAGE}`;
 
 export async function cmdLookup(argv: string[]): Promise<number> {
@@ -413,39 +419,52 @@ export async function cmdLookup(argv: string[]): Promise<number> {
     },
     LOOKUP_USAGE,
   );
+  // The command line as a whole first: every option given is used or refused.
   const kindArg = int(v, 'kind');
   if (kindArg === 3)
     throw new UsageError('kind 3 (contract token) has no color; query the contract with `mip0018 list --contract <address>`');
   if (kindArg !== undefined && kindArg !== 1 && kindArg !== 2) throw new UsageError('--kind is 1 (shielded coin) or 2 (unshielded UTXO)');
   const stateDir = str(v, 'state', true)!;
+  const colorArg = str(v, 'color');
+  const ds = str(v, 'domain-sep');
+  const contractArg = str(v, 'contract');
+  const recordPath = str(v, 'record');
+  if (colorArg !== undefined && (ds !== undefined || contractArg !== undefined || recordPath !== undefined))
+    throw new UsageError('--color excludes --contract, --record and --domain-sep (they compute the color)');
+  if (contractArg !== undefined && recordPath !== undefined) throw new UsageError('--contract and --record exclude each other');
+  if (ds === undefined && (contractArg !== undefined || recordPath !== undefined))
+    throw new UsageError('--contract and --record need --domain-sep (the color is computed from them)');
+  if (ds !== undefined && contractArg === undefined && recordPath === undefined)
+    throw new UsageError('--domain-sep needs --contract or --record');
+  if (colorArg === undefined && ds === undefined) throw new UsageError('--color (or --contract/--record with --domain-sep) is required');
+  const live = str(v, 'network') !== undefined;
+  const offlineOptions = Object.keys(NETWORK_OPTIONS).filter((k) => k !== 'network' && v[k] !== undefined);
+  if (!live && offlineOptions.length > 0)
+    throw new UsageError(`${offlineOptions.map((k) => `--${k}`).join(', ')}: network options need --network (a live read)`);
   const s = loadState(stateDir);
   if (!s) throw new UsageError(`no index state in ${stateDir} (run mip0018 index first)`);
-  // The networks recorded by the state and the run record: one chain, checked offline and bound for a live read.
-  const recorded: RecordedSource[] = [{ source: statePath(stateDir), network: s.network }];
-  let color = str(v, 'color');
+  // Every identity source (the state, the run record, the network file of the case folder each lies in): bound to the
+  // profile of a live read, or checked to agree, before anything else.
+  const files = [stateDir, ...(recordPath !== undefined ? [recordPath] : [])];
+  const profile = live ? boundProfile(profileFrom(v), files) : undefined;
+  if (!live) agreeingFiles(files);
+  let color = colorArg;
   let computedFrom: { contract: string; domainSep: string } | undefined;
-  const ds = str(v, 'domain-sep');
   if (ds !== undefined) {
-    if (color !== undefined) throw new UsageError('--domain-sep computes the color: drop --color');
-    let contract = str(v, 'contract');
-    const recordPath = str(v, 'record');
+    let contract = contractArg;
     if (recordPath !== undefined) {
       const rec = readRecord(recordPath);
-      recorded.push(recordSource(rec));
-      agreeingFiles(recorded);
       if (!rec.contract.address) throw new UsageError(`${recordPath} has no contract address`);
       contract = rec.contract.address;
     }
-    if (contract === undefined) throw new UsageError('--domain-sep needs --contract or --record');
     try {
-      color = tokenTypeHex(ds, contract);
+      color = tokenTypeHex(ds, contract!);
     } catch (e) {
       throw new UsageError((e as Error).message);
     }
-    computedFrom = { contract: normAddress(contract), domainSep: ds.replace(/^0x/u, '').toLowerCase() };
+    computedFrom = { contract: normAddress(contract!), domainSep: ds.replace(/^0x/u, '').toLowerCase() };
   }
-  if (color === undefined) throw new UsageError('--color (or --contract/--record with --domain-sep) is required');
-  const r = lookupColor(s, color, kindArg as 1 | 2 | undefined);
+  const r = lookupColor(s, color!, kindArg as 1 | 2 | undefined);
   if (r.found && computedFrom && (r.entry!.contractAddress !== computedFrom.contract || r.entry!.domainSep !== computedFrom.domainSep)) {
     process.stderr.write(
       `mip0018: the table maps ${color} to ${r.entry!.contractAddress}/${r.entry!.domainSep}, not ${computedFrom.contract}/${computedFrom.domainSep}\n`,
@@ -457,12 +476,13 @@ export async function cmdLookup(argv: string[]): Promise<number> {
     else out(`color ${r.color} was not minted in the scanned range [${r.scanned.from}, ${r.scanned.to}] of ${r.scanned.network}`);
     return EXIT.notFound;
   }
-  const live = str(v, 'network') !== undefined;
   let identities: IdentityView[];
   let source: string;
-  if (live) {
-    const profile = boundProfile(profileFrom(v), [stateDir, ...recorded.slice(1).map((x) => x.source)], recorded);
-    const l = await listMetadata({ profile, contract: r.entry!.contractAddress });
+  if (profile !== undefined) {
+    // The same binding as a resume of the scan: the state's genesis and chain instance, or its last-block anchor.
+    const http = httpFor(profile);
+    const bound = await bindScanState(profile, stateDir, s, http);
+    const l = await listMetadata({ profile: bound.profile, contract: r.entry!.contractAddress, http });
     identities = l.identities;
     source = `live indexer at block ${l.snapshot.indexerTip.height}`;
   } else {

@@ -5,7 +5,8 @@
 // `guardOutput` (@mip0018/midnight) filters everything the process writes through `removeSecrets` (no registered
 // token, nothing else changed — metadata values are printed exactly). A command that acts on a recorded file (a run
 // record, a scanner state, a case folder) binds its profile to the identity the file and its case folder's network
-// file record (`boundProfile`) before its first request.
+// file record (`boundProfile`: every identity source of the paths given, collected by `identitySources`) before its
+// first request.
 
 import { readFileSync, realpathSync } from 'node:fs';
 import { isAbsolute, relative, resolve } from 'node:path';
@@ -13,7 +14,7 @@ import { parseArgs, type ParseArgsConfig } from 'node:util';
 import {
   PROFILE_IDS,
   ProfileError,
-  agreeRecordedNetworks,
+  agreeFiles,
   profileForFiles,
   resolveProfile,
   scrubSecrets,
@@ -21,7 +22,6 @@ import {
   type EndpointOverrides,
   type NetworkProfile,
   type RecordedNetwork,
-  type RecordedSource,
 } from '@mip0018/midnight';
 
 export { guardOutput } from '@mip0018/midnight';
@@ -225,38 +225,36 @@ export function readRecord(path: string): RecordInfo {
 }
 
 /**
- * The profile bound to the identity recorded by files and by the network file of the case folder each path lies in
- * (`profileForFiles`): another network, another genesis or another chain instance is refused (exit 2) before any
- * request; what the profile lacks is taken from them, so its identity check verifies the recorded chain.
+ * The profile bound to every identity source of the files at `paths` (`profileForFiles`: each file's own network and
+ * the network file of the case folder it lies in): another network, another genesis or another chain instance is
+ * refused (exit 2) before any request; what the profile lacks is taken from them, so its identity check verifies the
+ * recorded chain.
  */
-export function boundProfile(profile: NetworkProfile, paths: readonly string[], recorded: readonly RecordedSource[] = []): NetworkProfile {
+export function boundProfile(profile: NetworkProfile, paths: readonly string[]): NetworkProfile {
   try {
-    return profileForFiles(profile, paths, recorded);
+    return profileForFiles(profile, paths);
   } catch (e) {
     if (e instanceof ProfileError) throw new UsageError(e.message);
     throw e;
   }
 }
 
-/** Refuses (exit 2) files that record different chains (`agreeRecordedNetworks`). */
-export function agreeingFiles(recorded: readonly RecordedSource[]): void {
+/** Refuses (exit 2) files whose identity sources record different chains (`agreeFiles`), for a read without a network. */
+export function agreeingFiles(paths: readonly string[]): void {
   try {
-    agreeRecordedNetworks(recorded);
+    agreeFiles(paths);
   } catch (e) {
     if (e instanceof ProfileError) throw new UsageError(e.message);
     throw e;
   }
 }
-
-/** The recorded network of a run record, as a binding source. */
-export const recordSource = (r: RecordInfo): RecordedSource => ({ source: r.path, network: r.network });
 
 /**
  * The contract of a run record and the profile to read it with: bound to the record's network and its case folder's
  * network file (`boundProfile`).
  */
 export function recordTarget(r: RecordInfo, profile: NetworkProfile): { profile: NetworkProfile; address: string } {
-  const bound = boundProfile(profile, [r.path], [recordSource(r)]);
+  const bound = boundProfile(profile, [r.path]);
   if (!r.contract.address) throw new UsageError(`${r.path} has no contract address (not deployed)`);
   return { profile: bound, address: r.contract.address };
 }
